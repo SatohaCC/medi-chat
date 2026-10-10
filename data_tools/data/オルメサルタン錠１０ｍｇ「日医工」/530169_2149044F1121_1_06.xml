@@ -1,0 +1,2365 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PackIns version="1.0" xmlKind="Packins" drugType="Medicine" referenceOfPrecautionsForUse="2149044-S0001" referenceOfPrecautionsForHandling="2149044-T0004" containedLang="ja" xmlns="http://info.pmda.go.jp/namespace/prescription_drugs/package_insert/1.0">
+  <PackageInsertNo>2149044F1121_1_06</PackageInsertNo>
+  <CompanyIdentifier>530169</CompanyIdentifier>
+  <!--ア.作成又は改訂年月-->
+  <DateOfPreparationOrRevision>
+    <PreparationOrRevision id="今回">
+      <YearMonth>2025-09</YearMonth>
+      <Version>
+        <Lang xml:lang="ja">第2版</Lang>
+      </Version>
+    </PreparationOrRevision>
+    <PreparationOrRevision id="前回">
+      <YearMonth>2023-08</YearMonth>
+      <Version>
+        <Lang xml:lang="ja">第1版</Lang>
+      </Version>
+    </PreparationOrRevision>
+  </DateOfPreparationOrRevision>
+  <!--イ.日本標準商品分類番号-->
+  <Sccj>
+    <SccjNo>872149</SccjNo>
+  </Sccj>
+  <!--オ.薬効分類名-->
+  <TherapeuticClassification>
+    <Detail>
+      <Lang xml:lang="ja">高親和性AT<Sub>1</Sub>レセプターブロッカー</Lang>
+    </Detail>
+  </TherapeuticClassification>
+  <ApprovalEtc>
+    <DetailBrandName id="BRD_Drug1">
+      <ApprovalBrandName>
+        <Lang xml:lang="ja">オルメサルタン錠5mg「日医工」</Lang>
+      </ApprovalBrandName>
+      <BrandCode>
+        <YJCode>2149044F3132</YJCode>
+      </BrandCode>
+      <TrademarkInEnglish>
+        <TrademarkName>Olmesartan Tablets</TrademarkName>
+      </TrademarkInEnglish>
+      <BrandNameInHiragana>
+        <NameInHiragana>おるめさるたんじょう5mg「にちいこう」</NameInHiragana>
+      </BrandNameInHiragana>
+      <!--ウ.承認番号-->
+      <ApprovalAndLicenseNo>
+        <ApprovalNo>22900AMX00767000</ApprovalNo>
+      </ApprovalAndLicenseNo>
+      <!--ウ.販売開始年月-->
+      <StartingDateOfMarketing>2017-12</StartingDateOfMarketing>
+      <!--エ.貯法、有効期間-->
+      <Storage>
+        <StorageMethod>
+          <Lang xml:lang="ja">室温保存</Lang>
+        </StorageMethod>
+        <ShelfLife>
+          <Lang xml:lang="ja">3年</Lang>
+        </ShelfLife>
+      </Storage>
+      <!--キ.基準名-->
+      <StandardName>
+        <StandardNameCategory>
+          <StandardNameCategoryCode>1</StandardNameCategoryCode>
+          <StandardNameDetail>
+            <Lang xml:lang="ja">オルメサルタン　メドキソミル錠</Lang>
+          </StandardNameDetail>
+        </StandardNameCategory>
+      </StandardName>
+      <!--カ.規制区分-->
+      <RegulatoryClassification>
+        <RegulatoryClassificationCodeAndNote>
+          <RegulatoryClassificationCode>12</RegulatoryClassificationCode>
+        </RegulatoryClassificationCodeAndNote>
+      </RegulatoryClassification>
+    </DetailBrandName>
+    <DetailBrandName id="BRD_Drug2">
+      <ApprovalBrandName>
+        <Lang xml:lang="ja">オルメサルタン錠10mg「日医工」</Lang>
+      </ApprovalBrandName>
+      <BrandCode>
+        <YJCode>2149044F1121</YJCode>
+      </BrandCode>
+      <TrademarkInEnglish>
+        <TrademarkName>Olmesartan Tablets</TrademarkName>
+      </TrademarkInEnglish>
+      <BrandNameInHiragana>
+        <NameInHiragana>おるめさるたんじょう10mg「にちいこう」</NameInHiragana>
+      </BrandNameInHiragana>
+      <!--ウ.承認番号-->
+      <ApprovalAndLicenseNo>
+        <ApprovalNo>22900AMX00768000</ApprovalNo>
+      </ApprovalAndLicenseNo>
+      <!--ウ.販売開始年月-->
+      <StartingDateOfMarketing>2017-12</StartingDateOfMarketing>
+      <!--エ.貯法、有効期間-->
+      <Storage>
+        <StorageMethod>
+          <Lang xml:lang="ja">室温保存</Lang>
+        </StorageMethod>
+        <ShelfLife>
+          <Lang xml:lang="ja">3年</Lang>
+        </ShelfLife>
+      </Storage>
+      <!--キ.基準名-->
+      <StandardName>
+        <StandardNameCategory>
+          <StandardNameCategoryCode>1</StandardNameCategoryCode>
+          <StandardNameDetail>
+            <Lang xml:lang="ja">オルメサルタン　メドキソミル錠</Lang>
+          </StandardNameDetail>
+        </StandardNameCategory>
+      </StandardName>
+      <!--カ.規制区分-->
+      <RegulatoryClassification>
+        <RegulatoryClassificationCodeAndNote>
+          <RegulatoryClassificationCode>12</RegulatoryClassificationCode>
+        </RegulatoryClassificationCodeAndNote>
+      </RegulatoryClassification>
+    </DetailBrandName>
+    <DetailBrandName id="BRD_Drug3">
+      <ApprovalBrandName>
+        <Lang xml:lang="ja">オルメサルタン錠20mg「日医工」</Lang>
+      </ApprovalBrandName>
+      <BrandCode>
+        <YJCode>2149044F2128</YJCode>
+      </BrandCode>
+      <TrademarkInEnglish>
+        <TrademarkName>Olmesartan Tablets</TrademarkName>
+      </TrademarkInEnglish>
+      <BrandNameInHiragana>
+        <NameInHiragana>おるめさるたんじょう20mg「にちいこう」</NameInHiragana>
+      </BrandNameInHiragana>
+      <!--ウ.承認番号-->
+      <ApprovalAndLicenseNo>
+        <ApprovalNo>22900AMX00769000</ApprovalNo>
+      </ApprovalAndLicenseNo>
+      <!--ウ.販売開始年月-->
+      <StartingDateOfMarketing>2017-12</StartingDateOfMarketing>
+      <!--エ.貯法、有効期間-->
+      <Storage>
+        <StorageMethod>
+          <Lang xml:lang="ja">室温保存</Lang>
+        </StorageMethod>
+        <ShelfLife>
+          <Lang xml:lang="ja">3年</Lang>
+        </ShelfLife>
+      </Storage>
+      <!--キ.基準名-->
+      <StandardName>
+        <StandardNameCategory>
+          <StandardNameCategoryCode>1</StandardNameCategoryCode>
+          <StandardNameDetail>
+            <Lang xml:lang="ja">オルメサルタン　メドキソミル錠</Lang>
+          </StandardNameDetail>
+        </StandardNameCategory>
+      </StandardName>
+      <!--カ.規制区分-->
+      <RegulatoryClassification>
+        <RegulatoryClassificationCodeAndNote>
+          <RegulatoryClassificationCode>12</RegulatoryClassificationCode>
+        </RegulatoryClassificationCodeAndNote>
+      </RegulatoryClassification>
+    </DetailBrandName>
+    <DetailBrandName id="BRD_Drug4">
+      <ApprovalBrandName>
+        <Lang xml:lang="ja">オルメサルタン錠40mg「日医工」</Lang>
+      </ApprovalBrandName>
+      <BrandCode>
+        <YJCode>2149044F4139</YJCode>
+      </BrandCode>
+      <TrademarkInEnglish>
+        <TrademarkName>Olmesartan Tablets</TrademarkName>
+      </TrademarkInEnglish>
+      <BrandNameInHiragana>
+        <NameInHiragana>おるめさるたんじょう40mg「にちいこう」</NameInHiragana>
+      </BrandNameInHiragana>
+      <!--ウ.承認番号-->
+      <ApprovalAndLicenseNo>
+        <ApprovalNo>22900AMX00770000</ApprovalNo>
+      </ApprovalAndLicenseNo>
+      <!--ウ.販売開始年月-->
+      <StartingDateOfMarketing>2017-12</StartingDateOfMarketing>
+      <!--エ.貯法、有効期間-->
+      <Storage>
+        <StorageMethod>
+          <Lang xml:lang="ja">室温保存</Lang>
+        </StorageMethod>
+        <ShelfLife>
+          <Lang xml:lang="ja">3年</Lang>
+        </ShelfLife>
+      </Storage>
+      <!--キ.基準名-->
+      <StandardName>
+        <StandardNameCategory>
+          <StandardNameCategoryCode>1</StandardNameCategoryCode>
+          <StandardNameDetail>
+            <Lang xml:lang="ja">オルメサルタン　メドキソミル錠</Lang>
+          </StandardNameDetail>
+        </StandardNameCategory>
+      </StandardName>
+      <!--カ.規制区分-->
+      <RegulatoryClassification>
+        <RegulatoryClassificationCodeAndNote>
+          <RegulatoryClassificationCode>12</RegulatoryClassificationCode>
+        </RegulatoryClassificationCodeAndNote>
+      </RegulatoryClassification>
+    </DetailBrandName>
+  </ApprovalEtc>
+  <!--キ.一般的名称-->
+  <GenericName>
+    <Detail>
+      <Lang xml:lang="ja">オルメサルタン　メドキソミル</Lang>
+    </Detail>
+  </GenericName>
+  <!--２.禁忌（次の患者には投与しないこと）-->
+  <ContraIndications id="HDR_ContraIndications" heading="fixing">
+    <OrderedList numberContinued="false">
+      <Item id="HDR_ContraIndications_1" heading="free">
+        <Detail>
+          <Lang xml:lang="ja">本剤の成分に対し過敏症の既往歴のある患者</Lang>
+        </Detail>
+      </Item>
+      <Item id="HDR_ContraIndications_2" heading="free">
+        <Detail>
+          <Lang xml:lang="ja">妊婦又は妊娠している可能性のある女性<HeaderRef ref="HDR_UseInPregnant" /></Lang>
+        </Detail>
+      </Item>
+      <Item id="HDR_ContraIndications_3" heading="free">
+        <Detail>
+          <Lang xml:lang="ja">アリスキレンフマル酸塩を投与中の糖尿病患者（ただし、他の降圧治療を行ってもなお血圧のコントロールが著しく不良の患者を除く）<HeaderRef ref="HDR_ContraIndicatedCombinations" /></Lang>
+        </Detail>
+      </Item>
+    </OrderedList>
+  </ContraIndications>
+  <!--３.組成・性状-->
+  <CompositionAndProperty id="HDR_CompositionAndProperty" heading="fixing">
+    <!--３.１ 組成-->
+    <Composition id="HDR_Composition" heading="fixing">
+      <CompositionForBrand ref="BRD_Drug1">
+        <CompositionForConstituentUnits>
+          <CompositionTable>
+            <ContainedAmount>
+              <ActiveIngredientName>
+                <Lang xml:lang="ja">1錠中<?enter?>オルメサルタン　メドキソミル</Lang>
+              </ActiveIngredientName>
+              <ValueAndUnit>
+                <Lang xml:lang="ja">5mg</Lang>
+              </ValueAndUnit>
+            </ContainedAmount>
+            <Additives>
+              <ListOfAdditives>
+                <Lang xml:lang="ja">乳糖水和物、結晶セルロース、低置換度ヒドロキシプロピルセルロース、ヒドロキシプロピルセルロース、ステアリン酸カルシウム、黄色三二酸化鉄</Lang>
+              </ListOfAdditives>
+            </Additives>
+          </CompositionTable>
+        </CompositionForConstituentUnits>
+      </CompositionForBrand>
+      <CompositionForBrand ref="BRD_Drug2">
+        <CompositionForConstituentUnits>
+          <CompositionTable>
+            <ContainedAmount>
+              <ActiveIngredientName>
+                <Lang xml:lang="ja">1錠中<?enter?>オルメサルタン　メドキソミル</Lang>
+              </ActiveIngredientName>
+              <ValueAndUnit>
+                <Lang xml:lang="ja">10mg</Lang>
+              </ValueAndUnit>
+            </ContainedAmount>
+            <Additives>
+              <ListOfAdditives>
+                <Lang xml:lang="ja">乳糖水和物、結晶セルロース、低置換度ヒドロキシプロピルセルロース、ヒドロキシプロピルセルロース、ステアリン酸カルシウム</Lang>
+              </ListOfAdditives>
+            </Additives>
+          </CompositionTable>
+        </CompositionForConstituentUnits>
+      </CompositionForBrand>
+      <CompositionForBrand ref="BRD_Drug3">
+        <CompositionForConstituentUnits>
+          <CompositionTable>
+            <ContainedAmount>
+              <ActiveIngredientName>
+                <Lang xml:lang="ja">1錠中<?enter?>オルメサルタン　メドキソミル</Lang>
+              </ActiveIngredientName>
+              <ValueAndUnit>
+                <Lang xml:lang="ja">20mg</Lang>
+              </ValueAndUnit>
+            </ContainedAmount>
+            <Additives>
+              <ListOfAdditives>
+                <Lang xml:lang="ja">乳糖水和物、結晶セルロース、低置換度ヒドロキシプロピルセルロース、ヒドロキシプロピルセルロース、ステアリン酸カルシウム</Lang>
+              </ListOfAdditives>
+            </Additives>
+          </CompositionTable>
+        </CompositionForConstituentUnits>
+      </CompositionForBrand>
+      <CompositionForBrand ref="BRD_Drug4">
+        <CompositionForConstituentUnits>
+          <CompositionTable>
+            <ContainedAmount>
+              <ActiveIngredientName>
+                <Lang xml:lang="ja">1錠中<?enter?>オルメサルタン　メドキソミル</Lang>
+              </ActiveIngredientName>
+              <ValueAndUnit>
+                <Lang xml:lang="ja">40mg</Lang>
+              </ValueAndUnit>
+            </ContainedAmount>
+            <Additives>
+              <ListOfAdditives>
+                <Lang xml:lang="ja">乳糖水和物、結晶セルロース、低置換度ヒドロキシプロピルセルロース、ヒドロキシプロピルセルロース、ステアリン酸カルシウム</Lang>
+              </ListOfAdditives>
+            </Additives>
+          </CompositionTable>
+        </CompositionForConstituentUnits>
+      </CompositionForBrand>
+    </Composition>
+    <!--３.２ 製剤の性状-->
+    <Property id="HDR_Property" heading="fixing">
+      <PropertyForBrand ref="BRD_Drug1">
+        <PropertyForConstituentUnits>
+          <PropertyTable>
+            <Formulation>
+              <Lang xml:lang="ja">素錠</Lang>
+            </Formulation>
+            <ColorTone>
+              <Lang xml:lang="ja">淡黄白色</Lang>
+            </ColorTone>
+            <Shape>
+              <ShapeFront>
+                <Lang xml:lang="ja"><InlineGraphic gfname="530169_2149044F1121_1_06_fig01.gif" scale="100" /></Lang>
+              </ShapeFront>
+              <ShapeBack>
+                <Lang xml:lang="ja"><InlineGraphic gfname="530169_2149044F1121_1_06_fig02.gif" scale="100" /></Lang>
+              </ShapeBack>
+              <ShapeSide>
+                <Lang xml:lang="ja"><InlineGraphic gfname="530169_2149044F1121_1_06_fig03.gif" scale="100" /></Lang>
+              </ShapeSide>
+            </Shape>
+            <Size>
+              <SizeDiameter>
+                <Lang xml:lang="ja">7mm</Lang>
+              </SizeDiameter>
+              <SizeThickness>
+                <Lang xml:lang="ja">2.4mm</Lang>
+              </SizeThickness>
+            </Size>
+            <Weight>
+              <Lang xml:lang="ja">120mg</Lang>
+            </Weight>
+            <Odor>
+              <Lang xml:lang="ja">においはないか、又はわずかに特異なにおいがある。</Lang>
+            </Odor>
+            <OtherProperty>
+              <CategoryName>
+                <Lang xml:lang="ja">本体表示</Lang>
+              </CategoryName>
+              <Content>
+                <ContentDetail>
+                  <Lang xml:lang="ja">オルメサルタン<?enter?>5　日医工</Lang>
+                </ContentDetail>
+              </Content>
+            </OtherProperty>
+            <OtherProperty>
+              <CategoryName>
+                <Lang xml:lang="ja">包装コード</Lang>
+              </CategoryName>
+              <Content>
+                <ContentDetail>
+                  <Lang xml:lang="ja"><InlineGraphic gfname="530169_2149044F1121_1_06_fig04.gif" scale="100" />112</Lang>
+                </ContentDetail>
+              </Content>
+            </OtherProperty>
+          </PropertyTable>
+        </PropertyForConstituentUnits>
+      </PropertyForBrand>
+      <PropertyForBrand ref="BRD_Drug2">
+        <PropertyForConstituentUnits>
+          <PropertyTable>
+            <Formulation>
+              <Lang xml:lang="ja">割線入りの素錠</Lang>
+            </Formulation>
+            <ColorTone>
+              <Lang xml:lang="ja">白色</Lang>
+            </ColorTone>
+            <Shape>
+              <ShapeFront>
+                <Lang xml:lang="ja"><InlineGraphic gfname="530169_2149044F1121_1_06_fig05.gif" scale="100" /></Lang>
+              </ShapeFront>
+              <ShapeBack>
+                <Lang xml:lang="ja"><InlineGraphic gfname="530169_2149044F1121_1_06_fig06.gif" scale="100" /></Lang>
+              </ShapeBack>
+              <ShapeSide>
+                <Lang xml:lang="ja"><InlineGraphic gfname="530169_2149044F1121_1_06_fig07.gif" scale="100" /></Lang>
+              </ShapeSide>
+            </Shape>
+            <Size>
+              <SizeDiameter>
+                <Lang xml:lang="ja">7mm</Lang>
+              </SizeDiameter>
+              <SizeThickness>
+                <Lang xml:lang="ja">2.4mm</Lang>
+              </SizeThickness>
+            </Size>
+            <Weight>
+              <Lang xml:lang="ja">120mg</Lang>
+            </Weight>
+            <Odor>
+              <Lang xml:lang="ja">においはないか、又はわずかに特異なにおいがある。</Lang>
+            </Odor>
+            <OtherProperty>
+              <CategoryName>
+                <Lang xml:lang="ja">本体表示</Lang>
+              </CategoryName>
+              <Content>
+                <ContentDetail>
+                  <Lang xml:lang="ja">オルメサルタン<?enter?>10　日医工</Lang>
+                </ContentDetail>
+              </Content>
+            </OtherProperty>
+            <OtherProperty>
+              <CategoryName>
+                <Lang xml:lang="ja">包装コード</Lang>
+              </CategoryName>
+              <Content>
+                <ContentDetail>
+                  <Lang xml:lang="ja"><InlineGraphic gfname="530169_2149044F1121_1_06_fig04.gif" scale="100" />113</Lang>
+                </ContentDetail>
+              </Content>
+            </OtherProperty>
+          </PropertyTable>
+        </PropertyForConstituentUnits>
+      </PropertyForBrand>
+      <PropertyForBrand ref="BRD_Drug3">
+        <PropertyForConstituentUnits>
+          <PropertyTable>
+            <Formulation>
+              <Lang xml:lang="ja">割線入りの素錠</Lang>
+            </Formulation>
+            <ColorTone>
+              <Lang xml:lang="ja">白色</Lang>
+            </ColorTone>
+            <Shape>
+              <ShapeFront>
+                <Lang xml:lang="ja"><InlineGraphic gfname="530169_2149044F1121_1_06_fig08.gif" scale="100" /></Lang>
+              </ShapeFront>
+              <ShapeBack>
+                <Lang xml:lang="ja"><InlineGraphic gfname="530169_2149044F1121_1_06_fig09.gif" scale="100" /></Lang>
+              </ShapeBack>
+              <ShapeSide>
+                <Lang xml:lang="ja"><InlineGraphic gfname="530169_2149044F1121_1_06_fig10.gif" scale="100" /></Lang>
+              </ShapeSide>
+            </Shape>
+            <Size>
+              <SizeDiameter>
+                <Lang xml:lang="ja">8mm</Lang>
+              </SizeDiameter>
+              <SizeThickness>
+                <Lang xml:lang="ja">2.5mm</Lang>
+              </SizeThickness>
+            </Size>
+            <Weight>
+              <Lang xml:lang="ja">160mg</Lang>
+            </Weight>
+            <Odor>
+              <Lang xml:lang="ja">においはないか、又はわずかに特異なにおいがある。</Lang>
+            </Odor>
+            <OtherProperty>
+              <CategoryName>
+                <Lang xml:lang="ja">本体表示</Lang>
+              </CategoryName>
+              <Content>
+                <ContentDetail>
+                  <Lang xml:lang="ja">オルメサルタン<?enter?>20　日医工</Lang>
+                </ContentDetail>
+              </Content>
+            </OtherProperty>
+            <OtherProperty>
+              <CategoryName>
+                <Lang xml:lang="ja">包装コード</Lang>
+              </CategoryName>
+              <Content>
+                <ContentDetail>
+                  <Lang xml:lang="ja"><InlineGraphic gfname="530169_2149044F1121_1_06_fig04.gif" scale="100" />114</Lang>
+                </ContentDetail>
+              </Content>
+            </OtherProperty>
+          </PropertyTable>
+        </PropertyForConstituentUnits>
+      </PropertyForBrand>
+      <PropertyForBrand ref="BRD_Drug4">
+        <PropertyForConstituentUnits>
+          <PropertyTable>
+            <Formulation>
+              <Lang xml:lang="ja">割線入りの素錠</Lang>
+            </Formulation>
+            <ColorTone>
+              <Lang xml:lang="ja">白色</Lang>
+            </ColorTone>
+            <Shape>
+              <ShapeFront>
+                <Lang xml:lang="ja"><InlineGraphic gfname="530169_2149044F1121_1_06_fig11.gif" scale="100" /></Lang>
+              </ShapeFront>
+              <ShapeBack>
+                <Lang xml:lang="ja"><InlineGraphic gfname="530169_2149044F1121_1_06_fig12.gif" scale="100" /></Lang>
+              </ShapeBack>
+              <ShapeSide>
+                <Lang xml:lang="ja"><InlineGraphic gfname="530169_2149044F1121_1_06_fig13.gif" scale="100" /></Lang>
+              </ShapeSide>
+            </Shape>
+            <Size>
+              <SizeDiameter>
+                <Lang xml:lang="ja">9.5mm</Lang>
+              </SizeDiameter>
+              <SizeThickness>
+                <Lang xml:lang="ja">3.6mm</Lang>
+              </SizeThickness>
+            </Size>
+            <Weight>
+              <Lang xml:lang="ja">320mg</Lang>
+            </Weight>
+            <Odor>
+              <Lang xml:lang="ja">においはないか、又はわずかに特異なにおいがある。</Lang>
+            </Odor>
+            <OtherProperty>
+              <CategoryName>
+                <Lang xml:lang="ja">本体表示</Lang>
+              </CategoryName>
+              <Content>
+                <ContentDetail>
+                  <Lang xml:lang="ja">オルメサルタン<?enter?>40　日医工</Lang>
+                </ContentDetail>
+              </Content>
+            </OtherProperty>
+            <OtherProperty>
+              <CategoryName>
+                <Lang xml:lang="ja">包装コード</Lang>
+              </CategoryName>
+              <Content>
+                <ContentDetail>
+                  <Lang xml:lang="ja"><InlineGraphic gfname="530169_2149044F1121_1_06_fig04.gif" scale="100" />115</Lang>
+                </ContentDetail>
+              </Content>
+            </OtherProperty>
+          </PropertyTable>
+        </PropertyForConstituentUnits>
+      </PropertyForBrand>
+    </Property>
+  </CompositionAndProperty>
+  <!--４.効能又は効果-->
+  <IndicationsOrEfficacy wordingPatternOfIndications="1" id="HDR_IndicationsOrEfficacy" heading="fixing">
+    <Detail>
+      <Lang xml:lang="ja">高血圧症</Lang>
+    </Detail>
+  </IndicationsOrEfficacy>
+  <!--６.用法及び用量-->
+  <InfoDoseAdmin wordingPatternOfDoseAdmin="1" id="HDR_InfoDoseAdmin" heading="fixing">
+    <DoseAdmin>
+      <Detail>
+        <Lang xml:lang="ja">通常、成人にはオルメサルタン　メドキソミルとして10～20mgを1日1回経口投与する。なお、1日5～10mgから投与を開始し、年齢、症状により適宜増減するが、1日最大投与量は40mgまでとする。</Lang>
+      </Detail>
+    </DoseAdmin>
+  </InfoDoseAdmin>
+  <!--８.重要な基本的注意-->
+  <ImportantPrecautions id="HDR_ImportantPrecautions" heading="fixing">
+    <OrderedList numberContinued="false">
+      <Item id="HDR_ImportantPrecautions_1" heading="free">
+        <Detail>
+          <Lang xml:lang="ja">本剤を含むアンジオテンシンⅡ受容体拮抗剤投与中に重篤な肝機能障害があらわれたとの報告があるので、肝機能検査を実施するなど観察を十分に行うこと。<HeaderRef ref="HDR_SeriousAdverseEvents_5" /></Lang>
+        </Detail>
+      </Item>
+      <Item id="HDR_ImportantPrecautions_2" heading="free">
+        <Detail>
+          <Lang xml:lang="ja">手術前24時間は投与しないことが望ましい。アンジオテンシンⅡ受容体拮抗剤投与中の患者は、麻酔及び手術中にレニン-アンジオテンシン系の抑制作用による高度な血圧低下を起こす可能性がある。</Lang>
+        </Detail>
+      </Item>
+      <Item id="HDR_ImportantPrecautions_3" heading="free">
+        <Detail>
+          <Lang xml:lang="ja">降圧作用に基づくめまい、ふらつきがあらわれることがあるので、高所作業、自動車の運転等危険を伴う機械を操作する際には注意させること。</Lang>
+        </Detail>
+      </Item>
+    </OrderedList>
+  </ImportantPrecautions>
+  <!--９.特定の背景を有する患者に関する注意-->
+  <UseInSpecificPopulations id="HDR_UseInSpecificPopulations" heading="fixing">
+    <!--９.１ 合併症・既往歴等のある患者-->
+    <UseInPatientsWithComplicationsOrHistoryOfDiseasesEtc id="HDR_UseInPatientsWithComplicationsOrHistoryOfDiseasesEtc" heading="fixing">
+      <OrderedList numberContinued="false">
+        <Item id="HDR_UseInPatientsWithComplicationsOrHistoryOfDiseasesEtc_1" heading="free">
+          <Header>
+            <Lang xml:lang="ja">両側性腎動脈狭窄のある患者又は片腎で腎動脈狭窄のある患者</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">治療上やむを得ないと判断される場合を除き、使用は避けること。腎血流量の減少や糸球体ろ過圧の低下により急速に腎機能を悪化させるおそれがある。</Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_UseInPatientsWithComplicationsOrHistoryOfDiseasesEtc_2" heading="free">
+          <Header>
+            <Lang xml:lang="ja">高カリウム血症の患者</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">治療上やむを得ないと判断される場合を除き、使用は避けること。高カリウム血症を増悪させるおそれがある。<?enter?>また、腎機能障害、コントロール不良の糖尿病等により血清カリウム値が高くなりやすい患者では、血清カリウム値に注意すること。</Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_UseInPatientsWithComplicationsOrHistoryOfDiseasesEtc_3" heading="free">
+          <Header>
+            <Lang xml:lang="ja">脳血管障害のある患者</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">過度の降圧が脳血流不全を惹起し、病態を悪化させるおそれがある。</Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_UseInPatientsWithComplicationsOrHistoryOfDiseasesEtc_4" heading="free">
+          <Header>
+            <Lang xml:lang="ja">厳重な減塩療法中の患者</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">低用量から投与を開始し、増量する場合は徐々に行うこと。一過性の急激な血圧低下を起こすおそれがある。<HeaderRef ref="HDR_SeriousAdverseEvents_4" /></Lang>
+          </Detail>
+        </Item>
+      </OrderedList>
+    </UseInPatientsWithComplicationsOrHistoryOfDiseasesEtc>
+    <!--９.２ 腎機能障害患者-->
+    <PatientsWithRenalImpairment id="HDR_PatientsWithRenalImpairment" heading="fixing">
+      <OrderedList numberContinued="false">
+        <Item id="HDR_PatientsWithRenalImpairment_1" heading="free">
+          <Header>
+            <Lang xml:lang="ja">重篤な腎機能障害（血清クレアチニン値3.0mg/dL以上）のある患者</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">これらの患者を対象とした有効性及び安全性を検討する臨床試験は実施していない。腎機能を悪化させるおそれがある。<HeaderRef ref="HDR_SpecificPopulation_1" /></Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_PatientsWithRenalImpairment_2" heading="free">
+          <Header>
+            <Lang xml:lang="ja">血液透析中の患者</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">低用量から投与を開始し、増量する場合は徐々に行うこと。一過性の急激な血圧低下を起こすおそれがある。<HeaderRef ref="HDR_SeriousAdverseEvents_4" /></Lang>
+          </Detail>
+        </Item>
+      </OrderedList>
+    </PatientsWithRenalImpairment>
+    <!--９.３ 肝機能障害患者-->
+    <PatientsWithHepaticImpairment id="HDR_PatientsWithHepaticImpairment" heading="fixing">
+      <Detail>
+        <Lang xml:lang="ja">軽度又は中等度の肝機能障害患者（Child-Pugh分類スコア：5～9）でオルメサルタンの血漿中濃度が上昇することが報告されている。<HeaderRef ref="HDR_SpecificPopulation_2" /></Lang>
+      </Detail>
+    </PatientsWithHepaticImpairment>
+    <!--９.４ 生殖能を有する者-->
+    <MalesAndFemalesOfReproductivePotential id="HDR_MalesAndFemalesOfReproductivePotential" heading="fixing">
+      <OrderedList numberContinued="false">
+        <Item id="HDR_MalesAndFemalesOfReproductivePotential_1" heading="free">
+          <Header>
+            <Lang xml:lang="ja">妊娠する可能性のある女性</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">妊娠していることが把握されずアンジオテンシン変換酵素阻害剤又はアンジオテンシンⅡ受容体拮抗剤を使用し、胎児・新生児への影響（腎不全、頭蓋・肺・腎の形成不全、死亡等）が認められた例が報告されている<ReferenceBookRef ref="DOC_01" /><Sup>,</Sup><ReferenceBookRef ref="DOC_02" />。</Lang>
+          </Detail>
+          <Detail>
+            <Lang xml:lang="ja">本剤の投与に先立ち、代替薬の有無等も考慮して本剤投与の必要性を慎重に検討し、治療上の有益性が危険性を上回ると判断される場合にのみ投与すること。また、投与が必要な場合には次の注意事項に留意すること。<HeaderRef ref="HDR_UseInPregnant" /></Lang>
+          </Detail>
+          <OrderedList numberContinued="false">
+            <Item id="HDR_MalesAndFemalesOfReproductivePotential_2" heading="free">
+              <Detail>
+                <Lang xml:lang="ja">本剤投与開始前に妊娠していないことを確認すること。本剤投与中も、妊娠していないことを定期的に確認すること。投与中に妊娠が判明した場合には、直ちに投与を中止すること。</Lang>
+              </Detail>
+            </Item>
+            <Item id="HDR_MalesAndFemalesOfReproductivePotential_3" heading="free">
+              <Detail>
+                <Lang xml:lang="ja">次の事項について、本剤投与開始時に患者に説明すること。また、投与中も必要に応じ説明すること。</Lang>
+              </Detail>
+              <UnorderedList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">妊娠中に本剤を使用した場合、胎児・新生児に影響を及ぼすリスクがあること。</Lang>
+                  </Detail>
+                </Item>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">妊娠が判明した又は疑われる場合は、速やかに担当医に相談すること。</Lang>
+                  </Detail>
+                </Item>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">妊娠を計画する場合は、担当医に相談すること。</Lang>
+                  </Detail>
+                </Item>
+              </UnorderedList>
+            </Item>
+          </OrderedList>
+        </Item>
+      </OrderedList>
+    </MalesAndFemalesOfReproductivePotential>
+    <!--９.５ 妊婦-->
+    <UseInPregnant id="HDR_UseInPregnant" heading="fixing">
+      <Detail>
+        <Lang xml:lang="ja">妊婦又は妊娠している可能性のある女性には投与しないこと。投与中に妊娠が判明した場合には、直ちに投与を中止すること。<?enter?>妊娠中期及び末期にアンジオテンシンⅡ受容体拮抗剤又はアンジオテンシン変換酵素阻害剤を投与された患者で羊水過少症、胎児・新生児の死亡、新生児の低血圧、腎不全、高カリウム血症、頭蓋の形成不全及び羊水過少症によると推測される四肢の拘縮、頭蓋顔面の変形、肺の形成不全等があらわれたとの報告がある。<HeaderRef ref="HDR_ContraIndications_2" />,<HeaderRef ref="HDR_MalesAndFemalesOfReproductivePotential_1" /></Lang>
+      </Detail>
+    </UseInPregnant>
+    <!--９.６ 授乳婦-->
+    <UseInNursing id="HDR_UseInNursing" heading="fixing">
+      <Detail>
+        <Lang xml:lang="ja">授乳しないことが望ましい。動物実験（ラット）の5mg/kg/日で乳汁中への移行が認められている。動物実験（ラット周産期及び授乳期経口投与）の200mg/kg/日で出生児に腎盂拡張を伴う死亡及び体重減少が、8mg/kg/日で出生児に体重増加抑制及び生後分化の遅延が認められている。</Lang>
+      </Detail>
+    </UseInNursing>
+    <!--９.７ 小児等-->
+    <PediatricUse id="HDR_PediatricUse" heading="fixing">
+      <Detail>
+        <Lang xml:lang="ja">小児等を対象とした臨床試験は実施していない。</Lang>
+      </Detail>
+    </PediatricUse>
+    <!--９.８ 高齢者-->
+    <UseInTheElderly id="HDR_UseInTheElderly" heading="fixing">
+      <Detail>
+        <Lang xml:lang="ja">開始用量を遵守し、慎重に投与すること。一般に過度の降圧は好ましくないとされている。脳梗塞等が起こるおそれがある。</Lang>
+      </Detail>
+    </UseInTheElderly>
+  </UseInSpecificPopulations>
+  <!--１０.相互作用-->
+  <Interactions id="HDR_Interactions" heading="fixing">
+    <!--１０.１ 併用禁忌（併用しないこと）-->
+    <ContraIndicatedCombinations id="HDR_ContraIndicatedCombinations" heading="fixing">
+      <ContraIndicatedCombination>
+        <ContraIndication>
+          <WidthDefinition totalWidth="582.19px">
+            <Col width="174.93px" />
+            <Col width="203.63px" />
+            <Col width="203.63px" />
+          </WidthDefinition>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">アリスキレンフマル酸塩</Lang>
+              </Detail>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">ラジレス</Lang>
+                  </Detail>
+                </Item>
+              </SimpleList>
+              <Detail>
+                <Lang xml:lang="ja">（糖尿病患者に使用する場合。ただし、他の降圧治療を行ってもなお血圧のコントロールが著しく不良の患者を除く。）</Lang>
+              </Detail>
+              <Detail>
+                <Lang xml:lang="ja"><HeaderRef ref="HDR_ContraIndications_3" /></Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">非致死性脳卒中、腎機能障害、高カリウム血症及び低血圧のリスク増加が報告されている。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">レニン-アンジオテンシン系阻害作用が増強される可能性がある。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+        </ContraIndication>
+      </ContraIndicatedCombination>
+    </ContraIndicatedCombinations>
+    <!--１０.２ 併用注意（併用に注意すること）-->
+    <PrecautionsForCombinations id="HDR_PrecautionsForCombinations" heading="fixing">
+      <PrecautionsForCombination>
+        <PrecautionsForCombi>
+          <WidthDefinition totalWidth="582.19px">
+            <Col width="174.37px" />
+            <Col width="206.57px" />
+            <Col width="201.25px" />
+          </WidthDefinition>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">カリウム保持性利尿剤</Lang>
+              </Detail>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">スピロノラクトン、</Lang>
+                  </Detail>
+                </Item>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">トリアムテレン等</Lang>
+                  </Detail>
+                </Item>
+              </SimpleList>
+              <Detail>
+                <Lang xml:lang="ja">カリウム補給剤</Lang>
+              </Detail>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">塩化カリウム等</Lang>
+                  </Detail>
+                </Item>
+              </SimpleList>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">血清カリウム値が上昇することがある。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">本剤のアルドステロン分泌抑制作用によりカリウム貯留作用が増強するおそれがある。</Lang>
+              </Detail>
+              <Detail>
+                <Lang xml:lang="ja">危険因子：腎機能障害のある患者</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">利尿降圧剤</Lang>
+              </Detail>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">フロセミド、</Lang>
+                  </Detail>
+                </Item>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">トリクロルメチアジド等</Lang>
+                  </Detail>
+                </Item>
+              </SimpleList>
+              <Detail>
+                <Lang xml:lang="ja"><HeaderRef ref="HDR_SeriousAdverseEvents_4" /></Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">一過性の急激な血圧低下を起こすおそれがある。低用量から投与を開始し、増量する場合は徐々に行うこと。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">利尿降圧剤で治療を受けている患者にはレニン活性が亢進している患者が多く、本剤が奏効しやすい。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">リチウム製剤</Lang>
+              </Detail>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">炭酸リチウム</Lang>
+                  </Detail>
+                </Item>
+              </SimpleList>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">リチウム中毒が起こるおそれがある。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">明確な機序は不明であるが、ナトリウムイオン不足はリチウムイオンの貯留を促進するといわれているため、本剤がナトリウム排泄を促進することにより起こると考えられる。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">アリスキレンフマル酸塩</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">腎機能障害、高カリウム血症及び低血圧を起こすおそれがある。eGFRが60mL/min/1.73m<Sup>2</Sup>未満の腎機能障害のある患者へのアリスキレンフマル酸塩との併用については、治療上やむを得ないと判断される場合を除き避けること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">レニン-アンジオテンシン系阻害作用が増強される可能性がある。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">アンジオテンシン変換酵素阻害剤</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">腎機能障害、高カリウム血症及び低血圧を起こすおそれがある。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">レニン-アンジオテンシン系阻害作用が増強される可能性がある。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">非ステロイド性消炎鎮痛剤</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">降圧作用が減弱するおそれがある。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">非ステロイド性消炎鎮痛剤は、血管拡張作用を有するプロスタグランジンの合成阻害作用により、本剤の降圧作用を減弱させる可能性がある。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">非ステロイド性消炎鎮痛剤</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">腎機能を悪化させるおそれがある。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">プロスタグランジンの合成阻害作用により、腎血流量が低下するためと考えられる。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+        </PrecautionsForCombi>
+      </PrecautionsForCombination>
+    </PrecautionsForCombinations>
+  </Interactions>
+  <!--１１.副作用-->
+  <AdverseEvents id="HDR_AdverseEvents" heading="fixing">
+    <CommonPrecautionsForAdverse>
+      <Lang xml:lang="ja">次の副作用があらわれることがあるので、観察を十分に行い、異常が認められた場合には投与を中止するなど適切な処置を行うこと。</Lang>
+    </CommonPrecautionsForAdverse>
+    <!--１１.１ 重大な副作用-->
+    <SeriousAdverseEvents id="HDR_SeriousAdverseEvents" heading="fixing">
+      <SeriousAdverse>
+        <OrderedList numberContinued="false">
+          <Item id="HDR_SeriousAdverseEvents_1" heading="free">
+            <Header modified="今回">
+              <Lang xml:lang="ja">血管性浮腫（頻度不明）</Lang>
+            </Header>
+            <Detail modified="今回">
+              <Lang xml:lang="ja">顔面、口唇、咽頭、舌の腫脹等が症状としてあらわれることがある。また、腹痛、嘔気、嘔吐、下痢等を伴う腸管血管性浮腫があらわれることがある。</Lang>
+            </Detail>
+          </Item>
+          <Item id="HDR_SeriousAdverseEvents_2" heading="free">
+            <Header>
+              <Lang xml:lang="ja">腎不全（頻度不明）</Lang>
+            </Header>
+          </Item>
+          <Item id="HDR_SeriousAdverseEvents_3" heading="free">
+            <Header>
+              <Lang xml:lang="ja">高カリウム血症（頻度不明）</Lang>
+            </Header>
+          </Item>
+          <Item id="HDR_SeriousAdverseEvents_4" heading="free">
+            <Header>
+              <Lang xml:lang="ja">ショック（頻度不明）、失神（頻度不明）、意識消失（頻度不明）</Lang>
+            </Header>
+            <Detail>
+              <Lang xml:lang="ja">冷感、嘔吐、意識消失等があらわれた場合には、直ちに適切な処置を行うこと。<HeaderRef ref="HDR_UseInPatientsWithComplicationsOrHistoryOfDiseasesEtc_4" />,<HeaderRef ref="HDR_PatientsWithRenalImpairment_2" />,<HeaderRef ref="HDR_PrecautionsForCombinations" /></Lang>
+            </Detail>
+          </Item>
+          <Item id="HDR_SeriousAdverseEvents_5" heading="free">
+            <Header>
+              <Lang xml:lang="ja">肝機能障害（頻度不明）、黄疸（頻度不明）</Lang>
+            </Header>
+            <Detail>
+              <Lang xml:lang="ja">AST、ALT、γ-GTP上昇等の肝機能障害があらわれることがある。<HeaderRef ref="HDR_ImportantPrecautions_1" /></Lang>
+            </Detail>
+          </Item>
+          <Item id="HDR_SeriousAdverseEvents_6" heading="free">
+            <Header>
+              <Lang xml:lang="ja">血小板減少（頻度不明）</Lang>
+            </Header>
+          </Item>
+          <Item id="HDR_SeriousAdverseEvents_7" heading="free">
+            <Header>
+              <Lang xml:lang="ja">低血糖（頻度不明）</Lang>
+            </Header>
+            <Detail>
+              <Lang xml:lang="ja">脱力感、空腹感、冷汗、手の震え、集中力低下、痙攣、意識障害等があらわれた場合には投与を中止し、適切な処置を行うこと。糖尿病治療中の患者であらわれやすい。</Lang>
+            </Detail>
+          </Item>
+          <Item id="HDR_SeriousAdverseEvents_8" heading="free">
+            <Header>
+              <Lang xml:lang="ja">横紋筋融解症（頻度不明）</Lang>
+            </Header>
+            <Detail>
+              <Lang xml:lang="ja">筋肉痛、脱力感、CK上昇、血中及び尿中ミオグロビン上昇を特徴とする横紋筋融解症があらわれることがあるので、このような場合には直ちに投与を中止し、適切な処置を行うこと。</Lang>
+            </Detail>
+          </Item>
+          <Item id="HDR_SeriousAdverseEvents_9" heading="free">
+            <Header>
+              <Lang xml:lang="ja">アナフィラキシー（頻度不明）</Lang>
+            </Header>
+            <Detail>
+              <Lang xml:lang="ja">そう痒感、全身発赤、血圧低下、呼吸困難等が症状としてあらわれることがあり、アナフィラキシーショックを起こしたとの報告もある。</Lang>
+            </Detail>
+          </Item>
+          <Item id="HDR_SeriousAdverseEvents_10" heading="free">
+            <Header>
+              <Lang xml:lang="ja">重度の下痢（頻度不明）</Lang>
+            </Header>
+            <Detail>
+              <Lang xml:lang="ja">長期投与により、体重減少を伴う重度の下痢があらわれることがある。生検により腸絨毛萎縮等が認められたとの報告がある。</Lang>
+            </Detail>
+          </Item>
+          <Item id="HDR_SeriousAdverseEvents_11" heading="free">
+            <Header>
+              <Lang xml:lang="ja">間質性肺炎（頻度不明）</Lang>
+            </Header>
+            <Detail>
+              <Lang xml:lang="ja">発熱、咳嗽、呼吸困難、胸部X線異常等を伴う間質性肺炎があらわれることがあるので、このような場合には投与を中止し、副腎皮質ホルモン剤の投与等の適切な処置を行うこと。</Lang>
+            </Detail>
+          </Item>
+        </OrderedList>
+      </SeriousAdverse>
+    </SeriousAdverseEvents>
+    <!--１１.２ その他の副作用-->
+    <OtherAdverseEvents id="HDR_OtherAdverseEvents" heading="fixing">
+      <OtherAdverseEvent>
+        <OtherAdverse>
+          <WidthDefinition totalWidth="582.19px">
+            <Col width="112.35px" />
+            <Col width="156.59px" />
+            <Col width="156.59px" />
+            <Col width="156.66px" />
+          </WidthDefinition>
+          <CategoryDefinition>
+            <Category id="OTHER1_TYPE1">
+              <Detail>
+                <Lang xml:lang="ja">過敏症</Lang>
+              </Detail>
+            </Category>
+            <Category id="OTHER1_TYPE2">
+              <Detail>
+                <Lang xml:lang="ja">血液</Lang>
+              </Detail>
+            </Category>
+            <Category id="OTHER1_TYPE3">
+              <Detail>
+                <Lang xml:lang="ja">精神神経系</Lang>
+              </Detail>
+            </Category>
+            <Category id="OTHER1_TYPE4">
+              <Detail>
+                <Lang xml:lang="ja">消化器</Lang>
+              </Detail>
+            </Category>
+            <Category id="OTHER1_TYPE5">
+              <Detail>
+                <Lang xml:lang="ja">循環器</Lang>
+              </Detail>
+            </Category>
+            <Category id="OTHER1_TYPE6">
+              <Detail>
+                <Lang xml:lang="ja">肝臓</Lang>
+              </Detail>
+            </Category>
+            <Category id="OTHER1_TYPE7">
+              <Detail>
+                <Lang xml:lang="ja">泌尿器</Lang>
+              </Detail>
+            </Category>
+            <Category id="OTHER1_TYPE8">
+              <Detail>
+                <Lang xml:lang="ja">その他</Lang>
+              </Detail>
+            </Category>
+          </CategoryDefinition>
+          <FrequencyDefinition>
+            <Frequency id="OTHER1_FRQ1">
+              <Detail>
+                <Lang xml:lang="ja">1～5%未満</Lang>
+              </Detail>
+            </Frequency>
+            <Frequency id="OTHER1_FRQ2">
+              <Detail>
+                <Lang xml:lang="ja">1%未満</Lang>
+              </Detail>
+            </Frequency>
+            <Frequency id="OTHER1_FRQ3">
+              <Detail>
+                <Lang xml:lang="ja">頻度不明</Lang>
+              </Detail>
+            </Frequency>
+          </FrequencyDefinition>
+          <AdverseReactions>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE1" frequencyRef="OTHER1_FRQ2">
+              <Detail>
+                <Lang xml:lang="ja">発疹</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE1" frequencyRef="OTHER1_FRQ3">
+              <Detail>
+                <Lang xml:lang="ja">そう痒</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE2" frequencyRef="OTHER1_FRQ1">
+              <Detail>
+                <Lang xml:lang="ja">赤血球数減少、ヘモグロビン減少、ヘマトクリット減少</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE2" frequencyRef="OTHER1_FRQ2">
+              <Detail>
+                <Lang xml:lang="ja">白血球数増加、血小板数減少</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE2" frequencyRef="OTHER1_FRQ3">
+              <Detail>
+                <Lang xml:lang="ja">貧血</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE3" frequencyRef="OTHER1_FRQ1">
+              <Detail>
+                <Lang xml:lang="ja">めまい、立ちくらみ、ふらつき感</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE3" frequencyRef="OTHER1_FRQ2">
+              <Detail>
+                <Lang xml:lang="ja">頭痛、頭重感、眠気</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE4" frequencyRef="OTHER1_FRQ2">
+              <Detail>
+                <Lang xml:lang="ja">軟便</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE4" frequencyRef="OTHER1_FRQ3">
+              <Detail>
+                <Lang xml:lang="ja">下痢、嘔気・嘔吐、口渇、口内炎、胃部不快感、便秘、腹痛</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE5" frequencyRef="OTHER1_FRQ3">
+              <Detail>
+                <Lang xml:lang="ja">心房細動、動悸、ほてり、胸痛</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE6" frequencyRef="OTHER1_FRQ1">
+              <Detail>
+                <Lang xml:lang="ja">ALT上昇、AST上昇、γ-GTP上昇、LDH上昇</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE6" frequencyRef="OTHER1_FRQ2">
+              <Detail>
+                <Lang xml:lang="ja">ALP上昇</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE7" frequencyRef="OTHER1_FRQ1">
+              <Detail>
+                <Lang xml:lang="ja">BUN上昇</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE7" frequencyRef="OTHER1_FRQ2">
+              <Detail>
+                <Lang xml:lang="ja">血清クレアチニン上昇、尿蛋白陽性、尿沈渣陽性</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE7" frequencyRef="OTHER1_FRQ3">
+              <Detail>
+                <Lang xml:lang="ja">頻尿</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE8" frequencyRef="OTHER1_FRQ1">
+              <Detail>
+                <Lang xml:lang="ja">CK上昇、CRP上昇、トリグリセリド上昇、血清カリウム上昇、尿酸上昇</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE8" frequencyRef="OTHER1_FRQ2">
+              <Detail>
+                <Lang xml:lang="ja">全身倦怠感、咳嗽</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE8" frequencyRef="OTHER1_FRQ3">
+              <Detail>
+                <Lang xml:lang="ja">浮腫、異常感（浮遊感、気分不良等）、胸部不快感、筋肉痛、脱力感、疲労、しびれ、味覚異常、脱毛</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+          </AdverseReactions>
+        </OtherAdverse>
+      </OtherAdverseEvent>
+    </OtherAdverseEvents>
+  </AdverseEvents>
+  <!--１４.適用上の注意-->
+  <PrecautionsForApplication id="HDR_PrecautionsForApplication" heading="fixing">
+    <OtherInformation id="HDR_PrecautionsForApplication_OtherInformation_1" heading="free">
+      <Header>
+        <Lang xml:lang="ja">薬剤調製時の注意</Lang>
+      </Header>
+      <Detail>
+        <Lang xml:lang="ja">本剤をメトホルミン塩酸塩製剤又はカモスタットメシル酸塩製剤等と一包化し高温多湿条件下にて保存した場合、メトホルミン塩酸塩製剤又はカモスタットメシル酸塩製剤等が変色することがあるので、一包化は避けること。</Lang>
+      </Detail>
+    </OtherInformation>
+    <OtherInformation id="HDR_PrecautionsForApplication_OtherInformation_2" heading="free">
+      <Header>
+        <Lang xml:lang="ja">薬剤交付時の注意</Lang>
+      </Header>
+      <Detail>
+        <Lang xml:lang="ja">PTP包装の薬剤はPTPシートから取り出して服用するよう指導すること。PTPシートの誤飲により、硬い鋭角部が食道粘膜へ刺入し、更には穿孔をおこして縦隔洞炎等の重篤な合併症を併発することがある。</Lang>
+      </Detail>
+    </OtherInformation>
+  </PrecautionsForApplication>
+  <!--１６.薬物動態-->
+  <Pharmacokinetics id="HDR_Pharmacokinetics" heading="fixing">
+    <!--１６.１ 血中濃度-->
+    <BloodLevel id="HDR_BloodLevel" heading="fixing">
+      <OrderedList numberContinued="false">
+        <Item id="HDR_BloodLevel_1" heading="free">
+          <Header>
+            <Lang xml:lang="ja">単回投与</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">健康な成人男性24例にオルメサルタン　メドキソミル5mg、10mg、20mg及び40mgを空腹時単回経口投与したとき、オルメサルタンの血漿中濃度は速やかに上昇し、投与1.7～2.2時間後に最高に達した。Cmax及びAUCは投与量に従い増加した<ReferenceBookRef ref="DOC_03" />。</Lang>
+          </Detail>
+          <SimpleList>
+            <Item>
+              <TblBlock>
+                <TblCaption align="top">
+                  <Lang xml:lang="ja">オルメサルタン　メドキソミル単回経口投与時のオルメサルタンの薬物動態パラメータ</Lang>
+                </TblCaption>
+                <WidthDefinition totalWidth="541.87px">
+                  <Col width="66.15px" />
+                  <Col width="46.41px" />
+                  <Col width="109.13px" />
+                  <Col width="81.62px" />
+                  <Col width="92.61px" />
+                  <Col width="145.95px" />
+                </WidthDefinition>
+                <SimpleTable>
+                  <SimpTblRow>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">投与量</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">例数</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">Cmax</Lang>
+                      </Detail>
+                      <Detail>
+                        <Lang xml:lang="ja">（ng/mL）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">Tmax</Lang>
+                      </Detail>
+                      <Detail>
+                        <Lang xml:lang="ja">（hr）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">t<Sub>1/2</Sub></Lang>
+                      </Detail>
+                      <Detail>
+                        <Lang xml:lang="ja">（hr）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">AUC</Lang>
+                      </Detail>
+                      <Detail>
+                        <Lang xml:lang="ja">（ng・hr/mL）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                  </SimpTblRow>
+                  <SimpTblRow>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">5mg</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">6</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">152±31</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">1.8±0.4</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">8.7±1.2</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">892±191</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                  </SimpTblRow>
+                  <SimpTblRow>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">10mg</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">6</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">277±46</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">1.7±0.5</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">10.2±1.8</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">1,576±244</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                  </SimpTblRow>
+                  <SimpTblRow>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">20mg</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">6</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">481±117</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">2.2±0.4</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">11.0±3.8</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">2,903±915</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                  </SimpTblRow>
+                  <SimpTblRow>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">40mg</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">6</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">1,006±152</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">1.7±0.5</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">10.6±4.7</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">5,807±1,142</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                  </SimpTblRow>
+                </SimpleTable>
+                <SimpTblFoot align="right">
+                  <Detail>
+                    <Lang xml:lang="ja">mean±SD</Lang>
+                  </Detail>
+                </SimpTblFoot>
+              </TblBlock>
+            </Item>
+          </SimpleList>
+        </Item>
+        <Item id="HDR_BloodLevel_2" heading="free">
+          <Header>
+            <Lang xml:lang="ja">反復投与</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">本態性高血圧症患者にオルメサルタン　メドキソミル10mg（20例）及び20mg（19例）を14日間、40mg（10例）を7日間反復経口投与したところ、最終日のオルメサルタンの薬物動態学的パラメータは、次のとおりであった<ReferenceBookRef ref="DOC_04" /><Sup>,</Sup><ReferenceBookRef ref="DOC_05" />。</Lang>
+          </Detail>
+          <SimpleList>
+            <Item>
+              <TblBlock>
+                <WidthDefinition totalWidth="582.12px">
+                  <Col width="87.64px" />
+                  <Col width="42.35px" />
+                  <Col width="148.89px" />
+                  <Col width="78.26px" />
+                  <Col width="78.26px" />
+                  <Col width="146.72px" />
+                </WidthDefinition>
+                <SimpleTable>
+                  <SimpTblRow>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">投与量</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">例数</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">Cmax<Sup>注3）</Sup></Lang>
+                      </Detail>
+                      <Detail>
+                        <Lang xml:lang="ja">（ng/mL）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">Tmax</Lang>
+                      </Detail>
+                      <Detail>
+                        <Lang xml:lang="ja">（hr）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">t<Sub>1/2</Sub></Lang>
+                      </Detail>
+                      <Detail>
+                        <Lang xml:lang="ja">（hr）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">AUC<Sup>注3）</Sup></Lang>
+                      </Detail>
+                      <Detail>
+                        <Lang xml:lang="ja">（ng・hr/mL）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                  </SimpTblRow>
+                  <SimpTblRow>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">10mg<Sup>注1）</Sup></Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">20</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">285.1（0.253）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">2.2±0.8</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">6.5±0.9</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">1,981.2（0.234）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                  </SimpTblRow>
+                  <SimpTblRow>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">20mg<Sup>注1）</Sup></Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">19</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">496.0（0.300）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">2.5±1.1</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">6.3±0.8</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">3,288.9（0.254）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                  </SimpTblRow>
+                  <SimpTblRow>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">40mg<Sup>注2）</Sup></Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">10</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">1,008.5（0.267）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">2.6±1.0</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">6.0±1.0</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">7,848.0（0.301）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                  </SimpTblRow>
+                </SimpleTable>
+                <SimpTblFoot align="right">
+                  <Detail>
+                    <Lang xml:lang="ja">mean±SD</Lang>
+                  </Detail>
+                  <Detail>
+                    <Lang xml:lang="ja">注1）14日間投与、注2）7日間投与、注3）幾何平均値（対数変換後の標準偏差）</Lang>
+                  </Detail>
+                </SimpTblFoot>
+              </TblBlock>
+            </Item>
+          </SimpleList>
+          <Detail>
+            <Lang xml:lang="ja">健康な成人男性27例にオルメサルタン　メドキソミル10mg、20mg及び40mgを1日1回7日間反復経口投与したときの血漿中オルメサルタン濃度を検討したところ、速やかに定常状態に達し、蓄積性はほとんど認められなかった<ReferenceBookRef ref="DOC_06" />。</Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_BloodLevel_3" heading="free">
+          <Header>
+            <Lang xml:lang="ja">生物学的同等性試験</Lang>
+          </Header>
+          <OrderedList numberContinued="false">
+            <Item id="HDR_BloodLevel_4" heading="free">
+              <Header>
+                <Lang xml:lang="ja">オルメサルタン錠10mg「日医工」</Lang>
+              </Header>
+              <Detail>
+                <Lang xml:lang="ja">オルメサルタン錠10mg「日医工」及びオルメテック錠10mgを、クロスオーバー法によりそれぞれ1錠（オルメサルタン　メドキソミルとして10mg）健康成人男性に絶食単回経口投与して血漿中オルメサルタン濃度を測定し、得られた薬物動態パラメータ（AUC、Cmax）について90％信頼区間法にて統計解析を行った結果、log（0.80）～log（1.25）の範囲内であり、両剤の生物学的同等性が確認された<ReferenceBookRef ref="DOC_07" />。</Lang>
+              </Detail>
+              <TblBlock>
+                <TblCaption align="top">
+                  <Lang xml:lang="ja">薬物動態パラメータ</Lang>
+                </TblCaption>
+                <WidthDefinition totalWidth="582.12px">
+                  <Col width="143.50px" />
+                  <Col width="109.62px" />
+                  <Col width="109.62px" />
+                  <Col width="109.62px" />
+                  <Col width="109.76px" />
+                </WidthDefinition>
+                <SimpleTable>
+                  <SimpTblRow>
+                    <SimpTblCell align="center" valign="middle" rspan="2" />
+                    <SimpTblCell align="center" valign="middle" cspan="2">
+                      <Detail>
+                        <Lang xml:lang="ja">判定パラメータ</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle" cspan="2">
+                      <Detail>
+                        <Lang xml:lang="ja">参考パラメータ</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                  </SimpTblRow>
+                  <SimpTblRow>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">AUC<Sub>0→48</Sub><?enter?>（ng・hr/mL）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">Cmax<?enter?>（ng/mL）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">Tmax<?enter?>（hr）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">t<Sub>1/2</Sub><?enter?>（hr）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                  </SimpTblRow>
+                  <SimpTblRow>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">オルメサルタン錠<?enter?>10mg「日医工」</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">2139.1±555.1</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">321.0±60.2</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">2.00±0.68</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">7.26±2.15</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                  </SimpTblRow>
+                  <SimpTblRow>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">オルメテック錠<?enter?>10mg</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">2116.0±523.4</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">321.3±63.9</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">2.04±0.78</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">7.29±2.20</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                  </SimpTblRow>
+                </SimpleTable>
+                <SimpTblFoot align="right">
+                  <Detail>
+                    <Lang xml:lang="ja">（1錠投与，Mean±S.D.，n=24）</Lang>
+                  </Detail>
+                </SimpTblFoot>
+              </TblBlock>
+              <Graphic>
+                <GraphicBody gfname="530169_2149044F1121_1_06_fig14.gif" scale="26" />
+                <GraphicCaption>
+                  <Lang xml:lang="ja">血漿中薬物濃度推移</Lang>
+                </GraphicCaption>
+              </Graphic>
+              <Detail>
+                <Lang xml:lang="ja">血漿中濃度並びにAUC、Cmax等のパラメータは、被験者の選択、体液の採取回数・時間等の試験条件によって異なる可能性がある。</Lang>
+              </Detail>
+            </Item>
+            <Item id="HDR_BloodLevel_5" heading="free">
+              <Header>
+                <Lang xml:lang="ja">オルメサルタン錠20mg「日医工」</Lang>
+              </Header>
+              <Detail>
+                <Lang xml:lang="ja">オルメサルタン錠20mg「日医工」及びオルメテック錠20mgを、クロスオーバー法によりそれぞれ1錠（オルメサルタン　メドキソミルとして20mg）健康成人男性に絶食単回経口投与して血漿中オルメサルタン濃度を測定し、得られた薬物動態パラメータ（AUC、Cmax）について90％信頼区間法にて統計解析を行った結果、log（0.80）～log（1.25）の範囲内であり、両剤の生物学的同等性が確認された<ReferenceBookRef ref="DOC_07" />。</Lang>
+              </Detail>
+              <TblBlock>
+                <TblCaption align="top">
+                  <Lang xml:lang="ja">薬物動態パラメータ</Lang>
+                </TblCaption>
+                <WidthDefinition totalWidth="582.12px">
+                  <Col width="143.50px" />
+                  <Col width="109.62px" />
+                  <Col width="109.62px" />
+                  <Col width="109.62px" />
+                  <Col width="109.76px" />
+                </WidthDefinition>
+                <SimpleTable>
+                  <SimpTblRow>
+                    <SimpTblCell align="center" valign="middle" rspan="2" />
+                    <SimpTblCell align="center" valign="middle" cspan="2">
+                      <Detail>
+                        <Lang xml:lang="ja">判定パラメータ</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle" cspan="2">
+                      <Detail>
+                        <Lang xml:lang="ja">参考パラメータ</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                  </SimpTblRow>
+                  <SimpTblRow>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">AUC<Sub>0→48</Sub><?enter?>（ng・hr/mL）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">Cmax<?enter?>（ng/mL）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">Tmax<?enter?>（hr）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">t<Sub>1/2</Sub><?enter?>（hr）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                  </SimpTblRow>
+                  <SimpTblRow>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">オルメサルタン錠<?enter?>20mg「日医工」</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">3452.9±656.2</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">523.5±110.8</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">2.44±1.16</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">8.15±1.74</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                  </SimpTblRow>
+                  <SimpTblRow>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">オルメテック錠<?enter?>20mg</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">3692.9±672.2</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">568.0±122.3</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">2.02±0.89</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">8.04±1.55</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                  </SimpTblRow>
+                </SimpleTable>
+                <SimpTblFoot align="right">
+                  <Detail>
+                    <Lang xml:lang="ja">（1錠投与，Mean±S.D.，n=24）</Lang>
+                  </Detail>
+                </SimpTblFoot>
+              </TblBlock>
+              <Graphic>
+                <GraphicBody gfname="530169_2149044F1121_1_06_fig15.gif" scale="26" />
+                <GraphicCaption>
+                  <Lang xml:lang="ja">血漿中薬物濃度推移</Lang>
+                </GraphicCaption>
+              </Graphic>
+              <Detail>
+                <Lang xml:lang="ja">血漿中濃度並びにAUC、Cmax等のパラメータは、被験者の選択、体液の採取回数・時間等の試験条件によって異なる可能性がある</Lang>
+              </Detail>
+            </Item>
+            <Item id="HDR_BloodLevel_6" heading="free">
+              <Header>
+                <Lang xml:lang="ja">オルメサルタン錠40mg「日医工」</Lang>
+              </Header>
+              <Detail>
+                <Lang xml:lang="ja">オルメサルタン錠40mg「日医工」及びオルメテック錠40mgを、クロスオーバー法によりそれぞれ1錠（オルメサルタン　メドキソミルとして40mg）健康成人男性に絶食単回経口投与して血漿中オルメサルタン濃度を測定し、得られた薬物動態パラメータ（AUC、Cmax）について90％信頼区間法にて統計解析を行った結果、log（0.80）～log（1.25）の範囲内であり、両剤の生物学的同等性が確認された<ReferenceBookRef ref="DOC_07" />。</Lang>
+              </Detail>
+              <TblBlock>
+                <TblCaption align="top">
+                  <Lang xml:lang="ja">薬物動態パラメータ</Lang>
+                </TblCaption>
+                <WidthDefinition totalWidth="582.12px">
+                  <Col width="143.50px" />
+                  <Col width="109.62px" />
+                  <Col width="109.62px" />
+                  <Col width="109.62px" />
+                  <Col width="109.76px" />
+                </WidthDefinition>
+                <SimpleTable>
+                  <SimpTblRow>
+                    <SimpTblCell align="center" valign="middle" rspan="2" />
+                    <SimpTblCell align="center" valign="middle" cspan="2">
+                      <Detail>
+                        <Lang xml:lang="ja">判定パラメータ</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle" cspan="2">
+                      <Detail>
+                        <Lang xml:lang="ja">参考パラメータ</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                  </SimpTblRow>
+                  <SimpTblRow>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">AUC<Sub>0→48</Sub><?enter?>（ng・hr/mL）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">Cmax<?enter?>（ng/mL）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">Tmax<?enter?>（hr）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">t<Sub>1/2</Sub><?enter?>（hr）</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                  </SimpTblRow>
+                  <SimpTblRow>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">オルメサルタン錠<?enter?>40mg「日医工」</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">8100.2±1867.2</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">1052.9±220.1</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">2.13±0.61</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">8.02±0.94</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                  </SimpTblRow>
+                  <SimpTblRow>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">オルメテック錠<?enter?>40mg</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">8098.4±2002.4</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">1081.9±290.3</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">2.11±0.83</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                    <SimpTblCell align="center" valign="middle">
+                      <Detail>
+                        <Lang xml:lang="ja">8.26±0.93</Lang>
+                      </Detail>
+                    </SimpTblCell>
+                  </SimpTblRow>
+                </SimpleTable>
+                <SimpTblFoot align="right">
+                  <Detail>
+                    <Lang xml:lang="ja">（1錠投与，Mean±S.D.，n=23）</Lang>
+                  </Detail>
+                </SimpTblFoot>
+              </TblBlock>
+              <Graphic>
+                <GraphicBody gfname="530169_2149044F1121_1_06_fig16.gif" scale="26" />
+                <GraphicCaption>
+                  <Lang xml:lang="ja">血漿中薬物濃度推移</Lang>
+                </GraphicCaption>
+              </Graphic>
+              <Detail>
+                <Lang xml:lang="ja">血漿中濃度並びにAUC、Cmax等のパラメータは、被験者の選択、体液の採取回数・時間等の試験条件によって異なる可能性がある。</Lang>
+              </Detail>
+            </Item>
+          </OrderedList>
+        </Item>
+      </OrderedList>
+    </BloodLevel>
+    <!--１６.２ 吸収-->
+    <Absorption id="HDR_Absorption" heading="fixing">
+      <OrderedList numberContinued="false">
+        <Item id="HDR_Absorption_1" heading="free">
+          <Header>
+            <Lang xml:lang="ja">食事の影響</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">健康な成人男性12例にオルメサルタン　メドキソミル20mgを空腹時、低脂肪食摂取30分後あるいは高脂肪食摂取30分後に単回経口投与したとき、それぞれのオルメサルタンのCmax及びAUCにはほとんど差はなく、食事の影響は認められなかった<ReferenceBookRef ref="DOC_08" />。</Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_Absorption_2" heading="free">
+          <Header>
+            <Lang xml:lang="ja">バイオアベイラビリティ</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">健康な成人男性24例にオルメサルタン　メドキソミル20mgを空腹時単回経口投与又はオルメサルタン16.2mgを静脈内に単回投与し、絶対バイオアベイラビリティを求めた結果、25.6%であった<ReferenceBookRef ref="DOC_09" />（外国人データ）。</Lang>
+          </Detail>
+        </Item>
+      </OrderedList>
+    </Absorption>
+    <!--１６.３ 分布-->
+    <Distribution id="HDR_Distribution" heading="fixing">
+      <OrderedList numberContinued="false">
+        <Item id="HDR_Distribution_1" heading="free">
+          <Header>
+            <Lang xml:lang="ja">血清蛋白結合率（限外濾過法）</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">オルメサルタンの血清蛋白結合率は99%と高く、主にアルブミンのワルファリンサイトに結合する（<Italic>in vitro</Italic>）が、ワルファリンとの併用試験でワルファリンの薬物動態に影響がなく血液凝固系に影響を及ぼさなかった<ReferenceBookRef ref="DOC_10" /><Sup>,</Sup><ReferenceBookRef ref="DOC_11" />（外国人データ）。</Lang>
+          </Detail>
+        </Item>
+      </OrderedList>
+    </Distribution>
+    <!--１６.４ 代謝-->
+    <Metabolism id="HDR_Metabolism" heading="fixing">
+      <Detail>
+        <Lang xml:lang="ja">オルメサルタン　メドキソミルは、経口投与後、主に小腸上皮、肝臓又は血漿においてエステラーゼによる加水分解を受け、活性代謝物のオルメサルタンに代謝される。血漿中にはオルメサルタンのみが認められ、その他の代謝物は存在しない。ヒト肝ミクロソームを用い、チトクロームP450分子種7種類（1A1&amp;2、2A6、2C19、2C8&amp;9、2D6、2E1、3A4）の活性について、オルメサルタンによる阻害率を検討したところ、臨床用量で想定される血漿中濃度ではいずれの分子種もほとんど阻害しなかった。また、ヒト培養肝細胞にて、オルメサルタン　メドキソミルによるチトクロームP450の誘導は認められなかった<ReferenceBookRef ref="DOC_12" />（<Italic>in vitro</Italic>）。</Lang>
+      </Detail>
+    </Metabolism>
+    <!--１６.５ 排泄-->
+    <Excretion id="HDR_Excretion" heading="fixing">
+      <Detail>
+        <Lang xml:lang="ja">健康な成人男性に<Sup>14</Sup>C-オルメサルタン　メドキソミル20mgを単回経口投与したところ、投与した総放射能の12.6%（240時間後まで）が尿中に、77.2%（312時間後まで）が糞中に排泄された<ReferenceBookRef ref="DOC_13" />（外国人データ）。<?enter?>健康な成人男性24例にオルメサルタン　メドキソミル5mg、10mg、20mg及び40mgを空腹時単回経口投与したとき、投与48時間までに尿中にオルメサルタンが11.6～14.6%排泄された<ReferenceBookRef ref="DOC_14" />。</Lang>
+      </Detail>
+    </Excretion>
+    <!--１６.６ 特定の背景を有する患者-->
+    <SpecificPopulation id="HDR_SpecificPopulation" heading="fixing">
+      <OrderedList numberContinued="false">
+        <Item id="HDR_SpecificPopulation_1" heading="free">
+          <Header>
+            <Lang xml:lang="ja">腎機能障害患者</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">健康な成人男性8例と、腎機能障害患者26例を重症度別に8～9例ずつ3群に分けた計34例に対し、オルメサルタン　メドキソミル10mgを1日1回7日間反復経口投与したときの7日目の定常状態における血漿中オルメサルタンのAUCの幾何平均値は、腎機能正常者と比較して、軽度、中等度及び重度腎機能障害患者でそれぞれ1.6倍、1.8倍、2.8倍であった<ReferenceBookRef ref="DOC_15" />（外国人データ）。<HeaderRef ref="HDR_PatientsWithRenalImpairment_1" /></Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_SpecificPopulation_2" heading="free">
+          <Header>
+            <Lang xml:lang="ja">肝機能障害患者</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">軽度及び中等度肝機能障害患者12例にオルメサルタン　メドキソミル10mgを空腹時単回経口投与したとき、肝機能正常者と比較して血漿中オルメサルタンのAUCはそれぞれ1.1倍、1.7倍であった<ReferenceBookRef ref="DOC_15" />（外国人データ）。<HeaderRef ref="HDR_PatientsWithHepaticImpairment" /></Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_SpecificPopulation_3" heading="free">
+          <Header>
+            <Lang xml:lang="ja">高齢者</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">健康な高齢者（65歳以上）6例にオルメサルタン　メドキソミル10mgを単回経口投与し、健康な非高齢者とオルメサルタンのAUCの幾何平均値を比較したところ、ほとんど差は認められなかった<ReferenceBookRef ref="DOC_16" />。<?enter?>また、高齢高血圧症患者（75歳以上）17例にオルメサルタン　メドキソミル10mgを1日1回14日間反復経口投与したところ、非高齢患者に比較しAUCの幾何平均値が1.4倍高値を示したが、蓄積性はほとんど認められなかった<ReferenceBookRef ref="DOC_15" />（外国人データ）。</Lang>
+          </Detail>
+        </Item>
+      </OrderedList>
+    </SpecificPopulation>
+    <!--１６.８ その他-->
+    <PharmacokineticsEtc id="HDR_PharmacokineticsEtc" heading="fixing">
+      <Detail>
+        <Lang xml:lang="ja">オルメサルタン錠5mg「日医工」は、オルメサルタン錠10mg「日医工」を標準製剤としたとき、溶出挙動が同等と判定され、生物学的に同等とみなされた<ReferenceBookRef ref="DOC_17" />。</Lang>
+      </Detail>
+    </PharmacokineticsEtc>
+  </Pharmacokinetics>
+  <!--１７.臨床成績-->
+  <ResultsOfClinicalTrials id="HDR_ResultsOfClinicalTrials" heading="fixing">
+    <!--１７.１ 有効性及び安全性に関する試験-->
+    <EfficacyAndSafety id="HDR_EfficacyAndSafety" heading="fixing">
+      <OrderedList numberContinued="false">
+        <Item id="HDR_EfficacyAndSafety_1" heading="free">
+          <Header>
+            <Lang xml:lang="ja">国内臨床試験</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">本態性高血圧症患者を対象としたオルメサルタン　メドキソミルの二重盲検比較試験を含む臨床試験での「判定不能」を含む降圧率（下降例数<CommentRef ref="TBLFN_01" />/評価例数）は79.8%（364/456例）、「判定不能」を含まない降圧率は84.7%（364/430例）であった。<?enter?>なお、このうち軽症・中等症の本態性高血圧症患者を対象とした二重盲検比較試験によって、オルメサルタン　メドキソミルの有用性が確認された。<?enter?>降圧効果はオルメサルタン　メドキソミル投与後1週間で発現し、2週間以内に有意な降圧を示した後、4～8週間で最大に達することが確認された<ReferenceBookRef ref="DOC_18" />。</Lang>
+          </Detail>
+          <Detail>
+            <Lang xml:lang="ja"><Comment id="TBLFN_01"><Lang xml:lang="ja">下降：収縮期血圧（-20mmHg以上）及び拡張期血圧（-10mmHg以上）を満たす場合、平均血圧（-13mmHg以上）を満たす場合、あるいは下降傾向<CommentRef ref="TBLFN_02" />であっても150/90mmHg未満（ただし、入院患者では140/85mmHg未満）に降圧した場合</Lang></Comment></Lang>
+          </Detail>
+          <Detail>
+            <Lang xml:lang="ja"><Comment id="TBLFN_02"><Lang xml:lang="ja">下降傾向：収縮期血圧（-10mmHg以上）及び拡張期血圧（-5mmHg以上）を満たす場合、あるいは平均血圧（-7mmHg以上）を満たす場合</Lang></Comment></Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_EfficacyAndSafety_2" heading="free">
+          <Header>
+            <Lang xml:lang="ja">国内第Ⅲ相試験</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">腎機能障害を伴う高血圧症患者を対象としたオルメサルタン　メドキソミルの臨床試験での「判定不能」を含む降圧率は68.0%（17/25例）、「判定不能」を含まない降圧率は77.3%（17/22例）であった。<?enter?>副作用発現頻度は、自他覚症状が10.0%（3/30例）、臨床検査値異常が20.7%（6/29例）であり、認められた自他覚症状の副作用は、頭重（感）、低血圧及び咳が各3.3%（1/30例）であった<ReferenceBookRef ref="DOC_19" />。</Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_EfficacyAndSafety_3" heading="free">
+          <Header>
+            <Lang xml:lang="ja">国内第Ⅲ相試験</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">重症高血圧症患者を対象としたオルメサルタン　メドキソミルの臨床試験での「判定不能」を含む降圧率は86.2%（25/29例）、「判定不能」を含まない降圧率は92.6%（25/27例）であった。<?enter?>副作用発現頻度は、自他覚症状が6.9%（2/29例）、臨床検査値異常が21.4%（6/28例）であり、認められた自他覚症状の副作用は、眠気及び軟便が各3.4%（1/29例）であった<ReferenceBookRef ref="DOC_20" />。</Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_EfficacyAndSafety_4" heading="free">
+          <Header>
+            <Lang xml:lang="ja">国内臨床試験（長期投与）</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">軽症・中等症本態性高血圧症患者を対象に、12ヵ月間オルメサルタン　メドキソミルを単独投与した結果、安定した降圧効果が得られた。「判定不能」を含む降圧率は80.7%（134/166例）、「判定不能」を含まない降圧率は93.1%（134/144例）であった<ReferenceBookRef ref="DOC_21" />。</Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_EfficacyAndSafety_5" heading="free">
+          <Header>
+            <Lang xml:lang="ja">国内第Ⅲ相試験（長期投与）</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">軽症・中等症本態性高血圧症患者を対象に、12ヵ月間オルメサルタン　メドキソミルをカルシウム拮抗剤もしくはサイアザイド系利尿降圧剤を併用投与した結果、安定した降圧効果が得られた。カルシウム拮抗剤併用療法での「判定不能」を含む降圧率は85.0%（17/20例）、「判定不能」を含まない降圧率は100.0%（17/17例）であった。利尿剤併用療法での「判定不能」を含む降圧率は72.7%（16/22例）、「判定不能」を含まない降圧率は100.0%（16/16例）であった。<?enter?>副作用発現頻度は、カルシウム拮抗剤併用療法群で自他覚症状が4.5%（1/22例）、臨床検査値異常が4.5%（1/22例）、利尿剤併用療法群で自他覚症状が37.0%（10/27例）、臨床検査値異常が25.9%（7/27例）であった。主な自他覚症状の副作用は、カルシウム拮抗剤併用療法群で立ちくらみ4.5%（1/22例）、利尿剤併用療法群でめまい14.8%（4/27例）であった<ReferenceBookRef ref="DOC_22" />。</Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_EfficacyAndSafety_6" heading="free">
+          <Header>
+            <Lang xml:lang="ja">国内第Ⅱ相試験（血圧日内変動）</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">軽症・中等症本態性高血圧症を対象に、オルメサルタン　メドキソミルを12週間投与し、自由行動下血圧測定による24時間血圧日内変動を検討した結果、オルメサルタン　メドキソミルは1日1回投与において、血圧推移のプロファイルに影響を及ぼすことなく、また夜間血圧を過度に低下させることなく24時間安定した降圧作用を示すことが確認された<ReferenceBookRef ref="DOC_23" />。</Lang>
+          </Detail>
+        </Item>
+      </OrderedList>
+    </EfficacyAndSafety>
+  </ResultsOfClinicalTrials>
+  <!--１８.薬効薬理-->
+  <EfficacyPharmacology id="HDR_EfficacyPharmacology" heading="fixing">
+    <!--１８.１ 作用機序-->
+    <MechanismOfAction id="HDR_MechanismOfAction" heading="fixing">
+      <Detail>
+        <Lang xml:lang="ja">オルメサルタン　メドキソミルはプロドラッグであり、生体内で活性代謝物であるオルメサルタンに変換され、アンジオテンシンⅡ（AⅡ）タイプ1（AT<Sub>1</Sub>）受容体に選択的に作用してAⅡの結合を競合的に阻害し、昇圧系であるAⅡの薬理作用を抑制する<ReferenceBookRef ref="DOC_24" />。</Lang>
+      </Detail>
+    </MechanismOfAction>
+    <OtherInformation id="HDR_EfficacyPharmacology_OtherInformation_1" heading="free">
+      <Header>
+        <Lang xml:lang="ja">アンジオテンシンⅡ受容体拮抗作用</Lang>
+      </Header>
+      <Detail>
+        <Lang xml:lang="ja">オルメサルタンのAT<Sub>1</Sub>受容体拮抗作用をヒトAT<Sub>1</Sub>受容体への<Sup>125</Sup>I-AⅡ結合阻害で検討したところ、50%阻害濃度（IC<Sub>50</Sub>値）は1.3nMであった（<Italic>in vitro</Italic>）。また、オルメサルタンはウサギ及びモルモットの摘出血管において、AⅡによる収縮反応を抑制し、その抑制作用は薬物除去後も持続的であった。ラット及びイヌにおいて、オルメサルタン　メドキソミルは、経口投与によりAⅡによる昇圧反応を持続的に抑制した<ReferenceBookRef ref="DOC_25" />。</Lang>
+      </Detail>
+    </OtherInformation>
+    <OtherInformation id="HDR_EfficacyPharmacology_OtherInformation_2" heading="free">
+      <Header>
+        <Lang xml:lang="ja">降圧作用</Lang>
+      </Header>
+      <OrderedList numberContinued="false">
+        <Item id="HDR_EfficacyPharmacology_1" heading="free">
+          <Detail>
+            <Lang xml:lang="ja">オルメサルタン　メドキソミルは経口投与により、腎性高血圧ラット、高血圧自然発症ラット、正常血圧ラットの順に強い降圧作用を示したが、心拍数に影響を与えなかった<ReferenceBookRef ref="DOC_25" />。</Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_EfficacyPharmacology_2" heading="free">
+          <Detail>
+            <Lang xml:lang="ja">オルメサルタン　メドキソミルを高血圧自然発症ラットに24週間反復経口投与すると、耐性を生じることなく安定した降圧作用を示し、反射性の頻脈も認められなかった。また、14日間反復経口投与後、休薬してもリバウンドは認められなかった<ReferenceBookRef ref="DOC_25" />。</Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_EfficacyPharmacology_3" heading="free">
+          <Detail>
+            <Lang xml:lang="ja">オルメサルタンを高血圧自然発症ラットに静脈内投与すると総末梢血管抵抗が減少し、腎血管抵抗の減少が認められた。血圧は下降したが、心拍数に変化はなく、心拍出量は増大した。従って、オルメサルタンの降圧作用は全身血管の拡張に基づく総末梢血管抵抗の減少によるものと考えられる<ReferenceBookRef ref="DOC_25" />。</Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_EfficacyPharmacology_4" heading="free">
+          <Detail>
+            <Lang xml:lang="ja">オルメサルタン　メドキソミルを高血圧自然発症ラットに20週間反復経口投与すると、血圧の下降とともに尿中蛋白排泄及びアルブミン排泄量の減少が認められ、腎臓の病理所見の改善も認められた<ReferenceBookRef ref="DOC_25" /><Sup>,</Sup><ReferenceBookRef ref="DOC_26" />。</Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_EfficacyPharmacology_5" heading="free">
+          <Detail>
+            <Lang xml:lang="ja">オルメサルタン　メドキソミルを高血圧自然発症ラットに8週間反復経口投与すると、血圧の下降とともに心重量の低下及び心筋線維径の減少が認められ、心肥大を抑制することが確認された<ReferenceBookRef ref="DOC_25" />。</Lang>
+          </Detail>
+        </Item>
+      </OrderedList>
+    </OtherInformation>
+  </EfficacyPharmacology>
+  <!--１９.有効成分に関する理化学的知見-->
+  <PhyschemOfActIngredients id="HDR_PhyschemOfActIngredients" heading="fixing">
+    <PhyschemOfActIngredientsSection>
+      <GeneralName>
+        <Detail>
+          <Lang xml:lang="ja">オルメサルタン　メドキソミル（Olmesartan Medoxomil）</Lang>
+        </Detail>
+      </GeneralName>
+      <ChemicalName>
+        <Detail>
+          <Lang xml:lang="ja">(5-Methyl-2-oxo-1,3-dioxol-4-yl)methyl 4-(2-hydroxypropan-2-yl)-2-propyl-1-{[2'-(1<Italic>H</Italic>-tetrazol-5-yl)biphenyl-4-yl]methyl}-1<Italic>H</Italic>-imidazole-5-carboxylate</Lang>
+        </Detail>
+      </ChemicalName>
+      <MolecularFormula>
+        <Detail>
+          <Lang xml:lang="ja">C<Sub>29</Sub>H<Sub>30</Sub>N<Sub>6</Sub>O<Sub>6</Sub></Lang>
+        </Detail>
+      </MolecularFormula>
+      <MolecularWeight>
+        <Detail>
+          <Lang xml:lang="ja">558.59</Lang>
+        </Detail>
+      </MolecularWeight>
+      <DescriptionOfActiveIngredients>
+        <Detail>
+          <Lang xml:lang="ja">白色～微黄白色の結晶性の粉末である。<?enter?>アセトニトリル又はエタノール（99.5）に溶けにくく、水にほとんど溶けない。</Lang>
+        </Detail>
+      </DescriptionOfActiveIngredients>
+      <StructuralFormula>
+        <Graphic>
+          <GraphicBody gfname="530169_2149044F1121_1_06_fig17.gif" scale="36" />
+        </Graphic>
+      </StructuralFormula>
+    </PhyschemOfActIngredientsSection>
+  </PhyschemOfActIngredients>
+  <!--２０.取扱い上の注意-->
+  <PrecautionsForHandling id="HDR_PrecautionsForHandling" heading="fixing">
+    <Detail>
+      <Lang xml:lang="ja">アルミピロー開封後は湿気を避けて保存すること。</Lang>
+    </Detail>
+  </PrecautionsForHandling>
+  <!--２２.包装-->
+  <Package id="HDR_Package" heading="fixing">
+    <SimpleList>
+      <Item>
+        <Header>
+          <Lang xml:lang="ja">〈<ApprovalBrandNameRef ref="BRD_Drug1" />〉</Lang>
+        </Header>
+        <Detail>
+          <Lang xml:lang="ja">100錠［10錠×10；PTP：乾燥剤入り］</Lang>
+        </Detail>
+      </Item>
+      <Item>
+        <Header>
+          <Lang xml:lang="ja">〈<ApprovalBrandNameRef ref="BRD_Drug2" />〉</Lang>
+        </Header>
+        <Detail>
+          <Lang xml:lang="ja">100錠［10錠×10；PTP：乾燥剤入り］</Lang>
+        </Detail>
+      </Item>
+      <Item>
+        <Header>
+          <Lang xml:lang="ja">〈<ApprovalBrandNameRef ref="BRD_Drug3" />〉</Lang>
+        </Header>
+        <Detail>
+          <Lang xml:lang="ja">100錠［10錠×10；PTP：乾燥剤入り］</Lang>
+        </Detail>
+      </Item>
+      <Item>
+        <Header>
+          <Lang xml:lang="ja">〈<ApprovalBrandNameRef ref="BRD_Drug4" />〉</Lang>
+        </Header>
+        <Detail>
+          <Lang xml:lang="ja">100錠［10錠×10；PTP：乾燥剤入り］</Lang>
+        </Detail>
+      </Item>
+    </SimpleList>
+  </Package>
+  <!--２３.主要文献-->
+  <MainLiterature id="HDR_MainLiterature" heading="fixing">
+    <Reference id="DOC_01">
+      <Lang xml:lang="ja">阿部真也　他：周産期医学. 2017；47（10）：1353-1355</Lang>
+    </Reference>
+    <Reference id="DOC_02">
+      <Lang xml:lang="ja">齊藤大祐　他：鹿児島産科婦人科学会雑誌. 2021；29：49-54</Lang>
+    </Reference>
+    <Reference id="DOC_03">
+      <Lang xml:lang="ja">田中孝典　他：臨床医薬. 2003；19（10）：1131-1142</Lang>
+    </Reference>
+    <Reference id="DOC_04">
+      <Lang xml:lang="ja">軽症・中等症本態性高血圧患者を対象とした薬物動態と降圧作用の関係の検討（オルメテック錠：2004年1月29日承認、申請資料概要2.7.6）</Lang>
+    </Reference>
+    <Reference id="DOC_05">
+      <Lang xml:lang="ja">本態性高血圧症患者を対象とした40mg投与時の薬物動態の検討（オルメテック錠：2004年1月29日承認、申請資料概要2.7.6）</Lang>
+    </Reference>
+    <Reference id="DOC_06">
+      <Lang xml:lang="ja">田中孝典　他：臨床医薬. 2003；19（10）：1143-1156</Lang>
+    </Reference>
+    <Reference id="DOC_07">
+      <Lang xml:lang="ja">中川美聡　他：医学と薬学. 2017；74（9）：1079-1091</Lang>
+    </Reference>
+    <Reference id="DOC_08">
+      <Lang xml:lang="ja">田中孝典　他：臨床医薬. 2003；19（11）：1283-1295</Lang>
+    </Reference>
+    <Reference id="DOC_09">
+      <Lang xml:lang="ja">バイオアベイラビリティ試験（オルメテック錠：2004年1月29日承認、申請資料概要2.7.1.2）</Lang>
+    </Reference>
+    <Reference id="DOC_10">
+      <Lang xml:lang="ja">蛋白結合（オルメテック錠：2004年1月29日承認、申請資料概要2.6.2.4）</Lang>
+    </Reference>
+    <Reference id="DOC_11">
+      <Lang xml:lang="ja">ワルファリンとの相互作用（オルメテック錠：2004年1月29日承認、申請資料概要2.7.6）</Lang>
+    </Reference>
+    <Reference id="DOC_12">
+      <Lang xml:lang="ja">代謝（オルメテック錠：2004年1月29日承認、申請資料概要2.6.2.5）</Lang>
+    </Reference>
+    <Reference id="DOC_13">
+      <Lang xml:lang="ja">第十八改正日本薬局方解説書 廣川書店 2021；C1265-C1272</Lang>
+    </Reference>
+    <Reference id="DOC_14">
+      <Lang xml:lang="ja">単回経口投与における薬物動態の検討（オルメテック錠：2004年1月29日承認、申請資料概要2.7.6）</Lang>
+    </Reference>
+    <Reference id="DOC_15">
+      <Lang xml:lang="ja">von Bergmann K., et al.：J. Hypertens. 2001；19（S.1）：S33-S40</Lang>
+    </Reference>
+    <Reference id="DOC_16">
+      <Lang xml:lang="ja">田中孝典　他：臨床医薬. 2003；19（11）：1297-1306</Lang>
+    </Reference>
+    <Reference id="DOC_17">
+      <Lang xml:lang="ja">社内資料：生物学的同等性試験（錠5mg）</Lang>
+    </Reference>
+    <Reference id="DOC_18">
+      <Lang xml:lang="ja">併合解析の結果（オルメテック錠：2004年1月29日承認、申請資料概要2.7.3.3、2.7.6）</Lang>
+    </Reference>
+    <Reference id="DOC_19">
+      <Lang xml:lang="ja">腎機能障害を伴う高血圧症患者を対象とした第Ⅲ相試験（オルメテック錠：2004年1月29日承認、申請資料概要2.7.6）</Lang>
+    </Reference>
+    <Reference id="DOC_20">
+      <Lang xml:lang="ja">重症高血圧症を対象とした第Ⅲ相試験（オルメテック錠：2004年1月29日承認、申請資料概要2.7.6）</Lang>
+    </Reference>
+    <Reference id="DOC_21">
+      <Lang xml:lang="ja">長期投与の有効性（オルメテック錠：2004年1月29日承認、申請資料概要2.7.3.5）</Lang>
+    </Reference>
+    <Reference id="DOC_22">
+      <Lang xml:lang="ja">本態性高血圧患者を対象としたカルシウム拮抗薬、サイアザイド系利尿薬併用投与試験（オルメテック錠：2004年1月29日承認、申請資料概要2.7.6）</Lang>
+    </Reference>
+    <Reference id="DOC_23">
+      <Lang xml:lang="ja">軽症・中等症本態性高血圧症患者を対象とした第Ⅱ相試験（オルメテック錠：2004年1月29日承認、申請資料概要2.7.6）</Lang>
+    </Reference>
+    <Reference id="DOC_24">
+      <Lang xml:lang="ja">薬理学的分類（オルメテック錠：2004年1月29日承認、申請資料概要2.5.1.3）</Lang>
+    </Reference>
+    <Reference id="DOC_25">
+      <Lang xml:lang="ja">小池博之　他：三共研究所年報. 2003；55：1-91</Lang>
+    </Reference>
+    <Reference id="DOC_26">
+      <Lang xml:lang="ja">腎臓に対する作用（オルメテック錠：2004年1月29日承認、申請資料概要2.6.1.3）</Lang>
+    </Reference>
+  </MainLiterature>
+  <!--２４.文献請求先及び問い合わせ先-->
+  <AddresseeOfLiteratureRequest id="HDR_AddresseeOfLiteratureRequest" heading="fixing">
+    <AddresseeInfo>
+      <AddresseeOfInquiry>
+        <Lang xml:lang="ja">日医工株式会社　お客様サポートセンター</Lang>
+      </AddresseeOfInquiry>
+      <Address>
+        <Lang xml:lang="ja">〒930-8583　富山市総曲輪1丁目6番21</Lang>
+      </Address>
+      <ContactInformation>
+        <Detail>
+          <Lang xml:lang="ja">TEL（0120）517-215<?enter?>FAX（076）442-8948</Lang>
+        </Detail>
+      </ContactInformation>
+    </AddresseeInfo>
+  </AddresseeOfLiteratureRequest>
+  <!--２６.製造販売業者等-->
+  <NameAddressManufact id="HDR_NameAddressManufact" heading="fixing">
+    <Manufacturer>
+      <TypeOfIndustry>
+        <Lang xml:lang="ja">製造販売元</Lang>
+      </TypeOfIndustry>
+      <Name>
+        <Lang xml:lang="ja">日医工株式会社</Lang>
+      </Name>
+      <Address>
+        <Lang xml:lang="ja">富山市総曲輪1丁目6番21</Lang>
+      </Address>
+    </Manufacturer>
+  </NameAddressManufact>
+</PackIns>

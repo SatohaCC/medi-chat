@@ -1,0 +1,2477 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<PackIns version="1.0" xmlKind="Packins" drugType="Medicine" referenceOfPrecautionsForUse="3962002-S0005" referenceOfPrecautionsForHandling="3962002-T0002" xmlns="http://info.pmda.go.jp/namespace/prescription_drugs/package_insert/1.0">
+  <PackageInsertNo>3962002F2027_1_22</PackageInsertNo>
+  <CompanyIdentifier>400093</CompanyIdentifier>
+  <!--ア.作成又は改訂年月-->
+  <DateOfPreparationOrRevision>
+    <PreparationOrRevision id="今回">
+      <YearMonth>2023-11</YearMonth>
+      <Version>
+        <Lang xml:lang="ja">第5版</Lang>
+      </Version>
+    </PreparationOrRevision>
+    <PreparationOrRevision id="前回">
+      <YearMonth>2022-09</YearMonth>
+      <Version>
+        <Lang xml:lang="ja">第4版</Lang>
+      </Version>
+      <ReasonForRevision>
+        <Lang xml:lang="ja">効能変更、用法変更、用量変更</Lang>
+      </ReasonForRevision>
+    </PreparationOrRevision>
+  </DateOfPreparationOrRevision>
+  <!--イ.日本標準商品分類番号-->
+  <Sccj>
+    <SccjNo>873962</SccjNo>
+  </Sccj>
+  <!--オ.薬効分類名-->
+  <TherapeuticClassification>
+    <Detail>
+      <Lang xml:lang="ja">ビグアナイド系経口血糖降下剤</Lang>
+    </Detail>
+  </TherapeuticClassification>
+  <ApprovalEtc>
+    <DetailBrandName id="BRD_Drug1">
+      <ApprovalBrandName>
+        <Lang xml:lang="ja">メトグルコ錠250mg</Lang>
+      </ApprovalBrandName>
+      <BrandCode>
+        <YJCode>3962002F2027</YJCode>
+      </BrandCode>
+      <TrademarkInEnglish>
+        <TrademarkName>METGLUCO　Tablets</TrademarkName>
+      </TrademarkInEnglish>
+      <!--ウ.承認番号-->
+      <ApprovalAndLicenseNo>
+        <ApprovalNo>22200AMX00234</ApprovalNo>
+      </ApprovalAndLicenseNo>
+      <!--ウ.販売開始年月-->
+      <StartingDateOfMarketing>2010-05</StartingDateOfMarketing>
+      <!--エ.貯法、有効期間-->
+      <Storage>
+        <StorageMethod>
+          <Lang xml:lang="ja">室温保存</Lang>
+        </StorageMethod>
+        <ShelfLife>
+          <Lang xml:lang="ja">3年</Lang>
+        </ShelfLife>
+      </Storage>
+      <!--キ.基準名-->
+      <StandardName>
+        <StandardNameCategory>
+          <StandardNameCategoryCode>1</StandardNameCategoryCode>
+          <StandardNameDetail>
+            <Lang xml:lang="ja">メトホルミン塩酸塩錠</Lang>
+          </StandardNameDetail>
+        </StandardNameCategory>
+      </StandardName>
+      <!--カ.規制区分-->
+      <RegulatoryClassification>
+        <RegulatoryClassificationCodeAndNote>
+          <RegulatoryClassificationCode>2</RegulatoryClassificationCode>
+        </RegulatoryClassificationCodeAndNote>
+        <RegulatoryClassificationCodeAndNote>
+          <RegulatoryClassificationCode>12</RegulatoryClassificationCode>
+        </RegulatoryClassificationCodeAndNote>
+      </RegulatoryClassification>
+    </DetailBrandName>
+    <DetailBrandName id="BRD_Drug2">
+      <ApprovalBrandName>
+        <Lang xml:lang="ja">メトグルコ錠500mg</Lang>
+      </ApprovalBrandName>
+      <BrandCode>
+        <YJCode>3962002F3023</YJCode>
+      </BrandCode>
+      <TrademarkInEnglish>
+        <TrademarkName>METGLUCO　Tablets</TrademarkName>
+      </TrademarkInEnglish>
+      <!--ウ.承認番号-->
+      <ApprovalAndLicenseNo>
+        <ApprovalNo>22400AMX01367</ApprovalNo>
+      </ApprovalAndLicenseNo>
+      <!--ウ.販売開始年月-->
+      <StartingDateOfMarketing>2013-08</StartingDateOfMarketing>
+      <!--エ.貯法、有効期間-->
+      <Storage>
+        <StorageMethod>
+          <Lang xml:lang="ja">室温保存</Lang>
+        </StorageMethod>
+        <ShelfLife>
+          <Lang xml:lang="ja">3年</Lang>
+        </ShelfLife>
+      </Storage>
+      <!--キ.基準名-->
+      <StandardName>
+        <StandardNameCategory>
+          <StandardNameCategoryCode>1</StandardNameCategoryCode>
+          <StandardNameDetail>
+            <Lang xml:lang="ja">メトホルミン塩酸塩錠</Lang>
+          </StandardNameDetail>
+        </StandardNameCategory>
+      </StandardName>
+      <!--カ.規制区分-->
+      <RegulatoryClassification>
+        <RegulatoryClassificationCodeAndNote>
+          <RegulatoryClassificationCode>2</RegulatoryClassificationCode>
+        </RegulatoryClassificationCodeAndNote>
+        <RegulatoryClassificationCodeAndNote>
+          <RegulatoryClassificationCode>12</RegulatoryClassificationCode>
+        </RegulatoryClassificationCodeAndNote>
+      </RegulatoryClassification>
+    </DetailBrandName>
+  </ApprovalEtc>
+  <!--キ.一般的名称-->
+  <GenericName>
+    <Detail>
+      <Lang xml:lang="ja">メトホルミン塩酸塩</Lang>
+    </Detail>
+  </GenericName>
+  <!--１.警告-->
+  <Warnings heading="fixing" id="HDR_Warnings">
+    <OrderedList numberContinued="false">
+      <Item heading="free" id="HDR_Warnings_1">
+        <Detail>
+          <Lang xml:lang="ja">重篤な乳酸アシドーシスを起こすことがあり、死亡に至った例も報告されている。乳酸アシドーシスを起こしやすい患者には投与しないこと。<HeaderRef ref="HDR_ContraIndications_1" />,<HeaderRef ref="HDR_ContraIndications_3" />,<HeaderRef ref="HDR_ImportantPrecautions_1" />,<HeaderRef ref="HDR_PatientsWithRenalImpairment" />,<HeaderRef ref="HDR_PatientsWithHepaticImpairment" />,<HeaderRef ref="HDR_SeriousAdverse_1" /></Lang>
+        </Detail>
+      </Item>
+      <Item heading="free" id="HDR_Warnings_2">
+        <Detail>
+          <Lang xml:lang="ja">腎機能障害又は肝機能障害のある患者、高齢者に投与する場合には、定期的に腎機能や肝機能を確認するなど慎重に投与すること。特に75歳以上の高齢者では、本剤投与の適否を慎重に判断すること。<HeaderRef ref="HDR_ImportantPrecautions_1" />,<HeaderRef ref="HDR_PatientsWithRenalImpairment" />,<HeaderRef ref="HDR_PatientsWithHepaticImpairment" />,<HeaderRef ref="HDR_UseInTheElderly" />,<HeaderRef ref="HDR_SeriousAdverse_1" /></Lang>
+        </Detail>
+      </Item>
+    </OrderedList>
+  </Warnings>
+  <!--２.禁忌（次の患者には投与しないこと）-->
+  <ContraIndications id="HDR_ContraIndications" heading="fixing">
+    <OrderedList numberContinued="false">
+      <Item id="HDR_ContraIndications_1" heading="free">
+        <Detail>
+          <Lang xml:lang="ja">次に示す患者［乳酸アシドーシスを起こしやすい。］<HeaderRef ref="HDR_Warnings_1" />,<HeaderRef ref="HDR_ImportantPrecautions_1" />,<HeaderRef ref="HDR_SeriousAdverse_1" /></Lang>
+        </Detail>
+        <UnorderedList>
+          <Item>
+            <Detail>
+              <Lang xml:lang="ja">乳酸アシドーシスの既往のある患者</Lang>
+            </Detail>
+          </Item>
+          <Item>
+            <Detail>
+              <Lang xml:lang="ja">重度の腎機能障害（eGFR 30mL/min/1.73m<Sup>2</Sup>未満）のある患者又は透析患者（腹膜透析を含む）<HeaderRef ref="HDR_PMDA_PatientsWithRenalImpairment_20220920113045_20" /></Lang>
+            </Detail>
+          </Item>
+          <Item>
+            <Detail>
+              <Lang xml:lang="ja">重度の肝機能障害のある患者<HeaderRef ref="HDR_PMDA_PatientsWithHepaticImpairment_20220920113045_23" /></Lang>
+            </Detail>
+          </Item>
+          <Item>
+            <Detail>
+              <Lang xml:lang="ja">心血管系、肺機能に高度の障害（ショック、心不全、心筋梗塞、肺塞栓等）のある患者及びその他の低酸素血症を伴いやすい状態にある患者［嫌気的解糖の亢進により乳酸産生が増加する。］</Lang>
+            </Detail>
+          </Item>
+          <Item>
+            <Detail>
+              <Lang xml:lang="ja">脱水症の患者又は脱水状態が懸念される患者（下痢、嘔吐等の胃腸障害のある患者、経口摂取が困難な患者等）</Lang>
+            </Detail>
+          </Item>
+          <Item>
+            <Detail>
+              <Lang xml:lang="ja">過度のアルコール摂取者<HeaderRef ref="HDR_ContraIndicatedCombinations" /></Lang>
+            </Detail>
+          </Item>
+        </UnorderedList>
+      </Item>
+      <Item id="HDR_PMDA_ContraIndications_20220920113045_4" heading="free">
+        <Detail>
+          <Lang xml:lang="ja">重症ケトーシス、糖尿病性昏睡又は前昏睡、1型糖尿病の患者［輸液、インスリンによる速やかな高血糖の是正が必須である。］</Lang>
+        </Detail>
+      </Item>
+      <Item id="HDR_ContraIndications_3" heading="free">
+        <Detail>
+          <Lang xml:lang="ja">重症感染症、手術前後、重篤な外傷のある患者［インスリン注射による血糖管理が望まれるので本剤の投与は適さない。また、乳酸アシドーシスを起こしやすい。］<HeaderRef ref="HDR_Warnings_1" />,<HeaderRef ref="HDR_ImportantPrecautions_1" />,<HeaderRef ref="HDR_SeriousAdverse_1" /></Lang>
+        </Detail>
+      </Item>
+      <Item id="HDR_ContraIndications_4" heading="free">
+        <Detail>
+          <Lang xml:lang="ja">栄養不良状態、飢餓状態、衰弱状態、脳下垂体機能不全又は副腎機能不全の患者［低血糖を起こすおそれがある。］<HeaderRef ref="HDR_SeriousAdverse_2" /></Lang>
+        </Detail>
+      </Item>
+      <Item id="HDR_ContraIndications_5" heading="free">
+        <Detail modified="前回">
+          <Lang xml:lang="ja">妊婦又は妊娠している可能性のある女性<HeaderRef ref="HDR_ImportantPrecautions_5" />,<HeaderRef ref="HDR_MalesAndFemalesOfReproductivePotential" />,<HeaderRef ref="HDR_UseInPregnant" /></Lang>
+        </Detail>
+      </Item>
+      <Item id="HDR_PMDA_ContraIndications_20220920113045_8" heading="free">
+        <Detail>
+          <Lang xml:lang="ja">本剤の成分又はビグアナイド系薬剤に対し過敏症の既往歴のある患者</Lang>
+        </Detail>
+      </Item>
+    </OrderedList>
+  </ContraIndications>
+  <!--３.組成・性状-->
+  <CompositionAndProperty id="HDR_CompositionAndProperty" heading="fixing">
+    <!--３.１ 組成-->
+    <Composition id="HDR_Composition" heading="fixing">
+      <CompositionForBrand ref="BRD_Drug1">
+        <CompositionForConstituentUnits>
+          <CompositionTable>
+            <ContainedAmount>
+              <ActiveIngredientName>
+                <Lang xml:lang="ja">1錠中日局メトホルミン塩酸塩</Lang>
+              </ActiveIngredientName>
+              <ValueAndUnit>
+                <Lang xml:lang="ja">250mg</Lang>
+              </ValueAndUnit>
+            </ContainedAmount>
+            <Additives>
+              <ListOfAdditives>
+                <Lang xml:lang="ja">ポビドン、ステアリン酸マグネシウム、ヒプロメロース、マクロゴール400、マクロゴール6000、タルク</Lang>
+              </ListOfAdditives>
+            </Additives>
+          </CompositionTable>
+        </CompositionForConstituentUnits>
+      </CompositionForBrand>
+      <CompositionForBrand ref="BRD_Drug2">
+        <CompositionForConstituentUnits>
+          <CompositionTable>
+            <ContainedAmount>
+              <ActiveIngredientName>
+                <Lang xml:lang="ja">1錠中日局メトホルミン塩酸塩</Lang>
+              </ActiveIngredientName>
+              <ValueAndUnit>
+                <Lang xml:lang="ja">500mg</Lang>
+              </ValueAndUnit>
+            </ContainedAmount>
+            <Additives>
+              <ListOfAdditives>
+                <Lang xml:lang="ja">ポビドン、ステアリン酸マグネシウム、ヒプロメロース、マクロゴール400、マクロゴール6000、タルク</Lang>
+              </ListOfAdditives>
+            </Additives>
+          </CompositionTable>
+        </CompositionForConstituentUnits>
+      </CompositionForBrand>
+    </Composition>
+    <!--３.２ 製剤の性状-->
+    <Property id="HDR_Property" heading="fixing">
+      <PropertyForBrand ref="BRD_Drug1">
+        <PropertyForConstituentUnits>
+          <PropertyTable>
+            <Formulation>
+              <Lang xml:lang="ja">割線入りのフィルムコート錠</Lang>
+            </Formulation>
+            <ColorTone>
+              <Lang xml:lang="ja">白色～帯黄白色</Lang>
+            </ColorTone>
+            <Shape>
+              <OtherShape>
+                <ShapeDetail>
+                  <Lang xml:lang="ja">
+                    <InlineGraphic gfname="400093_3962002F2027_fig01.gif" />
+                  </Lang>
+                </ShapeDetail>
+              </OtherShape>
+            </Shape>
+            <Size>
+              <SizeDiameter>
+                <Lang xml:lang="ja">約9.1mm</Lang>
+              </SizeDiameter>
+              <SizeThickness>
+                <Lang xml:lang="ja">約4.1mm</Lang>
+              </SizeThickness>
+            </Size>
+            <Weight>
+              <Lang xml:lang="ja">約271mg</Lang>
+            </Weight>
+            <IdCode>
+              <Lang xml:lang="ja">DS271</Lang>
+            </IdCode>
+          </PropertyTable>
+        </PropertyForConstituentUnits>
+      </PropertyForBrand>
+      <PropertyForBrand ref="BRD_Drug2">
+        <PropertyForConstituentUnits>
+          <PropertyTable>
+            <Formulation>
+              <Lang xml:lang="ja">割線入りのフィルムコート錠</Lang>
+            </Formulation>
+            <ColorTone>
+              <Lang xml:lang="ja">白色～帯黄白色</Lang>
+            </ColorTone>
+            <Shape>
+              <OtherShape>
+                <ShapeDetail>
+                  <Lang xml:lang="ja">
+                    <InlineGraphic gfname="400093_3962002F2027_fig02.gif" />
+                  </Lang>
+                </ShapeDetail>
+              </OtherShape>
+            </Shape>
+            <Size>
+              <SizeLongDiameter>
+                <Lang xml:lang="ja">約15.8mm</Lang>
+              </SizeLongDiameter>
+              <SizeShortDiameter>
+                <Lang xml:lang="ja">約7.3mm</Lang>
+              </SizeShortDiameter>
+              <SizeThickness>
+                <Lang xml:lang="ja">約5.7mm</Lang>
+              </SizeThickness>
+            </Size>
+            <Weight>
+              <Lang xml:lang="ja">約538mg</Lang>
+            </Weight>
+            <IdCode>
+              <Lang xml:lang="ja">DS272</Lang>
+            </IdCode>
+          </PropertyTable>
+        </PropertyForConstituentUnits>
+      </PropertyForBrand>
+    </Property>
+  </CompositionAndProperty>
+  <!--４.効能又は効果-->
+  <IndicationsOrEfficacy wordingPatternOfIndications="1" id="HDR_IndicationsOrEfficacy" heading="fixing">
+    <UnorderedList>
+      <Item>
+        <Detail>
+          <Lang xml:lang="ja">2型糖尿病</Lang>
+        </Detail>
+        <SimpleList>
+          <Item>
+            <Detail>
+              <Lang xml:lang="ja">ただし、下記のいずれかの治療で十分な効果が得られない場合に限る。<?enter?>（1）食事療法・運動療法のみ<?enter?>（2）食事療法・運動療法に加えてスルホニルウレア剤を使用</Lang>
+            </Detail>
+          </Item>
+        </SimpleList>
+      </Item>
+      <Item>
+        <Detail modified="前回">
+          <Lang xml:lang="ja">多嚢胞性卵巣症候群における排卵誘発、多嚢胞性卵巣症候群の生殖補助医療における調節卵巣刺激</Lang>
+        </Detail>
+        <SimpleList>
+          <Item>
+            <Detail>
+              <Lang xml:lang="ja">ただし、肥満、耐糖能異常、又はインスリン抵抗性のいずれかを呈する患者に限る。</Lang>
+            </Detail>
+          </Item>
+        </SimpleList>
+      </Item>
+    </UnorderedList>
+  </IndicationsOrEfficacy>
+  <!--５.効能又は効果に関連する注意-->
+  <EfficacyRelatedPrecautions wordingPatternOfEfficacyRelatedPrecautions="1" id="HDR_EfficacyRelatedPrecautions" heading="fixing">
+    <SimpleList>
+      <Item>
+        <Header modified="前回">
+          <Lang xml:lang="ja">〈多嚢胞性卵巣症候群における排卵誘発、多嚢胞性卵巣症候群の生殖補助医療における調節卵巣刺激〉</Lang>
+        </Header>
+        <OrderedList numberContinued="false">
+          <Item id="HDR_PMDA_EfficacyRelatedPrecautions_20220920113045_9" heading="free">
+            <Detail>
+              <Lang xml:lang="ja">糖尿病を合併する多嚢胞性卵巣症候群の患者では糖尿病の治療を優先すること。</Lang>
+            </Detail>
+          </Item>
+        </OrderedList>
+      </Item>
+      <Item>
+        <Header>
+          <Lang xml:lang="ja">〈多嚢胞性卵巣症候群における排卵誘発〉</Lang>
+        </Header>
+        <OrderedList numberContinued="true">
+          <Item id="HDR_PMDA_EfficacyRelatedPrecautions_20220920113045_10" heading="free">
+            <Detail>
+              <Lang xml:lang="ja">ゴナドトロピン製剤を除く排卵誘発薬で十分な効果が得られない場合に本剤の併用を考慮すること。</Lang>
+            </Detail>
+          </Item>
+        </OrderedList>
+      </Item>
+    </SimpleList>
+  </EfficacyRelatedPrecautions>
+  <!--６.用法及び用量-->
+  <InfoDoseAdmin wordingPatternOfDoseAdmin="1" id="HDR_InfoDoseAdmin" heading="fixing">
+    <DoseAdmin>
+      <SimpleList>
+        <Item>
+          <Header>
+            <Lang xml:lang="ja">〈2型糖尿病〉</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">通常、成人にはメトホルミン塩酸塩として1日500mgより開始し、1日2～3回に分割して食直前又は食後に経口投与する。維持量は効果を観察しながら決めるが、通常1日750～1,500mgとする。なお、患者の状態により適宜増減するが、1日最高投与量は2,250mgまでとする。<?enter?>通常、10歳以上の小児にはメトホルミン塩酸塩として1日500mgより開始し、1日2～3回に分割して食直前又は食後に経口投与する。維持量は効果を観察しながら決めるが、通常1日500～1,500mgとする。なお、患者の状態により適宜増減するが、1日最高投与量は2,000mgまでとする。</Lang>
+          </Detail>
+        </Item>
+        <Item>
+          <Header modified="前回">
+            <Lang xml:lang="ja">〈多嚢胞性卵巣症候群における排卵誘発〉</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">他の排卵誘発薬との併用で、通常、メトホルミン塩酸塩として500mgの1日1回経口投与より開始する。患者の忍容性を確認しながら増量し、1日投与量として1,500mgを超えない範囲で、1日2～3回に分割して経口投与する。なお、本剤は排卵までに中止する。</Lang>
+          </Detail>
+        </Item>
+        <Item>
+          <Header modified="前回">
+            <Lang xml:lang="ja">〈多嚢胞性卵巣症候群の生殖補助医療における調節卵巣刺激〉</Lang>
+          </Header>
+        </Item>
+        <Item>
+          <Detail>
+            <Lang xml:lang="ja">他の卵巣刺激薬との併用で、通常、メトホルミン塩酸塩として500mgの1日1回経口投与より開始する。患者の忍容性を確認しながら増量し、1日投与量として1,500mgを超えない範囲で、1日2～3回に分割して経口投与する。なお、本剤は採卵までに中止する。</Lang>
+          </Detail>
+        </Item>
+      </SimpleList>
+    </DoseAdmin>
+  </InfoDoseAdmin>
+  <!--７.用法及び用量に関連する注意-->
+  <InfoPrecautionsDosage heading="fixing" id="HDR_InfoPrecautionsDosage" wordingPatternOfInfoPrecautionsDosage="1">
+    <Detail>
+      <Lang xml:lang="ja">中等度の腎機能障害のある患者（eGFR 30mL/min/1.73m<Sup>2</Sup>以上60mL/min/1.73m<Sup>2</Sup>未満）では、メトホルミンの血中濃度が上昇し、乳酸アシドーシスの発現リスクが高くなる可能性があるため、以下の点に注意すること。特に、eGFRが30mL/min/1.73m<Sup>2</Sup>以上45mL/min/1.73m<Sup>2</Sup>未満の患者には、治療上の有益性が危険性を上回ると判断される場合にのみ投与すること。<HeaderRef ref="HDR_ImportantPrecautions_1" />,<HeaderRef ref="HDR_PMDA_PatientsWithRenalImpairment_20220920113045_21" />,<HeaderRef ref="HDR_SeriousAdverse_1" />,<HeaderRef ref="HDR_SpecificPopulation_1" /></Lang>
+    </Detail>
+    <UnorderedList>
+      <Item>
+        <Detail>
+          <Lang xml:lang="ja">投与は、少量より開始すること。</Lang>
+        </Detail>
+      </Item>
+      <Item>
+        <Detail>
+          <Lang xml:lang="ja">投与中は、より頻回に腎機能（eGFR等）を確認するなど慎重に経過を観察し、投与の適否及び投与量の調節を検討すること。</Lang>
+        </Detail>
+      </Item>
+      <Item>
+        <Detail>
+          <Lang xml:lang="ja">効果不十分な場合は、メトホルミン塩酸塩として1日最高投与量を下表の目安まで増量することができるが、効果を観察しながら徐々に増量すること。また、投与にあたっては、1日量を1日2～3回分割投与すること。</Lang>
+        </Detail>
+        <TblBlock>
+          <TblCaption align="top">
+            <Lang xml:lang="ja">中等度の腎機能障害のある患者における1日最高投与量の目安</Lang>
+          </TblCaption>
+          <WidthDefinition totalWidth="100%">
+            <Col width="50%" />
+            <Col width="50%" />
+          </WidthDefinition>
+          <SimpleTable>
+            <SimpTblRow>
+              <SimpTblCell align="center" valign="top">
+                <Detail>
+                  <Lang xml:lang="ja">推算糸球体濾過量（eGFR）<?enter?>（mL/min/1.73m<Sup>2</Sup>）</Lang>
+                </Detail>
+              </SimpTblCell>
+              <SimpTblCell align="center" valign="top">
+                <Detail>
+                  <Lang xml:lang="ja">1日最高投与量の目安</Lang>
+                </Detail>
+              </SimpTblCell>
+            </SimpTblRow>
+            <SimpTblRow>
+              <SimpTblCell align="center" valign="top">
+                <Detail>
+                  <Lang xml:lang="ja">45 ≦ eGFR ＜ 60</Lang>
+                </Detail>
+              </SimpTblCell>
+              <SimpTblCell align="center" valign="top">
+                <Detail>
+                  <Lang xml:lang="ja">1,500mg</Lang>
+                </Detail>
+              </SimpTblCell>
+            </SimpTblRow>
+            <SimpTblRow>
+              <SimpTblCell align="center" valign="top">
+                <Detail>
+                  <Lang xml:lang="ja">30 ≦ eGFR ＜ 45</Lang>
+                </Detail>
+              </SimpTblCell>
+              <SimpTblCell align="center" valign="top">
+                <Detail>
+                  <Lang xml:lang="ja">750mg</Lang>
+                </Detail>
+              </SimpTblCell>
+            </SimpTblRow>
+          </SimpleTable>
+        </TblBlock>
+      </Item>
+    </UnorderedList>
+  </InfoPrecautionsDosage>
+  <!--８.重要な基本的注意-->
+  <ImportantPrecautions id="HDR_ImportantPrecautions" heading="fixing">
+    <SimpleList>
+      <Item>
+        <Header>
+          <Lang xml:lang="ja">〈効能共通〉</Lang>
+        </Header>
+        <OrderedList numberContinued="false">
+          <Item id="HDR_ImportantPrecautions_1" heading="free">
+            <Detail>
+              <Lang xml:lang="ja">まれに重篤な乳酸アシドーシスを起こすことがある。リスク因子としては、腎機能障害、肝機能障害、低酸素血症を伴いやすい状態、脱水（利尿作用を有する薬剤の併用を含む）、過度のアルコール摂取、感染症、高齢者等が知られている。特に、脱水、過度のアルコール摂取等により患者の状態が急変することもあるので、以下の点に注意すること。<HeaderRef ref="HDR_Warnings_1" />,<HeaderRef ref="HDR_Warnings_2" />,<HeaderRef ref="HDR_ContraIndications_3" />,<HeaderRef ref="HDR_SeriousAdverse_1" /></Lang>
+            </Detail>
+            <SimpleList>
+              <Item>
+                <Detail>
+                  <Lang xml:lang="ja">(1)本剤の投与開始前及びその後も投与中は定期的に、腎機能（eGFR等）及び肝機能を確認するとともに、患者の状態に十分注意して投与の適否及び投与量の調節を検討すること。なお、高齢者等、特に慎重な経過観察が必要な場合には、より頻回に確認すること。<HeaderRef ref="HDR_ContraIndications_1" />,<HeaderRef ref="HDR_InfoPrecautionsDosage" />,<HeaderRef ref="HDR_PatientsWithRenalImpairment" />,<HeaderRef ref="HDR_PatientsWithHepaticImpairment" />,<HeaderRef ref="HDR_UseInTheElderly" /></Lang>
+                </Detail>
+              </Item>
+              <Item>
+                <Detail>
+                  <Lang xml:lang="ja">(2)脱水症状があらわれた場合には投与を中止し、適切な処置を行うこと。利尿作用を有する薬剤（利尿剤、SGLT2阻害剤等）との併用時には、特に脱水に注意すること。<HeaderRef ref="HDR_ContraIndications_1" />,<HeaderRef ref="HDR_PrecautionsForCombinations" /></Lang>
+                </Detail>
+              </Item>
+              <Item>
+                <Detail>
+                  <Lang xml:lang="ja">(3)本剤の投与開始時及びその後も投与中は適切に、以下の内容を患者及びその家族に十分指導すること。</Lang>
+                </Detail>
+                <UnorderedList>
+                  <Item>
+                    <Detail>
+                      <Lang xml:lang="ja">過度のアルコール摂取を避けること。<HeaderRef ref="HDR_ContraIndications_1" />,<HeaderRef ref="HDR_ContraIndicatedCombinations" /></Lang>
+                    </Detail>
+                  </Item>
+                  <Item>
+                    <Detail>
+                      <Lang xml:lang="ja">発熱、下痢、嘔吐、食事摂取不良等の体調不良（シックデイ）の時は、脱水状態が懸念されるため、いったん服用を中止し、医師に相談すること。<HeaderRef ref="HDR_ContraIndications_1" />,<HeaderRef ref="HDR_UseInPatientsWithComplicationsOrHistoryOfDiseasesEtc_2" /></Lang>
+                    </Detail>
+                  </Item>
+                  <Item>
+                    <Detail>
+                      <Lang xml:lang="ja">乳酸アシドーシスの症状（胃腸障害、倦怠感、筋肉痛、過呼吸等）があらわれた場合には、直ちに受診すること。<HeaderRef ref="HDR_SeriousAdverse_1" /></Lang>
+                    </Detail>
+                  </Item>
+                </UnorderedList>
+              </Item>
+              <Item>
+                <Detail>
+                  <Lang xml:lang="ja">(4)ヨード造影剤を用いて検査を行う患者においては、本剤の併用により乳酸アシドーシスを起こすことがあるので、検査前は本剤の投与を一時的に中止すること（ただし、緊急に検査を行う必要がある場合を除く）。ヨード造影剤投与後48時間は本剤の投与を再開しないこと。なお、投与再開時には、患者の状態に注意すること。<HeaderRef ref="HDR_PrecautionsForCombinations" /></Lang>
+                </Detail>
+              </Item>
+            </SimpleList>
+          </Item>
+          <Item id="HDR_ImportantPrecautions_3" heading="free">
+            <Detail>
+              <Lang xml:lang="ja">低血糖症状を起こすことがあるので、高所作業、自動車の運転等に従事している患者に投与するときには注意すること。<HeaderRef ref="HDR_SeriousAdverse_2" /></Lang>
+            </Detail>
+          </Item>
+          <Item id="HDR_ImportantPrecautions_4" heading="free">
+            <Detail>
+              <Lang xml:lang="ja">本剤の使用にあたっては、患者及びその家族に対し低血糖症状及びその対処方法について十分説明すること。<HeaderRef ref="HDR_UseInPatientsWithComplicationsOrHistoryOfDiseasesEtc_1" />,<HeaderRef ref="HDR_SeriousAdverse_2" /></Lang>
+            </Detail>
+          </Item>
+        </OrderedList>
+      </Item>
+      <Item>
+        <Header>
+          <Lang xml:lang="ja">〈2型糖尿病〉</Lang>
+        </Header>
+        <OrderedList numberContinued="true">
+          <Item id="HDR_PMDA_ImportantPrecautions_20220920113045_14" heading="free">
+            <Detail>
+              <Lang xml:lang="ja">投与する場合には、少量より開始し、血糖値、尿糖等を定期的に検査し、薬剤の効果を確かめ、本剤を3～4ヵ月投与しても効果が不十分な場合には、速やかに他の治療法への切り替えを行うこと。</Lang>
+            </Detail>
+          </Item>
+          <Item id="HDR_PMDA_ImportantPrecautions_20220920113045_15" heading="free">
+            <Detail>
+              <Lang xml:lang="ja">本剤とイメグリミン塩酸塩は作用機序の一部が共通している可能性があること、また、イメグリミン塩酸塩の国内臨床試験<ReferenceBookRef ref="DOC_01" />において、ビグアナイド系薬剤と併用した場合、他の糖尿病用薬との併用療法と比較して消化器症状が多く認められたとの報告があることから、併用薬剤の選択の際には留意すること。<HeaderRef ref="HDR_PrecautionsForCombinations" /></Lang>
+            </Detail>
+          </Item>
+        </OrderedList>
+      </Item>
+      <Item>
+        <Header>
+          <Lang xml:lang="ja">〈多嚢胞性卵巣症候群における排卵誘発、多嚢胞性卵巣症候群の生殖補助医療における調節卵巣刺激〉</Lang>
+        </Header>
+        <OrderedList numberContinued="true">
+          <Item id="HDR_ImportantPrecautions_5" heading="free">
+            <Detail modified="前回">
+              <Lang xml:lang="ja">本剤は、不妊治療に十分な知識と経験のある医師のもとで使用すること。本剤投与により予想されるリスク及び妊娠初期の本剤の服用を避けるための服用中止時期について、あらかじめ患者に説明を行うこと。<HeaderRef ref="HDR_ContraIndications_5" />,<HeaderRef ref="HDR_MalesAndFemalesOfReproductivePotential" />,<HeaderRef ref="HDR_UseInPregnant" /></Lang>
+            </Detail>
+          </Item>
+          <Item id="HDR_PMDA_ImportantPrecautions_20220920113045_17" heading="free">
+            <Detail modified="前回">
+              <Lang xml:lang="ja">患者に対しては、あらかじめ以下の点を説明すること。</Lang>
+            </Detail>
+            <UnorderedList>
+              <Item>
+                <Detail>
+                  <Lang xml:lang="ja">本剤との関連は明確ではないが、本剤を用いた不妊治療において、卵巣過剰刺激症候群があらわれることがあるので、自覚症状（下腹部痛、下腹部緊迫感、悪心、腰痛等）や急激な体重増加が認められた場合には直ちに医師等に相談すること。</Lang>
+                </Detail>
+              </Item>
+              <Item>
+                <Detail>
+                  <Lang xml:lang="ja">多嚢胞性卵巣症候群における排卵誘発に本剤を用いた場合、卵巣過剰刺激の結果として多胎妊娠となる可能性があること。</Lang>
+                </Detail>
+              </Item>
+            </UnorderedList>
+          </Item>
+        </OrderedList>
+      </Item>
+    </SimpleList>
+  </ImportantPrecautions>
+  <!--９.特定の背景を有する患者に関する注意-->
+  <UseInSpecificPopulations id="HDR_UseInSpecificPopulations" heading="fixing">
+    <!--９.１ 合併症・既往歴等のある患者-->
+    <UseInPatientsWithComplicationsOrHistoryOfDiseasesEtc id="HDR_UseInPatientsWithComplicationsOrHistoryOfDiseasesEtc" heading="fixing">
+      <OrderedList numberContinued="false">
+        <Item id="HDR_UseInPatientsWithComplicationsOrHistoryOfDiseasesEtc_1" heading="free">
+          <Header>
+            <Lang xml:lang="ja">低血糖を起こすおそれのある以下の患者又は状態</Lang>
+          </Header>
+          <UnorderedList>
+            <Item>
+              <Detail>
+                <Lang xml:lang="ja">不規則な食事摂取、食事摂取量の不足</Lang>
+              </Detail>
+            </Item>
+            <Item>
+              <Detail>
+                <Lang xml:lang="ja">激しい筋肉運動<?enter?><HeaderRef ref="HDR_ImportantPrecautions_4" />,<HeaderRef ref="HDR_SeriousAdverse_2" /></Lang>
+              </Detail>
+            </Item>
+          </UnorderedList>
+        </Item>
+        <Item id="HDR_UseInPatientsWithComplicationsOrHistoryOfDiseasesEtc_2" heading="free">
+          <Header>
+            <Lang xml:lang="ja">感染症</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">乳酸アシドーシスを起こすおそれがある。<HeaderRef ref="HDR_ImportantPrecautions_1" />,<HeaderRef ref="HDR_SeriousAdverse_1" /></Lang>
+          </Detail>
+        </Item>
+      </OrderedList>
+    </UseInPatientsWithComplicationsOrHistoryOfDiseasesEtc>
+    <!--９.２ 腎機能障害患者-->
+    <PatientsWithRenalImpairment id="HDR_PatientsWithRenalImpairment" heading="fixing">
+      <Detail>
+        <Lang xml:lang="ja">腎臓における排泄が減少しメトホルミンの血中濃度が上昇するため、乳酸アシドーシス等の発現リスクが高くなる可能性がある。<HeaderRef ref="HDR_Warnings_1" />,<HeaderRef ref="HDR_Warnings_2" />,<HeaderRef ref="HDR_UseInTheElderly" />,<HeaderRef ref="HDR_SeriousAdverse_1" />,<HeaderRef ref="HDR_SpecificPopulation_1" /></Lang>
+      </Detail>
+      <OrderedList numberContinued="false">
+        <Item id="HDR_PMDA_PatientsWithRenalImpairment_20220920113045_20" heading="free">
+          <Header>
+            <Lang xml:lang="ja">重度の腎機能障害のある患者（eGFR 30mL/min/1.73m<Sup>2</Sup>未満）又は透析患者（腹膜透析を含む）</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">投与しないこと。<HeaderRef ref="HDR_ContraIndications_1" /></Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_PMDA_PatientsWithRenalImpairment_20220920113045_21" heading="free">
+          <Header>
+            <Lang xml:lang="ja">中等度の腎機能障害のある患者（eGFR 30mL/min/1.73m<Sup>2</Sup>以上60mL/min/1.73m<Sup>2</Sup>未満）</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">慎重に経過を観察し、投与の適否及び投与量の調節を検討すること。特に、eGFRが30mL/min/1.73m<Sup>2</Sup>以上45mL/min/1.73m<Sup>2</Sup>未満の患者には、治療上の有益性が危険性を上回ると判断される場合にのみ投与すること。<HeaderRef ref="HDR_InfoPrecautionsDosage" />,<HeaderRef ref="HDR_ImportantPrecautions_1" /></Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_PMDA_PatientsWithRenalImpairment_20220920113045_22" heading="free">
+          <Header>
+            <Lang xml:lang="ja">軽度の腎機能障害のある患者</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">
+              <HeaderRef ref="HDR_ImportantPrecautions_1" />
+            </Lang>
+          </Detail>
+        </Item>
+      </OrderedList>
+    </PatientsWithRenalImpairment>
+    <!--９.３ 肝機能障害患者-->
+    <PatientsWithHepaticImpairment id="HDR_PatientsWithHepaticImpairment" heading="fixing">
+      <Detail>
+        <Lang xml:lang="ja">肝臓における乳酸の代謝能が低下し、乳酸アシドーシスの発現リスクが高くなる可能性がある。<HeaderRef ref="HDR_Warnings_1" />,<HeaderRef ref="HDR_Warnings_2" />,<HeaderRef ref="HDR_UseInTheElderly" />,<HeaderRef ref="HDR_SeriousAdverse_1" />,<HeaderRef ref="HDR_EfficacyAndSafety_1" />,<HeaderRef ref="HDR_EfficacyAndSafety_2" /></Lang>
+      </Detail>
+      <OrderedList numberContinued="false">
+        <Item id="HDR_PMDA_PatientsWithHepaticImpairment_20220920113045_23" heading="free">
+          <Header>
+            <Lang xml:lang="ja">重度の肝機能障害のある患者</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">投与しないこと。<HeaderRef ref="HDR_ContraIndications_1" /></Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_PMDA_PatientsWithHepaticImpairment_20220920113045_24" heading="free">
+          <Header>
+            <Lang xml:lang="ja">軽度～中等度の肝機能障害のある患者</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">
+              <HeaderRef ref="HDR_ImportantPrecautions_1" />
+            </Lang>
+          </Detail>
+        </Item>
+      </OrderedList>
+    </PatientsWithHepaticImpairment>
+    <!--９.４ 生殖能を有する者-->
+    <MalesAndFemalesOfReproductivePotential id="HDR_MalesAndFemalesOfReproductivePotential" heading="fixing">
+      <SimpleList>
+        <Item>
+          <Header modified="前回">
+            <Lang xml:lang="ja">〈多嚢胞性卵巣症候群における排卵誘発、多嚢胞性卵巣症候群の生殖補助医療における調節卵巣刺激〉</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">妊娠初期の投与を避けるため、以下の対応を行うこと。<HeaderRef ref="HDR_ContraIndications_5" />,<HeaderRef ref="HDR_ImportantPrecautions_5" />,<HeaderRef ref="HDR_UseInPregnant" /></Lang>
+          </Detail>
+          <UnorderedList>
+            <Item>
+              <Detail>
+                <Lang xml:lang="ja">各治療周期における本剤投与開始前に妊娠していないことを確認すること。</Lang>
+              </Detail>
+            </Item>
+            <Item>
+              <Detail>
+                <Lang xml:lang="ja">多嚢胞性卵巣症候群における排卵誘発においては、患者に、本剤投与前少なくとも1ヵ月間及び治療期間中は基礎体温を必ず記録させ、排卵の有無を確認すること。</Lang>
+              </Detail>
+            </Item>
+            <Item>
+              <Detail>
+                <Lang xml:lang="ja">排卵後又は採卵後に服用を継続することがないよう、服用中止時期を患者に指示すること。</Lang>
+              </Detail>
+            </Item>
+          </UnorderedList>
+        </Item>
+      </SimpleList>
+    </MalesAndFemalesOfReproductivePotential>
+    <!--９.５ 妊婦-->
+    <UseInPregnant id="HDR_UseInPregnant" heading="fixing">
+      <Detail modified="前回">
+        <Lang xml:lang="ja">妊婦又は妊娠している可能性のある女性には投与しないこと。動物実験（ラット、ウサギ）で胎児への移行が認められており、一部の動物実験（ラット）で催奇形作用が報告されている<ReferenceBookRef ref="DOC_02" />。また、妊婦は乳酸アシドーシスを起こしやすい。<HeaderRef ref="HDR_ContraIndications_5" />,<HeaderRef ref="HDR_ImportantPrecautions_5" />,<HeaderRef ref="HDR_MalesAndFemalesOfReproductivePotential" />,<HeaderRef ref="HDR_SeriousAdverse_1" /></Lang>
+      </Detail>
+    </UseInPregnant>
+    <!--９.６ 授乳婦-->
+    <UseInNursing id="HDR_UseInNursing" heading="fixing">
+      <Detail>
+        <Lang xml:lang="ja">治療上の有益性及び母乳栄養の有益性を考慮し、授乳の継続又は中止を検討すること。動物実験（ラット）で乳汁中への移行が認められている。</Lang>
+      </Detail>
+    </UseInNursing>
+    <!--９.７ 小児等-->
+    <PediatricUse id="HDR_PediatricUse" heading="fixing">
+      <Detail>
+        <Lang xml:lang="ja">低出生体重児、新生児、乳児、幼児を対象とした臨床試験は実施していない。10歳未満の小児への使用経験は限られている。</Lang>
+      </Detail>
+    </PediatricUse>
+    <!--９.８ 高齢者-->
+    <UseInTheElderly id="HDR_UseInTheElderly" heading="fixing">
+      <Detail>
+        <Lang xml:lang="ja">高齢者では、腎機能、肝機能等が低下していることが多く、また脱水症状を起こしやすい。これらの状態では乳酸アシドーシスを起こしやすいので、以下の点に注意すること。<HeaderRef ref="HDR_Warnings_2" />,<HeaderRef ref="HDR_ImportantPrecautions_1" />,<HeaderRef ref="HDR_PatientsWithRenalImpairment" />,<HeaderRef ref="HDR_PatientsWithHepaticImpairment" />,<HeaderRef ref="HDR_SeriousAdverse_1" />,<HeaderRef ref="HDR_SpecificPopulation_2" /></Lang>
+      </Detail>
+      <UnorderedList>
+        <Item>
+          <Detail>
+            <Lang xml:lang="ja">本剤の投与開始前、投与中は定期的に、特に慎重な経過観察が必要な場合にはより頻回に腎機能や肝機能を確認するなど十分に観察しながら慎重に投与すること。本剤はほとんど代謝されず、未変化体のまま尿中に排泄される。また、肝機能の低下により乳酸の代謝能が低下する。<HeaderRef ref="HDR_Metabolism" />,<HeaderRef ref="HDR_Excretion" /></Lang>
+          </Detail>
+        </Item>
+        <Item>
+          <Detail>
+            <Lang xml:lang="ja">腎機能や脱水症状等患者の状態に十分注意して投与の中止や減量を検討すること。特に75歳以上の高齢者では、本剤投与の適否をより慎重に判断すること。乳酸アシドーシスが多く報告されており、予後も不良であることが多い。国内における本剤の承認時までの臨床試験において、75歳以上の高齢者への1日1,500mgを超える用量の使用経験は限られている。<HeaderRef ref="HDR_EfficacyAndSafety_1" /></Lang>
+          </Detail>
+        </Item>
+        <Item>
+          <Detail>
+            <Lang xml:lang="ja">血清クレアチニン値が正常範囲内であっても、eGFR等も考慮して、慎重に患者の状態を観察すること。年齢によっては実際の腎機能が低下していることがある。</Lang>
+          </Detail>
+        </Item>
+      </UnorderedList>
+    </UseInTheElderly>
+  </UseInSpecificPopulations>
+  <!--１０.相互作用-->
+  <Interactions id="HDR_Interactions" heading="fixing">
+    <SummaryOfCombination>
+      <Item heading="free">
+        <Detail modified="今回">
+          <Lang xml:lang="ja">本剤はほとんど代謝されず、未変化体のまま、主にOCT2を介して尿中に排泄される。<HeaderRef ref="HDR_Metabolism" />,<HeaderRef ref="HDR_Excretion" /></Lang>
+        </Detail>
+      </Item>
+    </SummaryOfCombination>
+    <!--１０.１ 併用禁忌（併用しないこと）-->
+    <ContraIndicatedCombinations id="HDR_ContraIndicatedCombinations" heading="fixing">
+      <ContraIndicatedCombination>
+        <ContraIndication>
+          <WidthDefinition>
+            <Col width="210px" />
+            <Col width="265px" />
+            <Col width="177px" />
+          </WidthDefinition>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">アルコール（過度の摂取）<?enter?><HeaderRef ref="HDR_ContraIndications_1" />,<HeaderRef ref="HDR_ImportantPrecautions_1" />,<HeaderRef ref="HDR_SeriousAdverse_1" /></Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">乳酸アシドーシスを起こすことがある。本剤の投与中は過度のアルコール摂取（飲酒）を避けること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">肝臓における乳酸の代謝能が低下する。また、脱水状態を来すことがある。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+        </ContraIndication>
+      </ContraIndicatedCombination>
+    </ContraIndicatedCombinations>
+    <!--１０.２ 併用注意（併用に注意すること）-->
+    <PrecautionsForCombinations id="HDR_PrecautionsForCombinations" heading="fixing">
+      <PrecautionsForCombination>
+        <Instructions>
+          <SimpleList>
+            <Item>
+              <Header>
+                <Lang xml:lang="ja">10.2.1　乳酸アシドーシスを起こすことがある薬剤</Lang>
+              </Header>
+            </Item>
+          </SimpleList>
+        </Instructions>
+        <PrecautionsForCombi>
+          <WidthDefinition totalWidth="100%">
+            <Col width="27.29%" />
+            <Col width="42.85%" />
+            <Col width="28.84%" />
+          </WidthDefinition>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">ヨード造影剤<?enter?><HeaderRef ref="HDR_ImportantPrecautions_1" />,<HeaderRef ref="HDR_SeriousAdverse_1" /></Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">併用により乳酸アシドーシスを起こすことがある。<?enter?>ヨード造影剤を用いて検査を行う場合には、本剤の投与を一時的に中止すること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">腎機能が低下し、本剤の排泄が低下することが考えられている。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">腎毒性の強い抗生物質</Lang>
+              </Detail>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">ゲンタマイシン等</Lang>
+                  </Detail>
+                </Item>
+              </SimpleList>
+              <Detail>
+                <Lang xml:lang="ja">
+                  <HeaderRef ref="HDR_SeriousAdverse_1" />
+                </Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">併用により乳酸アシドーシスを起こすことがある。併用する場合は本剤の投与を一時的に減量・中止するなど適切な処置を行うこと。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">腎機能が低下し、本剤の排泄が低下することが考えられている。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">利尿作用を有する薬剤</Lang>
+              </Detail>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">利尿剤<?enter?>SGLT2阻害剤　等</Lang>
+                  </Detail>
+                </Item>
+              </SimpleList>
+              <Detail>
+                <Lang xml:lang="ja">
+                  <HeaderRef ref="HDR_ImportantPrecautions_1" />,<HeaderRef ref="HDR_SeriousAdverse_1" /></Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">脱水により乳酸アシドーシスを起こすことがある。脱水症状があらわれた場合には、本剤の投与を中止し、適切な処置を行うこと。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">利尿作用を有する薬剤により、体液量が減少し脱水状態になることがある。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+        </PrecautionsForCombi>
+      </PrecautionsForCombination>
+      <PrecautionsForCombination>
+        <Instructions>
+          <SimpleList>
+            <Item>
+              <Header>
+                <Lang xml:lang="ja">10.2.2　血糖降下作用を増強する薬剤</Lang>
+              </Header>
+            </Item>
+          </SimpleList>
+        </Instructions>
+        <PrecautionsForCombi>
+          <WidthDefinition totalWidth="100%">
+            <Col width="32.31%" />
+            <Col width="43.49%" />
+            <Col width="23.11%" />
+          </WidthDefinition>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">糖尿病用薬</Lang>
+              </Detail>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">インスリン製剤<?enter?>スルホニルウレア剤<?enter?>速効型インスリン分泌促進薬<?enter?>α-グルコシダーゼ阻害剤<?enter?>チアゾリジン系薬剤<?enter?>DPP-4阻害剤<?enter?>GLP-1受容体作動薬<?enter?>SGLT2阻害剤</Lang>
+                  </Detail>
+                </Item>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">イメグリミン塩酸塩　等</Lang>
+                  </Detail>
+                </Item>
+              </SimpleList>
+              <Detail>
+                <Lang xml:lang="ja">
+                  <HeaderRef ref="HDR_SeriousAdverse_2" />
+                </Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">併用により低血糖が起こることがある。<?enter?>スルホニルウレア剤併用時に低血糖のリスクが増加するおそれがある。<?enter?>患者の状態を十分観察しながら投与する。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">併用による血糖降下作用の増強。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">たん白同化ホルモン剤</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">併用により低血糖が起こることがある。<?enter?>スルホニルウレア剤併用時に低血糖のリスクが増加するおそれがある。<?enter?>患者の状態を十分観察しながら投与する。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">機序不明。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">サリチル酸剤</Lang>
+              </Detail>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">アスピリン等</Lang>
+                  </Detail>
+                </Item>
+              </SimpleList>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">併用により低血糖が起こることがある。<?enter?>スルホニルウレア剤併用時に低血糖のリスクが増加するおそれがある。<?enter?>患者の状態を十分観察しながら投与する。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">サリチル酸剤の血糖降下作用が考えられている。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">β遮断剤</Lang>
+              </Detail>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">プロプラノロール等</Lang>
+                  </Detail>
+                </Item>
+              </SimpleList>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">併用により低血糖が起こることがある。<?enter?>スルホニルウレア剤併用時に低血糖のリスクが増加するおそれがある。<?enter?>患者の状態を十分観察しながら投与する。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">β遮断作用によりアドレナリンを介した低血糖からの回復を遅らせることが考えられている。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">モノアミン酸化酵素阻害剤</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">併用により低血糖が起こることがある。<?enter?>スルホニルウレア剤併用時に低血糖のリスクが増加するおそれがある。<?enter?>患者の状態を十分観察しながら投与する。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">モノアミン酸化酵素阻害剤によるインスリン分泌促進、糖新生抑制が考えられている。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+        </PrecautionsForCombi>
+      </PrecautionsForCombination>
+      <PrecautionsForCombination>
+        <Instructions>
+          <SimpleList>
+            <Item>
+              <Header>
+                <Lang xml:lang="ja">10.2.3　血糖降下作用を減弱する薬剤</Lang>
+              </Header>
+            </Item>
+          </SimpleList>
+        </Instructions>
+        <PrecautionsForCombi>
+          <WidthDefinition totalWidth="100%">
+            <Col width="23.28%" />
+            <Col width="48.48%" />
+            <Col width="27.05%" />
+          </WidthDefinition>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">アドレナリン</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">併用により血糖降下作用が減弱することがある。<?enter?>患者の状態を十分観察しながら投与すること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">アドレナリンによる末梢での糖利用抑制、肝での糖新生促進、インスリン分泌抑制が考えられている。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">副腎皮質ホルモン</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">併用により血糖降下作用が減弱することがある。<?enter?>患者の状態を十分観察しながら投与すること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">副腎皮質ホルモンによる肝での糖新生促進等が考えられている。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">甲状腺ホルモン</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">併用により血糖降下作用が減弱することがある。<?enter?>患者の状態を十分観察しながら投与すること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">甲状腺ホルモンは糖代謝全般に作用し血糖値を変動させると考えられている。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">卵胞ホルモン</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">併用により血糖降下作用が減弱することがある。<?enter?>患者の状態を十分観察しながら投与すること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">卵胞ホルモンには耐糖能を変化させ、血糖を上昇させる作用が認められている。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">利尿剤</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">併用により血糖降下作用が減弱することがある。<?enter?>患者の状態を十分観察しながら投与すること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">利尿剤によるカリウム喪失によりインスリン分泌の低下が考えられている。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">ピラジナミド</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">併用により血糖降下作用が減弱することがある。<?enter?>患者の状態を十分観察しながら投与すること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">機序不明。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">イソニアジド</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">併用により血糖降下作用が減弱することがある。<?enter?>患者の状態を十分観察しながら投与すること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">イソニアジドによる炭水化物代謝阻害が考えられている。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">ニコチン酸</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">併用により血糖降下作用が減弱することがある。<?enter?>患者の状態を十分観察しながら投与すること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">ニコチン酸による血糖上昇作用が考えられている。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">フェノチアジン系薬剤</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">併用により血糖降下作用が減弱することがある。<?enter?>患者の状態を十分観察しながら投与すること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">フェノチアジン系薬剤によるインスリン分泌抑制、副腎からのアドレナリン遊離が考えられている。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+        </PrecautionsForCombi>
+      </PrecautionsForCombination>
+      <PrecautionsForCombination>
+        <Instructions>
+          <SimpleList>
+            <Item>
+              <Header>
+                <Lang xml:lang="ja">10.2.4　その他</Lang>
+              </Header>
+            </Item>
+          </SimpleList>
+        </Instructions>
+        <PrecautionsForCombi>
+          <WidthDefinition totalWidth="100%">
+            <Col width="24.69%" />
+            <Col width="38.15%" />
+            <Col width="35.65%" />
+          </WidthDefinition>
+          <Drug>
+            <DrugName>
+              <Detail modified="今回">
+                <Lang xml:lang="ja">OCT2、MATE1、又はMATE2-Kを阻害する薬剤</Lang>
+              </Detail>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">シメチジン<?enter?>ドルテグラビル<?enter?>ビクテグラビル<?enter?>バンデタニブ</Lang>
+                  </Detail>
+                </Item>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">イサブコナゾニウム硫酸塩</Lang>
+                  </Detail>
+                </Item>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">ピミテスピブ　等</Lang>
+                  </Detail>
+                </Item>
+              </SimpleList>
+              <Detail>
+                <Lang xml:lang="ja">
+                  <HeaderRef ref="HDR_DrugAndDrugInteractions_1" />,<HeaderRef ref="HDR_DrugAndDrugInteractions_2" />,<HeaderRef ref="HDR_DrugAndDrugInteractions_3" /></Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">本剤の血中濃度が上昇し、作用が増強するおそれがある。観察を十分に行い、必要に応じて本剤を減量するなど慎重に投与すること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">OCT2、MATE1、又はMATE2-Kを介した本剤の腎排泄が阻害されると考えられている。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">イメグリミン塩酸塩<?enter?><HeaderRef ref="HDR_PMDA_ImportantPrecautions_20220920113045_15" /></Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">消化器症状の発現に注意すること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">特に併用初期に多く発現する傾向が認められている。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+        </PrecautionsForCombi>
+      </PrecautionsForCombination>
+    </PrecautionsForCombinations>
+  </Interactions>
+  <!--１１.副作用-->
+  <AdverseEvents id="HDR_AdverseEvents" heading="fixing">
+    <CommonPrecautionsForAdverse>
+      <Lang xml:lang="ja">次の副作用があらわれることがあるので、観察を十分に行い、異常が認められた場合には投与を中止するなど適切な処置を行うこと。</Lang>
+    </CommonPrecautionsForAdverse>
+    <!--１１.１ 重大な副作用-->
+    <SeriousAdverseEvents id="HDR_SeriousAdverseEvents" heading="fixing">
+      <SeriousAdverse>
+        <OrderedList numberContinued="false">
+          <Item heading="free" id="HDR_SeriousAdverse_1">
+            <Header>
+              <Lang xml:lang="ja">乳酸アシドーシス（頻度不明）</Lang>
+            </Header>
+            <Detail>
+              <Lang xml:lang="ja">乳酸アシドーシス（血中乳酸値の上昇、乳酸/ピルビン酸比の上昇、血液pHの低下等を示す）は予後不良のことが多い。一般的に発現する臨床症状は様々であるが、胃腸症状、倦怠感、筋肉痛、過呼吸等の症状がみられることが多く、これらの症状があらわれた場合には直ちに投与を中止し、必要な検査を行うこと。なお、乳酸アシドーシスの疑いが大きい場合には、乳酸の測定結果等を待つことなく適切な処置を行うこと。<HeaderRef ref="HDR_Warnings_1" />,<HeaderRef ref="HDR_Warnings_2" />,<HeaderRef ref="HDR_ContraIndications_1" />,<HeaderRef ref="HDR_ContraIndications_3" />,<HeaderRef ref="HDR_InfoPrecautionsDosage" />,<HeaderRef ref="HDR_ImportantPrecautions_1" />,<HeaderRef ref="HDR_UseInPatientsWithComplicationsOrHistoryOfDiseasesEtc_2" />,<HeaderRef ref="HDR_PatientsWithRenalImpairment" />,<HeaderRef ref="HDR_PatientsWithHepaticImpairment" />,<HeaderRef ref="HDR_UseInPregnant" />,<HeaderRef ref="HDR_UseInTheElderly" />,<HeaderRef ref="HDR_ContraIndicatedCombinations" />,<HeaderRef ref="HDR_PrecautionsForCombinations" />,<HeaderRef ref="HDR_PMDA_OverDosage_20220920113045_29" /></Lang>
+            </Detail>
+          </Item>
+          <Item heading="free" id="HDR_SeriousAdverse_2">
+            <Header>
+              <Lang xml:lang="ja">低血糖（5%以上）</Lang>
+            </Header>
+            <Detail>
+              <Lang xml:lang="ja">低血糖症状（初期症状:脱力感、高度の空腹感、発汗等）が認められた場合には糖質を含む食品を摂取するなど適切な処置を行うこと。ただし、α-グルコシダーゼ阻害剤との併用により低血糖症状が認められた場合にはブドウ糖を投与すること。<HeaderRef ref="HDR_ContraIndications_4" />,<HeaderRef ref="HDR_ImportantPrecautions_3" />,<HeaderRef ref="HDR_ImportantPrecautions_4" />,<HeaderRef ref="HDR_UseInPatientsWithComplicationsOrHistoryOfDiseasesEtc_1" />,<HeaderRef ref="HDR_PrecautionsForCombinations" />,<HeaderRef ref="HDR_EfficacyAndSafety_1" /></Lang>
+            </Detail>
+          </Item>
+          <Item heading="free" id="HDR_PMDA_SeriousAdverseEvents_20220920113045_27">
+            <Header>
+              <Lang xml:lang="ja">肝機能障害、黄疸（頻度不明）</Lang>
+            </Header>
+            <Detail>
+              <Lang xml:lang="ja">AST、ALT、ALP、γ-GTP、ビリルビンの著しい上昇等を伴う肝機能障害、黄疸があらわれることがある。</Lang>
+            </Detail>
+          </Item>
+          <Item heading="free" id="HDR_PMDA_SeriousAdverseEvents_20220920113045_28">
+            <Header>
+              <Lang xml:lang="ja">横紋筋融解症（頻度不明）</Lang>
+            </Header>
+            <Detail>
+              <Lang xml:lang="ja">筋肉痛、脱力感、CK上昇、血中及び尿中ミオグロビン上昇を特徴とする横紋筋融解症があらわれることがある。</Lang>
+            </Detail>
+          </Item>
+        </OrderedList>
+      </SeriousAdverse>
+    </SeriousAdverseEvents>
+    <!--１１.２ その他の副作用-->
+    <OtherAdverseEvents id="HDR_OtherAdverseEvents" heading="fixing">
+      <OtherAdverseEvent>
+        <OtherAdverse>
+          <WidthDefinition totalWidth="100%">
+            <Col width="14.1%" />
+            <Col width="19.06%" />
+            <Col width="12.01%" />
+            <Col width="40.41%" />
+            <Col width="13%" />
+          </WidthDefinition>
+          <CategoryDefinition>
+            <Category id="OTHER1_TYPE1">
+              <Detail>
+                <Lang xml:lang="ja">消化器<Sup>注1）</Sup></Lang>
+              </Detail>
+            </Category>
+            <Category id="OTHER1_TYPE2">
+              <Detail>
+                <Lang xml:lang="ja">血液</Lang>
+              </Detail>
+            </Category>
+            <Category id="OTHER1_TYPE3">
+              <Detail>
+                <Lang xml:lang="ja">過敏症</Lang>
+              </Detail>
+            </Category>
+            <Category id="OTHER1_TYPE4">
+              <Detail>
+                <Lang xml:lang="ja">肝臓</Lang>
+              </Detail>
+            </Category>
+            <Category id="OTHER1_TYPE5">
+              <Detail>
+                <Lang xml:lang="ja">腎臓</Lang>
+              </Detail>
+            </Category>
+            <Category id="OTHER1_TYPE6">
+              <Detail>
+                <Lang xml:lang="ja">代謝異常</Lang>
+              </Detail>
+            </Category>
+            <Category id="OTHER1_TYPE7">
+              <Detail>
+                <Lang xml:lang="ja">その他</Lang>
+              </Detail>
+            </Category>
+          </CategoryDefinition>
+          <FrequencyDefinition>
+            <Frequency id="OTHER1_FRQ1">
+              <Detail>
+                <Lang xml:lang="ja">5%以上</Lang>
+              </Detail>
+            </Frequency>
+            <Frequency id="OTHER1_FRQ2">
+              <Detail>
+                <Lang xml:lang="ja">1～5%未満</Lang>
+              </Detail>
+            </Frequency>
+            <Frequency id="OTHER1_FRQ3">
+              <Detail>
+                <Lang xml:lang="ja">1%未満</Lang>
+              </Detail>
+            </Frequency>
+            <Frequency id="OTHER1_FRQ4">
+              <Detail>
+                <Lang xml:lang="ja">頻度不明</Lang>
+              </Detail>
+            </Frequency>
+          </FrequencyDefinition>
+          <AdverseReactions>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE1" frequencyRef="OTHER1_FRQ1">
+              <Detail>
+                <Lang xml:lang="ja">下痢（40.5%）、悪心（15.4%）、食欲不振（11.8%）、腹痛（11.5%）、嘔吐</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE1" frequencyRef="OTHER1_FRQ2">
+              <Detail>
+                <Lang xml:lang="ja">消化不良、腹部膨満感、便秘、胃炎</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE1" frequencyRef="OTHER1_FRQ3">
+              <Detail>
+                <Lang xml:lang="ja">胃腸障害、放屁増加</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE2" frequencyRef="OTHER1_FRQ3">
+              <Detail>
+                <Lang xml:lang="ja">貧血、白血球増加、好酸球増加、白血球減少</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE2" frequencyRef="OTHER1_FRQ4">
+              <Detail>
+                <Lang xml:lang="ja">血小板減少</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE3" frequencyRef="OTHER1_FRQ3">
+              <Detail>
+                <Lang xml:lang="ja">発疹、そう痒</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE4" frequencyRef="OTHER1_FRQ2">
+              <Detail>
+                <Lang xml:lang="ja">肝機能異常</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE5" frequencyRef="OTHER1_FRQ3">
+              <Detail>
+                <Lang xml:lang="ja">BUN上昇、クレアチニン上昇</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE6" frequencyRef="OTHER1_FRQ1">
+              <Detail>
+                <Lang xml:lang="ja">乳酸上昇</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE6" frequencyRef="OTHER1_FRQ2">
+              <Detail>
+                <Lang xml:lang="ja">CK上昇、血中カリウム上昇</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE6" frequencyRef="OTHER1_FRQ3">
+              <Detail>
+                <Lang xml:lang="ja">血中尿酸増加</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE6" frequencyRef="OTHER1_FRQ4">
+              <Detail>
+                <Lang xml:lang="ja">ケトーシス</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE7" frequencyRef="OTHER1_FRQ2">
+              <Detail>
+                <Lang xml:lang="ja">めまい・ふらつき</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE7" frequencyRef="OTHER1_FRQ3">
+              <Detail>
+                <Lang xml:lang="ja">全身倦怠感<Sup>注1）</Sup>、空腹感、眠気、動悸、脱力感、発汗、味覚異常、頭重、頭痛、浮腫、ビタミンB<Sub>12</Sub>減少<Sup>注2）</Sup></Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE7" frequencyRef="OTHER1_FRQ4">
+              <Detail>
+                <Lang xml:lang="ja">筋肉痛<Sup>注1）</Sup></Lang>
+              </Detail>
+            </AdverseReactionDescription>
+          </AdverseReactions>
+        </OtherAdverse>
+        <ExplanatoryNotesForOtherAdverse>
+          <Lang xml:lang="ja">注1）乳酸アシドーシスの初期症状であることもあるので注意すること。<?enter?>注2）長期使用によりビタミンB<Sub>12</Sub>の吸収不良があらわれることがある。</Lang>
+        </ExplanatoryNotesForOtherAdverse>
+      </OtherAdverseEvent>
+    </OtherAdverseEvents>
+  </AdverseEvents>
+  <!--１３.過量投与-->
+  <OverDosage heading="fixing" id="HDR_OverDosage">
+    <OrderedList numberContinued="false">
+      <Item heading="free" id="HDR_PMDA_OverDosage_20220920113045_29">
+        <Header>
+          <Lang xml:lang="ja">症状</Lang>
+        </Header>
+        <Detail>
+          <Lang xml:lang="ja">乳酸アシドーシスが起こることがある。<HeaderRef ref="HDR_SeriousAdverse_1" /></Lang>
+        </Detail>
+      </Item>
+      <Item heading="free" id="HDR_PMDA_OverDosage_20220920113045_30">
+        <Header>
+          <Lang xml:lang="ja">処置</Lang>
+        </Header>
+        <Detail>
+          <Lang xml:lang="ja">アシドーシスの補正（炭酸水素ナトリウム静注等）、輸液（強制利尿）、血液透析等の適切な処置を行う。</Lang>
+        </Detail>
+      </Item>
+    </OrderedList>
+  </OverDosage>
+  <!--１４.適用上の注意-->
+  <PrecautionsForApplication id="HDR_PrecautionsForApplication" heading="fixing">
+    <OtherInformation heading="free" id="HDR_PMDA_PrecautionsForApplication_20191111082441_26">
+      <Header>
+        <Lang xml:lang="ja">薬剤調製時の注意</Lang>
+      </Header>
+      <Detail>
+        <Lang xml:lang="ja">本剤とオルメサルタン メドキソミル製剤等との一包化は避けること。一包化して高温高湿度条件下にて保存した場合、本剤が変色することがある。</Lang>
+      </Detail>
+    </OtherInformation>
+    <OtherInformation heading="free" id="HDR_PMDA_PrecautionsForApplication_20191111082441_27">
+      <Header>
+        <Lang xml:lang="ja">薬剤交付時の注意</Lang>
+      </Header>
+      <Detail>
+        <Lang xml:lang="ja">PTP包装の薬剤はPTPシートから取り出して服用するよう指導すること。PTPシートの誤飲により、硬い鋭角部が食道粘膜へ刺入し、更には穿孔をおこして縦隔洞炎等の重篤な合併症を併発することがある。</Lang>
+      </Detail>
+    </OtherInformation>
+  </PrecautionsForApplication>
+  <!--１５.その他の注意-->
+  <OtherPrecautions id="HDR_OtherPrecautions" heading="fixing">
+    <!--１５.１ 臨床使用に基づく情報-->
+    <InformationBasedOnClinicalUse heading="fixing" id="HDR_InformationBasedOnClinicalUse">
+      <Detail>
+        <Lang xml:lang="ja">インスリン又は経口血糖降下剤の投与中にアンジオテンシン変換酵素阻害剤を投与することにより、低血糖が起こりやすいとの報告がある。</Lang>
+      </Detail>
+    </InformationBasedOnClinicalUse>
+  </OtherPrecautions>
+  <!--１６.薬物動態-->
+  <Pharmacokinetics id="HDR_Pharmacokinetics" heading="fixing">
+    <!--１６.１ 血中濃度-->
+    <BloodLevel id="HDR_BloodLevel" heading="fixing">
+      <OrderedList numberContinued="false">
+        <Item id="HDR_BloodLevel_1" heading="free">
+          <Header>
+            <Lang xml:lang="ja">単回投与</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">健康成人男性にメトホルミン塩酸塩を空腹時に単回経口投与したときの血漿中メトホルミン濃度推移及び薬物動態パラメータは以下のとおりであった。</Lang>
+          </Detail>
+          <Graphic>
+            <GraphicBody gfname="400093_3962002F2027_fig03.gif" />
+          </Graphic>
+          <TblBlock>
+            <WidthDefinition totalWidth="100%">
+              <Col width="20%" />
+              <Col width="20%" />
+              <Col width="20%" />
+              <Col width="20%" />
+              <Col width="20%" />
+            </WidthDefinition>
+            <SimpleTable>
+              <SimpTblRow>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">投与量</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">T<Sub>max</Sub><?enter?>（h）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">C<Sub>max</Sub><?enter?>（ng/mL）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">AUC<Sub>0-48</Sub><?enter?>（ng・h/mL）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">T<Sub>1/2</Sub><?enter?>（h）</Lang>
+                  </Detail>
+                </SimpTblCell>
+              </SimpTblRow>
+              <SimpTblRow>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">250mg（6例）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">1.9 ± 1.1</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">898 ± 168</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">4,861 ± 577</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">2.9 ± 0.6</Lang>
+                  </Detail>
+                </SimpTblCell>
+              </SimpTblRow>
+              <SimpTblRow>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">500mg（6例）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">2.3 ± 0.9</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">1,341 ± 329</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">8,019 ± 2,347</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">4.0 ± 1.4</Lang>
+                  </Detail>
+                </SimpTblCell>
+              </SimpTblRow>
+              <SimpTblRow>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">750mg（12例）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">2.1 ± 0.7</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">2,163 ± 517</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">11,802 ± 2,221</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">4.7 ±1.7</Lang>
+                  </Detail>
+                </SimpTblCell>
+              </SimpTblRow>
+            </SimpleTable>
+            <SimpTblFoot align="left">
+              <Detail>
+                <Lang xml:lang="ja">平均値±標準偏差</Lang>
+              </Detail>
+            </SimpTblFoot>
+          </TblBlock>
+        </Item>
+        <Item id="HDR_BloodLevel_2" heading="free">
+          <Header>
+            <Lang xml:lang="ja">反復投与</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">健康成人男性に1日3回メトホルミン塩酸塩500mgあるいは750mg（各9例）を6日間反復経口投与したとき、血漿中メトホルミン濃度は投与2～4日後には定常状態に達し、反復投与による蓄積性はみられなかった。</Lang>
+          </Detail>
+        </Item>
+      </OrderedList>
+    </BloodLevel>
+    <!--１６.２ 吸収-->
+    <Absorption id="HDR_Absorption" heading="fixing">
+      <OrderedList numberContinued="false">
+        <Item id="HDR_Absorption_1" heading="free">
+          <Header>
+            <Lang xml:lang="ja">食事の影響</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">健康成人男性12例にメトホルミン塩酸塩750mgを食後に単回経口投与したとき、空腹時投与に比べてC<Sub>max</Sub>が約20%低下したが、AUC<Sub>0-48</Sub>及び尿中排泄率に差は認められなかった。<?enter?><?enter?>健康成人男性にメトホルミン塩酸塩500mgを食直前及び食後に単回経口投与したときの薬物動態パラメータは以下のとおりであった。</Lang>
+          </Detail>
+          <TblBlock>
+            <WidthDefinition totalWidth="100%">
+              <Col width="20%" />
+              <Col width="20%" />
+              <Col width="20%" />
+              <Col width="20%" />
+              <Col width="20%" />
+            </WidthDefinition>
+            <SimpleTable>
+              <SimpTblRow>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">投与時期</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">T<Sub>max</Sub><?enter?>（h）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">C<Sub>max</Sub><?enter?>（ng/mL）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">AUC<Sub>0-24</Sub><?enter?>（ng・h/mL）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">T<Sub>1/2</Sub><?enter?>（h）</Lang>
+                  </Detail>
+                </SimpTblCell>
+              </SimpTblRow>
+              <SimpTblRow>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">食直前（12例）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">1.5 ± 0.6</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">1,060 ± 237</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">6,186 ± 1,249</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">4.5 ± 0.8</Lang>
+                  </Detail>
+                </SimpTblCell>
+              </SimpTblRow>
+              <SimpTblRow>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">食後　（12例）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">3.4 ± 0.6</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">1,014 ± 162</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">6,486 ± 823</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">4.0 ± 0.5</Lang>
+                  </Detail>
+                </SimpTblCell>
+              </SimpTblRow>
+            </SimpleTable>
+            <SimpTblFoot align="left">
+              <Detail>
+                <Lang xml:lang="ja">平均値±標準偏差</Lang>
+              </Detail>
+            </SimpTblFoot>
+          </TblBlock>
+        </Item>
+        <Item id="HDR_Absorption_2" heading="free">
+          <Header>
+            <Lang xml:lang="ja">生物学的利用率</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">健康成人3例にメトホルミン塩酸塩500mgを単回経口投与したときの生物学的利用率は60.6%であった<ReferenceBookRef ref="DOC_03" />（外国人データ）。</Lang>
+          </Detail>
+        </Item>
+      </OrderedList>
+    </Absorption>
+    <!--１６.３ 分布-->
+    <Distribution id="HDR_Distribution" heading="fixing">
+      <OrderedList numberContinued="false">
+        <Item id="HDR_Distribution_1" heading="free">
+          <Header>
+            <Lang xml:lang="ja">血漿蛋白結合率</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">1.1～2.8%（<Italic>in vitro</Italic>、ヒト血漿、0.1～100µg/mL、限外ろ過法）</Lang>
+          </Detail>
+        </Item>
+      </OrderedList>
+    </Distribution>
+    <!--１６.４ 代謝-->
+    <Metabolism id="HDR_Metabolism" heading="fixing">
+      <Detail>
+        <Lang xml:lang="ja">本剤はほとんど代謝されない。メトホルミンは、主要なCYP分子種（CYP1A2、CYP2A6、CYP2B6、CYP2C8、CYP2C9、CYP2C19、CYP2D6、CYP2E1及びCYP3A4）の代謝活性に影響を与えなかった（<Italic>in vitro</Italic>）。<HeaderRef ref="HDR_UseInTheElderly" />,<HeaderRef ref="HDR_Interactions" /></Lang>
+      </Detail>
+    </Metabolism>
+    <!--１６.５ 排泄-->
+    <Excretion id="HDR_Excretion" heading="fixing">
+      <Detail modified="今回">
+        <Lang xml:lang="ja">本剤は未変化体のまま尿中に排泄される。健康成人5例にメトホルミン塩酸塩500mgを単回経口投与したとき、投与48時間後までの尿中排泄率は投与量の51.6%であった<ReferenceBookRef ref="DOC_03" />（外国人データ）。ヒトのトランスポーター発現細胞（hOAT1、hOAT2、hOAT3、hOAT4、hOCT1、hOCT2、hOCT3）を用いて検討した結果、hOCT2が高い輸送能を示したことから、本剤は主にOCT2を介して尿中に排泄されると考えられた。<HeaderRef ref="HDR_UseInTheElderly" />,<HeaderRef ref="HDR_Interactions" /></Lang>
+      </Detail>
+    </Excretion>
+    <!--１６.６ 特定の背景を有する患者-->
+    <SpecificPopulation id="HDR_SpecificPopulation" heading="fixing">
+      <OrderedList numberContinued="false">
+        <Item id="HDR_SpecificPopulation_1" heading="free">
+          <Header>
+            <Lang xml:lang="ja">腎機能障害患者</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">腎機能正常者（クレアチニンクリアランス：＞90mL/min）、軽度（クレアチニンクリアランス：61～90mL/min）及び中等度（クレアチニンクリアランス：31～60mL/min）の腎機能障害者にメトホルミン塩酸塩850mgを空腹時に単回経口投与したときの薬物動態パラメータは以下のとおりであった<ReferenceBookRef ref="DOC_04" />（外国人データ）。<HeaderRef ref="HDR_InfoPrecautionsDosage" />,<HeaderRef ref="HDR_PatientsWithRenalImpairment" /></Lang>
+          </Detail>
+          <TblBlock>
+            <WidthDefinition totalWidth="100%">
+              <Col width="26.01%" />
+              <Col width="16.4%" />
+              <Col width="20.76%" />
+              <Col width="20.37%" />
+              <Col width="16.41%" />
+            </WidthDefinition>
+            <SimpleTable>
+              <SimpTblRow>
+                <SimpTblCell align="left" valign="middle" />
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">C<Sub>max</Sub><?enter?>（µg/mL）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">AUC<Sub>0-∞</Sub><?enter?>（µg・h/mL）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">T<Sub>1/2</Sub><?enter?>（h）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">CL<Sub>R</Sub><?enter?>(mL/min)</Lang>
+                  </Detail>
+                </SimpTblCell>
+              </SimpTblRow>
+              <SimpTblRow>
+                <SimpTblCell align="left" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">腎機能正常者(3例)</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">1.64±0.50</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">11.22±3.19</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">11.2±5.2</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">394.7±83.8</Lang>
+                  </Detail>
+                </SimpTblCell>
+              </SimpTblRow>
+              <SimpTblRow>
+                <SimpTblCell align="left" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">軽度腎機能障害者(5例)</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">1.86±0.52</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">13.22±2.00</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">17.3±21.2</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">383.6±122.3</Lang>
+                  </Detail>
+                </SimpTblCell>
+              </SimpTblRow>
+              <SimpTblRow>
+                <SimpTblCell align="left" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">中等度腎機能障害者(4例)</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">4.12±1.83</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">58.30±36.58</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">16.2±7.6</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">108.3±57.2</Lang>
+                  </Detail>
+                </SimpTblCell>
+              </SimpTblRow>
+            </SimpleTable>
+            <SimpTblFoot align="left">
+              <Detail>
+                <Lang xml:lang="ja">平均値±標準偏差<?enter?>CL<Sub>R</Sub>：腎クリアランス</Lang>
+              </Detail>
+            </SimpTblFoot>
+          </TblBlock>
+        </Item>
+        <Item id="HDR_SpecificPopulation_2" heading="free">
+          <Header>
+            <Lang xml:lang="ja">高齢者</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">健康高齢男性（65歳以上、クレアチニンクリアランス:＞60mL/min）及び健康非高齢男性（20歳以上40歳未満、クレアチニンクリアランス:＞90mL/min）にメトホルミン塩酸塩500mgを空腹時に単回投与したときの血漿中メトホルミン濃度推移及び薬物動態パラメータは以下のとおりであった。<HeaderRef ref="HDR_UseInTheElderly" /></Lang>
+          </Detail>
+          <Graphic>
+            <GraphicBody gfname="400093_3962002F2027_fig04.gif" />
+          </Graphic>
+          <TblBlock>
+            <WidthDefinition totalWidth="100%">
+              <Col width="24.12%" />
+              <Col width="18.47%" />
+              <Col width="20.82%" />
+              <Col width="21.64%" />
+              <Col width="14.91%" />
+            </WidthDefinition>
+            <SimpleTable>
+              <SimpTblRow>
+                <SimpTblCell align="center" valign="middle" />
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">T<Sub>max</Sub><?enter?>（h）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">C<Sub>max</Sub><?enter?>（ng/mL）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">AUC<Sub>0-48</Sub><?enter?>（ng・h/mL）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">T<Sub>1/2</Sub><?enter?>（h）</Lang>
+                  </Detail>
+                </SimpTblCell>
+              </SimpTblRow>
+              <SimpTblRow>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">健康高齢者（12例）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">2.5 ± 1.1</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">1,935 ± 633</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">14,236 ± 3,927</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">4.5 ± 1.0</Lang>
+                  </Detail>
+                </SimpTblCell>
+              </SimpTblRow>
+              <SimpTblRow>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">健康非高齢者（6例）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">2.9 ± 1.3</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">1,204 ± 367</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">8,907 ± 2,325</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">3.5 ± 0.6</Lang>
+                  </Detail>
+                </SimpTblCell>
+              </SimpTblRow>
+            </SimpleTable>
+            <SimpTblFoot align="left">
+              <Detail>
+                <Lang xml:lang="ja">平均値±標準偏差</Lang>
+              </Detail>
+            </SimpTblFoot>
+          </TblBlock>
+        </Item>
+        <Item id="HDR_SpecificPopulation_3" heading="free">
+          <Header>
+            <Lang xml:lang="ja">小児</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">小児2型糖尿病患者を対象とした長期投与試験において、メトホルミン塩酸塩を1日2～3回に分割して、500～2,000mg/日を投与したときの血漿中濃度173点を用いて、ポピュレーションPK解析を実施した。最終モデルから得られた母集団平均パラメータ（推定値±標準誤差）は、見かけのクリアランスが69.9±3.96L/h、見かけの分布容積が525±52.1L、吸収速度定数が1.98±0.563h<Sup>-1</Sup>であり、これらを用いて、小児2型糖尿病患者の薬物動態パラメータを推定した結果は、下表のとおりであった<ReferenceBookRef ref="DOC_05" />。</Lang>
+          </Detail>
+          <TblBlock>
+            <TblCaption align="top">
+              <Lang xml:lang="ja">ポピュレーションPKモデルから推定した、小児2型糖尿病患者の薬物動態パラメータ（投与条件:1日3回反復投与後）</Lang>
+            </TblCaption>
+            <WidthDefinition totalWidth="100%">
+              <Col width="20%" />
+              <Col width="20%" />
+              <Col width="20%" />
+              <Col width="20%" />
+              <Col width="20%" />
+            </WidthDefinition>
+            <SimpleTable>
+              <SimpTblRow>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">1回投与量</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">T<Sub>max</Sub><?enter?>（h）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">C<Sub>max</Sub><?enter?>（ng/mL）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">AUC<Sub>0-48</Sub><?enter?>（ng・h/mL）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">T<Sub>1/2</Sub><?enter?>（h）</Lang>
+                  </Detail>
+                </SimpTblCell>
+              </SimpTblRow>
+              <SimpTblRow>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">250mg（36例）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">1.5 ± 0.0</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">521 ± 119</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">5,095 ± 2,814</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">5.4 ± 1.7</Lang>
+                  </Detail>
+                </SimpTblCell>
+              </SimpTblRow>
+              <SimpTblRow>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">500mg（36例）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">1.5 ± 0.0</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">1,042 ± 237</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">10,191 ± 5,629</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">5.4 ± 1.7</Lang>
+                  </Detail>
+                </SimpTblCell>
+              </SimpTblRow>
+            </SimpleTable>
+            <SimpTblFoot align="left">
+              <Detail>
+                <Lang xml:lang="ja">平均値±標準偏差</Lang>
+              </Detail>
+            </SimpTblFoot>
+          </TblBlock>
+        </Item>
+      </OrderedList>
+    </SpecificPopulation>
+    <!--１６.７ 薬物相互作用-->
+    <DrugAndDrugInteractions id="HDR_DrugAndDrugInteractions" heading="fixing">
+      <OrderedList numberContinued="false">
+        <Item id="HDR_DrugAndDrugInteractions_1" heading="free">
+          <Header>
+            <Lang xml:lang="ja">シメチジン</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">健康成人に対し本剤とシメチジンを併用した場合、シメチジンの薬物動態には影響がみられなかったものの、メトホルミンのC<Sub>max</Sub>が約60%上昇し、AUC<Sub>0-24</Sub>が約40%増加した（外国人データ）。<HeaderRef ref="HDR_PrecautionsForCombinations" /></Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_DrugAndDrugInteractions_2" heading="free">
+          <Header>
+            <Lang xml:lang="ja">ドルテグラビル</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">健康成人に対し本剤とドルテグラビル50mg/日及び100mg/日を併用して反復投与した場合、メトホルミンのC<Sub>max</Sub>がそれぞれ66%及び111%上昇し、AUCがそれぞれ79%及び145%増加した<ReferenceBookRef ref="DOC_06" />（外国人データ）。<HeaderRef ref="HDR_PrecautionsForCombinations" /></Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_DrugAndDrugInteractions_3" heading="free">
+          <Header>
+            <Lang xml:lang="ja">バンデタニブ</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">健康成人に対し本剤とバンデタニブを併用して単回投与した場合、メトホルミンのC<Sub>max</Sub>及びAUC<Sub>0-∞</Sub>がそれぞれ50%及び74%増加し、腎クリアランスが52%減少した<ReferenceBookRef ref="DOC_07" />（外国人データ）。<HeaderRef ref="HDR_PrecautionsForCombinations" /></Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_DrugAndDrugInteractions_4" heading="free">
+          <Header>
+            <Lang xml:lang="ja">その他の薬剤</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">2型糖尿病患者に対し本剤とグリベンクラミドを併用した場合、グリベンクラミドのC<Sub>max</Sub>が約37%低下し、AUC<Sub>0-∞</Sub>が約22%減少した。健康成人に対し本剤とニフェジピンを併用した場合、メトホルミンのC<Sub>max</Sub>が約21%上昇し、AUC<Sub>0-24</Sub>が約16%増加した。フロセミドを併用した場合、メトホルミンのC<Sub>max</Sub>が約22%上昇し、フロセミドのC<Sub>max</Sub>が約31%低下し、AUC<Sub>0-36</Sub>が約12%減少した。プロプラノロール又はイブプロフェンを併用した場合は薬物動態パラメータに影響はなかった。いずれの薬剤も併用により薬物動態に臨床的意義のある薬物相互作用はみられなかった（外国人データ）。</Lang>
+          </Detail>
+        </Item>
+      </OrderedList>
+    </DrugAndDrugInteractions>
+  </Pharmacokinetics>
+  <!--１７.臨床成績-->
+  <ResultsOfClinicalTrials id="HDR_ResultsOfClinicalTrials" heading="fixing">
+    <!--１７.１ 有効性及び安全性に関する試験-->
+    <EfficacyAndSafety id="HDR_EfficacyAndSafety" heading="fixing">
+      <OrderedList numberContinued="false">
+        <Item id="HDR_EfficacyAndSafety_1" heading="free">
+          <Header>
+            <Lang xml:lang="ja">成人</Lang>
+          </Header>
+          <SimpleList>
+            <Item>
+              <Detail>
+                <Lang xml:lang="ja">成人2型糖尿病患者を対象とした二重盲検比較試験を含む各種臨床試験<Sup>注）</Sup>において、HbA1c（NGSP）値、空腹時血糖値及びグリコアルブミン値の改善が認められた。<?enter?>注）試験対象から以下の患者を除外した。</Lang>
+              </Detail>
+              <UnorderedList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">投与前の血清クレアチニン値が男性1.3mg/dL以上、女性1.2mg/dL以上（酵素法）の腎機能障害を有する患者</Lang>
+                  </Detail>
+                </Item>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">投与前のAST又はALTが基準値上限の2.5倍以上の患者、肝硬変患者<HeaderRef ref="HDR_PatientsWithHepaticImpairment" /></Lang>
+                  </Detail>
+                </Item>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">20歳未満又は75歳以上の患者（長期投与試験は20歳未満のみを除外した。）<HeaderRef ref="HDR_UseInTheElderly" /></Lang>
+                  </Detail>
+                </Item>
+              </UnorderedList>
+            </Item>
+            <Item>
+              <Header>
+                <Lang xml:lang="ja">(1)国内第Ⅱ相用量反応検討試験（単独療法）</Lang>
+              </Header>
+              <Detail>
+                <Lang xml:lang="ja">食事療法・運動療法で効果不十分な2型糖尿病患者に、1回250mg又は500mgを1日3回毎食後に14週間（投与開始1週間は1回250mgを1日2回）投与した結果、HbA1c（NGSP）値（平均値±標準偏差、以下同様）はそれぞれ0.67±0.64%（106例）、1.07±0.68%（106例）低下した。<?enter?>副作用発現頻度は、750mg/日群で47.7%（51/107例）、1,500mg/日群で69.8%（74/106例）であった。主な副作用（発現頻度10%以上）は、750mg/日群で下痢30.8%（33例）、悪心15.9%（17例）、腹痛15.0%（16例）、食欲不振11.2%（12例）、1,500mg/日群で下痢48.1%（51例）、悪心22.6%（24例）、腹痛16.0%（17例）、食欲不振15.1%（16例）であった。低血糖症の副作用は認められなかった<ReferenceBookRef ref="DOC_08" />。</Lang>
+              </Detail>
+            </Item>
+            <Item>
+              <Header>
+                <Lang xml:lang="ja">(2)国内第Ⅱ相用量反応検討試験（スルホニルウレア剤併用療法）</Lang>
+              </Header>
+              <Detail>
+                <Lang xml:lang="ja">食事療法・運動療法に加えてスルホニルウレア剤で効果不十分な2型糖尿病患者に、1回250mg又は500mgを1日3回毎食後に14週間（投与開始1週間は1回250mgを1日2回）投与した結果、HbA1c（NGSP）値はそれぞれ0.74±0.68%（102例）、1.22±0.75%（103例）低下した。<?enter?>副作用発現頻度は、750mg/日群で58.8%（60/102例）、1,500mg/日群で75.0%(78/104例)であった。主な副作用（発現頻度10%以上）は、750mg/日群で下痢26.5%（27例）、1,500mg/日群で下痢40.4%（42例）、食欲不振14.4%（15例）、悪心13.5%（14例）であった。低血糖症の副作用は、それぞれ9.8%（10例）、21.2%（22例）に発現した<ReferenceBookRef ref="DOC_09" />。<HeaderRef ref="HDR_SeriousAdverse_2" /></Lang>
+              </Detail>
+            </Item>
+            <Item>
+              <Header>
+                <Lang xml:lang="ja">(3)国内第Ⅱ相長期投与試験</Lang>
+              </Header>
+              <Detail>
+                <Lang xml:lang="ja">食事療法・運動療法のみ又は食事療法・運動療法に加えてスルホニルウレア剤で効果不十分な2型糖尿病患者に、1日500mgより開始し、1日750～2,250mgを2～3回に分割して54週間投与した結果、HbA1c（NGSP）値、空腹時血糖値及びグリコアルブミン値は改善し、良好な血糖コントロールが維持された。HbA1c（NGSP）値は1.30±0.78%（165例）低下した。HbA1c（NGSP）値6.9%未満の割合は、投与開始前7.3%（12/165例）に対して14週後で65.4%（100/153例）、26週後で73.5%（108/147例）、54週後で80.7%（113/140例）であった。<?enter?>副作用発現頻度は67.5%（114/169例）であった。主な副作用（発現頻度10%以上）は、下痢54.4%（92例）、悪心15.4%（26例）、食欲不振14.8%（25例）、腹痛10.1%（17例）であった。低血糖症の副作用は食事療法・運動療法のみの患者では発現せず、食事療法・運動療法に加えてスルホニルウレア剤で効果不十分な患者では11.6%（10/86例）に発現した<ReferenceBookRef ref="DOC_10" />。<HeaderRef ref="HDR_SeriousAdverse_2" /></Lang>
+              </Detail>
+            </Item>
+          </SimpleList>
+        </Item>
+        <Item id="HDR_EfficacyAndSafety_2" heading="free">
+          <Header>
+            <Lang xml:lang="ja">小児</Lang>
+          </Header>
+          <SimpleList>
+            <Item>
+              <Header>
+                <Lang xml:lang="ja">(1)国内第Ⅲ相長期投与試験</Lang>
+              </Header>
+              <Detail>
+                <Lang xml:lang="ja">小児2型糖尿病患者を対象とした長期投与試験<Sup>注）</Sup>において、HbA1c（NGSP）値、グリコアルブミン値、空腹時血糖値の改善が認められた。<?enter?>注）試験対象から以下の患者を除外した。</Lang>
+              </Detail>
+              <UnorderedList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">投与前の血清クレアチニン値が1.0mg/dL（酵素法）を超える腎機能障害を有する患者</Lang>
+                  </Detail>
+                </Item>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">投与前のAST又はALTが基準値上限の3倍以上の患者。ただし、脂肪肝を合併している場合は基準値上限の5倍未満の患者は投与可<HeaderRef ref="HDR_PatientsWithHepaticImpairment" /></Lang>
+                  </Detail>
+                </Item>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">5歳以下及び18歳以上の患者</Lang>
+                  </Detail>
+                </Item>
+              </UnorderedList>
+            </Item>
+            <Item>
+              <Detail>
+                <Lang xml:lang="ja">1日500～2,000mgを2～3回に分割して24週間（可能な場合は52週間）投与した結果は以下のとおりであった（なお、組み入れられた患者の体重は44.4～112.0kgであった）。</Lang>
+              </Detail>
+            </Item>
+            <Item>
+              <Detail>
+                <Lang xml:lang="ja">（1）食事療法・運動療法で効果不十分な2型糖尿病<?enter?>HbA1c（NGSP）値（平均値±標準偏差、以下同様）は24週間投与で0.76±0.58%（14例）低下した。52週継続例では0.71±0.69%（10例）低下した。</Lang>
+              </Detail>
+            </Item>
+            <Item>
+              <Detail>
+                <Lang xml:lang="ja">（2）食事療法・運動療法に加えてスルホニルウレア剤で効果不十分な2型糖尿病<?enter?>HbA1c（NGSP）値は24週間投与で0.40±1.87%（4例）低下した。52週継続例では0.45±0.78%（2例）低下した。</Lang>
+              </Detail>
+            </Item>
+            <Item>
+              <Detail>
+                <Lang xml:lang="ja">（3）食事療法・運動療法に加えて1日750mg以下のメトホルミンで効果不十分な2型糖尿病<?enter?>HbA1c（NGSP）値は24週間投与で0.98±1.62%（17例）低下した。52週継続例では0.65±1.17%（13例）低下した。<?enter?>副作用発現頻度は51.4 %（19/37例）であった。主な副作用（発現頻度10%以上）は、下痢29.7%（11例）、悪心18.9%（7例）、腹痛10.8%（4例）であった。低血糖症の副作用は認められなかった<ReferenceBookRef ref="DOC_11" />。</Lang>
+              </Detail>
+            </Item>
+          </SimpleList>
+        </Item>
+      </OrderedList>
+    </EfficacyAndSafety>
+  </ResultsOfClinicalTrials>
+  <!--１８.薬効薬理-->
+  <EfficacyPharmacology id="HDR_EfficacyPharmacology" heading="fixing">
+    <!--１８.１ 作用機序-->
+    <MechanismOfAction id="HDR_MechanismOfAction" heading="fixing">
+      <Detail>
+        <Lang xml:lang="ja">主に肝臓における糖新生を抑制し、膵β細胞のインスリン分泌を介することなく血糖降下作用を示す。また、末梢組織における糖取り込みの促進、小腸における糖吸収の抑制等も知られている<ReferenceBookRef ref="DOC_12" />。</Lang>
+      </Detail>
+    </MechanismOfAction>
+    <OtherInformation id="HDR_EfficacyPharmacology_OtherInformation_1" heading="free">
+      <Header>
+        <Lang xml:lang="ja">血糖降下作用</Lang>
+      </Header>
+      <Detail>
+        <Lang xml:lang="ja">肥満を呈する糖尿病モデル動物である<Italic>db</Italic>/<Italic>db</Italic>マウスにおいて、血糖値の低下作用及びHbA1c値の増加抑制作用を示す。</Lang>
+      </Detail>
+    </OtherInformation>
+  </EfficacyPharmacology>
+  <!--１９.有効成分に関する理化学的知見-->
+  <PhyschemOfActIngredients id="HDR_PhyschemOfActIngredients" heading="fixing">
+    <PhyschemOfActIngredientsSection>
+      <GeneralName>
+        <Detail>
+          <Lang xml:lang="ja">メトホルミン塩酸塩（Metformin Hydrochloride）</Lang>
+        </Detail>
+      </GeneralName>
+      <ChemicalName>
+        <Detail>
+          <Lang xml:lang="ja">1,1-Dimethylbiguanide monohydrochloride</Lang>
+        </Detail>
+      </ChemicalName>
+      <MolecularFormula>
+        <Detail>
+          <Lang xml:lang="ja">C<Sub>4</Sub>H<Sub>11</Sub>N<Sub>5</Sub>・HCl</Lang>
+        </Detail>
+      </MolecularFormula>
+      <MolecularWeight>
+        <Detail>
+          <Lang xml:lang="ja">165.62</Lang>
+        </Detail>
+      </MolecularWeight>
+      <DescriptionOfActiveIngredients>
+        <Detail>
+          <Lang xml:lang="ja">白色の結晶又は結晶性の粉末である。水に溶けやすく、酢酸（100）にやや溶けにくく、エタノール（99.5）に溶けにくい。</Lang>
+        </Detail>
+      </DescriptionOfActiveIngredients>
+      <StructuralFormula>
+        <Graphic>
+          <GraphicBody gfname="400093_3962002F2027_fig05.gif" />
+        </Graphic>
+      </StructuralFormula>
+      <MeltingPoint>
+        <Detail>
+          <Lang xml:lang="ja">約221℃（分解）</Lang>
+        </Detail>
+      </MeltingPoint>
+    </PhyschemOfActIngredientsSection>
+  </PhyschemOfActIngredients>
+  <!--２０.取扱い上の注意-->
+  <PrecautionsForHandling heading="fixing" id="HDR_PrecautionsForHandling">
+    <Detail>
+      <Lang xml:lang="ja">錠剤を取り出すときに特異なにおいがすることがある。（本剤の原料に由来する成分による。）</Lang>
+    </Detail>
+  </PrecautionsForHandling>
+  <!--２２.包装-->
+  <Package id="HDR_Package" heading="fixing">
+    <SimpleList>
+      <Item>
+        <Header>
+          <Lang xml:lang="ja">〈メトグルコ錠250mg〉</Lang>
+        </Header>
+        <Detail>
+          <Lang xml:lang="ja">100錠［10錠（PTP）×10］<?enter?>1,000錠［10錠（PTP）×100］<?enter?>500錠［瓶、バラ、乾燥剤入り］</Lang>
+        </Detail>
+      </Item>
+      <Item>
+        <Header>
+          <Lang xml:lang="ja">〈メトグルコ錠500mg〉</Lang>
+        </Header>
+        <Detail>
+          <Lang xml:lang="ja">100錠［10錠（PTP）×10］<?enter?>1,000錠［10錠（PTP）×100］<?enter?>500錠［瓶、バラ、乾燥剤入り］</Lang>
+        </Detail>
+      </Item>
+    </SimpleList>
+  </Package>
+  <!--２３.主要文献-->
+  <MainLiterature id="HDR_MainLiterature" heading="fixing">
+    <Reference id="DOC_01">
+      <Lang xml:lang="ja">Dubourg J., et al.: Diabetes Obes Metab.2022; 24(4): 609-619</Lang>
+    </Reference>
+    <Reference id="DOC_02">
+      <Lang xml:lang="ja">Tuchmann-Duplessis H., et al.: Compt. Rend. 1961; 253: 321-323</Lang>
+    </Reference>
+    <Reference id="DOC_03">
+      <Lang xml:lang="ja">Pentikainen P.J., et al.: Eur. J. Clin. Pharmacol. 1979; 16: 195-202</Lang>
+    </Reference>
+    <Reference id="DOC_04">
+      <Lang xml:lang="ja">Sambol N.C., et al.: J.Clin.Pharmacol. 1995; 35: 1094-1102</Lang>
+    </Reference>
+    <Reference id="DOC_05">
+      <Lang xml:lang="ja">社内資料: 小児患者を対象とした長期投与試験における母集団薬物動態解析</Lang>
+    </Reference>
+    <Reference id="DOC_06">
+      <Lang xml:lang="ja">Song I.H., et al.: J Acquir Immune Defic Syndr. 2016; 72(4): 400-407</Lang>
+    </Reference>
+    <Reference id="DOC_07">
+      <Lang xml:lang="ja">Johansson, S., et al.: Clin Pharmacokinet. 2014; 53: 837-847</Lang>
+    </Reference>
+    <Reference id="DOC_08">
+      <Lang xml:lang="ja">社内資料: 用量反応検討試験（単独療法）（2010年1月20日承認、CTD2.7.6.15）</Lang>
+    </Reference>
+    <Reference id="DOC_09">
+      <Lang xml:lang="ja">社内資料: 用量反応検討試験（SU剤併用療法）（2010年1月20日承認、CTD2.7.6.16）</Lang>
+    </Reference>
+    <Reference id="DOC_10">
+      <Lang xml:lang="ja">社内資料: 長期投与試験（2010年1月20日承認、CTD2.7.6.18）</Lang>
+    </Reference>
+    <Reference id="DOC_11">
+      <Lang xml:lang="ja">社内資料: 小児患者を対象とした長期投与試験</Lang>
+    </Reference>
+    <Reference id="DOC_12">
+      <Lang xml:lang="ja">Lee, A.J.: Pharmacotherapy.1996; 16: 327-351</Lang>
+    </Reference>
+  </MainLiterature>
+  <!--２４.文献請求先及び問い合わせ先-->
+  <AddresseeOfLiteratureRequest id="HDR_AddresseeOfLiteratureRequest" heading="fixing">
+    <AddresseeInfo>
+      <AddresseeOfInquiry>
+        <Lang xml:lang="ja">住友ファーマ株式会社</Lang>
+      </AddresseeOfInquiry>
+      <Address>
+        <Lang xml:lang="ja">〒541-0045　大阪市中央区道修町2-6-8</Lang>
+      </Address>
+      <ContactInformation>
+        <Detail>
+          <Lang xml:lang="ja">くすり情報センター<?enter?>TEL　0120-034-389</Lang>
+        </Detail>
+      </ContactInformation>
+    </AddresseeInfo>
+  </AddresseeOfLiteratureRequest>
+  <!--２６.製造販売業者等-->
+  <NameAddressManufact id="HDR_NameAddressManufact" heading="fixing">
+    <Manufacturer>
+      <TypeOfIndustry>
+        <Lang xml:lang="ja">製造販売元</Lang>
+      </TypeOfIndustry>
+      <Name>
+        <Lang xml:lang="ja">住友ファーマ株式会社</Lang>
+      </Name>
+      <Address>
+        <Lang xml:lang="ja">大阪市中央区道修町2-6-8</Lang>
+      </Address>
+    </Manufacturer>
+    <Manufacturer>
+      <TypeOfIndustry>
+        <Lang xml:lang="ja">提携</Lang>
+      </TypeOfIndustry>
+      <Name>
+        <Lang xml:lang="ja">Merck Santé（フランス）</Lang>
+      </Name>
+    </Manufacturer>
+  </NameAddressManufact>
+</PackIns>

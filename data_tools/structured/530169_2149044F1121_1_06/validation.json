@@ -1,0 +1,28 @@
+{
+  "source_file": "data_tools/data/オルメサルタン錠１０ｍｇ「日医工」/530169_2149044F1121_1_06.xml",
+  "document_key": "530169_2149044F1121_1_06",
+  "xml_element_count": 1617,
+  "processing_instruction_count": 37,
+  "xml_lang_count": 430,
+  "section_lang_count": 410,
+  "covered_section_lang_count": 410,
+  "uncovered_section_lang_paths": [],
+  "unrepresented_nonempty_lang_paths": [],
+  "section_count": 40,
+  "search_schema_version": "medi-chat.pmda-sections.v2",
+  "search_unit_count": 36,
+  "search_unit_types": {
+    "section": 36
+  },
+  "duplicate_section_codes": [],
+  "duplicate_unit_ids": [],
+  "reference_count": 91,
+  "unresolved_references": [],
+  "missing_figures": [],
+  "status": "pass",
+  "notes": [
+    "項目番号は医療用医薬品の記載要領に対応する明示的なタグ表で付与した。",
+    "原文の解釈や禁忌判定は生成していない。検索単位は原文階層からの派生データ。",
+    "XSDによる妥当性検証とPMDA表示との差分照合は未実施。"
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "source_file": "data_tools/data/イトリゾールカプセル５０/800155_6290004M1029_1_47.xml",
+  "document_key": "800155_6290004M1029_1_47",
+  "xml_element_count": 2688,
+  "processing_instruction_count": 104,
+  "xml_lang_count": 699,
+  "section_lang_count": 693,
+  "covered_section_lang_count": 693,
+  "uncovered_section_lang_paths": [],
+  "unrepresented_nonempty_lang_paths": [],
+  "section_count": 44,
+  "search_schema_version": "medi-chat.pmda-sections.v2",
+  "search_unit_count": 39,
+  "search_unit_types": {
+    "section": 39
+  },
+  "duplicate_section_codes": [],
+  "duplicate_unit_ids": [],
+  "reference_count": 195,
+  "unresolved_references": [],
+  "missing_figures": [],
+  "status": "pass",
+  "notes": [
+    "項目番号は医療用医薬品の記載要領に対応する明示的なタグ表で付与した。",
+    "原文の解釈や禁忌判定は生成していない。検索単位は原文階層からの派生データ。",
+    "XSDによる妥当性検証とPMDA表示との差分照合は未実施。"
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "source_file": "data_tools/data/イトラコナゾールカプセル５０ｍｇ「ＳＷ」/300119_6290004M1070_1_17.xml",
+  "document_key": "300119_6290004M1070_1_17",
+  "xml_element_count": 2208,
+  "processing_instruction_count": 106,
+  "xml_lang_count": 581,
+  "section_lang_count": 574,
+  "covered_section_lang_count": 574,
+  "uncovered_section_lang_paths": [],
+  "unrepresented_nonempty_lang_paths": [],
+  "section_count": 45,
+  "search_schema_version": "medi-chat.pmda-sections.v2",
+  "search_unit_count": 40,
+  "search_unit_types": {
+    "section": 40
+  },
+  "duplicate_section_codes": [],
+  "duplicate_unit_ids": [],
+  "reference_count": 186,
+  "unresolved_references": [],
+  "missing_figures": [],
+  "status": "pass",
+  "notes": [
+    "項目番号は医療用医薬品の記載要領に対応する明示的なタグ表で付与した。",
+    "原文の解釈や禁忌判定は生成していない。検索単位は原文階層からの派生データ。",
+    "XSDによる妥当性検証とPMDA表示との差分照合は未実施。"
+  ]
+}

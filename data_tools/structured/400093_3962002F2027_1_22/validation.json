@@ -1,0 +1,28 @@
+{
+  "source_file": "data_tools/data/メトグルコ錠２５０ｍｇ/400093_3962002F2027_1_22.xml",
+  "document_key": "400093_3962002F2027_1_22",
+  "xml_element_count": 1798,
+  "processing_instruction_count": 77,
+  "xml_lang_count": 414,
+  "section_lang_count": 401,
+  "covered_section_lang_count": 401,
+  "uncovered_section_lang_paths": [],
+  "unrepresented_nonempty_lang_paths": [],
+  "section_count": 47,
+  "search_schema_version": "medi-chat.pmda-sections.v2",
+  "search_unit_count": 42,
+  "search_unit_types": {
+    "section": 42
+  },
+  "duplicate_section_codes": [],
+  "duplicate_unit_ids": [],
+  "reference_count": 183,
+  "unresolved_references": [],
+  "missing_figures": [],
+  "status": "pass",
+  "notes": [
+    "項目番号は医療用医薬品の記載要領に対応する明示的なタグ表で付与した。",
+    "原文の解釈や禁忌判定は生成していない。検索単位は原文階層からの派生データ。",
+    "XSDによる妥当性検証とPMDA表示との差分照合は未実施。"
+  ]
+}

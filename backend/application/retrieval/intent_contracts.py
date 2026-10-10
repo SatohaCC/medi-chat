@@ -1,0 +1,34 @@
+"""外部技術に依存しない意図判定の契約。"""
+
+from dataclasses import dataclass
+from typing import Protocol
+
+from ...domain.attachment.value_objects import AttachmentProductMatch
+from ...domain.json_types import JsonValue
+from ...domain.retrieval.value_objects import IntentCandidate
+
+
+@dataclass
+class IntentRequest:
+    """意図を判定する質問と薬剤文脈。"""
+
+    question: str
+    medicines: tuple[AttachmentProductMatch, ...] = ()
+
+
+@dataclass
+class IntentResult:
+    """型付き候補が業務契約。raw_responseは解釈しない公開原本。"""
+
+    is_available: bool
+    raw_response: dict[str, JsonValue] | None = None
+    candidates: tuple[IntentCandidate, ...] = ()
+    choice: str | None = None
+    publish_selection: bool = False
+
+
+class IntentClassifier(Protocol):
+    """意図判定を交換するためのport。"""
+
+    async def classify(self, request: IntentRequest) -> IntentResult:
+        raise NotImplementedError

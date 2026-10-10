@@ -1,0 +1,119 @@
+[project]
+name = "medi-chat-backend"
+version = "0.2.0"
+description = "PMDA package inserts search and AI real-time streaming chat."
+requires-python = ">=3.14"
+dependencies = [
+    "alembic>=1.17,<2",
+    "fastapi[standard]>=0.115.0",
+    "google-genai>=1.0.0",
+    "janome>=0.5.0",
+    "openai>=1.50.0",
+    "pydantic>=2.10.0",
+    "python-dotenv>=1.0.0",
+    "sqlalchemy>=2.0,<3",
+    "typesafe-sdk>=0.7.2",
+    "uvicorn[standard]>=0.32.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "import-linter>=2.15",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.16.9",
+]
+
+[tool.pytest.ini_options]
+pythonpath = [".."]
+testpaths = ["tests"]
+
+[tool.importlinter]
+root_package = "backend"
+
+[[tool.importlinter.contracts]]
+name = "Domain does not depend on outer layers"
+type = "forbidden"
+source_modules = ["backend.domain"]
+forbidden_modules = ["backend.application", "backend.infrastructure", "backend.presentation"]
+
+[[tool.importlinter.contracts]]
+name = "Domain contexts are independent"
+type = "independence"
+modules = ["backend.domain.*"]
+ignore_imports = [
+    "backend.domain.** -> backend.domain.foundation",
+    "backend.domain.** -> backend.domain.foundation.**",
+    "backend.domain.** -> backend.domain.shared",
+    "backend.domain.** -> backend.domain.shared.**",
+    "backend.domain.** -> backend.domain.json_types",
+    "backend.domain.** -> backend.domain.*.identifiers",
+]
+unmatched_ignore_imports_alerting = "none"
+
+[[tool.importlinter.contracts]]
+name = "Foundation does not depend on business vocabulary"
+type = "forbidden"
+source_modules = ["backend.domain.foundation"]
+forbidden_modules = ["backend.domain.*"]
+ignore_imports = ["backend.domain.foundation.** -> backend.domain.json_types"]
+unmatched_ignore_imports_alerting = "none"
+
+[[tool.importlinter.contracts]]
+name = "Shared does not depend on business contexts"
+type = "forbidden"
+source_modules = ["backend.domain.shared"]
+forbidden_modules = ["backend.domain.*"]
+ignore_imports = [
+    "backend.domain.shared.** -> backend.domain.foundation",
+    "backend.domain.shared.** -> backend.domain.foundation.**",
+    "backend.domain.shared.** -> backend.domain.json_types",
+]
+unmatched_ignore_imports_alerting = "none"
+
+[[tool.importlinter.contracts]]
+name = "Public identifiers do not expose business implementation"
+type = "forbidden"
+source_modules = ["backend.domain.*.identifiers"]
+forbidden_modules = ["backend.**"]
+as_packages = false
+ignore_imports = [
+    "backend.domain.*.identifiers -> backend.domain.foundation.primitives.identifiers",
+]
+unmatched_ignore_imports_alerting = "none"
+
+[tool.ruff]
+target-version = "py314"
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "E501", # Line length (handled by ruff format)
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.14"
+ignore_missing_imports = true
+check_untyped_defs = true
+explicit_package_bases = true
+disable_error_code = ["no-redef"]
+
+[[tool.mypy.overrides]]
+module = "janome.*"
+ignore_missing_imports = true
+
