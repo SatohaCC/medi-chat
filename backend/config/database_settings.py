@@ -8,7 +8,7 @@ from pathlib import Path
 
 from sqlalchemy.engine import URL, make_url
 
-from ..project_paths import PROJECT_ROOT
+from ..project_paths import PROJECT_ROOT, resolve_project_path
 
 logger = logging.getLogger(__name__)
 
@@ -45,9 +45,9 @@ def resolve_database_settings(
             raise ValueError(
                 f"Unsupported database backend {backend_name}: only SQLite is supported"
             )
-        url_path = Path(parsed_url.database or "").resolve()
+        url_path = resolve_project_path(Path(parsed_url.database or ""))
     if index_path is not None:
-        database_path = index_path.resolve()
+        database_path = resolve_project_path(index_path)
         if url_path is not None and url_path != database_path:
             raise ValueError(
                 f"Conflicting database URL and index path: {url_path} != {database_path}"
@@ -71,10 +71,10 @@ def _resolve_structured_dir(
     structured_dir: Path | None, environ: Mapping[str, str]
 ) -> Path:
     if structured_dir is not None:
-        return structured_dir.resolve()
+        return resolve_project_path(structured_dir)
     environment_dir = environ.get("MEDI_CHAT_STRUCTURED_DIR")
     if environment_dir is not None:
-        return Path(environment_dir).resolve()
+        return resolve_project_path(Path(environment_dir))
     candidates = [
         PROJECT_ROOT / "data_tools" / "structured",
         PROJECT_ROOT / "structured",

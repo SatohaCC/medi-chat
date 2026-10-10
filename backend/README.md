@@ -223,6 +223,11 @@ uv run --project backend python -m backend.infrastructure.cli.migrate_legacy_ind
 
 ## 開発コマンド
 
+DB設定・CLIに渡す相対パス（`MEDI_CHAT_STRUCTURED_DIR`、
+`MEDI_CHAT_INDEX_PATH`、SQLite URLの相対DBパスを含む）は、
+実行ディレクトリではなくリポジトリルートを基準に解決します。
+絶対パスの明示指定も利用できます。実行時にはDB接続用に絶対パスへ解決します。
+
 リポジトリ直下で実行します。
 
 ```bash

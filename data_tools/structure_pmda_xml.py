@@ -18,8 +18,7 @@ from pathlib import Path
 
 from .pmda_xml.transform import transform
 from .pmda_xml.xml_nodes import relative_path
-
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+from .project_paths import PROJECT_ROOT, resolve_project_path
 
 
 def main() -> int:
@@ -44,6 +43,10 @@ def main() -> int:
         help="Output directory (default: structured/<company>_<insert-no> or structured/ for batch)",
     )
     args = arg_parser.parse_args()
+    for name in ("xml", "source_dir", "output_dir"):
+        path = getattr(args, name)
+        if path is not None:
+            setattr(args, name, resolve_project_path(path))
 
     if args.source_dir is not None:
         source_dir = args.source_dir
@@ -67,7 +70,7 @@ def main() -> int:
                 res = transform(xml_file, target_dir)
                 results.append(
                     {
-                        "xml": str(xml_file),
+                        "xml": relative_path(xml_file),
                         "output_dir": relative_path(target_dir),
                         "status": res.get("status"),
                     }
