@@ -14,6 +14,12 @@ import sys
 import unicodedata
 from pathlib import Path
 
+# Support both module execution and the package's direct-script command.
+if __package__:
+    from .project_paths import PROJECT_ROOT, resolve_project_path
+else:
+    from project_paths import PROJECT_ROOT, resolve_project_path
+
 logger = logging.getLogger(__name__)
 
 # Map MHLW administration category code to human-readable label
@@ -37,11 +43,8 @@ def katakana_to_hiragana(text: str) -> str:
 def find_default_csv_path() -> Path | None:
     """Look for y_ALL*.csv in common locations."""
     candidates = [
-        Path("yj"),
-        Path("../yj"),
-        Path("../../yj"),
-        Path("data_tools/yj"),
-        Path("../data_tools/yj"),
+        PROJECT_ROOT / "yj",
+        PROJECT_ROOT / "data_tools" / "yj",
     ]
     for directory in candidates:
         if directory.exists():
@@ -122,7 +125,11 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    csv_path = args.csv_path or find_default_csv_path()
+    csv_path = (
+        resolve_project_path(args.csv_path)
+        if args.csv_path is not None
+        else find_default_csv_path()
+    )
     if not csv_path:
         logger.error("Could not find y_ALL*.csv. Please specify with --csv-path.")
         sys.exit(1)
@@ -131,11 +138,13 @@ def main() -> None:
     items = parse_yj_csv(csv_path)
     logger.info(f"Extracted {len(items)} active medicine entries.")
 
-    outputs: list[Path] = args.output
+    outputs: list[Path] = [resolve_project_path(path) for path in args.output]
     if not outputs:
         # Default output paths
-        default_frontend = Path("frontend/public/data/medicines.json")
-        default_backend = Path("data_tools/structured/medicines_autocomplete.json")
+        default_frontend = PROJECT_ROOT / "frontend/public/data/medicines.json"
+        default_backend = (
+            PROJECT_ROOT / "data_tools/structured/medicines_autocomplete.json"
+        )
         outputs = [default_frontend, default_backend]
 
     json_str = json.dumps(items, ensure_ascii=False, separators=(",", ":"))

@@ -335,7 +335,9 @@ def test_conflicting_url_and_path_are_rejected_before_connect(
 
 
 @pytest.mark.parametrize("entrypoint", ["resolver", "application", "cli", "alembic"])
-@pytest.mark.parametrize("location", ["windows_absolute", "cwd_relative", "non_sqlite"])
+@pytest.mark.parametrize(
+    "location", ["windows_absolute", "project_relative", "non_sqlite"]
+)
 def test_supported_database_locations_are_normalized(
     tmp_path: Path,
     entrypoint: str,
@@ -347,6 +349,7 @@ def test_supported_database_locations_are_normalized(
     working_dir = tmp_path / "working-dir"
     working_dir.mkdir()
     monkeypatch.chdir(working_dir)
+    monkeypatch.setattr("backend.project_paths.PROJECT_ROOT", tmp_path)
     for key in (
         "MEDI_CHAT_STRUCTURED_DIR",
         "MEDI_CHAT_INDEX_PATH",
@@ -362,9 +365,9 @@ def test_supported_database_locations_are_normalized(
         # 実Windowsのドライブ付き絶対パスを入力し、skipや擬似Windows値で代替しない。
         assert index_path.drive and "\\" in str(index_path)
         expected_path = tmp_path / "索引 DB.sqlite3"
-    elif location == "cwd_relative":
+    elif location == "project_relative":
         index_path = Path("cache") / "相対索引.sqlite3"
-        expected_path = working_dir / "cache" / "相対索引.sqlite3"
+        expected_path = tmp_path / "cache" / "相対索引.sqlite3"
     else:
         database_url = "postgresql://db.example.test/unsupported"
 
