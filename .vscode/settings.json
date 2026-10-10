@@ -27,10 +27,6 @@
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff"
   },
-  "python.analysis.extraPaths": [
-    "backend",
-    "data_tools"
-  ],
   "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/Scripts/python.exe",
   "cSpell.words": [
     "astream",

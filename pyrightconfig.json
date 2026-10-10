@@ -11,6 +11,10 @@
     "frontend"
   ],
   "venvPath": "backend",
+  "extraPaths": [
+    "backend",
+    "data_tools"
+  ],
   "venv": ".venv",
   "typeCheckingMode": "standard",
   "pythonVersion": "3.14"
