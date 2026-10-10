@@ -1,0 +1,14 @@
+{
+  "name": "data_tools",
+  "version": "0.2.0",
+  "private": true,
+  "scripts": {
+    "test": "pytest",
+    "lint": "ruff check .",
+    "format": "ruff format .",
+    "check": "ruff check --fix . && ruff format .",
+    "typecheck": "mypy .",
+    "build-data": "cd .. && uv run --project data_tools python -m data_tools.structure_pmda_xml --source-dir data_tools/data --output-dir data_tools/structured",
+    "build:autocomplete": "python build_autocomplete_index.py"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "backend",
+  "version": "0.2.0",
+  "private": true,
+  "scripts": {
+    "dev": "uv run --locked uvicorn --app-dir .. backend.main:app --port 8000 --reload",
+    "dev:backend": "pnpm run dev",
+    "test": "uv run --locked pytest",
+    "test:backend": "pnpm run test",
+    "lint": "uv run --locked ruff check . ../package_inserts && pnpm run lint:imports",
+    "lint:imports": "cd .. && uv run --project backend --locked lint-imports --config backend/pyproject.toml",
+    "format": "uv run --locked ruff format . ../package_inserts",
+    "check": "uv run --locked ruff check --fix . ../package_inserts && uv run --locked ruff format . ../package_inserts",
+    "typecheck": "uv run --locked mypy . ../package_inserts",
+    "build-index": "cd .. && uv run --project backend python -m backend.infrastructure.cli.build_search_index"
+  }
+}

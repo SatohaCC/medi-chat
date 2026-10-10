@@ -1,0 +1,26 @@
+{
+  "name": "medi-chat",
+  "version": "0.2.0",
+  "private": true,
+  "description": "PMDA package inserts search and AI real-time streaming chat system.",
+  "scripts": {
+    "dev": "pnpm --parallel --filter frontend --filter backend dev",
+    "dev:frontend": "pnpm --filter frontend dev",
+    "dev:backend": "pnpm --filter backend dev",
+    "test": "pnpm --filter backend test && pnpm --filter data_tools test",
+    "test:backend": "pnpm --filter backend test",
+    "test:data": "pnpm --filter data_tools test",
+    "lint": "pnpm --filter frontend lint && pnpm --filter backend lint && pnpm --filter data_tools lint",
+    "format": "pnpm --filter frontend format && pnpm --filter backend format && pnpm --filter data_tools format",
+    "check": "pnpm --filter frontend check && pnpm --filter backend check && pnpm --filter data_tools check",
+    "typecheck": "pnpm --filter frontend typecheck && pyright",
+    "typecheck:frontend": "pnpm --filter frontend typecheck",
+    "typecheck:python": "pyright",
+    "build": "pnpm --filter frontend build",
+    "build:data": "pnpm --filter data_tools build-data && pnpm --filter backend build-index",
+    "build:index": "pnpm --filter backend build-index"
+  },
+  "devDependencies": {
+    "pyright": "^1.1.414"
+  }
+}

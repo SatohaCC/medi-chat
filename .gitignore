@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyright/
+
+# Virtual environments
+.venv
+.venv/
+**/.venv/
+**/.venv
+
+# Node / Package managers
+node_modules/
+.pnpm-store/
+.next/
+dist/
+build/
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# SQLite & local databases / cache
+*.sqlite3
+*.sqlite3-*
+.*.sqlite3
+.*.sqlite3-*
+*.sqlite
+*.db
+
+# Temporary & local tools
+.import_linter_cache/
+tmp/
+temp/
+graphify-out/
+*.log
+yj
+
+# OS
+.DS_Store
+Thumbs.db
+
+for-llm
