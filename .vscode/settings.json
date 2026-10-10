@@ -42,6 +42,7 @@
     "pnpm",
     "pylock",
     "turbopack",
+    "unrs",
     "yj_codes"
 ]
 }
