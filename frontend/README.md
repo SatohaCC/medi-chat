@@ -20,6 +20,22 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## チャットのPlaywrightテスト
+
+リポジトリルートで実行します。
+
+```bash
+pnpm --filter frontend exec playwright install chromium
+pnpm test:e2e
+```
+
+Chromiumで質問送信、回答のストリーミングと根拠表示、会話履歴、
+エラーからの回復、切断・再接続を検証します。専用のNext.js開発サーバーを
+`127.0.0.1:3100`で自動起動するため、そのポートを空けてください。
+医薬品APIとチャットWebSocketはPlaywrightでモック化し、バックエンド・DB・
+外部LLM・APIキーは使用しません。実バックエンドまで通すE2Eとは別の検証です。
+失敗時のスクリーンショットとtraceは`frontend/test-results/`へ保存します。
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

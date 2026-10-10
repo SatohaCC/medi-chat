@@ -27,8 +27,11 @@ backendの依存はuv.lockで管理し、pnpmのbackendスクリプトはuv経�
 | 型 | `pnpm typecheck:frontend` |
 | ビルド | `pnpm build` |
 | 接続ヘルパー単体 | `node --experimental-strip-types --test frontend/app/lib/chatWebSocket.test.mjs`（対応するNodeが必要） |
+| チャット画面（Playwright / Chromium） | 初回は`pnpm --filter frontend exec playwright install chromium`、実行は`pnpm test:e2e` |
 
 ルート`pnpm test`はbackendとdata_toolsであり、frontendのNodeテストを含まない。ブラウザ・実サーバー接続も別に確認する。
+`pnpm test:e2e`は専用Next.jsサーバーを起動し、医薬品APIとチャットWebSocketをモック化する。
+実ブラウザでチャット操作を検証するが、実バックエンド・DB・外部LLMとの接続は検証しない。
 
 ## 自動修正と最終確認
 

@@ -4,6 +4,7 @@
   "private": true,
   "description": "PMDA package inserts search and AI real-time streaming chat system.",
   "scripts": {
+    "test:e2e": "pnpm --filter frontend test:e2e",
     "dev": "pnpm --parallel --filter frontend --filter backend dev",
     "dev:frontend": "pnpm --filter frontend dev",
     "dev:backend": "pnpm --filter backend dev",
