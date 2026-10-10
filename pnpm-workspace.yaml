@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=./.vscode/pnpm-workspace.schema.json
 packages:
   - 'frontend'
   - 'backend'
