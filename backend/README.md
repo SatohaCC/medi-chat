@@ -320,7 +320,9 @@ Value Objectとして保持します。検索ポートは文書IDを公開する
 
 `POST /api/attachment-imports`はmultipartの`file`1つを受け取り、`GET /api/attachment-imports/{document_id}/{source_sha256}`は保存結果metadataを返します。新規201・同原本200、入力数/空400、上限413、非XML415、構造/解析422、保存矛盾409、保存IO500。新APIのエラーは`detail: {code, message}`です。
 
-lifespanが取り込みworkerを所有し、decoder/encoder/保存IOをevent loop外で実行して終了を待ちます。既定保存先は`data/pmda/imports`、環境変数は`MEDI_CHAT_IMPORT_DIR`です。準備済み検索DBが起動前提であり、Web保管はstructured/manifest/SQLiteを更新しません。原本/保存絶対パスの公開APIは追加していません。
+lifespanが取り込みworkerを所有し、decoder/encoder/保存IOをevent loop外で実行して終了を待ちます。既定保存先は`data/pmda/imports`、環境変数は`MEDI_CHAT_IMPORT_DIR`です。Alembic移行と初期登録済みの検索DBが起動前提です。既存DBはwriter停止・整合backup・コピー復元検査後、上記「検索インデックスの構築」の明示手順で移行してください。起動時に自動DDL・初期登録はしません。
+
+Web取り込みは保存だけでなく、`SqliteRegistrationPublisher`でactive製品・検索本文・候補・fingerprintを同一SQLite transactionで公開します。旧structured/manifestは直接上書きせず、import rootに版と世代成果物を保存します。同YJは改訂日ではなく初回成功登録順の新版へ切り替え、旧文書の未置換YJは保持します。active参照とreader leaseがない旧版の所有ファイルだけを削除し、削除待ちは再試行します。同原本の再送はreceiptを再利用し、旧版を復活させません。登録に利用できるYJがないXMLは422で拒否します。原本/保存絶対パスの公開APIは追加していません。
 
 ### 通常E2Eと索引の明示回復
 

@@ -6,7 +6,7 @@
 
 - `originals/`: 元XMLと図（移行時はbyte不変）
 - `structured/`: 既存検索用document/JSONL/validation/manifest/SQLite
-- `imports/`: Web取り込み不変版。保存だけではstructuredやSQLiteに反映しません。
+- `imports/`: Web取り込み不変版と登録世代の検索成果物。登録成功時にSQLiteのactive世代と候補へ即時反映します。
 - `migration-artifacts/`: 元ignored一時成果物の保全先
 - 変換正本: `backend.infrastructure.pmda_xml`、入口: `backend.infrastructure.cli.structure_pmda_xml`
 - 辞書の純粋変換: `backend.application.medicine.autocomplete`、CSV境界: `backend.infrastructure.sources.yj_csv`
@@ -20,7 +20,7 @@ XML構造化CLIと補完辞書生成CLIの相対入力・出力パスは、
 絶対パスの明示指定も利用できます。補完辞書の自動検出は
 リポジトリ内の`yj/`と`data/pmda/yj/`を検索します。
 
-### 1. 全文書の構造化とインデックス作成
+### 1. 全文書のoffline構造化（公開登録なし）
 
 ```bash
 uv run --project backend --locked python -m backend.infrastructure.cli.structure_pmda_xml \
@@ -48,8 +48,15 @@ uv run --project backend --locked python -m backend.infrastructure.cli.structure
 `10.1` と `10.2` のような別項目は分け、親項目にはその項目自身の本文だけを残します。
 子項目だけを持つ空の親項目は出力しません。`document.json` の原文構造は保持します。
 
-XML変換後は、アプリが参照するSQLite索引も明示的に再構築してください。
-JSONLの再生成だけでは検索結果は更新されません。
+上記のoffline変換は、JSONLを再生成しても公開検索へ登録しません。登録済み版の所有artifactへの直接上書きは拒否します。
+新しいXMLを公開する場合はWeb取り込みか明示登録CLIを使用してください。移行・初期登録済みDBに対する登録CLIの例です。
+
+```bash
+uv run --project backend --locked python -m backend.infrastructure.cli.structure_pmda_xml \
+  copy/new.xml --register --index-path copy/index.sqlite3 --import-dir copy/imports
+```
+
+`pnpm build:data`も登録modeです。`build_search_index`は既に登録されたactive集合を検証・再構築する入口であり、未登録XMLの自動走査や旧版の再登録は行いません。
 
 ```bash
 uv run --project backend python -m backend.infrastructure.cli.build_search_index \
@@ -57,8 +64,13 @@ uv run --project backend python -m backend.infrastructure.cli.build_search_index
   --index-path data/pmda/structured/.chat-search.sqlite3
 ```
 
-索引の更新判定にはmanifestだけでなく、各`document.json`と`search_units.jsonl`の
-内容を使います。古い索引が残っている場合、起動時に再構築を要求します。
+索引の整合判定には、登録されたactive集合の実内容を使います。未準備・不整合では起動を拒否し、自動再構築はしません。
+
+## Web取り込みと版の置換
+
+`/imports`と`POST /api/attachment-imports`は原XML・生成物を保存した後、検索DBへ即時登録します。アップロードは運用中の検索対象と候補を変更する操作です。同YJは原XMLの改訂日によらず初回成功登録順で新版へ切り替えます。旧文書A+Bに新文書Aを登録した場合、Bは旧版を保持します。active参照とreader leaseがなくなった旧版の所有XML・JSON・JSONL・図だけを削除し、同原本の再送で旧版を復活させません。登録用YJがないXMLは拒否されます。
+
+旧DBはbackend/writerを停止し、整合backupと別コピーでの復元検査を行った上で、Alembic移行と初期登録を明示実行してください。[backendの導入手順](../../backend/README.md#検索インデックスの構築)に従い、まずコピー先で検証します。初期登録後だけWeb/APIまたは`--register`で新版を公開し、旧原本群を初期登録CLIで再走査しません。
 
 ## 補完辞書
 
@@ -70,4 +82,4 @@ uv run --project backend python -m backend.infrastructure.cli.build_search_index
 旧data_tools/data→data/pmda/originals、旧data_tools/structured→data/pmda/structured。
 保存済みJSON内の旧source pathは歴史的出典として保持しています。元データを再生成せず移行しました。
 明示MEDI_CHAT_STRUCTURED_DIR/MEDI_CHAT_INDEX_PATH/MEDI_CHAT_DATABASE_URLは優先を維持します。旧pathの運用設定は移行先へ明示変更してください。明示旧DBを別DBへ自動切替えません。
-新しいWeb版を検索へ反映するときは確認済み版を明示的にstructuredへ配置し、準備済みDBへbuild_search_indexを実行してください。Web/APIは自動登録しません。
+新しいWeb版はpublisherが即時公開します。手動でstructuredへ配置する操作や、Web登録後のbuild_search_index実行は不要です。

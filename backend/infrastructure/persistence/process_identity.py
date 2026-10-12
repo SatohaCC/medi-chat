@@ -2,11 +2,14 @@
 
 import ctypes
 import os
+import sys
 from pathlib import Path
 
 
 def process_identity(pid: int) -> str | None:
     if os.name != "nt":
+        if not sys.platform.startswith("linux"):
+            return _posix_process_identity(pid)
         try:
             fields = (
                 (Path("/proc") / str(pid) / "stat")
@@ -54,3 +57,18 @@ def process_identity(pid: int) -> str | None:
         return str((times[0].dwHighDateTime << 32) | times[0].dwLowDateTime)
     finally:
         kernel.CloseHandle(handle)
+
+
+def _posix_process_identity(pid: int) -> str | None:
+    """Use the native process API on POSIX hosts without Linux procfs."""
+    import psutil
+
+    try:
+        process = psutil.Process(pid)
+        if process.status() in (psutil.STATUS_ZOMBIE, psutil.STATUS_DEAD):
+            return None
+        return f"posix:{process.create_time()}"
+    except psutil.NoSuchProcess:
+        return None
+    except psutil.AccessDenied as error:
+        raise OSError("Owner process identity cannot be established") from error
