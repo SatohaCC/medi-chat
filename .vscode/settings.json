@@ -30,6 +30,8 @@
   "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/Scripts/python.exe",
   "cSpell.words": [
     "astream",
+    "backendformat",
+    "backendlint",
     "biomejs",
     "Cmax",
     "Janome",
@@ -37,8 +39,11 @@
     "pmda",
     "pnpm",
     "pylock",
+    "pyproject",
+    "pyrightconfig",
     "turbopack",
     "unrs",
+    "xfail",
     "yj_codes"
 ]
 }
