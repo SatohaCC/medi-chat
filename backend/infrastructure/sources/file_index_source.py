@@ -16,10 +16,17 @@ from ..json_payloads import parse_json_object
 
 
 class FileIndexSourceReader:
-    def __init__(self, structured_dir: Path) -> None:
+    def __init__(self, structured_dir: Path, *, index_path: Path | None = None) -> None:
         self._structured_dir = structured_dir.resolve()
+        self._index_path = index_path
 
     def read_snapshot(self) -> SourceSnapshot:
+        if self._index_path is not None:
+            from .registration_source import read_registered_snapshot
+
+            snapshot = read_registered_snapshot(self._index_path)
+            if snapshot is not None:
+                return snapshot
         paths = self._document_unit_paths()
         fingerprint = self._source_fingerprint(paths)
         documents: list[IndexDocument] = []

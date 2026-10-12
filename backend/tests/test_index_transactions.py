@@ -38,9 +38,9 @@ def _search_results(engine: Engine) -> tuple[tuple[Evidence, ...], ...]:
     medicines = (
         AttachmentProductMatch(
             generic_name="テスト成分",
-            brand_names=["テスト薬"],
-            yj_codes=["1234567A0000"],
-            document_ids=["test_001"],
+            brand_names=("テスト薬",),
+            yj_codes=("1234567A0000",),
+            document_ids=("test_001",),
         ),
     )
     return tuple(

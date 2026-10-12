@@ -1,0 +1,1183 @@
+{
+  "schema": {
+    "openapi": "3.1.0",
+    "info": {
+      "title": "medi-chat API",
+      "description": "Search PMDA package inserts and real-time streaming AI chat.",
+      "version": "0.2.0"
+    },
+    "paths": {
+      "/health": {
+        "get": {
+          "tags": [
+            "system"
+          ],
+          "summary": "Health",
+          "description": "読み込まれた医薬品コーパスの稼働状態および統計情報を確認する",
+          "operationId": "health_health_get",
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HealthResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/": {
+        "get": {
+          "tags": [
+            "system"
+          ],
+          "summary": "Api Health",
+          "description": "軽量なヘルスチェックプローブ用エンドポイント",
+          "operationId": "api_health_api__get",
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object",
+                    "title": "Response Api Health Api  Get"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api": {
+        "get": {
+          "tags": [
+            "system"
+          ],
+          "summary": "Api Health",
+          "description": "軽量なヘルスチェックプローブ用エンドポイント",
+          "operationId": "api_health_api_get",
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object",
+                    "title": "Response Api Health Api Get"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/medicines": {
+        "get": {
+          "tags": [
+            "catalog"
+          ],
+          "summary": "Medicines",
+          "description": "入力クエリに合致する医薬品、または未指定時は全医薬品カタログを返却する",
+          "operationId": "medicines_api_medicines_get",
+          "parameters": [
+            {
+              "name": "query",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Query"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/MedicineListResponse"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/chat": {
+        "post": {
+          "tags": [
+            "chat"
+          ],
+          "summary": "Chat",
+          "description": "添付文書の根拠引用および任意のLLM文章生成を伴う質問回答を行う",
+          "operationId": "chat_api_chat_post",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatRequest"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ChatResponse"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/attachment-imports": {
+        "post": {
+          "tags": [
+            "attachment-imports"
+          ],
+          "summary": "Import Attachment",
+          "operationId": "import_attachment_api_attachment_imports_post",
+          "requestBody": {
+            "content": {
+              "multipart/form-data": {
+                "schema": {
+                  "properties": {
+                    "file": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "file"
+                  ]
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "201": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AttachmentImportResponse"
+                  }
+                }
+              }
+            },
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AttachmentImportResponse"
+                  }
+                }
+              }
+            },
+            "409": {
+              "description": "Conflict",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ImportConflictResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ImportErrorResponse"
+                  }
+                }
+              }
+            },
+            "413": {
+              "description": "Content Too Large",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ImportErrorResponse"
+                  }
+                }
+              }
+            },
+            "415": {
+              "description": "Unsupported Media Type",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ImportErrorResponse"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Unprocessable Content",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ImportErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Internal Server Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ImportErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/attachment-imports/{document_id}/{source_sha256}": {
+        "get": {
+          "tags": [
+            "attachment-imports"
+          ],
+          "summary": "Read Attachment",
+          "operationId": "read_attachment_api_attachment_imports__document_id___source_sha256__get",
+          "parameters": [
+            {
+              "name": "document_id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "Document Id"
+              }
+            },
+            {
+              "name": "source_sha256",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "Source Sha256"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AttachmentImportResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ImportErrorResponse"
+                  }
+                }
+              },
+              "description": "Not Found"
+            },
+            "409": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ImportErrorResponse"
+                  }
+                }
+              },
+              "description": "Conflict"
+            },
+            "410": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ImportErrorResponse"
+                  }
+                }
+              },
+              "description": "Gone"
+            },
+            "500": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ImportErrorResponse"
+                  }
+                }
+              },
+              "description": "Internal Server Error"
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/medicines/autocomplete": {
+        "get": {
+          "tags": [
+            "catalog"
+          ],
+          "summary": "Autocomplete",
+          "operationId": "autocomplete_api_medicines_autocomplete_get",
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AutocompleteResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "ChatRequest": {
+          "properties": {
+            "message": {
+              "type": "string",
+              "maxLength": 2000,
+              "minLength": 1,
+              "title": "Message"
+            },
+            "product_yj_codes": {
+              "items": {
+                "type": "string",
+                "pattern": "^[0-9A-Z]{12}$"
+              },
+              "type": "array",
+              "maxItems": 8,
+              "minItems": 1,
+              "title": "Product Yj Codes"
+            },
+            "provider": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Provider"
+            },
+            "model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Model"
+            }
+          },
+          "type": "object",
+          "required": [
+            "message",
+            "product_yj_codes"
+          ],
+          "title": "ChatRequest",
+          "description": "REST API 経由で受信するチャット同期リクエストモデル"
+        },
+        "ChatResponse": {
+          "properties": {
+            "answer": {
+              "type": "string",
+              "title": "Answer"
+            },
+            "intent": {
+              "type": "string",
+              "title": "Intent"
+            },
+            "retrieval_strategy": {
+              "type": "string",
+              "title": "Retrieval Strategy"
+            },
+            "resolved_medicines": {
+              "items": {
+                "$ref": "#/components/schemas/MedicineMatch"
+              },
+              "type": "array",
+              "title": "Resolved Medicines"
+            },
+            "sources": {
+              "items": {
+                "$ref": "#/components/schemas/ChatSource"
+              },
+              "type": "array",
+              "title": "Sources"
+            },
+            "needs_clarification": {
+              "type": "boolean",
+              "title": "Needs Clarification",
+              "default": false
+            },
+            "notices": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "title": "Notices"
+            },
+            "jev_response": {
+              "anyOf": [
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Jev Response"
+            }
+          },
+          "type": "object",
+          "required": [
+            "answer",
+            "intent",
+            "retrieval_strategy"
+          ],
+          "title": "ChatResponse",
+          "description": "チャット応答および根拠ソースを含むレスポンスモデル"
+        },
+        "ChatSource": {
+          "properties": {
+            "unit_id": {
+              "type": "string",
+              "title": "Unit Id"
+            },
+            "product_name": {
+              "type": "string",
+              "title": "Product Name"
+            },
+            "generic_name": {
+              "type": "string",
+              "title": "Generic Name"
+            },
+            "product_yj_codes": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "title": "Product Yj Codes"
+            },
+            "document_revision": {
+              "additionalProperties": true,
+              "type": "object",
+              "title": "Document Revision"
+            },
+            "section": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object",
+              "title": "Section"
+            },
+            "kind": {
+              "type": "string",
+              "title": "Kind"
+            },
+            "excerpt": {
+              "type": "string",
+              "title": "Excerpt"
+            },
+            "columns": {
+              "anyOf": [
+                {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Columns"
+            },
+            "references": {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "type": "array",
+              "title": "References"
+            },
+            "url": {
+              "type": "string",
+              "title": "Url"
+            },
+            "retrieved_by": {
+              "title": "Retrieved By",
+              "items": {
+                "$ref": "#/components/schemas/DetectionSource"
+              },
+              "type": "array"
+            },
+            "document_id": {
+              "type": "string",
+              "title": "Document Id"
+            }
+          },
+          "type": "object",
+          "required": [
+            "unit_id",
+            "document_id",
+            "product_name",
+            "generic_name",
+            "product_yj_codes",
+            "document_revision",
+            "section",
+            "kind",
+            "excerpt",
+            "url"
+          ],
+          "title": "ChatSource",
+          "description": "回答の根拠となった添付文書の文書単位（ソース）モデル"
+        },
+        "HTTPValidationError": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ValidationError"
+              },
+              "type": "array",
+              "title": "Detail"
+            }
+          },
+          "type": "object",
+          "title": "HTTPValidationError"
+        },
+        "HealthResponse": {
+          "properties": {
+            "status": {
+              "type": "string",
+              "title": "Status"
+            },
+            "document_count": {
+              "type": "integer",
+              "title": "Document Count"
+            },
+            "unit_count": {
+              "type": "integer",
+              "title": "Unit Count"
+            },
+            "generation_id": {
+              "type": "string",
+              "title": "Generation Id"
+            }
+          },
+          "type": "object",
+          "required": [
+            "status",
+            "document_count",
+            "unit_count",
+            "generation_id"
+          ],
+          "title": "HealthResponse",
+          "description": "システムヘルスチェックレスポンスモデル"
+        },
+        "MedicineListResponse": {
+          "properties": {
+            "items": {
+              "items": {
+                "$ref": "#/components/schemas/MedicineMatch"
+              },
+              "type": "array",
+              "title": "Items"
+            },
+            "generation_id": {
+              "type": "string",
+              "title": "Generation Id"
+            }
+          },
+          "type": "object",
+          "required": [
+            "items",
+            "generation_id"
+          ],
+          "title": "MedicineListResponse",
+          "description": "医薬品候補一覧レスポンスモデル"
+        },
+        "MedicineMatch": {
+          "properties": {
+            "generic_name": {
+              "type": "string",
+              "title": "Generic Name"
+            },
+            "brand_names": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "title": "Brand Names"
+            },
+            "yj_codes": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "title": "Yj Codes"
+            },
+            "matched_aliases": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "title": "Matched Aliases"
+            },
+            "document_ids": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "title": "Document Ids"
+            }
+          },
+          "type": "object",
+          "required": [
+            "generic_name",
+            "brand_names",
+            "yj_codes",
+            "document_ids"
+          ],
+          "title": "MedicineMatch",
+          "description": "照合・特定された医薬品情報モデル"
+        },
+        "ValidationError": {
+          "properties": {
+            "loc": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
+              },
+              "type": "array",
+              "title": "Location"
+            },
+            "msg": {
+              "type": "string",
+              "title": "Message"
+            },
+            "type": {
+              "type": "string",
+              "title": "Error Type"
+            },
+            "input": {
+              "title": "Input"
+            },
+            "ctx": {
+              "type": "object",
+              "title": "Context"
+            }
+          },
+          "type": "object",
+          "required": [
+            "loc",
+            "msg",
+            "type"
+          ],
+          "title": "ValidationError"
+        },
+        "DetectionSource": {
+          "type": "string",
+          "enum": [
+            "logic",
+            "jev",
+            "keyword"
+          ],
+          "title": "DetectionSource",
+          "description": "検索条件を作った検出元。"
+        },
+        "AttachmentImportResponse": {
+          "properties": {
+            "document_id": {
+              "type": "string",
+              "title": "Document Id"
+            },
+            "source_sha256": {
+              "type": "string",
+              "title": "Source Sha256"
+            },
+            "status": {
+              "type": "string",
+              "title": "Status"
+            },
+            "reused": {
+              "type": "boolean",
+              "title": "Reused"
+            },
+            "validation_status": {
+              "type": "string",
+              "title": "Validation Status"
+            },
+            "section_count": {
+              "type": "integer",
+              "title": "Section Count"
+            },
+            "search_unit_count": {
+              "type": "integer",
+              "title": "Search Unit Count"
+            },
+            "products": {
+              "items": {
+                "$ref": "#/components/schemas/ImportedProductResponse"
+              },
+              "type": "array",
+              "title": "Products"
+            },
+            "revisions": {
+              "items": {
+                "$ref": "#/components/schemas/ImportedRevisionResponse"
+              },
+              "type": "array",
+              "title": "Revisions"
+            },
+            "warnings": {
+              "items": {
+                "$ref": "#/components/schemas/ImportWarningResponse"
+              },
+              "type": "array",
+              "title": "Warnings"
+            },
+            "search_index_updated": {
+              "type": "boolean",
+              "title": "Search Index Updated"
+            },
+            "generation_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Generation Id"
+            },
+            "registration_sequence": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Registration Sequence"
+            },
+            "active_yj_codes": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "title": "Active Yj Codes"
+            },
+            "replaced_yj_codes": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "title": "Replaced Yj Codes"
+            },
+            "deleted_version_ids": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "title": "Deleted Version Ids"
+            },
+            "cleanup_pending": {
+              "items": {
+                "$ref": "#/components/schemas/CleanupPendingResponse"
+              },
+              "type": "array",
+              "title": "Cleanup Pending"
+            },
+            "artifacts_deleted": {
+              "type": "boolean",
+              "title": "Artifacts Deleted"
+            }
+          },
+          "type": "object",
+          "required": [
+            "document_id",
+            "source_sha256",
+            "status",
+            "reused",
+            "validation_status",
+            "section_count",
+            "search_unit_count",
+            "products",
+            "revisions",
+            "warnings",
+            "search_index_updated",
+            "generation_id",
+            "registration_sequence",
+            "active_yj_codes",
+            "replaced_yj_codes",
+            "deleted_version_ids",
+            "cleanup_pending",
+            "artifacts_deleted"
+          ],
+          "title": "AttachmentImportResponse"
+        },
+        "AutocompleteResponse": {
+          "properties": {
+            "generation_id": {
+              "type": "string",
+              "title": "Generation Id"
+            },
+            "items": {
+              "items": {
+                "$ref": "#/components/schemas/CompactMedicineResponse"
+              },
+              "type": "array",
+              "title": "Items"
+            }
+          },
+          "type": "object",
+          "required": [
+            "generation_id",
+            "items"
+          ],
+          "title": "AutocompleteResponse"
+        },
+        "CleanupPendingResponse": {
+          "properties": {
+            "version_id": {
+              "type": "string",
+              "title": "Version Id"
+            },
+            "reason": {
+              "type": "string",
+              "title": "Reason"
+            }
+          },
+          "type": "object",
+          "required": [
+            "version_id",
+            "reason"
+          ],
+          "title": "CleanupPendingResponse"
+        },
+        "CompactMedicineResponse": {
+          "properties": {
+            "n": {
+              "type": "string",
+              "title": "N"
+            },
+            "k": {
+              "type": "string",
+              "title": "K"
+            },
+            "h": {
+              "type": "string",
+              "title": "H"
+            },
+            "y": {
+              "type": "string",
+              "title": "Y"
+            },
+            "g": {
+              "type": "string",
+              "title": "G"
+            },
+            "c": {
+              "type": "string",
+              "title": "C"
+            }
+          },
+          "type": "object",
+          "required": [
+            "n",
+            "k",
+            "h",
+            "y",
+            "g",
+            "c"
+          ],
+          "title": "CompactMedicineResponse"
+        },
+        "ImportConflictDetail": {
+          "properties": {
+            "code": {
+              "type": "string",
+              "title": "Code"
+            },
+            "message": {
+              "type": "string",
+              "title": "Message"
+            },
+            "phase": {
+              "type": "string",
+              "title": "Phase"
+            },
+            "conflicts": {
+              "items": {
+                "$ref": "#/components/schemas/ImportConflictItem"
+              },
+              "type": "array",
+              "title": "Conflicts"
+            }
+          },
+          "type": "object",
+          "required": [
+            "code",
+            "message",
+            "phase",
+            "conflicts"
+          ],
+          "title": "ImportConflictDetail"
+        },
+        "ImportConflictItem": {
+          "properties": {
+            "yj_code": {
+              "type": "string",
+              "title": "Yj Code"
+            },
+            "version_ids": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "title": "Version Ids"
+            }
+          },
+          "type": "object",
+          "required": [
+            "yj_code",
+            "version_ids"
+          ],
+          "title": "ImportConflictItem"
+        },
+        "ImportConflictResponse": {
+          "properties": {
+            "detail": {
+              "$ref": "#/components/schemas/ImportConflictDetail"
+            }
+          },
+          "type": "object",
+          "required": [
+            "detail"
+          ],
+          "title": "ImportConflictResponse"
+        },
+        "ImportErrorDetail": {
+          "properties": {
+            "code": {
+              "type": "string",
+              "title": "Code"
+            },
+            "message": {
+              "type": "string",
+              "title": "Message"
+            },
+            "phase": {
+              "type": "string",
+              "title": "Phase"
+            }
+          },
+          "type": "object",
+          "required": [
+            "code",
+            "message",
+            "phase"
+          ],
+          "title": "ImportErrorDetail"
+        },
+        "ImportErrorResponse": {
+          "properties": {
+            "detail": {
+              "$ref": "#/components/schemas/ImportErrorDetail"
+            }
+          },
+          "type": "object",
+          "required": [
+            "detail"
+          ],
+          "title": "ImportErrorResponse"
+        },
+        "ImportWarningResponse": {
+          "properties": {
+            "code": {
+              "type": "string",
+              "title": "Code"
+            },
+            "reference": {
+              "type": "string",
+              "title": "Reference"
+            }
+          },
+          "type": "object",
+          "required": [
+            "code",
+            "reference"
+          ],
+          "title": "ImportWarningResponse"
+        },
+        "ImportedProductResponse": {
+          "properties": {
+            "yj_code": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Yj Code"
+            },
+            "brand_name": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Brand Name"
+            }
+          },
+          "type": "object",
+          "required": [
+            "yj_code",
+            "brand_name"
+          ],
+          "title": "ImportedProductResponse"
+        },
+        "ImportedRevisionResponse": {
+          "properties": {
+            "source_label": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source Label"
+            },
+            "year_month": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Year Month"
+            },
+            "version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Version"
+            }
+          },
+          "type": "object",
+          "required": [
+            "source_label",
+            "year_month",
+            "version"
+          ],
+          "title": "ImportedRevisionResponse"
+        }
+      }
+    }
+  },
+  "declaration_hashes": {
+    "backend/api/chat_routes.py": "50612609bf7d8da572bda7ca0d9356ff474912125150941fdd6fe041d090224c",
+    "backend/api/chat_websocket_routes.py": "cfdc79cdf132df08f3e55a1903c272665b5de03ed82fae749ca3af5a00c5964d",
+    "backend/api/medicine_routes.py": "e7d1ccc233da5ea12229c3a659c6f913acf4435f2393f75bbfb8263e55b4955d",
+    "backend/api/health_routes.py": "44161835a25efe1eb23773eeb515dbb4cf9645e28c2dd137ddd53cc7441020e5",
+    "backend/chat/chat_models.py": "fb3f60256e695dea1f21806668092386b7d179115f2cb23d7e116d588cb8180b",
+    "backend/medicines/medicine_models.py": "87996f823dbf78211ad93f0fbe2dea8d35d2942545e913fd0659b817fb4f87ff",
+    "backend/retrieval/evidence_models.py": "a772a520fc31fe1466ad5d2c1907c33dcffe2e596dbdf8ebaacb455345d282e2"
+  },
+  "note": "No lifespan entered; declarations match saved baseline sources."
+}

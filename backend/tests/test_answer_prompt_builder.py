@@ -57,9 +57,9 @@ class AnswerPromptBuilderTests(unittest.TestCase):
         )
         medicine = AttachmentProductMatch(
             generic_name="テスト成分",
-            brand_names=["テスト錠"],
-            yj_codes=["1234567A8901"],
-            document_ids=["doc-1"],
+            brand_names=("テスト錠",),
+            yj_codes=("1234567A8901",),
+            document_ids=("doc-1",),
         )
 
         prompt = build_answer_system_prompt(

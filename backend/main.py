@@ -10,38 +10,44 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
-from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from package_inserts.catalog_loader import get_package_insert_catalog
 
+from .application.attachment_import.import_document import AttachmentImportService
 from .application.indexing.medicine_catalog import get_weighted_aliases
 from .application.medicine.suggestions import MedicineSuggester, SuggestionProduct
 from .config.database_settings import resolve_database_settings
 from .config.generation_settings import read_generation_defaults
+from .config.import_settings import resolve_import_directory
+from .config.runtime_environment import load_runtime_environment
 from .infrastructure.composition.index_verifier import verify_index_readiness
+from .infrastructure.composition.recovery_readiness import (
+    ReadOnlyGenerationProbe,
+    verify_no_recovery_work,
+)
 from .infrastructure.intent.jev_classifier import JevIntentClassifier
 from .infrastructure.llm.provider_factory import create_llm_provider
 from .infrastructure.morphology.janome_keyword_extractor import (
     JanomeKeywordExtractor,
 )
 from .infrastructure.persistence.evidence_reader import SqlAlchemyEvidenceReader
+from .infrastructure.persistence.generation_runtime import GenerationRuntime
 from .infrastructure.persistence.index_reader import SqlAlchemyIndexReader
 from .infrastructure.persistence.medicine_reader import SqlAlchemyMedicineReader
 from .infrastructure.persistence.read_workers import ReadWorkers
 from .infrastructure.persistence.readonly_engine import create_readonly_engine
+from .infrastructure.persistence.registration_publisher import (
+    SqliteRegistrationPublisher,
+)
+from .infrastructure.persistence.sqlite_recovery import recover_sqlite_journal
+from .infrastructure.pmda_xml.artifact_mapping import PmdaArtifactEncoder
+from .infrastructure.pmda_xml.decoder import PmdaXmlDecoder
+from .infrastructure.sources.attachment_import_store import FileAttachmentImportStore
 from .presentation.chat_service import AppChatService
-from .project_paths import BACKEND_DIR, PROJECT_ROOT
 
 # ローカル環境変数の読み込み
-load_dotenv(BACKEND_DIR / ".env.local", override=True)
-load_dotenv(PROJECT_ROOT / ".env.local", override=True)
-load_dotenv(BACKEND_DIR / ".env")
-load_dotenv(PROJECT_ROOT / ".env")
-
-# GEMINI_API_KEY が明示的に設定されている場合、システム環境変数の GOOGLE_API_KEY との競合を解消
-if os.environ.get("GEMINI_API_KEY") and "GOOGLE_API_KEY" in os.environ:
-    del os.environ["GOOGLE_API_KEY"]
+load_runtime_environment()
 
 
 __all__ = ["create_app", "app"]
@@ -53,6 +59,8 @@ def create_app(
     llm_provider_factory: Callable[[str | None], Any] | None = None,
     *,
     database_url: str | None = None,
+    import_directory: Path | None = None,
+    _readonly_probe: bool = False,
 ) -> FastAPI:
     """FastAPI アプリケーションインスタンスを生成・設定する"""
     get_package_insert_catalog()
@@ -64,7 +72,13 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
-        verify_index_readiness(settings.structured_dir, settings.index_path)
+        if _readonly_probe:
+            await asyncio.to_thread(verify_no_recovery_work, settings.index_path)
+        else:
+            await asyncio.to_thread(recover_sqlite_journal, settings.index_path)
+        await asyncio.to_thread(
+            verify_index_readiness, settings.structured_dir, settings.index_path
+        )
         engine = create_readonly_engine(settings.index_path)
         workers = ReadWorkers(max_workers=4)
         application.state.index_engine = engine
@@ -112,7 +126,39 @@ def create_app(
             defaults=read_generation_defaults,
         )
         try:
-            yield
+            if _readonly_probe:
+                application.state.generation_runtime = ReadOnlyGenerationProbe(
+                    settings.index_path, workers
+                )
+                yield
+                return
+            store = await asyncio.to_thread(
+                FileAttachmentImportStore,
+                import_directory or resolve_import_directory(),
+            )
+            publisher = SqliteRegistrationPublisher(
+                settings.index_path,
+                store,
+                allowed_roots=(
+                    settings.structured_dir,
+                    settings.structured_dir.parent / "originals",
+                ),
+            )
+            import_service = AttachmentImportService(
+                decoder=PmdaXmlDecoder(),
+                encoder=PmdaArtifactEncoder(),
+                store=store,
+                publisher=publisher,
+            )
+            application.state.attachment_import_service = import_service
+            try:
+                await workers.run(publisher.recover)
+                runtime = GenerationRuntime(publisher, workers=workers)
+                application.state.generation_runtime = runtime
+                application.state.chat_service.snapshot_provider = runtime
+                yield
+            finally:
+                await import_service.aclose()
         finally:
             try:
                 await intent_classifier.aclose()
@@ -161,6 +207,9 @@ def create_app(
     application.include_router(medicine_router)
     application.include_router(chat_router)
     application.include_router(chat_websocket_router)
+    from .presentation.attachment_import_routes import router as import_router
+
+    application.include_router(import_router)
 
     return application
 

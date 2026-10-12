@@ -15,6 +15,9 @@ from backend.infrastructure.sources.file_index_source import FileIndexSourceRead
 from backend.main import create_app
 from backend.presentation.chat_models import ChatResponse
 from backend.presentation.dependencies import get_chat_service
+from backend.tests.registration_runtime_fixtures import (
+    register_synthetic_prepared_index,
+)
 from backend.tests.test_package_insert_index import migrated_index as migrated_index
 from fastapi.testclient import TestClient
 from sqlalchemy.engine import Engine
@@ -22,11 +25,7 @@ from starlette.websockets import WebSocketDisconnect
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 LEGACY_OPENAPI_PATH = (
-    REPO_ROOT
-    / "tmp"
-    / "feature-pipeline"
-    / "20261002-ddd-onion-sqlalchemy-alembic"
-    / "legacy-openapi-reference.json"
+    Path(__file__).resolve().parent / "fixtures" / "current-openapi-reference.json"
 )
 
 
@@ -38,11 +37,12 @@ async def test_rest_and_openapi_contracts_match_baseline(
     SqlAlchemyIndexWriter(engine).replace(FileIndexSourceReader(source).read_snapshot())
     assert engine.url.database is not None
     index_path = Path(engine.url.database)
+    register_synthetic_prepared_index(source, index_path)
 
     # 1. OpenAPI契約比較
     reference_data = json.loads(LEGACY_OPENAPI_PATH.read_text(encoding="utf-8"))
     expected_openapi = reference_data["schema"]
-    app = create_app(source, index_path)
+    app = create_app(source, index_path, import_directory=index_path.parent / "imports")
     actual_openapi = app.openapi()
     assert actual_openapi == expected_openapi
 
@@ -68,7 +68,7 @@ async def test_rest_and_openapi_contracts_match_baseline(
         health_json = res_health.json()
         assert health_json["status"] == "ok"
         assert health_json["document_count"] == 1
-        assert health_json["unit_count"] == 3
+        assert health_json["unit_count"] == 1
 
         # /api/medicines 省略
         res_med_default = await client.get("/api/medicines")
@@ -116,8 +116,9 @@ def test_ws_public_events_match_baseline(
     SqlAlchemyIndexWriter(engine).replace(FileIndexSourceReader(source).read_snapshot())
     assert engine.url.database is not None
     index_path = Path(engine.url.database)
+    register_synthetic_prepared_index(source, index_path)
 
-    app = create_app(source, index_path)
+    app = create_app(source, index_path, import_directory=index_path.parent / "imports")
     client = TestClient(app)
     with client:
         # 1. Ping-pong
@@ -214,8 +215,9 @@ def test_http_and_ws_dependencies_can_be_overridden(
     SqlAlchemyIndexWriter(engine).replace(FileIndexSourceReader(source).read_snapshot())
     assert engine.url.database is not None
     index_path = Path(engine.url.database)
+    register_synthetic_prepared_index(source, index_path)
 
-    app = create_app(source, index_path)
+    app = create_app(source, index_path, import_directory=index_path.parent / "imports")
 
     class FakeChatService:
         def __init__(self) -> None:
@@ -313,17 +315,26 @@ def test_create_app_retains_existing_arguments(
     SqlAlchemyIndexWriter(engine).replace(FileIndexSourceReader(source).read_snapshot())
     assert engine.url.database is not None
     index_path = Path(engine.url.database)
+    register_synthetic_prepared_index(source, index_path)
 
     def fake_factory(name: str | None) -> Any:
         return object()
 
     # 1. 3 positional arguments: (structured_dir, index_path, llm_provider_factory)
-    app1 = create_app(source, index_path, fake_factory)
+    app1 = create_app(
+        source, index_path, fake_factory, import_directory=index_path.parent / "imports"
+    )
     assert app1 is not None
 
     # 2. database_url as keyword argument
     db_url = f"sqlite:///{index_path.as_posix()}"
-    app2 = create_app(source, index_path, fake_factory, database_url=db_url)
+    app2 = create_app(
+        source,
+        index_path,
+        fake_factory,
+        database_url=db_url,
+        import_directory=index_path.parent / "imports",
+    )
     assert app2 is not None
 
     # 3. database_url passed positionally must raise TypeError (keyword-only)
@@ -343,8 +354,9 @@ def test_existing_provider_and_invalid_ws_behaviors_are_preserved(
     SqlAlchemyIndexWriter(engine).replace(FileIndexSourceReader(source).read_snapshot())
     assert engine.url.database is not None
     index_path = Path(engine.url.database)
+    register_synthetic_prepared_index(source, index_path)
 
-    app = create_app(source, index_path)
+    app = create_app(source, index_path, import_directory=index_path.parent / "imports")
     client = TestClient(app)
     with client:
         # 1. Unsupported provider returns validation error

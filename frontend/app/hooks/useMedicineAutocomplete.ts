@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { type MedicineEntry, searchMedicines } from "../lib/medicineAutocomplete";
+import { useActiveMedicines } from "./useActiveMedicines";
 
 interface UseMedicineAutocompleteOptions {
   value: string;
@@ -14,7 +15,7 @@ export function useMedicineAutocomplete({
   onSubmit,
   onSelectMedicine,
 }: UseMedicineAutocompleteOptions) {
-  const [entries, setEntries] = useState<MedicineEntry[]>([]);
+  const { items: entries } = useActiveMedicines();
   const [isOpen, setIsOpen] = useState(false);
   const [suggestions, setSuggestions] = useState<MedicineEntry[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -23,27 +24,6 @@ export function useMedicineAutocomplete({
 
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-
-  // Load medicines dictionary on mount
-  useEffect(() => {
-    let cancelled = false;
-    async function loadDictionary() {
-      try {
-        const res = await fetch("/data/medicines.json");
-        if (!res.ok) return;
-        const data = (await res.json()) as MedicineEntry[];
-        if (!cancelled) {
-          setEntries(data);
-        }
-      } catch (err) {
-        console.error("Failed to load medicine dictionary", err);
-      }
-    }
-    loadDictionary();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // Update suggestions based on text at cursor
   const updateSuggestions = useCallback(
@@ -85,6 +65,10 @@ export function useMedicineAutocomplete({
     },
     [entries],
   );
+
+  useEffect(() => {
+    updateSuggestions(value, inputRef.current?.selectionStart ?? value.length);
+  }, [updateSuggestions, value]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVal = e.target.value;

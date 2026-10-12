@@ -63,8 +63,9 @@ def test_order_follows_first_mention_and_results_do_not_accumulate(products):
     assert [item.yj_codes for item in first] == [(YjCode("C"),), (YjCode("A"),)]
     assert suggester.suggest("べーた")[0].yj_codes == (YjCode("B"),)
     assert first[1].matched_aliases == ("あるふぁ",)
+    field_name = "generic_name"
     with pytest.raises(FrozenInstanceError):
-        first[0].generic_name = "変更"
+        setattr(first[0], field_name, "変更")
 
 
 def test_normalization_and_unknown_query():

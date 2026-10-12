@@ -1,0 +1,2451 @@
+[
+  {
+    "document_id": "630004_3339003F5020_1_08",
+    "sha256": "2e04312381822dca6fd8a3d0c4c2dfac74a9d0bbec9a0f9e6bd02b6b8c11856c",
+    "yj": "3339003F5020",
+    "product_name": "イグザレルト錠2.5mg",
+    "generic_name": "リバーロキサバン",
+    "revision": {
+      "source_label": "今回",
+      "year_month": "2025-11",
+      "version": "第8版"
+    },
+    "sections": {
+      "10": {
+        "unit_id": "630004_3339003F5020_1_08:2e04312381822dca6fd8a3d0c4c2dfac74a9d0bbec9a0f9e6bd02b6b8c11856c:10",
+        "rows": [],
+        "body": [
+          "本剤は主としてチトクロームP450 3A4及び2J2（CYP3A4及びCYP2J2）により代謝される。また、本剤はP-糖タンパク及び乳癌耐性タンパク（BCRP）の基質である。"
+        ],
+        "references": [
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_Metabolism",
+            "target_section_code": "16.4",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_Metabolism"
+          }
+        ]
+      },
+      "10.1": {
+        "unit_id": "630004_3339003F5020_1_08:2e04312381822dca6fd8a3d0c4c2dfac74a9d0bbec9a0f9e6bd02b6b8c11856c:10.1",
+        "rows": [
+          [
+            "リトナビルを含有する製剤（ノービア、カレトラ、パキロビッド）\nダルナビル（プリジスタ）\nホスアンプレナビル（レクシヴァ）",
+            "本剤の血中濃度が上昇し、抗凝固作用が増強されることにより、出血の危険性が増大するおそれがある。",
+            "CYP3A4の強力な阻害及びP-糖タンパクの阻害によりクリアランスが減少する。"
+          ],
+          [
+            "コビシスタットを含有する製剤（ゲンボイヤ、プレジコビックス、シムツーザ）",
+            "本剤の血中濃度が上昇し、抗凝固作用が増強されることにより、出血の危険性が増大するおそれがある。",
+            "CYP3A4の強力な阻害によりクリアランスが減少する。"
+          ],
+          [
+            "以下の経口又は注射剤\nイトラコナゾール（イトリゾール）\nポサコナゾール（ノクサフィル）\nボリコナゾール（ブイフェンド）\nミコナゾール（フロリード）\nケトコナゾール（国内未発売）",
+            "本剤の血中濃度が上昇し、抗凝固作用が増強されることにより、出血の危険性が増大するおそれがある。",
+            "CYP3A4の強力な阻害及びP-糖タンパクの阻害によりクリアランスが減少する。"
+          ],
+          [
+            "エンシトレルビル（ゾコーバ）",
+            "本剤の血中濃度が上昇し、抗凝固作用が増強されることにより、出血の危険性が増大するおそれがある。",
+            "CYP3A4の強力な阻害及びP-糖タンパクの阻害によりクリアランスが減少する。"
+          ],
+          [
+            "ロナファルニブ（ゾキンヴィ）",
+            "本剤の血中濃度が上昇し、抗凝固作用が増強されることにより、出血の危険性が増大するおそれがある。",
+            "CYP3A4の強力な阻害及びP-糖タンパクの阻害によりクリアランスが減少する。"
+          ]
+        ],
+        "body": [],
+        "references": [
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_ContraIndications_6",
+            "target_section_code": "2.6",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_ContraIndications_6"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_DrugAndDrugInteractions_1",
+            "target_section_code": "16.7.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_DrugAndDrugInteractions_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_ContraIndications_7",
+            "target_section_code": "2.7",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_ContraIndications_7"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_ContraIndications_8",
+            "target_section_code": "2.8",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_ContraIndications_8"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_DrugAndDrugInteractions_2",
+            "target_section_code": "16.7.2",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_DrugAndDrugInteractions_2"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_ContraIndications_9",
+            "target_section_code": "2.9",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_ContraIndications_9"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_ContraIndications_10",
+            "target_section_code": "2.10",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_ContraIndications_10"
+          }
+        ]
+      },
+      "10.2": {
+        "unit_id": "630004_3339003F5020_1_08:2e04312381822dca6fd8a3d0c4c2dfac74a9d0bbec9a0f9e6bd02b6b8c11856c:10.2",
+        "rows": [
+          [
+            "抗凝固剤\nヘパリン製剤、低分子量ヘパリン製剤（エノキサパリンナトリウム等）、フォンダパリヌクスナトリウム、ワルファリンカリウム等",
+            "出血の危険性が増大するおそれがあるので、観察を十分に行い、注意すること。",
+            "両剤の抗凝固作用が相加的に増強される。"
+          ],
+          [
+            "血小板凝集抑制作用を有する薬剤\n抗血小板剤\nアスピリン、クロピドグレル硫酸塩、チクロピジン塩酸塩等\n非ステロイド性解熱鎮痛消炎剤\nナプロキセン、ジクロフェナクナトリウム等",
+            "出血の危険性が増大するおそれがあるので、これらの薬剤と本剤の併用については、治療上の有益性と危険性を考慮して慎重に判断すること。\n下肢血行再建術施行後の末梢動脈疾患患者では特に本剤と抗血小板剤との併用時における非ステロイド性解熱鎮痛消炎剤の長期使用については、治療上の有益性が危険性を上回ると判断された場合のみ、これらの薬剤と併用すること。\nFontan手術後患者では投与中は観察を十分に行い、注意すること。",
+            "本剤の抗凝固作用と血小板凝集抑制作用により相加的に出血傾向が増強される。"
+          ],
+          [
+            "選択的セロトニン再取り込み阻害剤\nセロトニン・ノルアドレナリン再取り込み阻害剤",
+            "出血の危険性が増大するおそれがあるので、観察を十分に行い、注意すること。",
+            "本剤の抗凝固作用と血小板凝集抑制作用により相加的に出血傾向が増強される。"
+          ],
+          [
+            "血栓溶解剤\nウロキナーゼ、t-PA製剤（アルテプラーゼ等）",
+            "出血の危険性が増大するおそれがあるので、観察を十分に行い、注意すること。",
+            "本剤の抗凝固作用とフィブリン溶解作用により相加的に出血傾向が増強される。"
+          ],
+          [
+            "フルコナゾール\nホスフルコナゾール",
+            "本剤の血中濃度が上昇したとの報告がある。\n下肢血行再建術施行後の末梢動脈疾患患者では治療上の有益性と危険性を十分に考慮し、本剤の投与が適切と判断される患者にのみ併用すること。\nFontan手術後患者では治療上やむを得ないと判断された場合を除き、これらの薬剤との併用を避けること。",
+            "フルコナゾールがCYP3A4を阻害することにより本剤のクリアランスが減少するおそれがある。"
+          ],
+          [
+            "クラリスロマイシン\nエリスロマイシン",
+            "本剤の血中濃度が上昇したとの報告がある。\n下肢血行再建術施行後の末梢動脈疾患患者では治療上の有益性と危険性を十分に考慮し、本剤の投与が適切と判断される患者にのみ併用すること。\nFontan手術後患者では治療上やむを得ないと判断された場合を除き、これらの薬剤との併用を避けること。",
+            "これらの薬剤がCYP3A4及びP-糖タンパクを阻害することにより本剤のクリアランスが減少する。"
+          ],
+          [
+            "リファンピシン",
+            "本剤の血中濃度が低下し、抗凝固作用が減弱したとの報告がある。",
+            "リファンピシンがCYP3A4を強力に誘導し、P-糖タンパクを誘導することにより本剤のクリアランスが増加する。"
+          ],
+          [
+            "フェニトイン\nカルバマゼピン\nフェノバルビタール\nセイヨウオトギリソウ（St.John's Wort、セント・ジョーンズ・ワート）含有食品",
+            "本剤の血中濃度が低下するおそれがある。",
+            "これらの薬剤等がCYP3A4を強力に誘導することにより本剤のクリアランスが増加する。"
+          ]
+        ],
+        "body": [],
+        "references": [
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_DrugAndDrugInteractions_5",
+            "target_section_code": "16.7.5",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_DrugAndDrugInteractions_5"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_DrugAndDrugInteractions_9",
+            "target_section_code": "16.7.9",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_DrugAndDrugInteractions_9"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_InfoPrecautionsDosage_1",
+            "target_section_code": "7.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_InfoPrecautionsDosage_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_InfoPrecautionsDosage_2",
+            "target_section_code": "7.2",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_InfoPrecautionsDosage_2"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_ImportantPrecautions_4",
+            "target_section_code": "8.4",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_ImportantPrecautions_4"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_DrugAndDrugInteractions_6",
+            "target_section_code": "16.7.6",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_DrugAndDrugInteractions_6"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_DrugAndDrugInteractions_7",
+            "target_section_code": "16.7.7",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_DrugAndDrugInteractions_7"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_DrugAndDrugInteractions_8",
+            "target_section_code": "16.7.8",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_DrugAndDrugInteractions_8"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_DrugAndDrugInteractions_2",
+            "target_section_code": "16.7.2",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_DrugAndDrugInteractions_2"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_DrugAndDrugInteractions_3",
+            "target_section_code": "16.7.3",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_DrugAndDrugInteractions_3"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_DrugAndDrugInteractions_4",
+            "target_section_code": "16.7.4",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_DrugAndDrugInteractions_4"
+          }
+        ]
+      },
+      "16.7": {
+        "unit_id": "630004_3339003F5020_1_08:2e04312381822dca6fd8a3d0c4c2dfac74a9d0bbec9a0f9e6bd02b6b8c11856c:16.7",
+        "rows": [],
+        "body": [
+          "リトナビル\n健康成人男子12例にリトナビル600mgとリバーロキサバン10mgを併用投与した際、リバーロキサバンのAUCは2.5倍、Cmaxは1.6倍上昇し抗凝固作用が増強された（外国人データ）。",
+          "ケトコナゾール・フルコナゾール\n健康成人男子20例にケトコナゾール400mgとリバーロキサバン10mgを併用投与した際、リバーロキサバンのAUCは2.6倍、Cmaxは1.7倍上昇し抗凝固作用が増強された（外国人データ）。\n健康成人男子13例にフルコナゾール400mgとリバーロキサバン20mgを併用投与した際、リバーロキサバンのAUCは1.4倍、Cmaxは1.3倍上昇した（外国人データ）。",
+          "クラリスロマイシン・エリスロマイシン\n健康成人男子15例にクラリスロマイシン500mgとリバーロキサバン10mgを併用投与した際、リバーロキサバンのAUCは1.5倍、Cmaxは1.4倍上昇した（外国人データ）。\n健康成人男子15例にエリスロマイシン500mgとリバーロキサバン10mgを併用投与した際、リバーロキサバンのAUC及びCmaxともに1.3倍上昇した（外国人データ）。",
+          "リファンピシン\n健康成人男子18例にリファンピシン（開始用量150mgより600mgまで漸増）とリバーロキサバン20mgを併用投与した際、リバーロキサバンのAUCが約50%低下し、それに伴い抗凝固作用も減弱した（外国人データ）。",
+          "エノキサパリン\n健康成人男子10例にエノキサパリン4000IUとリバーロキサバン10mgを併用投与した際、リバーロキサバンの薬物動態に影響はなかった。抗第Ⅹa因子活性は相加的に増加したが、PT及びaPTTには影響は認められなかった（外国人データ）。",
+          "アスピリン\n健康成人男子13例にアスピリン500mgを投与した翌日にアスピリン100mgとリバーロキサバン15mgを併用投与した際、リバーロキサバンの薬物動態及び抗凝固作用に影響は認められなかった（外国人データ）。",
+          "クロピドグレル\n健康成人男子11例にクロピドグレル300mgを投与した翌日にクロピドグレル75mgとリバーロキサバン15mgを併用投与した際、リバーロキサバンの薬物動態に影響は認められなかった。別の試験において一部の被験者に出血時間の延長が認められたとの報告がある（外国人データ）。",
+          "ナプロキセン\n健康成人男子11例にナプロキセン500mg1日1回反復投与時にリバーロキサバン15mgを併用投与した際、出血時間の延長は認められなかったが、一部の被験者において抗凝固作用の増強が認められた（外国人データ）。",
+          "ワルファリン\n日本人健康成人男子12例（VKORC1遺伝子1639位のAアレルがホモ接合体を有している被験者）にワルファリンを反復投与し、PT-INRが2.0～3.0に到達した後に、リバーロキサバン15mgを1日1回反復投与に切り替えた際、aPTT、第Ⅹa因子活性阻害及び内在性トロンビン産生能（ETP）への影響は相加的であったが、PT及びPT-INRのピーク値はリバーロキサバン単独投与時と比較しそれぞれ2.3倍及び2.9倍になった。リバーロキサバン投与開始後3日目には、ワルファリンの影響は消失した。なお、薬物動態に相互作用は認められなかった。",
+          "その他の薬剤\nミダゾラム、ジゴキシン及びアトルバスタチンとリバーロキサバンの併用による薬物相互作用試験を実施したが、薬物動態学的相互作用は認められず、制酸剤（水酸化アルミニウムゲル・水酸化マグネシウム配合剤）、ラニチジン及びオメプラゾールは、リバーロキサバンの薬物動態に影響を及ぼさなかった（外国人データ）。",
+          "本剤の「下肢血行再建術施行後の末梢動脈疾患患者における血栓・塞栓形成の抑制」の承認用法・用量は、2.5mg1日2回投与である。"
+        ],
+        "references": [
+          {
+            "kind": "CommentRef",
+            "target_xml_id": "TBLFN_01",
+            "target_section_code": "16.7",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_ContraIndications_6",
+            "target_section_code": "2.6",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_ContraIndications_6"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_ContraIndicatedCombinations",
+            "target_section_code": "10.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_ContraIndicatedCombinations"
+          },
+          {
+            "kind": "CommentRef",
+            "target_xml_id": "TBLFN_01",
+            "target_section_code": "16.7",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_ContraIndications_8",
+            "target_section_code": "2.8",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_ContraIndications_8"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_ContraIndicatedCombinations",
+            "target_section_code": "10.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_ContraIndicatedCombinations"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PrecautionsForCombinations",
+            "target_section_code": "10.2",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_PrecautionsForCombinations"
+          },
+          {
+            "kind": "CommentRef",
+            "target_xml_id": "TBLFN_01",
+            "target_section_code": "16.7",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PrecautionsForCombinations",
+            "target_section_code": "10.2",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_PrecautionsForCombinations"
+          },
+          {
+            "kind": "CommentRef",
+            "target_xml_id": "TBLFN_01",
+            "target_section_code": "16.7",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PrecautionsForCombinations",
+            "target_section_code": "10.2",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_PrecautionsForCombinations"
+          },
+          {
+            "kind": "CommentRef",
+            "target_xml_id": "TBLFN_01",
+            "target_section_code": "16.7",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PrecautionsForCombinations",
+            "target_section_code": "10.2",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_PrecautionsForCombinations"
+          },
+          {
+            "kind": "CommentRef",
+            "target_xml_id": "TBLFN_01",
+            "target_section_code": "16.7",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PrecautionsForCombinations",
+            "target_section_code": "10.2",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_PrecautionsForCombinations"
+          },
+          {
+            "kind": "CommentRef",
+            "target_xml_id": "TBLFN_01",
+            "target_section_code": "16.7",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PrecautionsForCombinations",
+            "target_section_code": "10.2",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_PrecautionsForCombinations"
+          },
+          {
+            "kind": "CommentRef",
+            "target_xml_id": "TBLFN_01",
+            "target_section_code": "16.7",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PrecautionsForCombinations",
+            "target_section_code": "10.2",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_PrecautionsForCombinations"
+          },
+          {
+            "kind": "CommentRef",
+            "target_xml_id": "TBLFN_01",
+            "target_section_code": "16.7",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_ImportantPrecautions_6",
+            "target_section_code": "8.6",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_ImportantPrecautions_6"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PrecautionsForCombinations",
+            "target_section_code": "10.2",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_PrecautionsForCombinations"
+          }
+        ],
+        "items": [
+          {
+            "xml_id": "HDR_DrugAndDrugInteractions_1",
+            "header": "リトナビル",
+            "text": "リトナビル\n健康成人男子12例にリトナビル600mgとリバーロキサバン10mgを併用投与した際、リバーロキサバンのAUCは2.5倍、Cmaxは1.6倍上昇し抗凝固作用が増強された（外国人データ）。",
+            "references": [
+              {
+                "kind": "CommentRef",
+                "target_xml_id": "TBLFN_01",
+                "target_section_code": "16.7",
+                "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+              },
+              {
+                "kind": "HeaderRef",
+                "target_xml_id": "HDR_ContraIndications_6",
+                "target_section_code": "2.6",
+                "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_ContraIndications_6"
+              },
+              {
+                "kind": "HeaderRef",
+                "target_xml_id": "HDR_ContraIndicatedCombinations",
+                "target_section_code": "10.1",
+                "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_ContraIndicatedCombinations"
+              }
+            ]
+          },
+          {
+            "xml_id": "HDR_DrugAndDrugInteractions_2",
+            "header": "ケトコナゾール・フルコナゾール",
+            "text": "ケトコナゾール・フルコナゾール\n健康成人男子20例にケトコナゾール400mgとリバーロキサバン10mgを併用投与した際、リバーロキサバンのAUCは2.6倍、Cmaxは1.7倍上昇し抗凝固作用が増強された（外国人データ）。\n健康成人男子13例にフルコナゾール400mgとリバーロキサバン20mgを併用投与した際、リバーロキサバンのAUCは1.4倍、Cmaxは1.3倍上昇した（外国人データ）。",
+            "references": [
+              {
+                "kind": "CommentRef",
+                "target_xml_id": "TBLFN_01",
+                "target_section_code": "16.7",
+                "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+              },
+              {
+                "kind": "HeaderRef",
+                "target_xml_id": "HDR_ContraIndications_8",
+                "target_section_code": "2.8",
+                "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_ContraIndications_8"
+              },
+              {
+                "kind": "HeaderRef",
+                "target_xml_id": "HDR_ContraIndicatedCombinations",
+                "target_section_code": "10.1",
+                "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_ContraIndicatedCombinations"
+              },
+              {
+                "kind": "HeaderRef",
+                "target_xml_id": "HDR_PrecautionsForCombinations",
+                "target_section_code": "10.2",
+                "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_PrecautionsForCombinations"
+              }
+            ]
+          },
+          {
+            "xml_id": "HDR_DrugAndDrugInteractions_3",
+            "header": "クラリスロマイシン・エリスロマイシン",
+            "text": "クラリスロマイシン・エリスロマイシン\n健康成人男子15例にクラリスロマイシン500mgとリバーロキサバン10mgを併用投与した際、リバーロキサバンのAUCは1.5倍、Cmaxは1.4倍上昇した（外国人データ）。\n健康成人男子15例にエリスロマイシン500mgとリバーロキサバン10mgを併用投与した際、リバーロキサバンのAUC及びCmaxともに1.3倍上昇した（外国人データ）。",
+            "references": [
+              {
+                "kind": "CommentRef",
+                "target_xml_id": "TBLFN_01",
+                "target_section_code": "16.7",
+                "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+              },
+              {
+                "kind": "HeaderRef",
+                "target_xml_id": "HDR_PrecautionsForCombinations",
+                "target_section_code": "10.2",
+                "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_PrecautionsForCombinations"
+              }
+            ]
+          },
+          {
+            "xml_id": "HDR_DrugAndDrugInteractions_4",
+            "header": "リファンピシン",
+            "text": "リファンピシン\n健康成人男子18例にリファンピシン（開始用量150mgより600mgまで漸増）とリバーロキサバン20mgを併用投与した際、リバーロキサバンのAUCが約50%低下し、それに伴い抗凝固作用も減弱した（外国人データ）。",
+            "references": [
+              {
+                "kind": "CommentRef",
+                "target_xml_id": "TBLFN_01",
+                "target_section_code": "16.7",
+                "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+              },
+              {
+                "kind": "HeaderRef",
+                "target_xml_id": "HDR_PrecautionsForCombinations",
+                "target_section_code": "10.2",
+                "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_PrecautionsForCombinations"
+              }
+            ]
+          },
+          {
+            "xml_id": "HDR_DrugAndDrugInteractions_5",
+            "header": "エノキサパリン",
+            "text": "エノキサパリン\n健康成人男子10例にエノキサパリン4000IUとリバーロキサバン10mgを併用投与した際、リバーロキサバンの薬物動態に影響はなかった。抗第Ⅹa因子活性は相加的に増加したが、PT及びaPTTには影響は認められなかった（外国人データ）。",
+            "references": [
+              {
+                "kind": "CommentRef",
+                "target_xml_id": "TBLFN_01",
+                "target_section_code": "16.7",
+                "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+              },
+              {
+                "kind": "HeaderRef",
+                "target_xml_id": "HDR_PrecautionsForCombinations",
+                "target_section_code": "10.2",
+                "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_PrecautionsForCombinations"
+              }
+            ]
+          },
+          {
+            "xml_id": "HDR_DrugAndDrugInteractions_6",
+            "header": "アスピリン",
+            "text": "アスピリン\n健康成人男子13例にアスピリン500mgを投与した翌日にアスピリン100mgとリバーロキサバン15mgを併用投与した際、リバーロキサバンの薬物動態及び抗凝固作用に影響は認められなかった（外国人データ）。",
+            "references": [
+              {
+                "kind": "CommentRef",
+                "target_xml_id": "TBLFN_01",
+                "target_section_code": "16.7",
+                "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+              },
+              {
+                "kind": "HeaderRef",
+                "target_xml_id": "HDR_PrecautionsForCombinations",
+                "target_section_code": "10.2",
+                "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_PrecautionsForCombinations"
+              }
+            ]
+          },
+          {
+            "xml_id": "HDR_DrugAndDrugInteractions_7",
+            "header": "クロピドグレル",
+            "text": "クロピドグレル\n健康成人男子11例にクロピドグレル300mgを投与した翌日にクロピドグレル75mgとリバーロキサバン15mgを併用投与した際、リバーロキサバンの薬物動態に影響は認められなかった。別の試験において一部の被験者に出血時間の延長が認められたとの報告がある（外国人データ）。",
+            "references": [
+              {
+                "kind": "CommentRef",
+                "target_xml_id": "TBLFN_01",
+                "target_section_code": "16.7",
+                "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+              },
+              {
+                "kind": "HeaderRef",
+                "target_xml_id": "HDR_PrecautionsForCombinations",
+                "target_section_code": "10.2",
+                "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_PrecautionsForCombinations"
+              }
+            ]
+          },
+          {
+            "xml_id": "HDR_DrugAndDrugInteractions_8",
+            "header": "ナプロキセン",
+            "text": "ナプロキセン\n健康成人男子11例にナプロキセン500mg1日1回反復投与時にリバーロキサバン15mgを併用投与した際、出血時間の延長は認められなかったが、一部の被験者において抗凝固作用の増強が認められた（外国人データ）。",
+            "references": [
+              {
+                "kind": "CommentRef",
+                "target_xml_id": "TBLFN_01",
+                "target_section_code": "16.7",
+                "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+              },
+              {
+                "kind": "HeaderRef",
+                "target_xml_id": "HDR_PrecautionsForCombinations",
+                "target_section_code": "10.2",
+                "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_PrecautionsForCombinations"
+              }
+            ]
+          },
+          {
+            "xml_id": "HDR_DrugAndDrugInteractions_9",
+            "header": "ワルファリン",
+            "text": "ワルファリン\n日本人健康成人男子12例（VKORC1遺伝子1639位のAアレルがホモ接合体を有している被験者）にワルファリンを反復投与し、PT-INRが2.0～3.0に到達した後に、リバーロキサバン15mgを1日1回反復投与に切り替えた際、aPTT、第Ⅹa因子活性阻害及び内在性トロンビン産生能（ETP）への影響は相加的であったが、PT及びPT-INRのピーク値はリバーロキサバン単独投与時と比較しそれぞれ2.3倍及び2.9倍になった。リバーロキサバン投与開始後3日目には、ワルファリンの影響は消失した。なお、薬物動態に相互作用は認められなかった。",
+            "references": [
+              {
+                "kind": "CommentRef",
+                "target_xml_id": "TBLFN_01",
+                "target_section_code": "16.7",
+                "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+              },
+              {
+                "kind": "HeaderRef",
+                "target_xml_id": "HDR_ImportantPrecautions_6",
+                "target_section_code": "8.6",
+                "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_ImportantPrecautions_6"
+              },
+              {
+                "kind": "HeaderRef",
+                "target_xml_id": "HDR_PrecautionsForCombinations",
+                "target_section_code": "10.2",
+                "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_PrecautionsForCombinations"
+              }
+            ]
+          },
+          {
+            "xml_id": "HDR_DrugAndDrugInteractions_10",
+            "header": "その他の薬剤",
+            "text": "その他の薬剤\nミダゾラム、ジゴキシン及びアトルバスタチンとリバーロキサバンの併用による薬物相互作用試験を実施したが、薬物動態学的相互作用は認められず、制酸剤（水酸化アルミニウムゲル・水酸化マグネシウム配合剤）、ラニチジン及びオメプラゾールは、リバーロキサバンの薬物動態に影響を及ぼさなかった（外国人データ）。",
+            "references": []
+          }
+        ],
+        "raw_reference_occurrences": [
+          {
+            "owner_xml_id": "HDR_DrugAndDrugInteractions_1",
+            "language_index": 1,
+            "reference_index": 0,
+            "reference": {
+              "kind": "CommentRef",
+              "target_xml_id": "TBLFN_01",
+              "target_section_code": "16.7",
+              "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+            }
+          },
+          {
+            "owner_xml_id": "HDR_DrugAndDrugInteractions_1",
+            "language_index": 1,
+            "reference_index": 1,
+            "reference": {
+              "kind": "HeaderRef",
+              "target_xml_id": "HDR_ContraIndications_6",
+              "target_section_code": "2.6",
+              "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_ContraIndications_6"
+            }
+          },
+          {
+            "owner_xml_id": "HDR_DrugAndDrugInteractions_1",
+            "language_index": 1,
+            "reference_index": 2,
+            "reference": {
+              "kind": "HeaderRef",
+              "target_xml_id": "HDR_ContraIndicatedCombinations",
+              "target_section_code": "10.1",
+              "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_ContraIndicatedCombinations"
+            }
+          },
+          {
+            "owner_xml_id": "HDR_DrugAndDrugInteractions_2",
+            "language_index": 1,
+            "reference_index": 0,
+            "reference": {
+              "kind": "CommentRef",
+              "target_xml_id": "TBLFN_01",
+              "target_section_code": "16.7",
+              "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+            }
+          },
+          {
+            "owner_xml_id": "HDR_DrugAndDrugInteractions_2",
+            "language_index": 1,
+            "reference_index": 1,
+            "reference": {
+              "kind": "HeaderRef",
+              "target_xml_id": "HDR_ContraIndications_8",
+              "target_section_code": "2.8",
+              "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_ContraIndications_8"
+            }
+          },
+          {
+            "owner_xml_id": "HDR_DrugAndDrugInteractions_2",
+            "language_index": 1,
+            "reference_index": 2,
+            "reference": {
+              "kind": "HeaderRef",
+              "target_xml_id": "HDR_ContraIndicatedCombinations",
+              "target_section_code": "10.1",
+              "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_ContraIndicatedCombinations"
+            }
+          },
+          {
+            "owner_xml_id": "HDR_DrugAndDrugInteractions_2",
+            "language_index": 1,
+            "reference_index": 3,
+            "reference": {
+              "kind": "CommentRef",
+              "target_xml_id": "TBLFN_01",
+              "target_section_code": "16.7",
+              "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+            }
+          },
+          {
+            "owner_xml_id": "HDR_DrugAndDrugInteractions_2",
+            "language_index": 1,
+            "reference_index": 4,
+            "reference": {
+              "kind": "HeaderRef",
+              "target_xml_id": "HDR_PrecautionsForCombinations",
+              "target_section_code": "10.2",
+              "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_PrecautionsForCombinations"
+            }
+          },
+          {
+            "owner_xml_id": "HDR_DrugAndDrugInteractions_3",
+            "language_index": 1,
+            "reference_index": 0,
+            "reference": {
+              "kind": "CommentRef",
+              "target_xml_id": "TBLFN_01",
+              "target_section_code": "16.7",
+              "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+            }
+          },
+          {
+            "owner_xml_id": "HDR_DrugAndDrugInteractions_3",
+            "language_index": 1,
+            "reference_index": 1,
+            "reference": {
+              "kind": "HeaderRef",
+              "target_xml_id": "HDR_PrecautionsForCombinations",
+              "target_section_code": "10.2",
+              "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_PrecautionsForCombinations"
+            }
+          },
+          {
+            "owner_xml_id": "HDR_DrugAndDrugInteractions_3",
+            "language_index": 1,
+            "reference_index": 2,
+            "reference": {
+              "kind": "CommentRef",
+              "target_xml_id": "TBLFN_01",
+              "target_section_code": "16.7",
+              "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+            }
+          },
+          {
+            "owner_xml_id": "HDR_DrugAndDrugInteractions_3",
+            "language_index": 1,
+            "reference_index": 3,
+            "reference": {
+              "kind": "HeaderRef",
+              "target_xml_id": "HDR_PrecautionsForCombinations",
+              "target_section_code": "10.2",
+              "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_PrecautionsForCombinations"
+            }
+          },
+          {
+            "owner_xml_id": "HDR_DrugAndDrugInteractions_4",
+            "language_index": 1,
+            "reference_index": 0,
+            "reference": {
+              "kind": "CommentRef",
+              "target_xml_id": "TBLFN_01",
+              "target_section_code": "16.7",
+              "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+            }
+          },
+          {
+            "owner_xml_id": "HDR_DrugAndDrugInteractions_4",
+            "language_index": 1,
+            "reference_index": 1,
+            "reference": {
+              "kind": "HeaderRef",
+              "target_xml_id": "HDR_PrecautionsForCombinations",
+              "target_section_code": "10.2",
+              "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_PrecautionsForCombinations"
+            }
+          },
+          {
+            "owner_xml_id": "HDR_DrugAndDrugInteractions_5",
+            "language_index": 1,
+            "reference_index": 0,
+            "reference": {
+              "kind": "CommentRef",
+              "target_xml_id": "TBLFN_01",
+              "target_section_code": "16.7",
+              "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+            }
+          },
+          {
+            "owner_xml_id": "HDR_DrugAndDrugInteractions_5",
+            "language_index": 1,
+            "reference_index": 1,
+            "reference": {
+              "kind": "HeaderRef",
+              "target_xml_id": "HDR_PrecautionsForCombinations",
+              "target_section_code": "10.2",
+              "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_PrecautionsForCombinations"
+            }
+          },
+          {
+            "owner_xml_id": "HDR_DrugAndDrugInteractions_6",
+            "language_index": 1,
+            "reference_index": 0,
+            "reference": {
+              "kind": "CommentRef",
+              "target_xml_id": "TBLFN_01",
+              "target_section_code": "16.7",
+              "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+            }
+          },
+          {
+            "owner_xml_id": "HDR_DrugAndDrugInteractions_6",
+            "language_index": 1,
+            "reference_index": 1,
+            "reference": {
+              "kind": "HeaderRef",
+              "target_xml_id": "HDR_PrecautionsForCombinations",
+              "target_section_code": "10.2",
+              "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_PrecautionsForCombinations"
+            }
+          },
+          {
+            "owner_xml_id": "HDR_DrugAndDrugInteractions_7",
+            "language_index": 1,
+            "reference_index": 0,
+            "reference": {
+              "kind": "CommentRef",
+              "target_xml_id": "TBLFN_01",
+              "target_section_code": "16.7",
+              "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+            }
+          },
+          {
+            "owner_xml_id": "HDR_DrugAndDrugInteractions_7",
+            "language_index": 1,
+            "reference_index": 1,
+            "reference": {
+              "kind": "HeaderRef",
+              "target_xml_id": "HDR_PrecautionsForCombinations",
+              "target_section_code": "10.2",
+              "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_PrecautionsForCombinations"
+            }
+          },
+          {
+            "owner_xml_id": "HDR_DrugAndDrugInteractions_8",
+            "language_index": 1,
+            "reference_index": 0,
+            "reference": {
+              "kind": "CommentRef",
+              "target_xml_id": "TBLFN_01",
+              "target_section_code": "16.7",
+              "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+            }
+          },
+          {
+            "owner_xml_id": "HDR_DrugAndDrugInteractions_8",
+            "language_index": 1,
+            "reference_index": 1,
+            "reference": {
+              "kind": "HeaderRef",
+              "target_xml_id": "HDR_PrecautionsForCombinations",
+              "target_section_code": "10.2",
+              "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_PrecautionsForCombinations"
+            }
+          },
+          {
+            "owner_xml_id": "HDR_DrugAndDrugInteractions_9",
+            "language_index": 1,
+            "reference_index": 0,
+            "reference": {
+              "kind": "CommentRef",
+              "target_xml_id": "TBLFN_01",
+              "target_section_code": "16.7",
+              "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#TBLFN_01"
+            }
+          },
+          {
+            "owner_xml_id": "HDR_DrugAndDrugInteractions_9",
+            "language_index": 1,
+            "reference_index": 1,
+            "reference": {
+              "kind": "HeaderRef",
+              "target_xml_id": "HDR_ImportantPrecautions_6",
+              "target_section_code": "8.6",
+              "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_ImportantPrecautions_6"
+            }
+          },
+          {
+            "owner_xml_id": "HDR_DrugAndDrugInteractions_9",
+            "language_index": 1,
+            "reference_index": 2,
+            "reference": {
+              "kind": "HeaderRef",
+              "target_xml_id": "HDR_PrecautionsForCombinations",
+              "target_section_code": "10.2",
+              "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/630004_3339003F5020_1_08#HDR_PrecautionsForCombinations"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "document_id": "800155_6290004M1029_1_47",
+    "sha256": "53eb95df5383e8883dc97a3d0537fba3d5bc530acf1a8726ecce44b8f548e08b",
+    "yj": "6290004M1029",
+    "product_name": "イトリゾールカプセル50",
+    "generic_name": "イトラコナゾール",
+    "revision": {
+      "source_label": "今回",
+      "year_month": "2026-08",
+      "version": "第8版"
+    },
+    "sections": {
+      "10": {
+        "unit_id": "800155_6290004M1029_1_47:53eb95df5383e8883dc97a3d0537fba3d5bc530acf1a8726ecce44b8f548e08b:10",
+        "rows": [],
+        "body": [
+          "本剤は、主に肝チトクロームP450 3A4（CYP3A4）によって代謝される。また、本剤は、CYP3A4及びP糖蛋白に対して阻害作用を示す。他の薬剤との相互作用はすべての薬剤との組み合わせについて検討されているわけではなく、下表における併用薬剤は包括的なものではない。そのため、他剤による治療中に新たに本剤を併用したり、本剤による治療中に新たに他の薬剤を併用する場合には、併用薬剤の添付文書情報（代謝経路、相互作用経路、潜在的リスク及び併用時の具体的な対処方法等）を確認するとともに患者の状態を十分に観察し、慎重に投与すること。また、本剤投与終了後の血漿中薬物濃度は、本剤の投与量及び投与期間に応じて徐々に低下するため、本剤によって代謝が影響される薬剤の投与開始に際しては患者の状態を十分に観察し、慎重に投与すること。なお、パルス療法中の患者において休薬期間中に新たに他の薬剤を併用する場合にも、患者の状態を十分に観察し、慎重に投与すること。"
+        ],
+        "references": []
+      },
+      "10.1": {
+        "unit_id": "800155_6290004M1029_1_47:53eb95df5383e8883dc97a3d0537fba3d5bc530acf1a8726ecce44b8f548e08b:10.1",
+        "rows": [
+          [
+            "ピモジド\nキニジン,\nベプリジル\nベプリコール",
+            "これらの薬剤の血中濃度上昇により、QT延長が発現する可能性がある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "トリアゾラム\nハルシオン",
+            "トリアゾラムの血中濃度上昇、作用の増強、作用時間の延長があらわれることがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "シンバスタチン\nリポバス",
+            "シンバスタチンの血中濃度上昇により、横紋筋融解症があらわれやすくなる。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "アゼルニジピン\nカルブロック\nアゼルニジピン・オルメサルタン メドキソミル\nレザルタス配合錠\nニソルジピン",
+            "これらの薬剤の血中濃度を上昇させることがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "エルゴタミン・カフェイン・イソプロピルアンチピリン\nクリアミン配合錠\nジヒドロエルゴタミン\nエルゴメトリン\nメチルエルゴメトリン\nパルタンM",
+            "これらの薬剤の血中濃度上昇により、血管攣縮等の副作用が発現するおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "バルデナフィル\nレビトラ",
+            "バルデナフィルのAUCが増加しC_{max}が上昇するとの報告がある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "エプレレノン\nセララ",
+            "エプレレノンの血中濃度を上昇させるおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ブロナンセリン\nロナセン",
+            "ブロナンセリンの血中濃度が上昇し、作用が増強するおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "シルデナフィル\nレバチオ",
+            "シルデナフィルの血中濃度を上昇させるおそれがある（シルデナフィルとリトナビルの併用により、シルデナフィルのC_{max}及びAUCがそれぞれ3.9倍及び10.5倍に増加したとの報告がある）。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "タダラフィル\nアドシルカ",
+            "タダラフィルの血中濃度を上昇させるおそれがある（タダラフィルとケトコナゾールの併用により、タダラフィルのAUC及びC_{max}がそれぞれ312%及び22%増加したとの報告がある）。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "スボレキサント\nベルソムラ",
+            "スボレキサントの作用を著しく増強させるおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ボルノレキサント水和物\nボルズィ",
+            "ボルノレキサントの血漿中濃度が顕著に上昇し、作用を著しく増強させるおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "イブルチニブ\nイムブルビカ",
+            "イブルチニブの血中濃度が上昇し、副作用が増強されるおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "チカグレロル\nブリリンタ",
+            "チカグレロルの血中濃度が上昇し、出血の危険性が増大するおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ロミタピド\nジャクスタピッド",
+            "ロミタピドの血中濃度が著しく上昇するおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "イバブラジン\nコララン",
+            "イバブラジンの血中濃度が上昇し、過度の徐脈があらわれることがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ベネトクラクス（再発又は難治性の慢性リンパ性白血病（小リンパ球性リンパ腫を含む）の用量漸増期）\nベネクレクスタ",
+            "ベネトクラクスの血中濃度が上昇し、腫瘍崩壊症候群の発現が増強する可能性がある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ルラシドン塩酸塩\nラツーダ",
+            "ルラシドンの血中濃度が上昇し、作用が増強するおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "アナモレリン塩酸塩\nエドルミズ",
+            "アナモレリンの血中濃度が上昇し、副作用の発現が増強するおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "マバカムテン\nカムザイオス",
+            "マバカムテンの血中濃度が上昇し、副作用が増強され、収縮機能障害による心不全のリスクが高まるおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "フィネレノン\nケレンディア",
+            "フィネレノンの血中濃度が著しく上昇するおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ボクロスポリン\nルプキネス",
+            "ボクロスポリンの血中濃度が上昇し、作用が増強するおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "イサブコナゾニウム硫酸塩\nクレセンバ",
+            "イサブコナゾールの血中濃度が上昇し、作用が増強するおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ロナファルニブ\nゾキンヴィ",
+            "ロナファルニブの血中濃度が著しく上昇し、副作用が増強するおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "パロバロテン\nソホノス",
+            "パロバロテンの血中濃度が上昇し、副作用が増強するおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "アリスキレン\nラジレス",
+            "イトラコナゾールカプセルの併用投与（空腹時）により、アリスキレンのC_{max}及びAUCがそれぞれ約5.8倍及び約6.5倍に上昇したとの報告がある。",
+            "本剤のP糖蛋白阻害作用により、アリスキレンの排泄が阻害されると考えられる。"
+          ],
+          [
+            "ダビガトラン\nプラザキサ",
+            "ダビガトランの血中濃度が上昇し、出血の危険性が増大することがある。",
+            "本剤のP糖蛋白阻害作用により、ダビガトランの排泄が阻害されると考えられる。"
+          ],
+          [
+            "リバーロキサバン\nイグザレルト",
+            "リバーロキサバンの血中濃度が上昇し、出血の危険性が増大するおそれがある（リバーロキサバンとケトコナゾールの併用により、リバーロキサバンのAUC及びC_{max}がそれぞれ158％及び72％増加したとの報告がある）。",
+            "本剤のCYP3A4及びP糖蛋白阻害作用により、リバーロキサバンの代謝及び排泄が阻害され、抗凝固作用が増強されると考えられる。"
+          ]
+        ],
+        "body": [],
+        "references": [
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_04",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_04"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_05",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_05"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_06",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_06"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_07",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_07"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_08",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_08"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_09",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_09"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_10",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_10"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_11",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_11"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_12",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_12"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ContraIndications_20211026170339_1"
+          }
+        ]
+      },
+      "10.2": {
+        "unit_id": "800155_6290004M1029_1_47:53eb95df5383e8883dc97a3d0537fba3d5bc530acf1a8726ecce44b8f548e08b:10.2",
+        "rows": [
+          [
+            "アトルバスタチン",
+            "アトルバスタチンの血中濃度を上昇させることがあり、横紋筋融解症があらわれやすくなる。必要に応じてアトルバスタチンの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ビンカアルカロイド系抗悪性腫瘍剤\nビンクリスチン\nビンブラスチン等",
+            "これらの薬剤の血中濃度を上昇させることがあり、ビンカアルカロイド系抗悪性腫瘍剤の副作用が増強されることがある。必要に応じてこれらの薬剤の投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "メチルプレドニゾロン\nデキサメタゾン\nブデソニド",
+            "これらの薬剤の血中濃度を上昇させることがあり、これらの薬剤の副作用が増強されることがある。必要に応じてこれらの薬剤の投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "コルヒチン",
+            "コルヒチンの血中濃度を上昇させることがあり、コルヒチンの作用が増強されることがある。必要に応じてコルヒチンの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ジソピラミド",
+            "ジソピラミドの血中濃度上昇により、QT延長が発現する可能性がある。必要に応じてジソピラミドの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ベンゾジアゼピン系薬剤\nミダゾラム\nブロチゾラム\nアルプラゾラム",
+            "これらの薬剤の血中濃度を上昇させることがある。必要に応じてこれらの薬剤の投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "抗精神病薬\nハロペリドール\nアリピプラゾール\nペロスピロン\nクエチアピン",
+            "・本剤とアリピプラゾールの併用により、アリピプラゾールのC_{max}、AUC、t_{1/2}がそれぞれ19.4%、48.0%、18.6%増加したとの報告がある。\n・本剤とペロスピロンの併用により、ペロスピロンのC_{max}及びAUCがそれぞれ5.7倍及び6.8倍増加したとの報告がある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "免疫抑制剤\nシクロスポリン\nタクロリムス水和物",
+            "",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "抗悪性腫瘍剤\nドセタキセル水和物\nエベロリムス\nテムシロリムス\nゲフィチニブ\nダサチニブ\nエルロチニブ\nラパチニブ\nボルテゾミブ\nイマチニブ\nスニチニブ\nボスチニブ\nカバジタキセル\nセリチニブ\nクリゾチニブ\nシロリムス（錠）\nパノビノスタット\nポナチニブ\nルキソリチニブ\nアパルタミド\nトレチノイン（カプセル）\nペミガチニブ\nエヌトレクチニブ",
+            "・クリゾチニブ反復投与時に本剤を併用投与したとき、クリゾチニブの定常状態におけるAUC_{tau}及びC_{max}は単独投与と比べそれぞれ57%及び33%増加した。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "オピオイド系鎮痛剤\nフェンタニル\nオキシコドン\nメサドン",
+            "・本剤とオキシコドンの併用により、オキシコドンのクリアランスが32%減少し、AUCが51%増加したとの報告がある（オキシコドン注射剤）。また、オキシコドンのAUCが144%上昇したとの報告がある（オキシコドン経口剤）。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ブプレノルフィン\nセレギリン\nガランタミン\nトルバプタン\nエレトリプタン\nサルメテロール\nシクレソニド\nフルチカゾン\nアプレピタント\nイミダフェナシン\nソリフェナシン\nトルテロジン\nシロスタゾール\nシナカルセト\nエバスチン\nダルナビル\nマラビロク\nオキシブチニン\nドンペリドン\nシロドシン\nキニーネ\nゾピクロン\nグアンファシン\nジエノゲスト",
+            "・トルバプタンとの併用が避けられない場合は、トルバプタンの減量あるいは、低用量から開始するなど用量に注意すること。\n・本剤とイミダフェナシンの併用により、イミダフェナシンのC_{max}及びAUCがそれぞれ1.32倍及び1.78倍増加したとの報告がある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "シルデナフィル\nバイアグラ",
+            "シルデナフィルとエリスロマイシンの併用によりシルデナフィルのC_{max}、AUCの増加が認められたとの報告がある。必要に応じてシルデナフィルの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "タダラフィル\nシアリス\nザルティア",
+            "タダラフィルの血中濃度を上昇させるおそれがある（タダラフィルとケトコナゾールの併用により、タダラフィルのAUC及びC_{max}がそれぞれ312%及び22%増加したとの報告がある）。必要に応じてタダラフィルの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ワルファリン",
+            "ワルファリンの作用が増強し、著しいINR上昇があらわれることがある。必要に応じてワルファリンの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "アキシチニブ",
+            "アキシチニブの血中濃度が上昇し、副作用の発現頻度及び重症度が増加するおそれがある。やむを得ず併用する際にはアキシチニブの減量を考慮するとともに、患者の状態を慎重に観察し、副作用発現に十分注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "フェソテロジン",
+            "活性代謝物5-HMTの血漿中濃度の上昇に伴い効果や副作用の増強が予想される。必要に応じてフェソテロジンの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ボセンタン",
+            "ボセンタンの血中濃度が上昇し、ボセンタンの副作用が発現しやすくなるおそれがある。必要に応じてボセンタンの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "アルテメテル・ルメファントリン",
+            "アルテメテル及びルメファントリンの血中濃度が上昇し、QT延長が起こるおそれがある。必要に応じてアルテメテル・ルメファントリンの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "デソゲストレル・エチニルエストラジオール",
+            "これらの薬剤の血中濃度を上昇させることがある。必要に応じてデソゲストレル・エチニルエストラジオールの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ベネトクラクス（再発又は難治性の慢性リンパ性白血病（小リンパ球性リンパ腫を含む）の維持投与期、急性骨髄性白血病）",
+            "ベネトクラクスの血中濃度が上昇し、副作用が増強する可能性があるので、ベネトクラクスを減量するとともに患者の状態を慎重に観察すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ジヒドロピリジン系Ca拮抗剤\nニフェジピン\nニルバジピン\nフェロジピン等\nベラパミル",
+            "これらの薬剤の血中濃度を上昇させることがある。また、心機能が低下する可能性がある。必要に応じてこれらの薬剤の投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。また、両剤の心抑制作用が増強する可能性がある。"
+          ],
+          [
+            "イリノテカン",
+            "イリノテカンの活性代謝物の血中濃度が上昇することがある。必要に応じてイリノテカンの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4阻害作用により、イリノテカンの活性代謝物の無毒化が阻害されると考えられる。"
+          ],
+          [
+            "バルベナジン",
+            "バルベナジン及び活性代謝物の血漿中濃度が上昇するおそれがある。バルベナジンの作用が増強することで副作用があらわれるおそれがあるため、観察を十分に行うこと。本剤を併用する場合にはバルベナジンの増量はしないこと。",
+            "本剤のCYP3A阻害作用により、バルベナジン及び活性代謝物の代謝が阻害されると考えられる。"
+          ],
+          [
+            "ニロチニブ",
+            "ニロチニブの血中濃度が上昇し、QT延長があらわれることがある。必要に応じてニロチニブの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4及びP糖蛋白阻害作用により、ニロチニブの代謝及び排泄が阻害されると考えられる。"
+          ],
+          [
+            "アピキサバン",
+            "アピキサバンの血中濃度を上昇させることがある。必要に応じてアピキサバンの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4及びP糖蛋白阻害作用により、アピキサバンの代謝及び排泄が阻害されると考えられる。"
+          ],
+          [
+            "エドキサバン",
+            "エドキサバンの血中濃度を上昇させ、出血の危険性を増大させるおそれがある。必要に応じてエドキサバンの投与量を減量するなど用量に注意すること。",
+            "本剤のP糖蛋白阻害作用により、エドキサバンのバイオアベイラビリティを上昇させると考えられる。"
+          ],
+          [
+            "タラゾパリブ",
+            "タラゾパリブの副作用が増強されるおそれがあるので、本剤との併用は可能な限り避けること。やむを得ず併用する場合には、患者の状態を慎重に観察し、副作用の発現に十分注意すること。",
+            "本剤のP糖蛋白阻害作用により、タラゾパリブの血中濃度が上昇する可能性がある。"
+          ],
+          [
+            "ジゴキシン\nブスルファン",
+            "これらの薬剤の血中濃度を上昇させることがある。\n本剤とブスルファンの併用により、ブスルファンのクリアランスが20％減少したとの報告がある。必要に応じてこれらの薬剤の投与量を減量するなど用量に注意すること。",
+            "機序不明"
+          ],
+          [
+            "ロペラミド",
+            "ロペラミドの血中濃度が上昇することがある。必要に応じてロペラミドの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4及びP糖蛋白阻害作用により、ロペラミドの代謝及び排泄が阻害されると考えられる。"
+          ],
+          [
+            "クラリスロマイシン\nリトナビル\nホスアンプレナビル/リトナビル\nエリスロマイシン\nシプロフロキサシン",
+            "本剤の血中濃度が上昇することがある。\n本剤とシプロフロキサシンの併用により、イトラコナゾールのC_{max}及びAUCがそれぞれ53.13%及び82.46%増加したとの報告がある。必要に応じて本剤の投与量を減量するなど用量に注意すること。",
+            "これらの薬剤のCYP3A4に対する阻害作用により、本剤の代謝が阻害される。"
+          ],
+          [
+            "ダルナビル/リトナビル",
+            "本剤又はダルナビルの血中濃度が上昇する可能性がある（ダルナビル/リトナビルとケトコナゾールの併用により、ダルナビルとケトコナゾールの血中濃度の上昇が認められたとの報告がある）。必要に応じて本剤又はこれらの薬剤の投与量を調節するなど用量に注意すること。",
+            "本剤及びこれらの薬剤のCYP3A4に対する阻害作用により、血中濃度の変化が起こる場合がある。"
+          ],
+          [
+            "エルビテグラビル・コビシスタット・エムトリシタビン・テノホビル アラフェナミドフマル酸塩\nエルビテグラビル・コビシスタット・エムトリシタビン・テノホビル ジソプロキシルフマル酸塩",
+            "本剤、エルビテグラビル及びコビシスタットの血中濃度が上昇する可能性がある。必要に応じて本剤又はこれらの薬剤の投与量を調節するなど用量に注意すること。",
+            "本剤及びコビシスタットのCYP3A等阻害作用により、相互に代謝が阻害される。"
+          ],
+          [
+            "ダルナビル エタノール付加物・コビシスタット",
+            "本剤、ダルナビル又はコビシスタットの血中濃度が上昇する可能性がある。必要に応じて本剤又はダルナビル エタノール付加物・コビシスタットの投与量を調節するなど用量に注意すること。",
+            "本剤とダルナビル及びコビシスタットのCYP3A阻害作用により、相互に代謝が阻害される。"
+          ],
+          [
+            "ダルナビル エタノール付加物・コビシスタット・エムトリシタビン・テノホビル アラフェナミドフマル酸塩",
+            "本剤、ダルナビル、コビシスタット又はテノホビル アラフェナミドの血中濃度が上昇する可能性がある。必要に応じて本剤又はダルナビル エタノール付加物・コビシスタット・エムトリシタビン・テノホビル アラフェナミドフマル酸塩の投与量を調節するなど用量に注意すること。",
+            "本剤とダルナビル、コビシスタット及びテノホビル アラフェナミドのCYP3A及びP糖蛋白阻害作用により、相互に代謝が阻害される。"
+          ],
+          [
+            "カルバマゼピン,\nエトラビリン\nリファブチン",
+            "本剤の血中濃度が低下することがある。また、これらの薬剤の血中濃度が上昇する可能性がある。必要に応じて本剤又はこれらの薬剤の投与量を調節するなど用量に注意すること。",
+            "これらの薬剤の肝薬物代謝酵素誘導により、本剤の肝代謝が促進される。また、本剤のCYP3A4に対する阻害作用によりこれらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "リファンピシン\nフェニトイン\nイソニアジド\nフェノバルビタール\nエファビレンツ\nネビラピン",
+            "本剤の血中濃度が低下することがある。\n本剤とネビラピンの併用により、本剤のC_{max}、AUC及びt_{1/2}がそれぞれ38%、61%及び31%減少したとの報告がある。必要に応じて本剤の投与量、両剤の投与間隔を調節するなど注意すること。",
+            "これらの薬剤の肝薬物代謝酵素誘導により、本剤の肝代謝が促進される。"
+          ],
+          [
+            "H_{2}遮断薬\nファモチジン等",
+            "本剤の血中濃度が低下することがある。併用する場合には両剤の投与間隔をできる限り空けるなど慎重に投与すること。",
+            "酸分泌量低下のため本剤の消化管での溶解性が低下し、吸収が低下することがある。"
+          ],
+          [
+            "プロトンポンプ阻害剤\nオメプラゾール\nランソプラゾール\nラベプラゾール\nエソメプラゾール\nボノプラザンフマル酸塩",
+            "本剤の血中濃度が低下することがある。必要に応じて本剤の投与量、両剤の投与間隔を調節するなど注意すること。",
+            "酸分泌量低下のため本剤の消化管での溶解性が低下し、吸収が低下することがある。"
+          ],
+          [
+            "制酸剤\n乾燥水酸化アルミニウムゲル\n乾燥水酸化アルミニウムゲル・水酸化マグネシウム等",
+            "本剤と制酸剤の併用により、本剤のC_{max}及びAUCがそれぞれ70%及び66%減少したとの報告がある。必要に応じて本剤の投与量、両剤の投与間隔を調節するなど注意すること。",
+            "酸分泌量低下のため本剤の消化管での溶解性が低下し、吸収が低下することがある。"
+          ],
+          [
+            "メロキシカム",
+            "本剤とメロキシカムの併用により、メロキシカムのC_{max}及びAUCがそれぞれ64%及び37%減少したとの報告がある。必要に応じてメロキシカムの投与量を調節するなど用量に注意すること。",
+            "本剤がメロキシカムの消化管からの吸収を抑制すると考えられる。"
+          ],
+          [
+            "リオシグアト",
+            "リオシグアトの血中濃度を上昇させるおそれがある（リオシグアトとケトコナゾールの併用により、リオシグアトのAUC及びCmaxがそれぞれ150%及び46%増加、また、消失半減期が延長したとの報告がある）。本剤との併用が必要な場合は、患者の状態に注意し、必要に応じてリオシグアトの減量を考慮すること。",
+            "本剤のCYP1A1及びCYP3A4阻害作用により、リオシグアトのクリアランスが低下することが考えられる。"
+          ]
+        ],
+        "body": [],
+        "references": [
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_13",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_13"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_14",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_14"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_15",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_15"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_16",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_16"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_17",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_17"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_ContraIndications_2",
+            "target_section_code": "2.2",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_ContraIndications_2"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_PatientsWithRenalImpairment_20211026170339_18",
+            "target_section_code": "9.2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_PatientsWithRenalImpairment_20211026170339_18"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_PatientsWithHepaticImpairment_20211026170339_21",
+            "target_section_code": "9.3.2",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_PatientsWithHepaticImpairment_20211026170339_21"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_18",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_18"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_19",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_19"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_20",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_20"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_21",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_21"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_22",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_22"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_23",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_23"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_24",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_24"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_25",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_25"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_26",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_26"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_27",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_27"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ImportantPrecautions_20211026170339_13",
+            "target_section_code": "8.3",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#HDR_PMDA_ImportantPrecautions_20211026170339_13"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_28",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_28"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_29",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_29"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_30",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_30"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_31",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_31"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_32",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_32"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_33",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_33"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_34",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_34"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_35",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_35"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_36",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_36"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_37",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_37"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_38",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_38"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_39",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_39"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_40",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_40"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_41",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/800155_6290004M1029_1_47#DOC_41"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "document_id": "300119_6290004M1070_1_17",
+    "sha256": "14a47118a9d65104e16837e32d88b9c4eb6ce9ad730068f8a7fdcc5342ce8efc",
+    "yj": "6290004M1070",
+    "product_name": "イトラコナゾールカプセル50mg「SW」",
+    "generic_name": "イトラコナゾール",
+    "revision": {
+      "source_label": "今回",
+      "year_month": "2026-08",
+      "version": "第5版"
+    },
+    "sections": {
+      "10": {
+        "unit_id": "300119_6290004M1070_1_17:14a47118a9d65104e16837e32d88b9c4eb6ce9ad730068f8a7fdcc5342ce8efc:10",
+        "rows": [],
+        "body": [
+          "本剤は、主に肝チトクロームP450 3A4（CYP3A4）によって代謝される。また、本剤は、CYP3A4及びP糖蛋白に対して阻害作用を示す。他の薬剤との相互作用はすべての薬剤との組み合わせについて検討されているわけではなく、下表における併用薬剤は包括的なものではない。そのため、他剤による治療中に新たに本剤を併用したり、本剤による治療中に新たに他の薬剤を併用する場合には、併用薬剤の添付文書情報（代謝経路、相互作用経路、潜在的リスク及び併用時の具体的な対処方法等）を確認するとともに患者の状態を十分に観察し、慎重に投与すること。また、本剤投与終了後の血漿中薬物濃度は、本剤の投与量及び投与期間に応じて徐々に低下するため、本剤によって代謝が影響される薬剤の投与開始に際しては患者の状態を十分に観察し、慎重に投与すること。なお、パルス療法中の患者において休薬期間中に新たに他の薬剤を併用する場合にも、患者の状態を十分に観察し、慎重に投与すること。"
+        ],
+        "references": []
+      },
+      "10.1": {
+        "unit_id": "300119_6290004M1070_1_17:14a47118a9d65104e16837e32d88b9c4eb6ce9ad730068f8a7fdcc5342ce8efc:10.1",
+        "rows": [
+          [
+            "ピモジド\nキニジン,\nベプリジル\nベプリコール",
+            "これらの薬剤の血中濃度上昇により、QT延長が発現する可能性がある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "トリアゾラム\nハルシオン",
+            "トリアゾラムの血中濃度上昇、作用の増強、作用時間の延長があらわれることがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "シンバスタチン\nリポバス",
+            "シンバスタチンの血中濃度上昇により、横紋筋融解症があらわれやすくなる。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "アゼルニジピン\nカルブロック\nアゼルニジピン・オルメサルタン メドキソミル\nレザルタス配合錠\nニソルジピン",
+            "これらの薬剤の血中濃度を上昇させることがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "エルゴタミン・カフェイン・イソプロピルアンチピリン\nクリアミン配合錠\nジヒドロエルゴタミン\nエルゴメトリン\nメチルエルゴメトリン\nパルタンM",
+            "これらの薬剤の血中濃度上昇により、血管攣縮等の副作用が発現するおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "バルデナフィル\nレビトラ",
+            "バルデナフィルのAUCが増加しC_{max}が上昇するとの報告がある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "エプレレノン\nセララ",
+            "エプレレノンの血中濃度を上昇させるおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ブロナンセリン\nロナセン",
+            "ブロナンセリンの血中濃度が上昇し、作用が増強するおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "シルデナフィル\nレバチオ",
+            "シルデナフィルの血中濃度を上昇させるおそれがある（シルデナフィルとリトナビルの併用により、シルデナフィルのC_{max}及びAUCがそれぞれ3.9倍及び10.5倍に増加したとの報告がある）。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "タダラフィル\nアドシルカ",
+            "タダラフィルの血中濃度を上昇させるおそれがある（タダラフィルとケトコナゾールの併用により、タダラフィルのAUC及びC_{max}がそれぞれ312%及び22%増加したとの報告がある）。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "スボレキサント\nベルソムラ",
+            "スボレキサントの作用を著しく増強させるおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ボルノレキサント水和物\nボルズィ",
+            "ボルノレキサントの血漿中濃度が顕著に上昇し、作用を著しく増強させるおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "イブルチニブ\nイムブルビカ",
+            "イブルチニブの血中濃度が上昇し、副作用が増強されるおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "チカグレロル\nブリリンタ",
+            "チカグレロルの血中濃度が上昇し、出血の危険性が増大するおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ロミタピド\nジャクスタピッド",
+            "ロミタピドの血中濃度が著しく上昇するおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "イバブラジン\nコララン",
+            "イバブラジンの血中濃度が上昇し、過度の徐脈があらわれることがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ベネトクラクス（再発又は難治性の慢性リンパ性白血病（小リンパ球性リンパ腫を含む）の用量漸増期）\nベネクレクスタ",
+            "ベネトクラクスの血中濃度が上昇し、腫瘍崩壊症候群の発現が増強する可能性がある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ルラシドン塩酸塩\nラツーダ",
+            "ルラシドンの血中濃度が上昇し、作用が増強するおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "アナモレリン塩酸塩\nエドルミズ",
+            "アナモレリンの血中濃度が上昇し、副作用の発現が増強するおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "マバカムテン\nカムザイオス",
+            "マバカムテンの血中濃度が上昇し、副作用が増強され、収縮機能障害による心不全のリスクが高まるおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "フィネレノン\nケレンディア",
+            "フィネレノンの血中濃度が著しく上昇するおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ボクロスポリン\nルプキネス",
+            "ボクロスポリンの血中濃度が上昇し、作用が増強するおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "イサブコナゾニウム硫酸塩\nクレセンバ",
+            "イサブコナゾールの血中濃度が上昇し、作用が増強するおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ロナファルニブ\nゾキンヴィ",
+            "ロナファルニブの血中濃度が著しく上昇し、副作用が増強するおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "パロバロテン\nソホノス",
+            "パロバロテンの血中濃度が上昇し、副作用が増強するおそれがある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "アリスキレン\nラジレス",
+            "イトラコナゾールカプセルの併用投与（空腹時）により、アリスキレンのC_{max}及びAUCがそれぞれ約5.8倍及び約6.5倍に上昇したとの報告がある。",
+            "本剤のP糖蛋白阻害作用により、アリスキレンの排泄が阻害されると考えられる。"
+          ],
+          [
+            "ダビガトラン\nプラザキサ",
+            "ダビガトランの血中濃度が上昇し、出血の危険性が増大することがある。",
+            "本剤のP糖蛋白阻害作用により、ダビガトランの排泄が阻害されると考えられる。"
+          ],
+          [
+            "リバーロキサバン\nイグザレルト",
+            "リバーロキサバンの血中濃度が上昇し、出血の危険性が増大するおそれがある（リバーロキサバンとケトコナゾールの併用により、リバーロキサバンのAUC及びC_{max}がそれぞれ158％及び72％増加したとの報告がある）。",
+            "本剤のCYP3A4及びP糖蛋白阻害作用により、リバーロキサバンの代謝及び排泄が阻害され、抗凝固作用が増強されると考えられる。"
+          ]
+        ],
+        "body": [],
+        "references": [
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_04",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_04"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_05",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_05"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_06",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_06"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_07",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_07"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_08",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_08"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_09",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_09"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_10",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_10"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_11",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_11"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_12",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_12"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ContraIndications_20211026170339_1",
+            "target_section_code": "2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ContraIndications_20211026170339_1"
+          }
+        ]
+      },
+      "10.2": {
+        "unit_id": "300119_6290004M1070_1_17:14a47118a9d65104e16837e32d88b9c4eb6ce9ad730068f8a7fdcc5342ce8efc:10.2",
+        "rows": [
+          [
+            "アトルバスタチン",
+            "アトルバスタチンの血中濃度を上昇させることがあり、横紋筋融解症があらわれやすくなる。必要に応じてアトルバスタチンの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ビンカアルカロイド系抗悪性腫瘍剤\nビンクリスチン\nビンブラスチン等",
+            "これらの薬剤の血中濃度を上昇させることがあり、ビンカアルカロイド系抗悪性腫瘍剤の副作用が増強されることがある。必要に応じてこれらの薬剤の投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "メチルプレドニゾロン\nデキサメタゾン\nブデソニド",
+            "これらの薬剤の血中濃度を上昇させることがあり、これらの薬剤の副作用が増強されることがある。必要に応じてこれらの薬剤の投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "コルヒチン",
+            "コルヒチンの血中濃度を上昇させることがあり、コルヒチンの作用が増強されることがある。必要に応じてコルヒチンの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ジソピラミド",
+            "ジソピラミドの血中濃度上昇により、QT延長が発現する可能性がある。必要に応じてジソピラミドの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ベンゾジアゼピン系薬剤\nミダゾラム\nブロチゾラム\nアルプラゾラム",
+            "これらの薬剤の血中濃度を上昇させることがある。必要に応じてこれらの薬剤の投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "抗精神病薬\nハロペリドール\nアリピプラゾール\nペロスピロン\nクエチアピン",
+            "・本剤とアリピプラゾールの併用により、アリピプラゾールのC_{max}、AUC、t_{1/2}がそれぞれ19.4%、48.0%、18.6%増加したとの報告がある。\n・本剤とペロスピロンの併用により、ペロスピロンのC_{max}及びAUCがそれぞれ5.7倍及び6.8倍増加したとの報告がある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "免疫抑制剤\nシクロスポリン\nタクロリムス水和物",
+            "",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "抗悪性腫瘍剤\nドセタキセル水和物\nエベロリムス\nテムシロリムス\nゲフィチニブ\nダサチニブ\nエルロチニブ\nラパチニブ\nボルテゾミブ\nイマチニブ\nスニチニブ\nボスチニブ\nカバジタキセル\nセリチニブ\nクリゾチニブ\nシロリムス（錠）\nパノビノスタット\nポナチニブ\nルキソリチニブ\nアパルタミド\nトレチノイン（カプセル）\nペミガチニブ\nエヌトレクチニブ",
+            "・クリゾチニブ反復投与時に本剤を併用投与したとき、クリゾチニブの定常状態におけるAUC_{tau}及びC_{max}は単独投与と比べそれぞれ57%及び33%増加した。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "オピオイド系鎮痛剤\nフェンタニル\nオキシコドン\nメサドン",
+            "・本剤とオキシコドンの併用により、オキシコドンのクリアランスが32%減少し、AUCが51%増加したとの報告がある（オキシコドン注射剤）。また、オキシコドンのAUCが144%上昇したとの報告がある（オキシコドン経口剤）。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ブプレノルフィン\nセレギリン\nガランタミン\nトルバプタン\nエレトリプタン\nサルメテロール\nシクレソニド\nフルチカゾン\nアプレピタント\nイミダフェナシン\nソリフェナシン\nトルテロジン\nシロスタゾール\nシナカルセト\nエバスチン\nダルナビル\nマラビロク\nオキシブチニン\nドンペリドン\nシロドシン\nキニーネ\nゾピクロン\nグアンファシン\nジエノゲスト",
+            "・トルバプタンとの併用が避けられない場合は、トルバプタンの減量あるいは、低用量から開始するなど用量に注意すること。\n・本剤とイミダフェナシンの併用により、イミダフェナシンのC_{max}及びAUCがそれぞれ1.32倍及び1.78倍増加したとの報告がある。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "シルデナフィル\nバイアグラ",
+            "シルデナフィルとエリスロマイシンの併用によりシルデナフィルのC_{max}、AUCの増加が認められたとの報告がある。必要に応じてシルデナフィルの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "タダラフィル\nシアリス\nザルティア",
+            "タダラフィルの血中濃度を上昇させるおそれがある（タダラフィルとケトコナゾールの併用により、タダラフィルのAUC及びC_{max}がそれぞれ312%及び22%増加したとの報告がある）。必要に応じてタダラフィルの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ワルファリン",
+            "ワルファリンの作用が増強し、著しいINR上昇があらわれることがある。必要に応じてワルファリンの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "アキシチニブ",
+            "アキシチニブの血中濃度が上昇し、副作用の発現頻度及び重症度が増加するおそれがある。やむを得ず併用する際にはアキシチニブの減量を考慮するとともに、患者の状態を慎重に観察し、副作用発現に十分注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "フェソテロジン",
+            "活性代謝物5-HMTの血漿中濃度の上昇に伴い効果や副作用の増強が予想される。必要に応じてフェソテロジンの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ボセンタン",
+            "ボセンタンの血中濃度が上昇し、ボセンタンの副作用が発現しやすくなるおそれがある。必要に応じてボセンタンの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "アルテメテル・ルメファントリン",
+            "アルテメテル及びルメファントリンの血中濃度が上昇し、QT延長が起こるおそれがある。必要に応じてアルテメテル・ルメファントリンの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "デソゲストレル・エチニルエストラジオール",
+            "これらの薬剤の血中濃度を上昇させることがある。必要に応じてデソゲストレル・エチニルエストラジオールの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ベネトクラクス（再発又は難治性の慢性リンパ性白血病（小リンパ球性リンパ腫を含む）の維持投与期、急性骨髄性白血病）",
+            "ベネトクラクスの血中濃度が上昇し、副作用が増強する可能性があるので、ベネトクラクスを減量するとともに患者の状態を慎重に観察すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "ジヒドロピリジン系Ca拮抗剤\nニフェジピン\nニルバジピン\nフェロジピン等\nベラパミル",
+            "これらの薬剤の血中濃度を上昇させることがある。また、心機能が低下する可能性がある。必要に応じてこれらの薬剤の投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4に対する阻害作用により、これらの薬剤の代謝が阻害される。また、両剤の心抑制作用が増強する可能性がある。"
+          ],
+          [
+            "イリノテカン",
+            "イリノテカンの活性代謝物の血中濃度が上昇することがある。必要に応じてイリノテカンの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4阻害作用により、イリノテカンの活性代謝物の無毒化が阻害されると考えられる。"
+          ],
+          [
+            "バルベナジン",
+            "バルベナジン及び活性代謝物の血漿中濃度が上昇するおそれがある。バルベナジンの作用が増強することで副作用があらわれるおそれがあるため、観察を十分に行うこと。本剤を併用する場合にはバルベナジンの増量はしないこと。",
+            "本剤のCYP3A阻害作用により、バルベナジン及び活性代謝物の代謝が阻害されると考えられる。"
+          ],
+          [
+            "ニロチニブ",
+            "ニロチニブの血中濃度が上昇し、QT延長があらわれることがある。必要に応じてニロチニブの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4及びP糖蛋白阻害作用により、ニロチニブの代謝及び排泄が阻害されると考えられる。"
+          ],
+          [
+            "アピキサバン",
+            "アピキサバンの血中濃度を上昇させることがある。必要に応じてアピキサバンの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4及びP糖蛋白阻害作用により、アピキサバンの代謝及び排泄が阻害されると考えられる。"
+          ],
+          [
+            "エドキサバン",
+            "エドキサバンの血中濃度を上昇させ、出血の危険性を増大させるおそれがある。必要に応じてエドキサバンの投与量を減量するなど用量に注意すること。",
+            "本剤のP糖蛋白阻害作用により、エドキサバンのバイオアベイラビリティを上昇させると考えられる。"
+          ],
+          [
+            "タラゾパリブ",
+            "タラゾパリブの副作用が増強されるおそれがあるので、本剤との併用は可能な限り避けること。やむを得ず併用する場合には、患者の状態を慎重に観察し、副作用の発現に十分注意すること。",
+            "本剤のP糖蛋白阻害作用により、タラゾパリブの血中濃度が上昇する可能性がある。"
+          ],
+          [
+            "ジゴキシン\nブスルファン",
+            "これらの薬剤の血中濃度を上昇させることがある。\n本剤とブスルファンの併用により、ブスルファンのクリアランスが20％減少したとの報告がある。必要に応じてこれらの薬剤の投与量を減量するなど用量に注意すること。",
+            "機序不明"
+          ],
+          [
+            "ロペラミド",
+            "ロペラミドの血中濃度が上昇することがある。必要に応じてロペラミドの投与量を減量するなど用量に注意すること。",
+            "本剤のCYP3A4及びP糖蛋白阻害作用により、ロペラミドの代謝及び排泄が阻害されると考えられる。"
+          ],
+          [
+            "クラリスロマイシン\nリトナビル\nホスアンプレナビル/リトナビル\nエリスロマイシン\nシプロフロキサシン",
+            "本剤の血中濃度が上昇することがある。\n本剤とシプロフロキサシンの併用により、イトラコナゾールのC_{max}及びAUCがそれぞれ53.13%及び82.46%増加したとの報告がある。必要に応じて本剤の投与量を減量するなど用量に注意すること。",
+            "これらの薬剤のCYP3A4に対する阻害作用により、本剤の代謝が阻害される。"
+          ],
+          [
+            "ダルナビル/リトナビル",
+            "本剤又はダルナビルの血中濃度が上昇する可能性がある（ダルナビル/リトナビルとケトコナゾールの併用により、ダルナビルとケトコナゾールの血中濃度の上昇が認められたとの報告がある）。必要に応じて本剤又はこれらの薬剤の投与量を調節するなど用量に注意すること。",
+            "本剤及びこれらの薬剤のCYP3A4に対する阻害作用により、血中濃度の変化が起こる場合がある。"
+          ],
+          [
+            "エルビテグラビル・コビシスタット・エムトリシタビン・テノホビル アラフェナミドフマル酸塩\nエルビテグラビル・コビシスタット・エムトリシタビン・テノホビル ジソプロキシルフマル酸塩",
+            "本剤、エルビテグラビル及びコビシスタットの血中濃度が上昇する可能性がある。必要に応じて本剤又はこれらの薬剤の投与量を調節するなど用量に注意すること。",
+            "本剤及びコビシスタットのCYP3A等阻害作用により、相互に代謝が阻害される。"
+          ],
+          [
+            "ダルナビル エタノール付加物・コビシスタット",
+            "本剤、ダルナビル又はコビシスタットの血中濃度が上昇する可能性がある。必要に応じて本剤又はダルナビル エタノール付加物・コビシスタットの投与量を調節するなど用量に注意すること。",
+            "本剤とダルナビル及びコビシスタットのCYP3A阻害作用により、相互に代謝が阻害される。"
+          ],
+          [
+            "ダルナビル エタノール付加物・コビシスタット・エムトリシタビン・テノホビル アラフェナミドフマル酸塩",
+            "本剤、ダルナビル、コビシスタット又はテノホビル アラフェナミドの血中濃度が上昇する可能性がある。必要に応じて本剤又はダルナビル エタノール付加物・コビシスタット・エムトリシタビン・テノホビル アラフェナミドフマル酸塩の投与量を調節するなど用量に注意すること。",
+            "本剤とダルナビル、コビシスタット及びテノホビル アラフェナミドのCYP3A及びP糖蛋白阻害作用により、相互に代謝が阻害される。"
+          ],
+          [
+            "カルバマゼピン,\nエトラビリン\nリファブチン",
+            "本剤の血中濃度が低下することがある。また、これらの薬剤の血中濃度が上昇する可能性がある。必要に応じて本剤又はこれらの薬剤の投与量を調節するなど用量に注意すること。",
+            "これらの薬剤の肝薬物代謝酵素誘導により、本剤の肝代謝が促進される。また、本剤のCYP3A4に対する阻害作用によりこれらの薬剤の代謝が阻害される。"
+          ],
+          [
+            "リファンピシン\nフェニトイン\nイソニアジド\nフェノバルビタール\nエファビレンツ\nネビラピン",
+            "本剤の血中濃度が低下することがある。\n本剤とネビラピンの併用により、本剤のC_{max}、AUC及びt_{1/2}がそれぞれ38%、61%及び31%減少したとの報告がある。必要に応じて本剤の投与量、両剤の投与間隔を調節するなど注意すること。",
+            "これらの薬剤の肝薬物代謝酵素誘導により、本剤の肝代謝が促進される。"
+          ],
+          [
+            "H_{2}遮断薬\nファモチジン等",
+            "本剤の血中濃度が低下することがある。併用する場合には両剤の投与間隔をできる限り空けるなど慎重に投与すること。",
+            "酸分泌量低下のため本剤の消化管での溶解性が低下し、吸収が低下することがある。"
+          ],
+          [
+            "プロトンポンプ阻害剤\nオメプラゾール\nランソプラゾール\nラベプラゾール\nエソメプラゾール\nボノプラザンフマル酸塩",
+            "本剤の血中濃度が低下することがある。必要に応じて本剤の投与量、両剤の投与間隔を調節するなど注意すること。",
+            "酸分泌量低下のため本剤の消化管での溶解性が低下し、吸収が低下することがある。"
+          ],
+          [
+            "制酸剤\n乾燥水酸化アルミニウムゲル\n乾燥水酸化アルミニウムゲル・水酸化マグネシウム等",
+            "本剤と制酸剤の併用により、本剤のC_{max}及びAUCがそれぞれ70%及び66%減少したとの報告がある。必要に応じて本剤の投与量、両剤の投与間隔を調節するなど注意すること。",
+            "酸分泌量低下のため本剤の消化管での溶解性が低下し、吸収が低下することがある。"
+          ],
+          [
+            "メロキシカム",
+            "本剤とメロキシカムの併用により、メロキシカムのC_{max}及びAUCがそれぞれ64%及び37%減少したとの報告がある。必要に応じてメロキシカムの投与量を調節するなど用量に注意すること。",
+            "本剤がメロキシカムの消化管からの吸収を抑制すると考えられる。"
+          ],
+          [
+            "リオシグアト",
+            "リオシグアトの血中濃度を上昇させるおそれがある（リオシグアトとケトコナゾールの併用により、リオシグアトのAUC及びCmaxがそれぞれ150%及び46％増加、また、消失半減期が延長したとの報告がある）。本剤との併用が必要な場合は、患者の状態に注意し、必要に応じてリオシグアトの減量を考慮すること。",
+            "本剤のCYP1A1及びCYP3A4阻害作用により、リオシグアトのクリアランスが低下することが考えられる。"
+          ]
+        ],
+        "body": [],
+        "references": [
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_13",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_13"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_14",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_14"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_15",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_15"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_16",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_16"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_17",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_17"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_ContraIndications_2",
+            "target_section_code": "2.2",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_ContraIndications_2"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_PatientsWithRenalImpairment_20211026170339_18",
+            "target_section_code": "9.2.1",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_PatientsWithRenalImpairment_20211026170339_18"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_PatientsWithHepaticImpairment_20211026170339_21",
+            "target_section_code": "9.3.2",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_PatientsWithHepaticImpairment_20211026170339_21"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_18",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_18"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_19",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_19"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_20",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_20"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_21",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_21"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_23",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_23"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_24",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_24"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_25",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_25"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_26",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_26"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_27",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_27"
+          },
+          {
+            "kind": "HeaderRef",
+            "target_xml_id": "HDR_PMDA_ImportantPrecautions_20211026170339_13",
+            "target_section_code": "8.3",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#HDR_PMDA_ImportantPrecautions_20211026170339_13"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_28",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_28"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_29",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_29"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_30",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_30"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_31",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_31"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_32",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_32"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_33",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_33"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_34",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_34"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_35",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_35"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_36",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_36"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_37",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_37"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_38",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_38"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_39",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_39"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_40",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_40"
+          },
+          {
+            "kind": "ReferenceBookRef",
+            "target_xml_id": "DOC_41",
+            "target_section_code": "23",
+            "target_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/300119_6290004M1070_1_17#DOC_41"
+          }
+        ]
+      }
+    }
+  }
+]

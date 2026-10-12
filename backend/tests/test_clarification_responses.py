@@ -16,7 +16,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.engine import URL
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-STRUCTURED_DIR = REPO_ROOT / "data_tools" / "structured"
+STRUCTURED_DIR = REPO_ROOT / "data" / "pmda" / "structured"
 
 
 class RecordingLLMProvider:
@@ -50,6 +50,13 @@ class ClarificationResponseTests(unittest.TestCase):
             )
         finally:
             engine.dispose()
+        from backend.tests.registration_runtime_fixtures import (
+            register_existing_test_source,
+        )
+
+        cls.prepared_source = register_existing_test_source(
+            STRUCTURED_DIR, cls.index_path
+        )
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -58,9 +65,10 @@ class ClarificationResponseTests(unittest.TestCase):
     def test_rest_clarification_does_not_call_provider(self) -> None:
         provider = RecordingLLMProvider()
         app = create_app(
-            STRUCTURED_DIR,
+            self.prepared_source,
             self.index_path,
             llm_provider_factory=lambda _name: provider,
+            import_directory=Path(self.temp_dir.name) / "imports",
         )
         with TestClient(app) as client:
             response = client.post(
@@ -83,9 +91,10 @@ class ClarificationResponseTests(unittest.TestCase):
     def test_websocket_clarification_does_not_call_provider(self) -> None:
         provider = RecordingLLMProvider()
         app = create_app(
-            STRUCTURED_DIR,
+            self.prepared_source,
             self.index_path,
             llm_provider_factory=lambda _name: provider,
+            import_directory=Path(self.temp_dir.name) / "imports",
         )
         with (
             TestClient(app) as client,
@@ -98,15 +107,15 @@ class ClarificationResponseTests(unittest.TestCase):
                     "messages": [{"role": "user", "content": "副作用を教えて"}],
                 }
             )
-            events = [
-                websocket.receive_json(),
-                websocket.receive_json(),
-            ]
+            events = []
+            while not events or events[-1]["type"] != "text_done":
+                events.append(websocket.receive_json())
 
         self.assertEqual(
-            [event["type"] for event in events], ["text_delta", "text_done"]
+            [event["type"] for event in events],
+            ["retrieval_status", "text_delta", "text_done"],
         )
-        self.assertIn("YJコード", events[0]["content"])
+        self.assertIn("YJコード", events[1]["content"])
         self.assertEqual(provider.calls, [])
 
 

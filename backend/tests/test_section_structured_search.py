@@ -14,16 +14,16 @@ from backend.infrastructure.persistence.evidence_reader import SqlAlchemyEvidenc
 from backend.infrastructure.persistence.index_writer import SqlAlchemyIndexWriter
 from backend.infrastructure.persistence.read_workers import ReadWorkers
 from backend.infrastructure.persistence.sqlite_engine import create_sqlite_engine
+from backend.infrastructure.pmda_xml.transform import transform
 from backend.infrastructure.sources.file_index_source import FileIndexSourceReader
 from backend.tests.test_alembic_migrations import _migrate_database
-from data_tools.pmda_xml.transform import transform
 from sqlalchemy.engine import URL
 
 
 def test_generated_section_is_one_sqlite_hit_with_table_and_original_revision(tmp_path):
     source = (
         Path(__file__).resolve().parents[2]
-        / "data_tools/data/イグザレルト錠２．５ｍｇ/630004_3339003F5020_1_08.xml"
+        / "data/pmda/originals/イグザレルト錠２．５ｍｇ/630004_3339003F5020_1_08.xml"
     )
     structured = tmp_path / "structured"
     output = structured / source.stem

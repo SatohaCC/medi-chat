@@ -9,6 +9,8 @@ from sqlalchemy.dialects.sqlite import dialect
 
 from .schema import metadata
 
+_LEGACY_TABLES = ("documents", "medicines", "units", "index_meta")
+
 
 def _quoted(name: str) -> str:
     return '"' + name.replace('"', '""') + '"'
@@ -77,7 +79,7 @@ def _validate_table(connection: sqlite3.Connection, name: str) -> None:
 
 def _validate_schema(connection: sqlite3.Connection) -> None:
     objects = connection.execute("SELECT type, name, sql FROM sqlite_schema").fetchall()
-    ordinary_tables = set(metadata.tables)
+    ordinary_tables = set(_LEGACY_TABLES)
     fts_tables = {
         "unit_fts",
         *(
@@ -89,7 +91,7 @@ def _validate_schema(connection: sqlite3.Connection) -> None:
     if actual_tables != ordinary_tables | fts_tables:
         raise ValueError("Legacy table schema mismatch or unknown objects")
     expected_indexes = {
-        index.name for table in metadata.tables.values() for index in table.indexes
+        index.name for name in _LEGACY_TABLES for index in metadata.tables[name].indexes
     } | {f"sqlite_autoindex_{name}_1" for name in ("documents", "units", "index_meta")}
     if any(
         kind not in ("table", "index")
@@ -97,7 +99,7 @@ def _validate_schema(connection: sqlite3.Connection) -> None:
         for kind, name, _ in objects
     ):
         raise ValueError("Unknown schema objects or index definitions")
-    for name in metadata.tables:
+    for name in _LEGACY_TABLES:
         _validate_table(connection, name)
     version = connection.execute(
         "SELECT value FROM index_meta WHERE key='schema_version'"

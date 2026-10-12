@@ -1,7 +1,6 @@
 {
   "include": [
     "backend",
-    "data_tools",
     "package_inserts"
   ],
   "exclude": [
@@ -12,8 +11,7 @@
   ],
   "venvPath": "backend",
   "extraPaths": [
-    "backend",
-    "data_tools"
+    "backend"
   ],
   "venv": ".venv",
   "typeCheckingMode": "standard",

@@ -6,10 +6,13 @@ from .value_objects import Evidence, SearchCriteria
 
 
 class EvidenceSearchTarget(Protocol):
-    """根拠検索に必要な文書IDだけを公開する入力契約。"""
+    """根拠検索の文書と要求製品の公開識別子。"""
 
     @property
     def document_ids(self) -> tuple[str, ...]: ...
+
+    @property
+    def yj_codes(self) -> tuple[str, ...]: ...
 
 
 class EvidenceRepository(Protocol):

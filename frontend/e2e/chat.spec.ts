@@ -30,6 +30,7 @@ async function openChat(page: Page) {
   await page.route("**/api/medicines", (route) =>
     route.fulfill({
       json: {
+        generation_id: "chat-gen",
         items: [
           {
             generic_name: "テスト成分",
@@ -43,7 +44,31 @@ async function openChat(page: Page) {
     }),
   );
   // Keep autocomplete data deterministic too; no external API is contacted.
-  await page.route("**/data/medicines.json", (route) => route.fulfill({ json: [] }));
+  await page.route("**/api/medicines/autocomplete", (route) =>
+    route.fulfill({
+      json: {
+        generation_id: "chat-gen",
+        items: [
+          {
+            n: "テスト医薬品A",
+            k: "テストイヤクヒンA",
+            h: "てすといやくひんA",
+            y: "3339003F5020",
+            g: "テスト成分",
+            c: "他",
+          },
+          {
+            n: "テスト医薬品B",
+            k: "テストイヤクヒンB",
+            h: "てすといやくひんB",
+            y: "1141007F1063",
+            g: "テスト成分",
+            c: "他",
+          },
+        ],
+      },
+    }),
+  );
   await page.routeWebSocket("**/api/ws", (ws) => {
     socket = ws;
     ws.onMessage((message) => requests.push(JSON.parse(String(message))));

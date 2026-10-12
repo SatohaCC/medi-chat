@@ -5,10 +5,22 @@ from dataclasses import dataclass
 from typing import Self
 
 from ..foundation.exceptions import DomainValidationError
+from ..foundation.primitives.base import DomainPrimitive
 from ..foundation.primitives.primitives import (
     BaseHttpUrl,
     BaseString,
 )
+
+
+@dataclass(frozen=True, slots=True)
+class RegistrationSequence(DomainPrimitive[int]):
+    """原本版の初成功登録順。失敗や再送に割り当てない正整数。"""
+
+    def validate(self) -> None:
+        if type(self.value) is not int or self.value < 1:
+            raise DomainValidationError(
+                "registration sequence must be a positive integer"
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -107,3 +119,30 @@ class AttachmentUrl(BaseHttpUrl):
 @dataclass(frozen=True, slots=True)
 class ProductGroupId(BaseString):
     """文書掲載製品を照合中にまとめるための派生識別値。"""
+
+
+@dataclass(frozen=True, slots=True)
+class AttachmentText(DomainPrimitive[str]):
+    """空文字・空白・改行を含め原文を保持する。"""
+
+    def validate(self) -> None:
+        if not isinstance(self.value, str):
+            raise DomainValidationError("original text must be created from str")
+
+
+@dataclass(frozen=True, slots=True)
+class AttachmentColumnIndex(DomainPrimitive[int]):
+    """表内の0始まりの列位置。"""
+
+    def validate(self) -> None:
+        if type(self.value) is not int or self.value < 0:
+            raise DomainValidationError("column index must be a nonnegative integer")
+
+
+@dataclass(frozen=True, slots=True)
+class AttachmentCellSpan(DomainPrimitive[int]):
+    """セルが占める行数または列数。"""
+
+    def validate(self) -> None:
+        if type(self.value) is not int or self.value < 1:
+            raise DomainValidationError("cell span must be a positive integer")

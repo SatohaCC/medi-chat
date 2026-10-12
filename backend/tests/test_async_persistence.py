@@ -112,9 +112,9 @@ async def test_api_and_ws_respond_while_search_is_blocked(
             (
                 AttachmentProductMatch(
                     generic_name="テスト成分",
-                    brand_names=["テスト薬"],
-                    yj_codes=["1234567A0000"],
-                    document_ids=["test_001"],
+                    brand_names=("テスト薬",),
+                    yj_codes=("1234567A0000",),
+                    document_ids=("test_001",),
                 ),
             ),
         )
@@ -301,6 +301,7 @@ async def test_workers_own_connections_and_return_plain_values(
                 *[SqlAlchemyIndexReader(engine).read_index_stats() for _ in range(2)]
             )
             assert results == [
+                {"document_count": 1, "unit_count": 3},
                 {"document_count": 1, "unit_count": 3},
             ]
         _assert_plain(results)

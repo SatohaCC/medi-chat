@@ -8,6 +8,8 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.pool import ConnectionPoolEntry
 
+from .owned_sqlite import OwnedSqliteConnection
+
 
 def _compare_section_codes(left: str, right: str) -> int:
     left_key = section_code_sort_key(left)
@@ -27,6 +29,8 @@ def _configure_connection(
 
 
 def create_sqlite_engine(database_url: str) -> Engine:
-    engine = create_engine(database_url)
+    engine = create_engine(
+        database_url, connect_args={"factory": OwnedSqliteConnection}
+    )
     event.listen(engine, "connect", _configure_connection)
     return engine

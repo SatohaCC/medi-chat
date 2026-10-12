@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from ...domain.attachment.identifiers import DocumentId
 from ...domain.medicine.identifiers import YjCode
+from ...domain.retrieval.identifiers import SearchGenerationId
 from ...domain.shared.services import normalize_match_text
 
 
@@ -34,8 +35,14 @@ class MedicineSuggestion:
 class MedicineSuggester:
     """読み取り専用の候補データから候補一覧・名称照合結果を返す。"""
 
-    def __init__(self, products: tuple[SuggestionProduct, ...]) -> None:
+    def __init__(
+        self,
+        products: tuple[SuggestionProduct, ...],
+        *,
+        generation_id: SearchGenerationId | None = None,
+    ) -> None:
         self._products = products
+        self.generation_id = generation_id
 
     def suggest(self, query: str | None = None) -> tuple[MedicineSuggestion, ...]:
         normalized = normalize_match_text(query or "")

@@ -355,14 +355,7 @@ class AttachmentProductCatalog:
         message_groups = self._match_text_groups(message)
         if not requested_codes:
             return message_groups
-        selected = self._match_yj_groups(requested_codes)
-        if message_groups:
-            message_codes = {
-                code for group in message_groups for code in group.yj_codes
-            }
-            if not {code.value for code in requested_codes}.intersection(message_codes):
-                return message_groups
-        return selected
+        return self._match_yj_groups(requested_codes)
 
     @staticmethod
     def covers_requested_products(
@@ -409,4 +402,30 @@ class AttachmentProductCatalog:
                 for group in self._match_yj_groups(codes)
                 for medicine in group.medicines
             ]
+        )
+
+    def question_name_candidates(self, name: str) -> frozenset[YjCode]:
+        """スロット全体が既存別名に一致する製品だけを返す。"""
+        normalized = normalize_match_text(name)
+        return frozenset(
+            medicine.yj_code
+            for medicine in self._medicines
+            if medicine.yj_code is not None
+            and any(alias == normalized for alias, _ in get_weighted_aliases(medicine))
+        )
+
+    def original_product_names(self) -> tuple[str, ...]:
+        """販売名内の引用符を引用文と区別するための原名称。"""
+        return tuple(
+            dict.fromkeys(
+                name
+                for medicine in self._medicines
+                for name in (
+                    medicine.brand_name,
+                    medicine.generic_name,
+                    medicine.english_name,
+                    medicine.hiragana_name,
+                )
+                if name
+            )
         )
