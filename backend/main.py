@@ -227,10 +227,12 @@ def create_app(
         chat_websocket_router,
         health_router,
         medicine_router,
+        search_router,
     )
 
     application.include_router(health_router)
     application.include_router(medicine_router)
+    application.include_router(search_router)
     application.include_router(chat_router)
     application.include_router(chat_websocket_router)
     from .presentation.attachment_import_routes import router as import_router

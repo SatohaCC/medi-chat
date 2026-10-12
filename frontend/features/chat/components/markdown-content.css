@@ -99,4 +99,12 @@
     color: #e2e8f0;
     font-weight: 600;
   }
+  mark.search-highlight,
+  .search-highlight {
+    background-color: rgba(234, 179, 8, 0.35);
+    color: #fef08a;
+    border-radius: 3px;
+    padding: 1px 3px;
+    font-weight: 600;
+  }
 }
