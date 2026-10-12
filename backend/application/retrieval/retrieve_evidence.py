@@ -1,6 +1,7 @@
 """質問から添付文書の根拠を取得する技術非依存のユースケース。"""
 
 import asyncio
+from collections.abc import Awaitable, Callable
 from copy import deepcopy
 
 from ...domain.attachment.repositories import AttachmentProductRepository
@@ -24,6 +25,9 @@ from .morphology_detector import detect_morphology_criteria
 from .retrieval_models import RetrievalResult
 from .snapshot_contracts import RetrievalSnapshotProvider
 
+SourcesCallback = Callable[[list[Evidence]], Awaitable[None]]
+CriteriaCallback = Callable[[list[SearchCriteria]], Awaitable[None]]
+
 
 async def retrieve_evidence(
     message: str,
@@ -35,6 +39,7 @@ async def retrieve_evidence(
     keyword_extractor: KeywordExtractor,
     intent_policy: IntentPolicy,
     snapshot_provider: RetrievalSnapshotProvider | None = None,
+    on_logic_sources: SourcesCallback | None = None,
 ) -> RetrievalResult:
     if snapshot_provider is not None:
         async with snapshot_provider.acquire() as snapshot:
@@ -46,6 +51,7 @@ async def retrieve_evidence(
                 intent_classifier=intent_classifier,
                 keyword_extractor=keyword_extractor,
                 intent_policy=intent_policy,
+                on_logic_sources=on_logic_sources,
             )
     medicine_catalog = AttachmentProductCatalog(await medicine_reader.read_medicines())
     resolved = medicine_catalog.resolve_medicines(message, product_yj_codes)
@@ -54,12 +60,38 @@ async def retrieve_evidence(
         or not medicine_catalog.covers_requested_products(resolved, product_yj_codes)
     )
     excluded_terms = medicine_catalog.aliases_for_yj_codes(product_yj_codes)
+    reason = None
+    if not needs_clarification:
+        questions = recognize_product_questions(
+            message, medicine_catalog.original_product_names()
+        )
+        reason = product_identity_reason(
+            tuple(
+                tuple(
+                    medicine_catalog.question_name_candidates(name.value)
+                    for name in question.names
+                )
+                for question in questions
+            ),
+            frozenset(YjCode.from_value(code) for code in product_yj_codes),
+        )
+
+    search_batches: dict[SearchCriteria, tuple[Evidence, ...]] = {}
+
+    async def publish_logic(criteria: list[SearchCriteria]) -> None:
+        if on_logic_sources is not None and not needs_clarification and reason is None:
+            sources = await _search_evidence(
+                evidence_reader, tuple(resolved), criteria, cache=search_batches
+            )
+            await on_logic_sources(sources)
+
     criteria, jev_response, qualifying_intents = await collect_search_criteria(
         intent_classifier,
         keyword_extractor,
         message,
         excluded_terms,
         intent_policy=intent_policy,
+        on_logic_criteria=publish_logic if on_logic_sources is not None else None,
     )
 
     intent = (
@@ -86,19 +118,6 @@ async def retrieve_evidence(
             jev_response=deepcopy(jev_response),
             qualifying_intents=qualifying_intents,
         )
-    questions = recognize_product_questions(
-        message, medicine_catalog.original_product_names()
-    )
-    reason = product_identity_reason(
-        tuple(
-            tuple(
-                medicine_catalog.question_name_candidates(name.value)
-                for name in question.names
-            )
-            for question in questions
-        ),
-        frozenset(YjCode.from_value(code) for code in product_yj_codes),
-    )
     if reason is not None:
         return RetrievalResult(
             intent=intent,
@@ -109,7 +128,9 @@ async def retrieve_evidence(
             qualifying_intents=qualifying_intents,
             product_identity_reason=reason,
         )
-    sources = await _search_evidence(evidence_reader, tuple(resolved), criteria)
+    sources = await _search_evidence(
+        evidence_reader, tuple(resolved), criteria, cache=search_batches
+    )
     return RetrievalResult(
         intent=intent,
         retrieval_strategy="three_detectors",
@@ -124,10 +145,16 @@ async def _search_evidence(
     reader: EvidenceRepository,
     medicines: tuple[AttachmentProductMatch, ...],
     criteria: list[SearchCriteria],
+    *,
+    cache: dict[SearchCriteria, tuple[Evidence, ...]] | None = None,
 ) -> list[Evidence]:
+    if cache is None:
+        cache = {}
     batches = []
     for condition in criteria:
-        batches.append((await reader.search(condition, medicines), condition.source))
+        if condition not in cache:
+            cache[condition] = tuple(await reader.search(condition, medicines))
+        batches.append((cache[condition], condition.source))
     return list(merge_evidence(batches))
 
 
@@ -138,8 +165,9 @@ async def collect_search_criteria(
     excluded_terms: list[str],
     *,
     intent_policy: IntentPolicy,
+    on_logic_criteria: CriteriaCallback | None = None,
 ):
-    """全検出完了後の検索条件を、検索IOを行わず返す。"""
+    """各ローカル検出の条件を累積通知し、全検出完了後の条件を返す。"""
     tasks = [
         asyncio.create_task(
             detect_jev_criteria(
@@ -156,6 +184,7 @@ async def collect_search_criteria(
         ),
     ]
     criteria: list[SearchCriteria] = []
+    logic_criteria: list[SearchCriteria] = []
     jev_response = None
     qualifying_intents: tuple[str, ...] = ()
     try:
@@ -165,8 +194,12 @@ async def collect_search_criteria(
                 criteria.extend(result.search_criteria)
                 jev_response = result.raw_response
                 qualifying_intents = result.qualifying_intents
-            elif result is not None:
-                criteria.append(result)
+            else:
+                if result is not None:
+                    criteria.append(result)
+                    logic_criteria.append(result)
+                    if on_logic_criteria is not None:
+                        await on_logic_criteria(list(logic_criteria))
     finally:
         for task in tasks:
             if not task.done():

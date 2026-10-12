@@ -236,6 +236,7 @@ def test_tc134_fixed_end_ping_then_normal_same_connection(
             [
                 "retrieval_status",
                 "sources",
+                "sources",
                 "jev_response",
                 "retrieval_status",
                 "text_delta",
@@ -255,10 +256,11 @@ def test_tc134_fixed_end_ping_then_normal_same_connection(
             "type": "retrieval_status",
             "stage": "jev_searching" if available else "unavailable",
         }
-        assert_normal_sources(events[1]["sources"], available)
+        assert_normal_sources(events[1]["sources"], False)
         if available:
-            assert events[2] == {"type": "jev_response", "data": {"fixed": True}}
-            assert events[3] == {
+            assert_normal_sources(events[2]["sources"], True)
+            assert events[3] == {"type": "jev_response", "data": {"fixed": True}}
+            assert events[4] == {
                 "type": "retrieval_status",
                 "stage": "complete",
                 "jev_response": {"fixed": True},
@@ -270,7 +272,7 @@ def test_tc134_fixed_end_ping_then_normal_same_connection(
         ]
         assert (
             provider.factory_calls == provider.stream_calls == 1
-            and counter.search_calls > 0
+            and counter.search_calls == (2 if available else 1)
             and lease_count(public_copy) == 0
         )
         ws.send_json({"type": "ping"})

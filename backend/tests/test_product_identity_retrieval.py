@@ -74,6 +74,7 @@ class EvidenceReader:
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("progressive", [False, True])
 @pytest.mark.parametrize(
     "message,codes,strategy",
     [
@@ -82,7 +83,10 @@ class EvidenceReader:
         ("イグザレルトと未知薬の併用は可能ですか", [X], "unresolved_counterpart"),
     ],
 )
-async def test_tc124_126_real_catalog_early_stop(message, codes, strategy):
+async def test_tc124_126_real_catalog_early_stop(message, codes, strategy, progressive):
+    async def publish(sources):
+        raise AssertionError("clarification must not publish partial evidence")
+
     reader = EvidenceReader(True)
     result = await retrieve_evidence(
         message,
@@ -92,6 +96,7 @@ async def test_tc124_126_real_catalog_early_stop(message, codes, strategy):
         intent_classifier=Classifier(),
         keyword_extractor=Keywords(),
         intent_policy=get_package_insert_definitions().intent_policy,
+        on_logic_sources=publish if progressive else None,
     )
     assert result.retrieval_strategy == strategy
     assert result.needs_clarification and result.sources == [] and reader.calls == []

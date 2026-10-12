@@ -26,7 +26,7 @@
 | `domain/shared` | 複数コンテキストで共有する汎用正規化処理を置く。YJコードはmedicineが所有する |
 | `application/chat` | 会話から質問を取り出し、retrievalの結果を使って回答を準備・生成する。プロンプトと所有stream終了を担当する |
 | `application/medicine` | フォームの医薬品候補提示。入力スナップショットから候補を選び、根拠検索には依存しない |
-| `application/retrieval` | 質問とYJコードから医薬品を解決し、検索条件を生成して根拠を取得・統合する。`collect_search_criteria`は全検出器の完了を待ち、検索はその後に行う |
+| `application/retrieval` | 質問とYJコードから医薬品を解決し、検索条件を生成して根拠を取得・統合する。WebSocketでは固定キーワード・形態素解析の各検出完了時にローカル根拠を累積配信し、Jev完了後に全検出条件の統合根拠で更新する。固定キーワードの配信は形態素解析を待たない。製品確認が必要な場合は先行配信しない。RESTと回答生成は全検出完了後の根拠を使う |
 | `application/indexing` | 索引構築のユースケース・入出力契約 |
 | `presentation` | Pydantic公開DTO、JSON変換、`AppChatService`、REST/WS、FastAPI依存関数 |
 | `infrastructure` | SDK JSON解釈、JSON読取、Janome、SQLAlchemy Reader/Writer、Alembic runner、旧v3検証・移行 |
@@ -335,3 +335,5 @@ Web取り込みは保存だけでなく、`SqliteRegistrationPublisher`でactive
 医薬品解決からdetector・検索・改訂のmaterializeまで、一つのgeneration leaseを所有します。取得の終了・例外・取消でleaseを解放し、LLM streamは解放後の不変な根拠snapshotを使います。別processで新版が公開されても旧取得へ新本文を混ぜず、新しい要求だけが新世代を読みます。旧版ファイルと派生世代は参照と生存owner leaseがなくなった後に所有manifestを再確認して削除します。ownerの生存はPIDとprocess開始時刻で確認し、固定TTLでは追い出しません。
 
 通常startupと明示CLIはSQLite自身のjournal回復と所有cleanupを行います。公開済みartifactの破損は起動拒否で、旧世代fallback・自動DDL・再構築を行いません。configured E2E gateのreadinessはread-onlyです。cleanup待ち・lease・未公開attempt/stageがあれば明示startup/CLI回復へ返します。前検査後の競合もprobe起動側・health側で再確認し、probeはjournal回復・store cleanup・publisher recoveryを実行しません。通常mainの既定回復は維持します。healthの件数・generation_idはread-only snapshotから取得し、leaseを書きません。
+
+JanomeのTokenizerはlifespanでワーカースレッド上に初期化してから要求を受け付けます。初回質問の辞書初期化待ちを起動時へ移します。
