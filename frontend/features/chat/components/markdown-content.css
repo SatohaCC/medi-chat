@@ -1,0 +1,102 @@
+@layer markdown {
+  .markdown-content > * + * {
+    margin-top: 0.75em;
+  }
+  .markdown-content h1,
+  .markdown-content h2,
+  .markdown-content h3,
+  .markdown-content h4 {
+    margin-top: 1em;
+    font-weight: 650;
+    line-height: 1.35;
+  }
+  .markdown-content h1 {
+    font-size: 1.25em;
+  }
+  .markdown-content h2 {
+    font-size: 1.15em;
+  }
+  .markdown-content h3,
+  .markdown-content h4 {
+    font-size: 1.05em;
+  }
+  .markdown-content p,
+  .markdown-content li {
+    line-height: 1.65;
+  }
+  .markdown-content ul,
+  .markdown-content ol {
+    padding-left: 1.5em;
+  }
+  .markdown-content table {
+    display: block;
+    width: max-content;
+    max-width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+    border-spacing: 0;
+    font-size: 0.9em;
+  }
+  .markdown-content th,
+  .markdown-content td {
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    text-align: left;
+    vertical-align: top;
+  }
+  .markdown-content th {
+    background: #252525;
+    font-weight: 600;
+  }
+  .markdown-content a {
+    color: #93c5fd;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .markdown-content blockquote {
+    padding-left: 0.8em;
+    border-left: 3px solid var(--border);
+    color: var(--muted);
+  }
+  .markdown-content pre {
+    overflow-x: auto;
+    padding: 10px;
+    border-radius: 6px;
+    background: #111;
+  }
+  .markdown-content code {
+    overflow-wrap: anywhere;
+  }
+  .source-evidence-content > :first-child {
+    margin-top: 0;
+  }
+  .source-evidence-content h3 {
+    padding-bottom: 6px;
+    border-bottom: 1px solid #334155;
+    color: #bfdbfe;
+  }
+  .source-evidence-content table {
+    display: table;
+    width: 100%;
+    min-width: 520px;
+    max-width: none;
+    font-size: 13px;
+  }
+  .source-evidence-content th,
+  .source-evidence-content td {
+    min-width: 100px;
+    padding: 10px 12px;
+    border-color: #334155;
+    white-space: pre-wrap;
+    line-height: 1.7;
+  }
+  .source-evidence-content tr:nth-child(even) {
+    background: rgba(148, 163, 184, 0.05);
+  }
+  .source-evidence-content th,
+  .source-evidence-content tr:first-child td {
+    background: #243044;
+    color: #e2e8f0;
+    font-weight: 600;
+  }
+}

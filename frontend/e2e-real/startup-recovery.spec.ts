@@ -8,6 +8,7 @@ import {
   ensureOwnedRestartPortAvailable,
   ensurePortAvailable,
 } from "../scripts/owned-server.mjs";
+import { restoreHistoricalManifest } from "./helpers/sqlite-fixture";
 
 const root = resolve("..");
 const evidence = resolve(
@@ -29,7 +30,7 @@ test("TC117 real legacy migration O→N(A)→P(B), search cleanup replay restart
   request,
 }, testInfo) => {
   const isolated = mkdtempSync(join(tmpdir(), "medi-chat-registration-browser-"));
-  const oldIndex = join(root, "data_tools/structured/.chat-search.sqlite3");
+  const oldIndex = restoreHistoricalManifest(root, isolated, process.env);
   const original = digest(readFileSync(oldIndex));
   const environment = {
     ...process.env,

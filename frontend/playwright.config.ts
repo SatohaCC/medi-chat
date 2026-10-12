@@ -11,6 +11,8 @@ export default defineConfig({
   reporter: "list",
   use: {
     baseURL,
+    locale: "ja-JP",
+    deviceScaleFactor: 1,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
@@ -25,6 +27,7 @@ export default defineConfig({
       NEXT_PUBLIC_API_URL: baseURL,
       NEXT_PUBLIC_WS_URL: "ws://127.0.0.1:3100/api/ws",
       NEXT_TELEMETRY_DISABLED: "1",
+      MEDI_CHAT_TEST_UI: "1",
     },
   },
 });

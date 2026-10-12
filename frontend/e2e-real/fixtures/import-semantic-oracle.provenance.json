@@ -1,0 +1,23 @@
+{
+  "source_sha256": "2e04312381822dca6fd8a3d0c4c2dfac74a9d0bbec9a0f9e6bd02b6b8c11856c",
+  "oracle_sha256": "6fa2d525135d4c183495438af4ccde968b72a9c8eddb3b0909d2ed278f9ab737",
+  "candidate_sha256": "2b65ed782a82acbecb1269d7301b22d7b5a762ba27092ac30d519247267466ff",
+  "review": "for-llm/progress/20261012-stylex-react-aria-refactor-evidence/oracle-review-v2/review-report.md",
+  "review_sha256": "59d791b901f18f0f39ad1d06e05bb0eee9781f91da892a3e897023730e59bded",
+  "plan_v3_sha256": "BB47F87F737C227EA3F7C5CE38AADA90478C87655EC92BC28C829A81EC13FA21",
+  "coverage": {
+    "sections": 40,
+    "tables": 14,
+    "cells": 396
+  },
+  "projection_rules": [
+    "Documented repeated context headings and generated brackets at reviewed positions",
+    "Parent Details combined within the same parent in 13/16.1/16.6/17.1; raw XML order not claimed",
+    "Figure metadata and reviewed empty paragraphs retained for fig05/fig06; 3.2 placeholders ordered",
+    "Backend td/no-scope projection retained; all cell grids and payload columns verified",
+    "Interaction table/block references and SimpleTable cell references retained",
+    "Dedup of same references in the same group with first occurrence order retained"
+  ],
+  "corrections": ["2.1 to 2.12/2.13", "9.7.1 to 9.7.2"],
+  "automatic_update": false
+}
