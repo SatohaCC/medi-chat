@@ -47,3 +47,15 @@ yj
 Thumbs.db
 
 for-llm
+
+# Package insert source/body datasets are supplied locally, not redistributed.
+/data/pmda/originals/
+/data/pmda/imports/
+/data/pmda/structured/*
+!/data/pmda/structured/README.md
+/data_tools/data/
+/data_tools/structured/*
+!/data_tools/structured/README.md
+/backend/tests/fixtures/interaction_oracle_v6.json
+/backend/tests/fixtures/definition-*-reference.json
+/backend/tests/fixtures/*.sqlite3.gz
