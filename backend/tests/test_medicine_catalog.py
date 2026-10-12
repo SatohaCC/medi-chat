@@ -145,7 +145,7 @@ def test_group_rejects_other_ingredient_without_changing_products(
     ("message", "codes", "expected_codes", "covered"),
     [
         ("アルファの副作用", ["1234567A0000"], ["1234567A0000"], True),
-        ("ベータの副作用", ["1234567A0000"], ["1234567A0001"], False),
+        ("ベータの副作用", ["1234567A0000"], ["1234567A0000"], True),
         ("副作用について", ["1234567A0000", "0000000A0000"], ["1234567A0000"], False),
         ("副作用について", ["0000000A0000"], [], False),
         (

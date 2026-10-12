@@ -58,7 +58,11 @@ def test_upgrade_creates_v3_compatible_schema(
     scripts = ScriptDirectory.from_config(Config(str(ini_path)))
     heads = scripts.get_heads()
     assert len(heads) == 1
-    initial_revision = scripts.get_revision(heads[0])
+    registration_revision = scripts.get_revision(heads[0])
+    assert registration_revision is not None
+    assert registration_revision.revision == "0002_registration_generations"
+    assert registration_revision.down_revision == "0001_v3_schema"
+    initial_revision = scripts.get_revision("0001_v3_schema")
     assert initial_revision is not None
     assert initial_revision.down_revision is None
 
@@ -448,7 +452,7 @@ def test_upgrade_rejects_unmanaged_or_unknown_database(
     error: Exception | SystemExit | None = None
     try:
         _migrate_database(index_path, source)
-    except (ImportError, TypeError, NotImplementedError):
+    except ImportError, TypeError, NotImplementedError:
         raise
     except (Exception, SystemExit) as caught:
         error = caught

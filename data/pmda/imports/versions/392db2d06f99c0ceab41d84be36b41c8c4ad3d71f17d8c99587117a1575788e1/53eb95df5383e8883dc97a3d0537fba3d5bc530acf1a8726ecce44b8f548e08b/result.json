@@ -1,0 +1,55 @@
+{
+  "document_id": "800155_6290004M1029_1_47",
+  "source_sha256": "53eb95df5383e8883dc97a3d0537fba3d5bc530acf1a8726ecce44b8f548e08b",
+  "status": "stored",
+  "reused": false,
+  "validation_status": "warning",
+  "section_count": 44,
+  "search_unit_count": 39,
+  "products": [
+    {
+      "yj_code": "6290004M1029",
+      "brand_name": "イトリゾールカプセル50"
+    }
+  ],
+  "revisions": [
+    {
+      "source_label": "前回",
+      "year_month": "2025-08",
+      "version": null
+    },
+    {
+      "source_label": "今回",
+      "year_month": "2026-08",
+      "version": "第8版"
+    }
+  ],
+  "warnings": [
+    {
+      "code": "missing_figure",
+      "reference": "800155_6290004M1029_1_47_fig01.gif"
+    },
+    {
+      "code": "missing_figure",
+      "reference": "800155_6290004M1029_1_47_fig02.gif"
+    },
+    {
+      "code": "missing_figure",
+      "reference": "800155_6290004M1029_1_47_fig03.gif"
+    },
+    {
+      "code": "missing_figure",
+      "reference": "800155_6290004M1029_1_47_fig04.gif"
+    },
+    {
+      "code": "missing_figure",
+      "reference": "800155_6290004M1029_1_47_fig05.gif"
+    },
+    {
+      "code": "missing_figure",
+      "reference": "800155_6290004M1029_1_47_fig06.gif"
+    }
+  ],
+  "transformer_version": "medi-chat.pmda-import.v1",
+  "search_index_updated": false
+}

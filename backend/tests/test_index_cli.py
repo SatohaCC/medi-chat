@@ -8,6 +8,9 @@ from pathlib import Path
 
 from backend.infrastructure.persistence.index_reader import SqlAlchemyIndexReader
 from backend.infrastructure.persistence.sqlite_engine import create_sqlite_engine
+from backend.tests.registration_runtime_fixtures import (
+    register_synthetic_prepared_index,
+)
 from backend.tests.storage_fixtures import write_structured_document
 from backend.tests.test_alembic_migrations import _migrate_database
 from sqlalchemy.engine import URL
@@ -37,6 +40,23 @@ def test_existing_build_entrypoint_requires_migrated_database(tmp_path: Path) ->
 
     # 2. マイグレーション実行後、正常にビルドが成功すること
     _migrate_database(index_path, structured)
+    unregistered = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "backend.infrastructure.cli.build_search_index",
+            "--structured-dir",
+            str(structured),
+            "--index-path",
+            str(index_path),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        capture_output=True,
+        text=True,
+    )
+    assert unregistered.returncode != 0
+    assert "initialize_registrations" in unregistered.stderr
+    register_synthetic_prepared_index(structured, index_path)
 
     res_build = subprocess.run(
         [
@@ -65,7 +85,7 @@ def test_existing_build_entrypoint_requires_migrated_database(tmp_path: Path) ->
         reader = SqlAlchemyIndexReader(engine)
         stats = reader._read_index_stats()
         assert stats["document_count"] == 1
-        assert stats["unit_count"] == 3
+        assert stats["unit_count"] == 1
 
         doc = reader._get_document("test_001")
         assert doc is not None

@@ -8,6 +8,7 @@ from ...domain.attachment.repositories import AttachmentProductRepository
 from ...domain.retrieval.repositories import EvidenceRepository
 from ..retrieval.intent_contracts import IntentClassifier
 from ..retrieval.keyword_contracts import KeywordExtractor
+from ..retrieval.snapshot_contracts import RetrievalSnapshotProvider
 from .answer_preparation import prepare_reply
 from .answer_prompt_builder import build_answer_messages
 from .answer_stream import stream_answer
@@ -27,6 +28,7 @@ async def answer_question(
     provider_factory: Callable[[str | None], LLMProvider],
     provider_name: str | None,
     model_name: str | None,
+    snapshot_provider: RetrievalSnapshotProvider | None = None,
 ) -> ChatResponse:
     reply = await prepare_reply(
         conversation,
@@ -36,6 +38,7 @@ async def answer_question(
         intent_classifier=intent_classifier,
         keyword_extractor=keyword_extractor,
         catalog=catalog,
+        snapshot_provider=snapshot_provider,
     )
     if reply.needs_clarification:
         return reply

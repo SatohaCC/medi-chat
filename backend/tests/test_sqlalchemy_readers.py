@@ -148,9 +148,9 @@ def test_two_character_search_matches_legacy_instr(
     medicines = (
         AttachmentProductMatch(
             generic_name="テスト成分",
-            brand_names=["テスト薬"],
-            yj_codes=["1234567A0000"],
-            document_ids=["test_001"],
+            brand_names=("テスト薬",),
+            yj_codes=("1234567A0000",),
+            document_ids=("test_001",),
         ),
     )
     criteria = SearchCriteria(
@@ -261,9 +261,9 @@ def test_trigram_search_and_tie_break_match_baseline(
     medicines = (
         AttachmentProductMatch(
             generic_name="テスト成分",
-            brand_names=["テスト薬"],
-            yj_codes=["1234567A0000"],
-            document_ids=["test_001"],
+            brand_names=("テスト薬",),
+            yj_codes=("1234567A0000",),
+            document_ids=("test_001",),
         ),
     )
     engine = create_sqlite_engine(

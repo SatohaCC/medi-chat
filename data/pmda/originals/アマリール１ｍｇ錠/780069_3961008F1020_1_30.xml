@@ -1,0 +1,2000 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<PackIns version="1.0" xmlKind="Packins" drugType="Medicine" referenceOfPrecautionsForUse="3961008-S0001" referenceOfPrecautionsForHandling="3961008-T0001" xmlns="http://info.pmda.go.jp/namespace/prescription_drugs/package_insert/1.0">
+  <PackageInsertNo>3961008F1020_1_30</PackageInsertNo>
+  <CompanyIdentifier>780069</CompanyIdentifier>
+  <!--ア.作成又は改訂年月-->
+  <DateOfPreparationOrRevision>
+    <PreparationOrRevision id="前回">
+      <YearMonth>2021-11</YearMonth>
+      <Version>
+        <Lang xml:lang="ja">第1版</Lang>
+      </Version>
+    </PreparationOrRevision>
+    <PreparationOrRevision id="今回">
+      <YearMonth>2024-03</YearMonth>
+      <Version>
+        <Lang xml:lang="ja">第2版</Lang>
+      </Version>
+    </PreparationOrRevision>
+  </DateOfPreparationOrRevision>
+  <!--イ.日本標準商品分類番号-->
+  <Sccj>
+    <SccjNo>873961</SccjNo>
+  </Sccj>
+  <!--オ.薬効分類名-->
+  <TherapeuticClassification>
+    <Detail>
+      <Lang xml:lang="ja">スルホニルウレア系経口血糖降下剤</Lang>
+    </Detail>
+  </TherapeuticClassification>
+  <ApprovalEtc>
+    <DetailBrandName id="BRD_Drug1">
+      <ApprovalBrandName>
+        <Lang xml:lang="ja">アマリール0.5mg錠</Lang>
+      </ApprovalBrandName>
+      <BrandCode>
+        <YJCode>3961008F3023</YJCode>
+      </BrandCode>
+      <TrademarkInEnglish>
+        <TrademarkName>Amaryl Tablets</TrademarkName>
+      </TrademarkInEnglish>
+      <BrandNameInHiragana>
+        <NameInHiragana>あまりーるじょう</NameInHiragana>
+      </BrandNameInHiragana>
+      <!--ウ.承認番号-->
+      <ApprovalAndLicenseNo>
+        <ApprovalNo>22100AMX02339</ApprovalNo>
+      </ApprovalAndLicenseNo>
+      <!--ウ.販売開始年月-->
+      <StartingDateOfMarketing>2010-06</StartingDateOfMarketing>
+      <!--エ.貯法、有効期間-->
+      <Storage>
+        <StorageMethod>
+          <Lang xml:lang="ja">室温保存</Lang>
+        </StorageMethod>
+        <ShelfLife>
+          <Lang xml:lang="ja">3年</Lang>
+        </ShelfLife>
+      </Storage>
+      <!--キ.基準名-->
+      <StandardName>
+        <StandardNameCategory>
+          <StandardNameCategoryCode>1</StandardNameCategoryCode>
+          <StandardNameDetail>
+            <Lang xml:lang="ja">グリメピリド錠</Lang>
+          </StandardNameDetail>
+        </StandardNameCategory>
+      </StandardName>
+      <!--カ.規制区分-->
+      <RegulatoryClassification>
+        <RegulatoryClassificationCodeAndNote>
+          <RegulatoryClassificationCode>2</RegulatoryClassificationCode>
+        </RegulatoryClassificationCodeAndNote>
+        <RegulatoryClassificationCodeAndNote>
+          <RegulatoryClassificationCode>12</RegulatoryClassificationCode>
+        </RegulatoryClassificationCodeAndNote>
+      </RegulatoryClassification>
+    </DetailBrandName>
+    <DetailBrandName id="BRD_Drug2">
+      <ApprovalBrandName>
+        <Lang xml:lang="ja">アマリール1mg錠</Lang>
+      </ApprovalBrandName>
+      <BrandCode>
+        <YJCode>3961008F1020</YJCode>
+      </BrandCode>
+      <TrademarkInEnglish>
+        <TrademarkName>Amaryl Tablets</TrademarkName>
+      </TrademarkInEnglish>
+      <BrandNameInHiragana>
+        <NameInHiragana>あまりーるじょう</NameInHiragana>
+      </BrandNameInHiragana>
+      <!--ウ.承認番号-->
+      <ApprovalAndLicenseNo>
+        <ApprovalNo>21100AMZ00635</ApprovalNo>
+      </ApprovalAndLicenseNo>
+      <!--ウ.販売開始年月-->
+      <StartingDateOfMarketing>2000-04</StartingDateOfMarketing>
+      <!--エ.貯法、有効期間-->
+      <Storage>
+        <StorageMethod>
+          <Lang xml:lang="ja">室温保存</Lang>
+        </StorageMethod>
+        <ShelfLife>
+          <Lang xml:lang="ja">3年</Lang>
+        </ShelfLife>
+      </Storage>
+      <!--キ.基準名-->
+      <StandardName>
+        <StandardNameCategory>
+          <StandardNameCategoryCode>1</StandardNameCategoryCode>
+          <StandardNameDetail>
+            <Lang xml:lang="ja">グリメピリド錠</Lang>
+          </StandardNameDetail>
+        </StandardNameCategory>
+      </StandardName>
+      <!--カ.規制区分-->
+      <RegulatoryClassification>
+        <RegulatoryClassificationCodeAndNote>
+          <RegulatoryClassificationCode>2</RegulatoryClassificationCode>
+        </RegulatoryClassificationCodeAndNote>
+        <RegulatoryClassificationCodeAndNote>
+          <RegulatoryClassificationCode>12</RegulatoryClassificationCode>
+        </RegulatoryClassificationCodeAndNote>
+      </RegulatoryClassification>
+    </DetailBrandName>
+    <DetailBrandName id="BRD_Drug3">
+      <ApprovalBrandName>
+        <Lang xml:lang="ja">アマリール3mg錠</Lang>
+      </ApprovalBrandName>
+      <BrandCode>
+        <YJCode>3961008F2027</YJCode>
+      </BrandCode>
+      <TrademarkInEnglish>
+        <TrademarkName>Amaryl Tablets</TrademarkName>
+      </TrademarkInEnglish>
+      <BrandNameInHiragana>
+        <NameInHiragana>あまりーるじょう</NameInHiragana>
+      </BrandNameInHiragana>
+      <!--ウ.承認番号-->
+      <ApprovalAndLicenseNo>
+        <ApprovalNo>21100AMZ00636</ApprovalNo>
+      </ApprovalAndLicenseNo>
+      <!--ウ.販売開始年月-->
+      <StartingDateOfMarketing>2000-04</StartingDateOfMarketing>
+      <!--エ.貯法、有効期間-->
+      <Storage>
+        <StorageMethod>
+          <Lang xml:lang="ja">室温保存</Lang>
+        </StorageMethod>
+        <ShelfLife>
+          <Lang xml:lang="ja">3年</Lang>
+        </ShelfLife>
+      </Storage>
+      <!--キ.基準名-->
+      <StandardName>
+        <StandardNameCategory>
+          <StandardNameCategoryCode>1</StandardNameCategoryCode>
+          <StandardNameDetail>
+            <Lang xml:lang="ja">グリメピリド錠</Lang>
+          </StandardNameDetail>
+        </StandardNameCategory>
+      </StandardName>
+      <!--カ.規制区分-->
+      <RegulatoryClassification>
+        <RegulatoryClassificationCodeAndNote>
+          <RegulatoryClassificationCode>2</RegulatoryClassificationCode>
+        </RegulatoryClassificationCodeAndNote>
+        <RegulatoryClassificationCodeAndNote>
+          <RegulatoryClassificationCode>12</RegulatoryClassificationCode>
+        </RegulatoryClassificationCodeAndNote>
+      </RegulatoryClassification>
+    </DetailBrandName>
+  </ApprovalEtc>
+  <!--キ.一般的名称-->
+  <GenericName>
+    <Detail>
+      <Lang xml:lang="ja">グリメピリド</Lang>
+    </Detail>
+  </GenericName>
+  <!--１.警告-->
+  <Warnings heading="fixing" id="HDR_Warnings">
+    <Detail>
+      <Lang xml:lang="ja">重篤かつ遷延性の低血糖を起こすことがある。用法及び用量、使用上の注意に特に留意すること。<HeaderRef ref="HDR_ImportantPrecautions_1" />,<HeaderRef ref="HDR_SeriousAdverse_1" /></Lang>
+    </Detail>
+  </Warnings>
+  <!--２.禁忌（次の患者には投与しないこと）-->
+  <ContraIndications heading="fixing" id="HDR_ContraIndications">
+    <OrderedList numberContinued="false">
+      <Item heading="free" id="HDR_PMDA_ContraIndications_20210906154126_1">
+        <Detail>
+          <Lang xml:lang="ja">重症ケトーシス、糖尿病性昏睡又は前昏睡、インスリン依存型糖尿病（若年型糖尿病、ブリットル型糖尿病等）の患者［インスリンの適用である。］</Lang>
+        </Detail>
+      </Item>
+      <Item heading="free" id="HDR_ContraIndications_2">
+        <Detail>
+          <Lang xml:lang="ja">重篤な肝又は腎機能障害のある患者［低血糖を起こすおそれがある。］<HeaderRef ref="HDR_PatientsWithRenalImpairment_1" />,<HeaderRef ref="HDR_PatientsWithHepaticImpairment_1" />,<HeaderRef ref="HDR_SeriousAdverse_1" /></Lang>
+        </Detail>
+      </Item>
+      <Item heading="free" id="HDR_PMDA_ContraIndications_20210906154126_3">
+        <Detail>
+          <Lang xml:lang="ja">重症感染症、手術前後、重篤な外傷のある患者［インスリンの適用である。］</Lang>
+        </Detail>
+      </Item>
+      <Item heading="free" id="HDR_ContraIndications_4">
+        <Detail>
+          <Lang xml:lang="ja">下痢、嘔吐等の胃腸障害のある患者［低血糖を起こすおそれがある。］<HeaderRef ref="HDR_SeriousAdverse_1" /></Lang>
+        </Detail>
+      </Item>
+      <Item heading="free" id="HDR_ContraIndications_5">
+        <Detail>
+          <Lang xml:lang="ja">妊婦又は妊娠している可能性のある女性<HeaderRef ref="HDR_UseInPregnant" /></Lang>
+        </Detail>
+      </Item>
+      <Item heading="free" id="HDR_PMDA_ContraIndications_20210906154126_6">
+        <Detail>
+          <Lang xml:lang="ja">本剤の成分又はスルホンアミド系薬剤に対し過敏症の既往歴のある患者</Lang>
+        </Detail>
+      </Item>
+    </OrderedList>
+  </ContraIndications>
+  <!--３.組成・性状-->
+  <CompositionAndProperty id="HDR_CompositionAndProperty" heading="fixing">
+    <!--３.１ 組成-->
+    <Composition id="HDR_Composition" heading="fixing">
+      <CompositionForBrand ref="BRD_Drug1">
+        <CompositionForConstituentUnits>
+          <CompositionTable>
+            <ContainedAmount>
+              <ActiveIngredientName>
+                <Lang xml:lang="ja">日局グリメピリド</Lang>
+              </ActiveIngredientName>
+              <ValueAndUnit>
+                <Lang xml:lang="ja">0.5mg（1錠中）</Lang>
+              </ValueAndUnit>
+            </ContainedAmount>
+            <Additives>
+              <ListOfAdditives>
+                <Lang xml:lang="ja">乳糖水和物、ポビドン、デンプングリコール酸ナトリウム、結晶セルロース、ステアリン酸マグネシウム</Lang>
+              </ListOfAdditives>
+            </Additives>
+          </CompositionTable>
+        </CompositionForConstituentUnits>
+      </CompositionForBrand>
+      <CompositionForBrand ref="BRD_Drug2">
+        <CompositionForConstituentUnits>
+          <CompositionTable>
+            <ContainedAmount>
+              <ActiveIngredientName>
+                <Lang xml:lang="ja">日局グリメピリド</Lang>
+              </ActiveIngredientName>
+              <ValueAndUnit>
+                <Lang xml:lang="ja">1mg（1錠中）</Lang>
+              </ValueAndUnit>
+            </ContainedAmount>
+            <Additives>
+              <ListOfAdditives>
+                <Lang xml:lang="ja">乳糖水和物、ポビドン、デンプングリコール酸ナトリウム、結晶セルロース、ステアリン酸マグネシウム、三二酸化鉄</Lang>
+              </ListOfAdditives>
+            </Additives>
+          </CompositionTable>
+        </CompositionForConstituentUnits>
+      </CompositionForBrand>
+      <CompositionForBrand ref="BRD_Drug3">
+        <CompositionForConstituentUnits>
+          <CompositionTable>
+            <ContainedAmount>
+              <ActiveIngredientName>
+                <Lang xml:lang="ja">日局グリメピリド</Lang>
+              </ActiveIngredientName>
+              <ValueAndUnit>
+                <Lang xml:lang="ja">3mg（1錠中）</Lang>
+              </ValueAndUnit>
+            </ContainedAmount>
+            <Additives>
+              <ListOfAdditives>
+                <Lang xml:lang="ja">乳糖水和物、ポビドン、デンプングリコール酸ナトリウム、結晶セルロース、ステアリン酸マグネシウム、黄色三二酸化鉄</Lang>
+              </ListOfAdditives>
+            </Additives>
+          </CompositionTable>
+        </CompositionForConstituentUnits>
+      </CompositionForBrand>
+    </Composition>
+    <!--３.２ 製剤の性状-->
+    <Property id="HDR_Property" heading="fixing">
+      <PropertyForBrand ref="BRD_Drug1">
+        <PropertyForConstituentUnits>
+          <PropertyTable>
+            <Formulation>
+              <Lang xml:lang="ja">裸錠</Lang>
+            </Formulation>
+            <ColorTone>
+              <Lang xml:lang="ja">白色</Lang>
+            </ColorTone>
+            <Shape>
+              <ShapeFront>
+                <Lang xml:lang="ja">
+                  <InlineGraphic gfname="fig01.gif" />
+                </Lang>
+              </ShapeFront>
+              <ShapeBack>
+                <Lang xml:lang="ja">
+                  <InlineGraphic gfname="fig02.gif" />
+                </Lang>
+              </ShapeBack>
+              <ShapeSide>
+                <Lang xml:lang="ja">
+                  <InlineGraphic gfname="fig03.gif" />
+                </Lang>
+              </ShapeSide>
+            </Shape>
+            <Size>
+              <SizeDiameter>
+                <Lang xml:lang="ja">4.5mm</Lang>
+              </SizeDiameter>
+              <SizeThickness>
+                <Lang xml:lang="ja">2.0mm</Lang>
+              </SizeThickness>
+            </Size>
+            <Weight>
+              <Lang xml:lang="ja">0.0425g</Lang>
+            </Weight>
+            <IdCode>
+              <Lang xml:lang="ja">NM</Lang>
+            </IdCode>
+          </PropertyTable>
+        </PropertyForConstituentUnits>
+      </PropertyForBrand>
+      <PropertyForBrand ref="BRD_Drug2">
+        <PropertyForConstituentUnits>
+          <PropertyTable>
+            <Formulation>
+              <Lang xml:lang="ja">裸錠（割線入り）</Lang>
+            </Formulation>
+            <ColorTone>
+              <Lang xml:lang="ja">淡紅色</Lang>
+            </ColorTone>
+            <Shape>
+              <ShapeFront>
+                <Lang xml:lang="ja">
+                  <InlineGraphic gfname="fig04.gif" />
+                </Lang>
+              </ShapeFront>
+              <ShapeBack>
+                <Lang xml:lang="ja">
+                  <InlineGraphic gfname="fig05.gif" />
+                </Lang>
+              </ShapeBack>
+              <ShapeSide>
+                <Lang xml:lang="ja">
+                  <InlineGraphic gfname="fig06.gif" />
+                </Lang>
+              </ShapeSide>
+            </Shape>
+            <Size>
+              <SizeDiameter>
+                <Lang xml:lang="ja">6.0mm</Lang>
+              </SizeDiameter>
+              <SizeThickness>
+                <Lang xml:lang="ja">2.2mm</Lang>
+              </SizeThickness>
+            </Size>
+            <Weight>
+              <Lang xml:lang="ja">0.085g</Lang>
+            </Weight>
+            <IdCode>
+              <Lang xml:lang="ja">NMK</Lang>
+            </IdCode>
+          </PropertyTable>
+        </PropertyForConstituentUnits>
+      </PropertyForBrand>
+      <PropertyForBrand ref="BRD_Drug3">
+        <PropertyForConstituentUnits>
+          <PropertyTable>
+            <Formulation>
+              <Lang xml:lang="ja">裸錠（割線入り）</Lang>
+            </Formulation>
+            <ColorTone>
+              <Lang xml:lang="ja">微黄白色</Lang>
+            </ColorTone>
+            <Shape>
+              <ShapeFront>
+                <Lang xml:lang="ja">
+                  <InlineGraphic gfname="fig07.gif" />
+                </Lang>
+              </ShapeFront>
+              <ShapeBack>
+                <Lang xml:lang="ja">
+                  <InlineGraphic gfname="fig08.gif" />
+                </Lang>
+              </ShapeBack>
+              <ShapeSide>
+                <Lang xml:lang="ja">
+                  <InlineGraphic gfname="fig09.gif" />
+                </Lang>
+              </ShapeSide>
+            </Shape>
+            <Size>
+              <SizeDiameter>
+                <Lang xml:lang="ja">8.0mm</Lang>
+              </SizeDiameter>
+              <SizeThickness>
+                <Lang xml:lang="ja">2.6mm</Lang>
+              </SizeThickness>
+            </Size>
+            <Weight>
+              <Lang xml:lang="ja">0.17g</Lang>
+            </Weight>
+            <IdCode>
+              <Lang xml:lang="ja">NMN</Lang>
+            </IdCode>
+          </PropertyTable>
+        </PropertyForConstituentUnits>
+      </PropertyForBrand>
+    </Property>
+  </CompositionAndProperty>
+  <!--４.効能又は効果-->
+  <IndicationsOrEfficacy wordingPatternOfIndications="1" id="HDR_IndicationsOrEfficacy" heading="fixing">
+    <Detail>
+      <Lang xml:lang="ja">2型糖尿病（ただし、食事療法・運動療法のみで十分な効果が得られない場合に限る。）</Lang>
+    </Detail>
+  </IndicationsOrEfficacy>
+  <!--６.用法及び用量-->
+  <InfoDoseAdmin wordingPatternOfDoseAdmin="1" id="HDR_InfoDoseAdmin" heading="fixing">
+    <DoseAdmin>
+      <Detail>
+        <Lang xml:lang="ja">通常、グリメピリドとして1日0.5～1mgより開始し、1日1～2回朝または朝夕、食前または食後に経口投与する。<?enter?>維持量は通常1日1～4mgで、必要に応じて適宜増減する。なお、1日最高投与量は6mgまでとする。</Lang>
+      </Detail>
+    </DoseAdmin>
+  </InfoDoseAdmin>
+  <!--８.重要な基本的注意-->
+  <ImportantPrecautions heading="fixing" id="HDR_ImportantPrecautions">
+    <OrderedList numberContinued="false">
+      <Item heading="free" id="HDR_ImportantPrecautions_1">
+        <Detail>
+          <Lang xml:lang="ja">本剤の使用にあたっては、患者及びその家族に対し低血糖症状及びその対処方法について十分説明すること。<HeaderRef ref="HDR_Warnings" />,<HeaderRef ref="HDR_UseInPatientsWithComplicationsOrHistoryOfDiseasesEtc_1" />,<HeaderRef ref="HDR_SeriousAdverse_1" /></Lang>
+        </Detail>
+      </Item>
+      <Item heading="free" id="HDR_PMDA_ImportantPrecautions_20210906154126_8">
+        <Detail>
+          <Lang xml:lang="ja">投与する場合には、少量より開始し、血糖、尿糖を定期的に検査し、薬剤の効果を確かめ、効果が不十分な場合には、速やかに他の治療法への切り替えを行うこと。</Lang>
+        </Detail>
+      </Item>
+      <Item heading="free" id="HDR_ImportantPrecautions_3">
+        <Detail>
+          <Lang xml:lang="ja">重篤かつ遷延性の低血糖を起こすことがあるので、高所作業、自動車の運転等に従事している患者に投与するときには注意すること。<HeaderRef ref="HDR_SeriousAdverse_1" /></Lang>
+        </Detail>
+      </Item>
+    </OrderedList>
+  </ImportantPrecautions>
+  <!--９.特定の背景を有する患者に関する注意-->
+  <UseInSpecificPopulations id="HDR_UseInSpecificPopulations" heading="fixing">
+    <!--９.１ 合併症・既往歴等のある患者-->
+    <UseInPatientsWithComplicationsOrHistoryOfDiseasesEtc heading="fixing" id="HDR_UseInPatientsWithComplicationsOrHistoryOfDiseasesEtc">
+      <OrderedList numberContinued="false">
+        <Item heading="free" id="HDR_UseInPatientsWithComplicationsOrHistoryOfDiseasesEtc_1">
+          <Header>
+            <Lang xml:lang="ja">低血糖を起こすおそれのある以下の患者又は状態</Lang>
+          </Header>
+          <UnorderedList>
+            <Item>
+              <Detail>
+                <Lang xml:lang="ja">脳下垂体機能不全又は副腎機能不全</Lang>
+              </Detail>
+            </Item>
+            <Item>
+              <Detail>
+                <Lang xml:lang="ja">栄養不良状態、飢餓状態、不規則な食事摂取、食事摂取量の不足又は衰弱状態</Lang>
+              </Detail>
+            </Item>
+            <Item>
+              <Detail>
+                <Lang xml:lang="ja">激しい筋肉運動</Lang>
+              </Detail>
+            </Item>
+            <Item>
+              <Detail>
+                <Lang xml:lang="ja">過度のアルコール摂取</Lang>
+              </Detail>
+            </Item>
+            <Item>
+              <Detail>
+                <Lang xml:lang="ja">高齢者</Lang>
+              </Detail>
+            </Item>
+          </UnorderedList>
+          <Detail>
+            <Lang xml:lang="ja">
+              <HeaderRef ref="HDR_ImportantPrecautions_1" />,<HeaderRef ref="HDR_SeriousAdverse_1" /></Lang>
+          </Detail>
+        </Item>
+      </OrderedList>
+    </UseInPatientsWithComplicationsOrHistoryOfDiseasesEtc>
+    <!--９.２ 腎機能障害患者-->
+    <PatientsWithRenalImpairment heading="fixing" id="HDR_PatientsWithRenalImpairment">
+      <OrderedList numberContinued="false">
+        <Item heading="free" id="HDR_PatientsWithRenalImpairment_1">
+          <Header>
+            <Lang xml:lang="ja">重篤な腎機能障害のある患者</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">投与しないこと。低血糖を起こすおそれがある。<HeaderRef ref="HDR_ContraIndications_2" />,<HeaderRef ref="HDR_SeriousAdverse_1" /></Lang>
+          </Detail>
+        </Item>
+        <Item heading="free" id="HDR_PatientsWithRenalImpairment_2">
+          <Header>
+            <Lang xml:lang="ja">腎機能障害のある患者（重篤な腎機能障害のある患者を除く）</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">低血糖を起こすおそれがある。<HeaderRef ref="HDR_SeriousAdverse_1" /></Lang>
+          </Detail>
+        </Item>
+      </OrderedList>
+    </PatientsWithRenalImpairment>
+    <!--９.３ 肝機能障害患者-->
+    <PatientsWithHepaticImpairment heading="fixing" id="HDR_PatientsWithHepaticImpairment">
+      <OrderedList numberContinued="false">
+        <Item heading="free" id="HDR_PatientsWithHepaticImpairment_1">
+          <Header>
+            <Lang xml:lang="ja">重篤な肝機能障害のある患者</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">投与しないこと。低血糖を起こすおそれがある。<HeaderRef ref="HDR_ContraIndications_2" />,<HeaderRef ref="HDR_SeriousAdverse_1" /></Lang>
+          </Detail>
+        </Item>
+        <Item heading="free" id="HDR_PatientsWithHepaticImpairment_2">
+          <Header>
+            <Lang xml:lang="ja">肝機能障害のある患者（重篤な肝機能障害のある患者を除く）</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">低血糖を起こすおそれがある。<HeaderRef ref="HDR_SeriousAdverse_1" /></Lang>
+          </Detail>
+        </Item>
+      </OrderedList>
+    </PatientsWithHepaticImpairment>
+    <!--９.５ 妊婦-->
+    <UseInPregnant heading="fixing" id="HDR_UseInPregnant">
+      <Detail>
+        <Lang xml:lang="ja">妊婦又は妊娠している可能性のある女性には投与しないこと。スルホニルウレア系薬剤は胎盤を通過することが報告されており、新生児の低血糖、巨大児が認められている。また、本剤の動物実験（ラット、ウサギ）で催奇形性作用が報告されている。<HeaderRef ref="HDR_ContraIndications_5" /></Lang>
+      </Detail>
+    </UseInPregnant>
+    <!--９.６ 授乳婦-->
+    <UseInNursing heading="fixing" id="HDR_UseInNursing">
+      <Detail>
+        <Lang xml:lang="ja">治療上の有益性及び母乳栄養の有益性を考慮し、授乳の継続又は中止を検討すること。授乳を継続する場合、児の低血糖の症状について観察を十分に行うこと。本剤のヒト母乳への移行性及び乳汁産生への影響は不明である。動物実験（ラット）において、母乳への移行が認められている。また、他のスルホニルウレア系薬剤で母乳へ移行することが報告されている。</Lang>
+      </Detail>
+    </UseInNursing>
+    <!--９.７ 小児等-->
+    <PediatricUse heading="fixing" id="HDR_PediatricUse">
+      <OrderedList numberContinued="false">
+        <Item heading="free" id="HDR_PediatricUse_1">
+          <Detail>
+            <Lang xml:lang="ja">小児に投与する際には、低血糖症状及びその対処方法について保護者等にも十分説明すること。<HeaderRef ref="HDR_SeriousAdverse_1" />,<HeaderRef ref="HDR_BloodLevel_3" />,<HeaderRef ref="HDR_PostMarketingSurveylancesEtc_1" /></Lang>
+          </Detail>
+        </Item>
+        <Item heading="free" id="HDR_PMDA_PediatricUse_20210906154126_16">
+          <Detail>
+            <Lang xml:lang="ja">低出生体重児、新生児、乳児、幼児又は9歳未満の小児を対象とした有効性及び安全性を指標とした臨床試験は実施していない。</Lang>
+          </Detail>
+        </Item>
+      </OrderedList>
+    </PediatricUse>
+    <!--９.８ 高齢者-->
+    <UseInTheElderly heading="fixing" id="HDR_UseInTheElderly">
+      <Detail>
+        <Lang xml:lang="ja">少量から投与を開始し定期的に検査を行うなど慎重に投与すること。生理機能が低下していることが多く、低血糖があらわれやすい。<HeaderRef ref="HDR_SeriousAdverse_1" /></Lang>
+      </Detail>
+    </UseInTheElderly>
+  </UseInSpecificPopulations>
+  <!--１０.相互作用-->
+  <Interactions id="HDR_Interactions" heading="fixing">
+    <SummaryOfCombination>
+      <Item heading="free">
+        <Detail>
+          <Lang xml:lang="ja">本剤は、主に肝代謝酵素CYP2C9により代謝される。</Lang>
+        </Detail>
+      </Item>
+    </SummaryOfCombination>
+    <!--１０.２ 併用注意（併用に注意すること）-->
+    <PrecautionsForCombinations id="HDR_PrecautionsForCombinations" heading="fixing">
+      <PrecautionsForCombination>
+        <PrecautionsForCombi>
+          <WidthDefinition totalWidth="100%">
+            <Col width="35%" />
+            <Col width="32.5%" />
+            <Col width="32.5%" />
+          </WidthDefinition>
+          <Drug>
+            <DrugName>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">糖尿病用薬</Lang>
+                  </Detail>
+                  <SimpleList>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">インスリン製剤</Lang>
+                      </Detail>
+                    </Item>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">ビグアナイド系薬剤</Lang>
+                      </Detail>
+                    </Item>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">チアゾリジン系薬剤</Lang>
+                      </Detail>
+                    </Item>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">α-グルコシダーゼ阻害剤</Lang>
+                      </Detail>
+                    </Item>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">DPP-4阻害薬</Lang>
+                      </Detail>
+                    </Item>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">GLP-1受容体作動薬</Lang>
+                      </Detail>
+                    </Item>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">SGLT2阻害剤　等</Lang>
+                      </Detail>
+                    </Item>
+                  </SimpleList>
+                </Item>
+              </SimpleList>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">低血糖症状が起こることがある。<?enter?>血糖値その他患者の状態を十分観察し、必要に応じて本剤又は併用薬剤の投与量を調節するなど慎重に投与すること。特にβ-遮断剤と併用する場合にはプロプラノロール等の非選択性薬剤は避けることが望ましい。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">血糖降下作用が増強される。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">プロベネシド</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">低血糖症状が起こることがある。<?enter?>血糖値その他患者の状態を十分観察し、必要に応じて本剤又は併用薬剤の投与量を調節するなど慎重に投与すること。特にβ-遮断剤と併用する場合にはプロプラノロール等の非選択性薬剤は避けることが望ましい。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">腎排泄抑制により血糖降下作用が増強される。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">クマリン系薬剤</Lang>
+                  </Detail>
+                  <SimpleList>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">ワルファリンカリウム</Lang>
+                      </Detail>
+                    </Item>
+                  </SimpleList>
+                </Item>
+              </SimpleList>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">低血糖症状が起こることがある。<?enter?>血糖値その他患者の状態を十分観察し、必要に応じて本剤又は併用薬剤の投与量を調節するなど慎重に投与すること。特にβ-遮断剤と併用する場合にはプロプラノロール等の非選択性薬剤は避けることが望ましい。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">肝代謝抑制により血糖降下作用が増強される。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">サリチル酸剤</Lang>
+                  </Detail>
+                  <SimpleList>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">アスピリン</Lang>
+                      </Detail>
+                    </Item>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">サザピリン　等</Lang>
+                      </Detail>
+                    </Item>
+                  </SimpleList>
+                </Item>
+              </SimpleList>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">低血糖症状が起こることがある。<?enter?>血糖値その他患者の状態を十分観察し、必要に応じて本剤又は併用薬剤の投与量を調節するなど慎重に投与すること。特にβ-遮断剤と併用する場合にはプロプラノロール等の非選択性薬剤は避けることが望ましい。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">血中蛋白との結合抑制、サリチル酸剤の血糖降下作用により血糖降下作用が増強される。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">プロピオン酸系消炎剤</Lang>
+                  </Detail>
+                  <SimpleList>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">ナプロキセン</Lang>
+                      </Detail>
+                    </Item>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">ロキソプロフェンナトリウム水和物　等</Lang>
+                      </Detail>
+                    </Item>
+                  </SimpleList>
+                </Item>
+              </SimpleList>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">低血糖症状が起こることがある。<?enter?>血糖値その他患者の状態を十分観察し、必要に応じて本剤又は併用薬剤の投与量を調節するなど慎重に投与すること。特にβ-遮断剤と併用する場合にはプロプラノロール等の非選択性薬剤は避けることが望ましい。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">血中蛋白との結合抑制により、これらの消炎剤は蛋白結合率が高いので、血中に本剤の遊離型が増加して血糖降下作用が増強するおそれがある。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">アリール酢酸系消炎剤</Lang>
+                  </Detail>
+                  <SimpleList>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">アンフェナクナトリウム水和物</Lang>
+                      </Detail>
+                    </Item>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">ナブメトン　等</Lang>
+                      </Detail>
+                    </Item>
+                  </SimpleList>
+                </Item>
+              </SimpleList>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">低血糖症状が起こることがある。<?enter?>血糖値その他患者の状態を十分観察し、必要に応じて本剤又は併用薬剤の投与量を調節するなど慎重に投与すること。特にβ-遮断剤と併用する場合にはプロプラノロール等の非選択性薬剤は避けることが望ましい。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">血中蛋白との結合抑制により、これらの消炎剤は蛋白結合率が高いので、血中に本剤の遊離型が増加して血糖降下作用が増強するおそれがある。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">オキシカム系消炎剤</Lang>
+                  </Detail>
+                  <SimpleList>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">ロルノキシカム　等</Lang>
+                      </Detail>
+                    </Item>
+                  </SimpleList>
+                </Item>
+              </SimpleList>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">低血糖症状が起こることがある。<?enter?>血糖値その他患者の状態を十分観察し、必要に応じて本剤又は併用薬剤の投与量を調節するなど慎重に投与すること。特にβ-遮断剤と併用する場合にはプロプラノロール等の非選択性薬剤は避けることが望ましい。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">血中蛋白との結合抑制により、これらの消炎剤は蛋白結合率が高いので、血中に本剤の遊離型が増加して血糖降下作用が増強するおそれがある。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">β-遮断剤</Lang>
+                  </Detail>
+                  <SimpleList>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">プロプラノロール</Lang>
+                      </Detail>
+                    </Item>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">アテノロール</Lang>
+                      </Detail>
+                    </Item>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">ピンドロール　等</Lang>
+                      </Detail>
+                    </Item>
+                  </SimpleList>
+                </Item>
+              </SimpleList>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">低血糖症状が起こることがある。<?enter?>血糖値その他患者の状態を十分観察し、必要に応じて本剤又は併用薬剤の投与量を調節するなど慎重に投与すること。特にβ-遮断剤と併用する場合にはプロプラノロール等の非選択性薬剤は避けることが望ましい。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">糖新生抑制、アドレナリンによる低血糖からの回復抑制、低血糖に対する交感神経症状抑制により血糖降下作用が増強される。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">モノアミン酸化酵素阻害剤</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">低血糖症状が起こることがある。<?enter?>血糖値その他患者の状態を十分観察し、必要に応じて本剤又は併用薬剤の投与量を調節するなど慎重に投与すること。特にβ-遮断剤と併用する場合にはプロプラノロール等の非選択性薬剤は避けることが望ましい。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">インスリン分泌促進、糖新生抑制により血糖降下作用が増強される。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">クラリスロマイシン</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">低血糖症状が起こることがある。<?enter?>血糖値その他患者の状態を十分観察し、必要に応じて本剤又は併用薬剤の投与量を調節するなど慎重に投与すること。特にβ-遮断剤と併用する場合にはプロプラノロール等の非選択性薬剤は避けることが望ましい。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">機序不明<?enter?>左記薬剤が他のスルホニルウレア系薬剤の血中濃度を上昇させたとの報告がある。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">サルファ剤</Lang>
+                  </Detail>
+                  <SimpleList>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">スルファメトキサゾール　等</Lang>
+                      </Detail>
+                    </Item>
+                  </SimpleList>
+                </Item>
+              </SimpleList>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">低血糖症状が起こることがある。<?enter?>血糖値その他患者の状態を十分観察し、必要に応じて本剤又は併用薬剤の投与量を調節するなど慎重に投与すること。特にβ-遮断剤と併用する場合にはプロプラノロール等の非選択性薬剤は避けることが望ましい。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">血中蛋白との結合抑制、肝代謝抑制、腎排泄抑制により血糖降下作用が増強される。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">クロラムフェニコール</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">低血糖症状が起こることがある。<?enter?>血糖値その他患者の状態を十分観察し、必要に応じて本剤又は併用薬剤の投与量を調節するなど慎重に投与すること。特にβ-遮断剤と併用する場合にはプロプラノロール等の非選択性薬剤は避けることが望ましい。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">肝代謝抑制により血糖降下作用が増強される。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">テトラサイクリン系抗生物質</Lang>
+                  </Detail>
+                  <SimpleList>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">テトラサイクリン塩酸塩</Lang>
+                      </Detail>
+                    </Item>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">ミノサイクリン塩酸塩　等</Lang>
+                      </Detail>
+                    </Item>
+                  </SimpleList>
+                </Item>
+              </SimpleList>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">低血糖症状が起こることがある。<?enter?>血糖値その他患者の状態を十分観察し、必要に応じて本剤又は併用薬剤の投与量を調節するなど慎重に投与すること。特にβ-遮断剤と併用する場合にはプロプラノロール等の非選択性薬剤は避けることが望ましい。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">インスリン感受性促進により血糖降下作用が増強される。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">シプロフロキサシン</Lang>
+              </Detail>
+              <Detail>
+                <Lang xml:lang="ja">レボフロキサシン水和物</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">低血糖症状が起こることがある。<?enter?>血糖値その他患者の状態を十分観察し、必要に応じて本剤又は併用薬剤の投与量を調節するなど慎重に投与すること。特にβ-遮断剤と併用する場合にはプロプラノロール等の非選択性薬剤は避けることが望ましい。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">機序不明</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">フィブラート系薬剤</Lang>
+                  </Detail>
+                  <SimpleList>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">クロフィブラート</Lang>
+                      </Detail>
+                    </Item>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">ベザフィブラート　等</Lang>
+                      </Detail>
+                    </Item>
+                  </SimpleList>
+                </Item>
+              </SimpleList>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">低血糖症状が起こることがある。<?enter?>血糖値その他患者の状態を十分観察し、必要に応じて本剤又は併用薬剤の投与量を調節するなど慎重に投与すること。特にβ-遮断剤と併用する場合にはプロプラノロール等の非選択性薬剤は避けることが望ましい。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">血中蛋白との結合抑制、肝代謝抑制、腎排泄抑制により血糖降下作用が増強される。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">アゾール系抗真菌剤</Lang>
+                  </Detail>
+                  <SimpleList>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">ミコナゾール</Lang>
+                      </Detail>
+                    </Item>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">フルコナゾール　等</Lang>
+                      </Detail>
+                    </Item>
+                  </SimpleList>
+                </Item>
+              </SimpleList>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">低血糖症状が起こることがある。<?enter?>血糖値その他患者の状態を十分観察し、必要に応じて本剤又は併用薬剤の投与量を調節するなど慎重に投与すること。特にβ-遮断剤と併用する場合にはプロプラノロール等の非選択性薬剤は避けることが望ましい。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">肝代謝抑制（CYP2C9阻害）、血中蛋白との結合抑制により血糖降下作用が増強される。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">シベンゾリンコハク酸塩</Lang>
+              </Detail>
+              <Detail>
+                <Lang xml:lang="ja">ジソピラミド</Lang>
+              </Detail>
+              <Detail>
+                <Lang xml:lang="ja">ピルメノール塩酸塩水和物</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">低血糖症状が起こることがある。<?enter?>血糖値その他患者の状態を十分観察し、必要に応じて本剤又は併用薬剤の投与量を調節するなど慎重に投与すること。特にβ-遮断剤と併用する場合にはプロプラノロール等の非選択性薬剤は避けることが望ましい。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">インスリン分泌促進によると考えられる血糖降下作用の増強のおそれがある。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">アドレナリン</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">高血糖症状（嘔気・嘔吐、脱水、呼気のアセトン臭等）が起こることがある。<?enter?>血糖値その他患者の状態を十分観察しながら投与すること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">末梢でのブドウ糖の取り込み抑制、肝臓での糖新生促進により血糖降下作用が減弱される。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">副腎皮質ホルモン</Lang>
+                  </Detail>
+                  <SimpleList>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">コルチゾン酢酸エステル</Lang>
+                      </Detail>
+                    </Item>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">ヒドロコルチゾン　等</Lang>
+                      </Detail>
+                    </Item>
+                  </SimpleList>
+                </Item>
+              </SimpleList>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">高血糖症状（嘔気・嘔吐、脱水、呼気のアセトン臭等）が起こることがある。<?enter?>血糖値その他患者の状態を十分観察しながら投与すること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">肝臓での糖新生促進、末梢組織でのインスリン感受性低下により血糖降下作用が減弱される。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">甲状腺ホルモン</Lang>
+                  </Detail>
+                  <SimpleList>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">レボチロキシンナトリウム水和物</Lang>
+                      </Detail>
+                    </Item>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">乾燥甲状腺　等</Lang>
+                      </Detail>
+                    </Item>
+                  </SimpleList>
+                </Item>
+              </SimpleList>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">高血糖症状（嘔気・嘔吐、脱水、呼気のアセトン臭等）が起こることがある。<?enter?>血糖値その他患者の状態を十分観察しながら投与すること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">腸管でのブドウ糖吸収亢進、グルカゴンの分泌促進、カテコールアミンの作用増強、肝臓での糖新生促進により血糖降下作用が減弱される。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">卵胞ホルモン</Lang>
+                  </Detail>
+                  <SimpleList>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">エストラジオール安息香酸エステル</Lang>
+                      </Detail>
+                    </Item>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">エストリオール　等</Lang>
+                      </Detail>
+                    </Item>
+                  </SimpleList>
+                </Item>
+              </SimpleList>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">高血糖症状（嘔気・嘔吐、脱水、呼気のアセトン臭等）が起こることがある。<?enter?>血糖値その他患者の状態を十分観察しながら投与すること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">機序不明<?enter?>コルチゾール分泌変化、組織での糖利用変化、成長ホルモンの過剰産生、肝機能の変化等によると考えられる血糖降下作用の減弱のおそれがある。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">利尿剤</Lang>
+                  </Detail>
+                  <SimpleList>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">トリクロルメチアジド</Lang>
+                      </Detail>
+                    </Item>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">フロセミド　等</Lang>
+                      </Detail>
+                    </Item>
+                  </SimpleList>
+                </Item>
+              </SimpleList>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">高血糖症状（嘔気・嘔吐、脱水、呼気のアセトン臭等）が起こることがある。<?enter?>血糖値その他患者の状態を十分観察しながら投与すること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">インスリン分泌の抑制、末梢でのインスリン感受性の低下により血糖降下作用が減弱される。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">ピラジナミド</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">高血糖症状（嘔気・嘔吐、脱水、呼気のアセトン臭等）が起こることがある。<?enter?>血糖値その他患者の状態を十分観察しながら投与すること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">機序不明<?enter?>血糖値のコントロールが難しいとの報告がある。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">イソニアジド</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">高血糖症状（嘔気・嘔吐、脱水、呼気のアセトン臭等）が起こることがある。<?enter?>血糖値その他患者の状態を十分観察しながら投与すること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">糖質代謝の障害による血糖値上昇及び耐糖能異常により血糖降下作用が減弱される。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">リファンピシン</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">高血糖症状（嘔気・嘔吐、脱水、呼気のアセトン臭等）が起こることがある。<?enter?>血糖値その他患者の状態を十分観察しながら投与すること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">肝代謝促進（CYP誘導）により血糖降下作用が減弱される。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">ニコチン酸</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">高血糖症状（嘔気・嘔吐、脱水、呼気のアセトン臭等）が起こることがある。<?enter?>血糖値その他患者の状態を十分観察しながら投与すること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">肝臓でのブドウ糖の同化抑制により血糖降下作用が減弱される。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <SimpleList>
+                <Item>
+                  <Detail>
+                    <Lang xml:lang="ja">フェノチアジン系薬剤</Lang>
+                  </Detail>
+                  <SimpleList>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">クロルプロマジン</Lang>
+                      </Detail>
+                    </Item>
+                    <Item>
+                      <Detail>
+                        <Lang xml:lang="ja">フルフェナジン　等</Lang>
+                      </Detail>
+                    </Item>
+                  </SimpleList>
+                </Item>
+              </SimpleList>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">高血糖症状（嘔気・嘔吐、脱水、呼気のアセトン臭等）が起こることがある。<?enter?>血糖値その他患者の状態を十分観察しながら投与すること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">インスリン遊離抑制、副腎からのアドレナリン遊離により血糖降下作用が減弱される。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">フェニトイン</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">高血糖症状（嘔気・嘔吐、脱水、呼気のアセトン臭等）が起こることがある。<?enter?>血糖値その他患者の状態を十分観察しながら投与すること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">インスリンの分泌阻害により血糖降下作用が減弱される。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+          <Drug>
+            <DrugName>
+              <Detail>
+                <Lang xml:lang="ja">ブセレリン酢酸塩</Lang>
+              </Detail>
+            </DrugName>
+            <ClinSymptomsAndMeasures>
+              <Detail>
+                <Lang xml:lang="ja">高血糖症状（嘔気・嘔吐、脱水、呼気のアセトン臭等）が起こることがある。<?enter?>血糖値その他患者の状態を十分観察しながら投与すること。</Lang>
+              </Detail>
+            </ClinSymptomsAndMeasures>
+            <MechanismAndRiskFactors>
+              <Detail>
+                <Lang xml:lang="ja">機序不明<?enter?>ブセレリン酢酸塩投与により、耐糖能が悪化したという報告がある。</Lang>
+              </Detail>
+            </MechanismAndRiskFactors>
+          </Drug>
+        </PrecautionsForCombi>
+      </PrecautionsForCombination>
+    </PrecautionsForCombinations>
+  </Interactions>
+  <!--１１.副作用-->
+  <AdverseEvents id="HDR_AdverseEvents" heading="fixing">
+    <CommonPrecautionsForAdverse>
+      <Lang xml:lang="ja">次の副作用があらわれることがあるので、観察を十分に行い、異常が認められた場合には投与を中止するなど適切な処置を行うこと。</Lang>
+    </CommonPrecautionsForAdverse>
+    <!--１１.１ 重大な副作用-->
+    <SeriousAdverseEvents id="HDR_SeriousAdverseEvents" heading="fixing">
+      <SeriousAdverse>
+        <OrderedList numberContinued="false">
+          <Item heading="free" id="HDR_SeriousAdverse_1">
+            <Header>
+              <Lang xml:lang="ja">低血糖（4.08%）</Lang>
+            </Header>
+            <Detail>
+              <Lang xml:lang="ja">低血糖（初期症状：脱力感、高度の空腹感、発汗等）があらわれることがある。なお、徐々に進行する低血糖では、精神障害、意識障害等が主である場合があるので注意すること。<?enter?>また、本剤の投与により低血糖症状（脱力感、高度の空腹感、発汗、動悸、振戦、頭痛、知覚異常、不安、興奮、神経過敏、集中力低下、精神障害、意識障害、痙攣等）が認められた場合には糖質を含む食品を摂取するなど適切な処置を行うこと。ただし、α-グルコシダーゼ阻害剤との併用により低血糖症状が認められた場合にはブドウ糖を投与すること。<?enter?>また、低血糖は投与中止後、臨床的にいったん回復したと思われる場合でも数日間は再発することがある。<HeaderRef ref="HDR_Warnings" />,<HeaderRef ref="HDR_ContraIndications_2" />,<HeaderRef ref="HDR_ContraIndications_4" />,<HeaderRef ref="HDR_ImportantPrecautions_1" />,<HeaderRef ref="HDR_ImportantPrecautions_3" />,<HeaderRef ref="HDR_UseInPatientsWithComplicationsOrHistoryOfDiseasesEtc_1" />,<HeaderRef ref="HDR_PatientsWithRenalImpairment_1" />,<HeaderRef ref="HDR_PatientsWithRenalImpairment_2" />,<HeaderRef ref="HDR_PatientsWithHepaticImpairment_1" />,<HeaderRef ref="HDR_PatientsWithHepaticImpairment_2" />,<HeaderRef ref="HDR_PediatricUse_1" />,<HeaderRef ref="HDR_UseInTheElderly" />,<HeaderRef ref="HDR_PMDA_OverDosage_20210906154126_21" /></Lang>
+            </Detail>
+          </Item>
+          <Item heading="free" id="HDR_PMDA_SeriousAdverseEvents_20210906154126_18">
+            <Header>
+              <Lang xml:lang="ja">汎血球減少、無顆粒球症、溶血性貧血、血小板減少（いずれも頻度不明）</Lang>
+            </Header>
+          </Item>
+          <Item heading="free" id="HDR_PMDA_SeriousAdverseEvents_20210906154126_19">
+            <Header>
+              <Lang xml:lang="ja">肝機能障害、黄疸（いずれも頻度不明）</Lang>
+            </Header>
+            <Detail>
+              <Lang xml:lang="ja">AST、ALT、Al-Pの上昇等を伴う肝機能障害、黄疸があらわれることがある。</Lang>
+            </Detail>
+          </Item>
+          <Item heading="free" id="HDR_PMDA_SeriousAdverseEvents_20210906154126_20">
+            <Header>
+              <Lang xml:lang="ja">再生不良性貧血（頻度不明）</Lang>
+            </Header>
+          </Item>
+        </OrderedList>
+      </SeriousAdverse>
+    </SeriousAdverseEvents>
+    <!--１１.２ その他の副作用-->
+    <OtherAdverseEvents id="HDR_OtherAdverseEvents" heading="fixing">
+      <OtherAdverseEvent>
+        <OtherAdverse>
+          <WidthDefinition totalWidth="100%">
+            <Col width="30%" />
+            <Col width="35%" />
+            <Col width="35%" />
+          </WidthDefinition>
+          <CategoryDefinition>
+            <Category id="OTHER1_TYPE1">
+              <Detail>
+                <Lang xml:lang="ja">血液</Lang>
+              </Detail>
+            </Category>
+            <Category id="OTHER1_TYPE2">
+              <Detail>
+                <Lang xml:lang="ja">肝臓</Lang>
+              </Detail>
+            </Category>
+            <Category id="OTHER1_TYPE3">
+              <Detail>
+                <Lang xml:lang="ja">腎臓</Lang>
+              </Detail>
+            </Category>
+            <Category id="OTHER1_TYPE4">
+              <Detail>
+                <Lang xml:lang="ja">消化器</Lang>
+              </Detail>
+            </Category>
+            <Category id="OTHER1_TYPE5">
+              <Detail>
+                <Lang xml:lang="ja">過敏症</Lang>
+              </Detail>
+            </Category>
+            <Category id="OTHER1_TYPE6">
+              <Detail>
+                <Lang xml:lang="ja">精神神経系</Lang>
+              </Detail>
+            </Category>
+            <Category id="OTHER1_TYPE7">
+              <Detail>
+                <Lang xml:lang="ja">その他</Lang>
+              </Detail>
+            </Category>
+          </CategoryDefinition>
+          <FrequencyDefinition>
+            <Frequency id="OTHER1_FRQ1">
+              <Detail>
+                <Lang xml:lang="ja">0.1～5%未満</Lang>
+              </Detail>
+            </Frequency>
+            <Frequency id="OTHER1_FRQ2">
+              <Detail>
+                <Lang xml:lang="ja">頻度不明</Lang>
+              </Detail>
+            </Frequency>
+          </FrequencyDefinition>
+          <AdverseReactions>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE1" frequencyRef="OTHER1_FRQ1">
+              <Detail>
+                <Lang xml:lang="ja">白血球減少、貧血</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE2" frequencyRef="OTHER1_FRQ1">
+              <Detail>
+                <Lang xml:lang="ja">AST上昇、ALT上昇、Al-P上昇、LDH上昇、γ-GTP上昇</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE3" frequencyRef="OTHER1_FRQ1">
+              <Detail>
+                <Lang xml:lang="ja">BUN上昇</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE4" frequencyRef="OTHER1_FRQ1">
+              <Detail>
+                <Lang xml:lang="ja">嘔気、嘔吐、心窩部痛、下痢、腹部膨満感</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE4" frequencyRef="OTHER1_FRQ2">
+              <Detail>
+                <Lang xml:lang="ja">便秘、腹痛</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE5" frequencyRef="OTHER1_FRQ1">
+              <Detail>
+                <Lang xml:lang="ja">発疹、そう痒感等</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE5" frequencyRef="OTHER1_FRQ2">
+              <Detail>
+                <Lang xml:lang="ja">光線過敏症</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE6" frequencyRef="OTHER1_FRQ1">
+              <Detail>
+                <Lang xml:lang="ja">めまい</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE6" frequencyRef="OTHER1_FRQ2">
+              <Detail>
+                <Lang xml:lang="ja">頭痛</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE7" frequencyRef="OTHER1_FRQ1">
+              <Detail>
+                <Lang xml:lang="ja">血清カリウム上昇・ナトリウム低下等の電解質異常</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+            <AdverseReactionDescription categoryRef="OTHER1_TYPE7" frequencyRef="OTHER1_FRQ2">
+              <Detail>
+                <Lang xml:lang="ja">味覚異常、CK上昇、浮腫、倦怠感、脱毛、一過性視力障害</Lang>
+              </Detail>
+            </AdverseReactionDescription>
+          </AdverseReactions>
+        </OtherAdverse>
+      </OtherAdverseEvent>
+    </OtherAdverseEvents>
+  </AdverseEvents>
+  <!--１３.過量投与-->
+  <OverDosage heading="fixing" id="HDR_OverDosage">
+    <OrderedList numberContinued="false">
+      <Item heading="free" id="HDR_PMDA_OverDosage_20210906154126_21">
+        <Header>
+          <Lang xml:lang="ja">症状</Lang>
+        </Header>
+        <Detail>
+          <Lang xml:lang="ja">低血糖が起こることがある。<HeaderRef ref="HDR_SeriousAdverse_1" /></Lang>
+        </Detail>
+      </Item>
+      <Item heading="free" id="HDR_PMDA_OverDosage_20210906154126_22">
+        <Header>
+          <Lang xml:lang="ja">処置</Lang>
+        </Header>
+        <OrderedList numberContinued="false">
+          <Item heading="free" id="HDR_PMDA_OverDosage_20210906154126_23">
+            <Header>
+              <Lang xml:lang="ja">飲食が可能な場合</Lang>
+            </Header>
+            <Detail>
+              <Lang xml:lang="ja">ブドウ糖（5～15g）又は10～30gの砂糖の入った吸収の良いジュース、キャンディなどを摂取させる。</Lang>
+            </Detail>
+          </Item>
+          <Item heading="free" id="HDR_PMDA_OverDosage_20210906154126_24">
+            <Header>
+              <Lang xml:lang="ja">意識障害がある場合</Lang>
+            </Header>
+            <Detail>
+              <Lang xml:lang="ja">ブドウ糖液（50%20mL）を静注し、必要に応じて5%ブドウ糖液点滴により血糖値の維持を図る。</Lang>
+            </Detail>
+          </Item>
+          <Item heading="free" id="HDR_PMDA_OverDosage_20210906154126_25">
+            <Header>
+              <Lang xml:lang="ja">その他</Lang>
+            </Header>
+            <Detail>
+              <Lang xml:lang="ja">血糖上昇ホルモンとしてのグルカゴン投与もよい。</Lang>
+            </Detail>
+          </Item>
+        </OrderedList>
+      </Item>
+    </OrderedList>
+  </OverDosage>
+  <!--１４.適用上の注意-->
+  <PrecautionsForApplication id="HDR_PrecautionsForApplication" heading="fixing">
+    <OtherInformation heading="free" id="HDR_PMDA_PrecautionsForApplication_20210906154126_28">
+      <Header>
+        <Lang xml:lang="ja">薬剤交付時の注意</Lang>
+      </Header>
+      <Detail>
+        <Lang xml:lang="ja">PTP包装の薬剤はPTPシートから取り出して服用するよう指導すること。PTPシートの誤飲により、硬い鋭角部が食道粘膜へ刺入し、更には穿孔をおこして縦隔洞炎等の重篤な合併症を併発することがある。</Lang>
+      </Detail>
+    </OtherInformation>
+  </PrecautionsForApplication>
+  <!--１５.その他の注意-->
+  <OtherPrecautions id="HDR_OtherPrecautions" heading="fixing">
+    <!--１５.１ 臨床使用に基づく情報-->
+    <InformationBasedOnClinicalUse heading="fixing" id="HDR_InformationBasedOnClinicalUse">
+      <OrderedList numberContinued="false">
+        <Item heading="free" id="HDR_PMDA_InformationBasedOnClinicalUse_20210906154126_26">
+          <Detail>
+            <Lang xml:lang="ja">スルホニルウレア系薬剤（トルブタミド1日1.5g）を長期間継続使用した場合、食事療法単独の場合と比較して心臓・血管系障害による死亡率が有意に高かったとの報告がある。</Lang>
+          </Detail>
+        </Item>
+        <Item heading="free" id="HDR_PMDA_InformationBasedOnClinicalUse_20210906154126_27">
+          <Detail>
+            <Lang xml:lang="ja">インスリン又は経口血糖降下剤の投与中にアンジオテンシン変換酵素阻害剤を投与することにより、低血糖が起こりやすいとの報告がある。</Lang>
+          </Detail>
+        </Item>
+      </OrderedList>
+    </InformationBasedOnClinicalUse>
+    <!--１５.２ 非臨床試験に基づく情報-->
+    <InformationBasedOnNonclinicalStudies heading="fixing" id="HDR_InformationBasedOnNonclinicalStudies">
+      <Detail>
+        <Lang xml:lang="ja">イヌを用いた慢性毒性試験において、最高用量の320mg/kg投与群の雌雄各1例に白内障を認めた。ウシの水晶体を用いた<Italic>in vitro</Italic>試験とラットを用いた検討結果では、白内障を発症させる作用や発症増強作用の可能性は認められなかった。</Lang>
+      </Detail>
+    </InformationBasedOnNonclinicalStudies>
+  </OtherPrecautions>
+  <!--１６.薬物動態-->
+  <Pharmacokinetics id="HDR_Pharmacokinetics" heading="fixing">
+    <!--１６.１ 血中濃度-->
+    <BloodLevel id="HDR_BloodLevel" heading="fixing">
+      <OrderedList numberContinued="false">
+        <Item id="HDR_BloodLevel_1" heading="free">
+          <Header>
+            <Lang xml:lang="ja">単回投与</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">健康成人男子6例に本剤1mgを朝食直前に単回経口投与したときのグリメピリドの血清中濃度推移、及び薬物動態学的パラメータを示す<ReferenceBookRef ref="DOC_01" />。</Lang>
+          </Detail>
+          <Graphic>
+            <GraphicBody gfname="fig10.gif" />
+          </Graphic>
+          <TblBlock>
+            <TblCaption align="top">
+              <Lang xml:lang="ja">血清中濃度パラメータ</Lang>
+            </TblCaption>
+            <WidthDefinition totalWidth="100%">
+              <Col width="34%" />
+              <Col width="33%" />
+              <Col width="33%" />
+            </WidthDefinition>
+            <SimpleTable>
+              <SimpTblRow>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">T<Sub>max</Sub></Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">C<Sub>max</Sub>（平均±SD）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">半減期</Lang>
+                  </Detail>
+                </SimpTblCell>
+              </SimpTblRow>
+              <SimpTblRow>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">1.33時間</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">103.5±29.1ng/mL</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">1.47時間</Lang>
+                  </Detail>
+                </SimpTblCell>
+              </SimpTblRow>
+            </SimpleTable>
+          </TblBlock>
+        </Item>
+        <Item id="HDR_BloodLevel_2" heading="free">
+          <Header>
+            <Lang xml:lang="ja">反復投与</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">インスリン非依存型糖尿病患者9例に本剤0.5mgもしくは1mgを1日1回7日間朝食前に連続投与したとき、初回及び最終回投与時のグリメピリドの薬物動態学的パラメータに差は認められなかった<ReferenceBookRef ref="DOC_02" />。</Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_BloodLevel_3" heading="free">
+          <Header>
+            <Lang xml:lang="ja">2型糖尿病患者（小児及び成人）における薬物動態</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">国内の小児2型糖尿病患者及び成人2型糖尿病患者［解析対象集団136例（小児31例及び成人105例）、血清中濃度517点］を対象に、0.5～6mg/日の用量で、一定用量を2週間以上投与した任意の時点で母集団薬物動態解析を行った。<?enter?>その結果、グリメピリドの消失プロファイルは1-コンパートメントモデルによくフィットした。共変量の検討を行った結果、最終モデルに反映される影響因子はなかった。最終モデルから得られた母集団のパラメータはCL/Fが1.56L/h、Vss/Fが6.84Lであった。母集団モデルを用いて推定したパラメータを以下に示す。小児及び成人患者の推定パラメータは同様の値であった。<HeaderRef ref="HDR_PediatricUse_1" /></Lang>
+          </Detail>
+          <TblBlock>
+            <TblCaption align="top">
+              <Lang xml:lang="ja">母集団モデルを用いて推定した薬物動態パラメータ</Lang>
+            </TblCaption>
+            <WidthDefinition totalWidth="100%">
+              <Col width="25%" />
+              <Col width="25%" />
+              <Col width="25%" />
+              <Col width="25%" />
+            </WidthDefinition>
+            <SimpleTable>
+              <SimpTblRow>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">2型糖尿病患者</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">CL/F（L/h）<?enter?>（平均±SD）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">Vss/F（L）<?enter?>（平均±SD）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">t<Sub>1/2</Sub>（h）<?enter?>（平均±SD）</Lang>
+                  </Detail>
+                </SimpTblCell>
+              </SimpTblRow>
+              <SimpTblRow>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">小児（9～16歳）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">1.79±0.77</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">6.84±0.09</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">3.15±1.38</Lang>
+                  </Detail>
+                </SimpTblCell>
+              </SimpTblRow>
+              <SimpTblRow>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">成人（17歳以上）</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">1.64±0.59</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">6.83±0.11</Lang>
+                  </Detail>
+                </SimpTblCell>
+                <SimpTblCell align="center" valign="middle">
+                  <Detail>
+                    <Lang xml:lang="ja">3.30±1.60</Lang>
+                  </Detail>
+                </SimpTblCell>
+              </SimpTblRow>
+            </SimpleTable>
+            <SimpTblFoot align="left">
+              <Detail>
+                <Lang xml:lang="ja">CL/F：見かけのクリアランス、Vss/F：見かけの分布容積</Lang>
+              </Detail>
+            </SimpTblFoot>
+          </TblBlock>
+        </Item>
+      </OrderedList>
+    </BloodLevel>
+    <!--１６.２ 吸収-->
+    <Absorption id="HDR_Absorption" heading="fixing">
+      <Detail>
+        <Lang xml:lang="ja">外国人12例に本剤1mgをクロスオーバー法にて単回経口投与及び静脈内投与した時、それぞれのAUCの比から得られたバイオアベイラビリティーはほぼ100%であり、消化管からの吸収は良好であると考えられた<ReferenceBookRef ref="DOC_03" />。</Lang>
+      </Detail>
+    </Absorption>
+    <!--１６.４ 代謝-->
+    <Metabolism id="HDR_Metabolism" heading="fixing">
+      <OrderedList numberContinued="false">
+        <Item id="HDR_Metabolism_1" heading="free">
+          <Header>
+            <Lang xml:lang="ja">代謝酵素</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">本剤は、主に肝代謝酵素CYP2C9の関与により、シクロヘキシル環メチル基の水酸化を受ける<ReferenceBookRef ref="DOC_04" />。<?enter?>（参考）<?enter?>ラット肝細胞分画を用いて代謝酵素を検討した結果、グリメピリドは主にCYP2Cサブファミリーの関与によりシクロヘキシル環メチル基の水酸化を受け、引き続いてサイトゾールの酵素によってカルボン酸体に変換されることが示唆された<ReferenceBookRef ref="DOC_05" />。</Lang>
+          </Detail>
+        </Item>
+      </OrderedList>
+    </Metabolism>
+    <!--１６.５ 排泄-->
+    <Excretion id="HDR_Excretion" heading="fixing">
+      <Detail>
+        <Lang xml:lang="ja">健康成人男子6例に本剤1mgを朝食直前に単回経口投与したとき、血清中にはグリメピリド及び代謝物が、尿中には代謝物のみが検出された。この代謝物は、シクロヘキシル環のメチル基の水酸化体及びカルボン酸体で、投与後24時間までに投与量の44.9%が尿中に排泄された<ReferenceBookRef ref="DOC_01" />。<?enter?>外国人3例に<Sup>14</Sup>C-グリメピリドを単回経口投与した時、投与後168時間までに尿及び糞中にそれぞれ投与量の57.5%及び35.0%が排泄された<ReferenceBookRef ref="DOC_06" />。</Lang>
+      </Detail>
+    </Excretion>
+  </Pharmacokinetics>
+  <!--１７.臨床成績-->
+  <ResultsOfClinicalTrials id="HDR_ResultsOfClinicalTrials" heading="fixing">
+    <!--１７.１ 有効性及び安全性に関する試験-->
+    <EfficacyAndSafety id="HDR_EfficacyAndSafety" heading="fixing">
+      <OrderedList numberContinued="false">
+        <Item id="HDR_EfficacyAndSafety_1" heading="free">
+          <Header>
+            <Lang xml:lang="ja">国内第3相プラセボ対照二重盲検比較試験</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">食事療法のみにて治療中で、HbA1c（JDS値）が7.0%以上の成人NIDDM患者（±0.5%以内の変動で安定）を対象に、本剤1～4mg/日又はプラセボを12週間経口投与した結果、改善率（HbA1c（JDS値）が1.0%以上低下した症例）は67.6%（25/37例）であった。また、HbA1c（JDS値）は本剤投与群で8.26%から6.94%に低下し、プラセボ投与群で8.24%から8.40%に上昇した。<?enter?>副作用発現割合は、本剤投与群で27.0%（10/37例）、プラセボ投与群で20.0%（8/40例）であり、本剤投与群での主な副作用は、γ-GTP増加（3例）及びALT増加（2例）であった<ReferenceBookRef ref="DOC_07" />。</Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_EfficacyAndSafety_2" heading="free">
+          <Header>
+            <Lang xml:lang="ja">国内第3相二重盲検比較試験</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">グリベンクラミド7.5mg/日以上の投与を受けているにもかかわらず、HbA1c（JDS値）が8.0%以上のNIDDM患者（±0.5%以内の変動で安定）を対象に、本剤4～6mg/日を用量漸増法にて28週間経口投与した結果、改善率（HbA1c（JDS値）が1.0%以上低下した症例）は7.6%（12/158例）であった。また、HbA1c（JDS値）は9.66%から9.93%と0.27%上昇した。副作用発現割合は、本剤投与群で19.6%（31/158例）であり、主な副作用は、LDH増加（7例）、γ-GTP増加（6例）、AST増加（5例）、ALT増加（4例）であった<ReferenceBookRef ref="DOC_08" />。</Lang>
+          </Detail>
+        </Item>
+      </OrderedList>
+    </EfficacyAndSafety>
+    <!--１７.２ 製造販売後調査等-->
+    <PostMarketingSurveylancesEtc id="HDR_PostMarketingSurveylancesEtc" heading="fixing">
+      <OrderedList numberContinued="false">
+        <Item id="HDR_PostMarketingSurveylancesEtc_1" heading="free">
+          <Header>
+            <Lang xml:lang="ja">国内小児製造販売後臨床試験</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">食事療法・運動療法にて治療中の小児2型糖尿病患者（9～16歳）35例を対象に、本剤0.5～6mg/日を用量漸増法にて12～28週間経口投与した非盲検非対照試験において、投与開始時から最終観察時のHbA1c（JDS値）は、試験前本剤未治療の小児患者（10例）では8.24%から7.61%へ、試験前に本剤2mg/日以下で治療していた小児患者（25例）では8.27%から7.94%へ低下の傾向が認められた。<?enter?>なお、服薬不良又は維持用量の投与期間不足の症例が5例（未治療3例、既治療2例）含まれていた。投与終了時の維持用量は0.5mg/日4例、1mg/日13例、2mg/日6例、4mg/日6例、6mg/日6例であった（ITTpopulation）。副作用発現割合は、11.4%（4/35例）で、低血糖（3例）及び蛋白尿（1例）であった。<HeaderRef ref="HDR_PediatricUse_1" /></Lang>
+          </Detail>
+        </Item>
+      </OrderedList>
+    </PostMarketingSurveylancesEtc>
+  </ResultsOfClinicalTrials>
+  <!--１８.薬効薬理-->
+  <EfficacyPharmacology id="HDR_EfficacyPharmacology" heading="fixing">
+    <!--１８.１ 作用機序-->
+    <MechanismOfAction id="HDR_MechanismOfAction" heading="fixing">
+      <Detail>
+        <Lang xml:lang="ja">本剤は主に膵β細胞の刺激による内因性インスリン分泌の促進（膵作用）により、血糖降下作用を発現するものと考えられる。また、<Italic>in vitro</Italic>試験において糖輸送担体の活性化等の関与が示されている。</Lang>
+      </Detail>
+    </MechanismOfAction>
+    <OtherInformation id="HDR_EfficacyPharmacology_OtherInformation_1" heading="free">
+      <Header>
+        <Lang xml:lang="ja">薬理作用</Lang>
+      </Header>
+      <OrderedList numberContinued="false">
+        <Item id="HDR_EfficacyPharmacology_OtherInformation_1_1" heading="free">
+          <Header>
+            <Lang xml:lang="ja">血糖降下作用及びインスリン分泌作用</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">健康成人男子9例に本剤1mgを朝食直前に単回投与した時、プラセボ投与時と比べ、朝食後の血中グルコース濃度は本剤投与時において有意に低下した。<?enter?>この時の血清中インスリン濃度のC<Sub>max</Sub>は、プラセボ投与時と比べ本剤投与時では有意差は認められなかったが、朝食後4時間までのAUCはプラセボ投与時と比べ有意に増加した<ReferenceBookRef ref="DOC_09" />。<?enter?>ウサギ、ラット、イヌを用いた経口投与試験において、本剤の血糖降下作用は投与1時間後から認められた。<?enter?>グリベンクラミドとの比較では同等もしくはそれ以上の血糖降下作用を示した<ReferenceBookRef ref="DOC_10" />。<?enter?>ラットβ細胞腫を用いた<Italic>in vitro</Italic>試験で、β細胞上のSU剤レセプターに対してグリメピリドはグリベンクラミドに比して1/5の結合親和性を示した<ReferenceBookRef ref="DOC_11" />。</Lang>
+          </Detail>
+        </Item>
+        <Item id="HDR_EfficacyPharmacology_OtherInformation_1_2" heading="free">
+          <Header>
+            <Lang xml:lang="ja">インスリン作用の増強</Lang>
+          </Header>
+          <Detail>
+            <Lang xml:lang="ja">人工膵島を用いたイヌ正常血糖インスリンクランプ試験で、本剤の投与により末梢組織での糖取り込み促進と、肝糖処理能の増加を認めた<ReferenceBookRef ref="DOC_12" /><Sup>,</Sup><ReferenceBookRef ref="DOC_13" />。また、本剤はインスリン抵抗性KK-Ayマウスへの長期経口投与により、高血糖及び高インスリン血症を改善した<ReferenceBookRef ref="DOC_14" />。<?enter?>筋肉・脂肪細胞を用いた<Italic>in vitro</Italic>試験において、糖輸送担体の活性化や糖輸送の増加等の機序による膵外作用の関与が報告されている<ReferenceBookRef ref="DOC_15" />。</Lang>
+          </Detail>
+        </Item>
+      </OrderedList>
+    </OtherInformation>
+  </EfficacyPharmacology>
+  <!--１９.有効成分に関する理化学的知見-->
+  <PhyschemOfActIngredients id="HDR_PhyschemOfActIngredients" heading="fixing">
+    <PhyschemOfActIngredientsSection>
+      <GeneralName>
+        <Detail>
+          <Lang xml:lang="ja">グリメピリド（Glimepiride）</Lang>
+        </Detail>
+      </GeneralName>
+      <ChemicalName>
+        <Detail>
+          <Lang xml:lang="ja">1-(4-{2-[(3-Ethyl-4-methyl-2-oxo-3-pyrroline-1-carbonyl)amino]ethyl}phenylsulfonyl)-3-(<Italic>trans</Italic>-4-methylcyclohexyl)urea</Lang>
+        </Detail>
+      </ChemicalName>
+      <MolecularFormula>
+        <Detail>
+          <Lang xml:lang="ja">C<Sub>24</Sub>H<Sub>34</Sub>N<Sub>4</Sub>O<Sub>5</Sub>S</Lang>
+        </Detail>
+      </MolecularFormula>
+      <MolecularWeight>
+        <Detail>
+          <Lang xml:lang="ja">490.62</Lang>
+        </Detail>
+      </MolecularWeight>
+      <DescriptionOfActiveIngredients>
+        <Detail>
+          <Lang xml:lang="ja">本品は白色の結晶性の粉末である。<?enter?>本品はジクロロメタンに溶けにくく、メタノール又はエタノール（99.5）に極めて溶けにくく、水にほとんど溶けない。</Lang>
+        </Detail>
+      </DescriptionOfActiveIngredients>
+      <StructuralFormula>
+        <Graphic>
+          <GraphicBody gfname="fig11.gif" />
+        </Graphic>
+      </StructuralFormula>
+    </PhyschemOfActIngredientsSection>
+  </PhyschemOfActIngredients>
+  <!--２２.包装-->
+  <Package id="HDR_Package" heading="fixing">
+    <SimpleList>
+      <Item>
+        <Header>
+          <Lang xml:lang="ja">〈<ApprovalBrandNameRef ref="BRD_Drug1" />〉</Lang>
+        </Header>
+        <Detail>
+          <Lang xml:lang="ja">100錠［10錠（PTP）×10］<?enter?>500錠［10錠（PTP）×50］<?enter?>700錠［14錠（PTP）×50］</Lang>
+        </Detail>
+      </Item>
+      <Item>
+        <Header>
+          <Lang xml:lang="ja">〈<ApprovalBrandNameRef ref="BRD_Drug2" />〉</Lang>
+        </Header>
+        <Detail>
+          <Lang xml:lang="ja">100錠［10錠（PTP）×10］<?enter?>500錠［10錠（PTP）×50］<?enter?>500錠（瓶、バラ）<?enter?>700錠［14錠（PTP）×50］<?enter?>1000錠［10錠（PTP）×100］</Lang>
+        </Detail>
+      </Item>
+      <Item>
+        <Header modified="今回">
+          <Lang xml:lang="ja">〈<ApprovalBrandNameRef ref="BRD_Drug3" />〉</Lang>
+        </Header>
+        <Detail>
+          <Lang xml:lang="ja">100錠［10錠（PTP）×10］<?enter?>500錠［10錠（PTP）×50］<?enter?>700錠［14錠（PTP）×50］</Lang>
+        </Detail>
+      </Item>
+    </SimpleList>
+  </Package>
+  <!--２３.主要文献-->
+  <MainLiterature id="HDR_MainLiterature" heading="fixing">
+    <Reference id="DOC_01">
+      <Lang xml:lang="ja">中島光好　他：臨床医薬. 1993;9(3):503-22</Lang>
+    </Reference>
+    <Reference id="DOC_02">
+      <Lang xml:lang="ja">加来浩平　他：臨床医薬. 1993;9(4):795-807</Lang>
+    </Reference>
+    <Reference id="DOC_03">
+      <Lang xml:lang="ja">Badian M, et al.：Drug Metabol Drug Interact. 1994;11:331-9</Lang>
+    </Reference>
+    <Reference id="DOC_04">
+      <Lang xml:lang="ja">Niemi M, et al.：Clin Pharmacol Ther. 2002;72:326-32</Lang>
+    </Reference>
+    <Reference id="DOC_05">
+      <Lang xml:lang="ja">Yamazaki H, et al.：Arzneim-Forsch/Drug Res. 1993;43:1317-21</Lang>
+    </Reference>
+    <Reference id="DOC_06">
+      <Lang xml:lang="ja">Eckert H G, et al.：基礎と臨床. 1993;27(5):1493-524</Lang>
+    </Reference>
+    <Reference id="DOC_07">
+      <Lang xml:lang="ja">豊田隆謙　他：臨床医薬. 1997;13(17):4457-78</Lang>
+    </Reference>
+    <Reference id="DOC_08">
+      <Lang xml:lang="ja">兼子俊男　他：臨床医薬. 1997;13(17):4479-511</Lang>
+    </Reference>
+    <Reference id="DOC_09">
+      <Lang xml:lang="ja">中島光好　他：臨床医薬. 1993;9(3):535-48</Lang>
+    </Reference>
+    <Reference id="DOC_10">
+      <Lang xml:lang="ja">Geisen K：Arzneim-Forsch/Drug Res. 1988;38:1120-30</Lang>
+    </Reference>
+    <Reference id="DOC_11">
+      <Lang xml:lang="ja">社内資料：ラットβ細胞腫を用いたSU剤レセプターへの結合親和性（1999年9月22日承認、申請資料概要ホ.I.2.(1)3)）</Lang>
+    </Reference>
+    <Reference id="DOC_12">
+      <Lang xml:lang="ja">久保田昌詞　他：糖尿病. 1995;38(6):447-53</Lang>
+    </Reference>
+    <Reference id="DOC_13">
+      <Lang xml:lang="ja">久保田昌詞　他：糖尿病. 1992;35 Suppl.1:204</Lang>
+    </Reference>
+    <Reference id="DOC_14">
+      <Lang xml:lang="ja">Müler G, et al.：Diabetes Res Clin Pract. 1995;28 Suppl:S115-37</Lang>
+    </Reference>
+    <Reference id="DOC_15">
+      <Lang xml:lang="ja">Müler G, et al.：Diabetes. 1993;42:1852-67</Lang>
+    </Reference>
+  </MainLiterature>
+  <!--２４.文献請求先及び問い合わせ先-->
+  <AddresseeOfLiteratureRequest id="HDR_AddresseeOfLiteratureRequest" heading="fixing">
+    <AddresseeInfo>
+      <AddresseeOfInquiry>
+        <Lang xml:lang="ja">サノフィ株式会社<?enter?>くすり相談室</Lang>
+      </AddresseeOfInquiry>
+      <Address>
+        <Lang xml:lang="ja">〒163-1488　東京都新宿区西新宿三丁目20番2号</Lang>
+      </Address>
+      <ContactInformation>
+        <Detail>
+          <Lang xml:lang="ja">フリーダイヤル 0120-109-905</Lang>
+        </Detail>
+      </ContactInformation>
+    </AddresseeInfo>
+  </AddresseeOfLiteratureRequest>
+  <!--２６.製造販売業者等-->
+  <NameAddressManufact id="HDR_NameAddressManufact" heading="fixing">
+    <Manufacturer>
+      <TypeOfIndustry>
+        <Lang xml:lang="ja">製造販売元</Lang>
+      </TypeOfIndustry>
+      <Name>
+        <Lang xml:lang="ja">サノフィ株式会社</Lang>
+      </Name>
+      <Address>
+        <Lang xml:lang="ja">〒163-1488　東京都新宿区西新宿三丁目20番2号</Lang>
+      </Address>
+    </Manufacturer>
+  </NameAddressManufact>
+</PackIns>

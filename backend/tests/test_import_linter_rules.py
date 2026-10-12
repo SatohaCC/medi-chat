@@ -13,6 +13,15 @@ ROOT = Path(__file__).resolve().parents[2]
 @pytest.mark.parametrize(
     ("sources", "broken"),
     [
+        ({"application/retrieval/model.py": "from ..chat import model"}, True),
+        (
+            {
+                "application/retrieval/model.py": "from .. import model",
+                "application/model.py": "from .chat import model",
+            },
+            True,
+        ),
+        ({"application/chat/model.py": "from ..retrieval import model"}, False),
         ({"domain/new_one/model.py": "from ..new_two import identifiers"}, False),
         (
             {"domain/new_one/model.py": "import backend.domain.new_two.identifiers"},
@@ -90,6 +99,8 @@ def test_import_linter_enforces_configured_contracts(tmp_path, sources, broken):
         "domain/shared",
         "domain/foundation",
         "application",
+        "application/chat",
+        "application/retrieval",
         "infrastructure",
         "presentation",
     ]:

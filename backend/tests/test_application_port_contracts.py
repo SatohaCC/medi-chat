@@ -51,7 +51,10 @@ from backend.domain.retrieval.primitives import (
     SearchKeyword,
     SearchSectionCode,
 )
-from backend.domain.retrieval.repositories import EvidenceRepository
+from backend.domain.retrieval.repositories import (
+    EvidenceRepository,
+    EvidenceSearchTarget,
+)
 from backend.domain.retrieval.services import merge_evidence
 from backend.domain.retrieval.value_objects import (
     DocumentRevision,
@@ -598,11 +601,11 @@ class RecordingEvidenceReader:
         self.sources = deepcopy(sources)
         self.medicines = deepcopy(medicines)
         self.requests: list[
-            tuple[SearchCriteria, tuple[AttachmentProductMatch, ...]]
+            tuple[SearchCriteria, tuple[EvidenceSearchTarget, ...]]
         ] = []
 
     async def search(
-        self, criteria: SearchCriteria, medicines: tuple[AttachmentProductMatch, ...]
+        self, criteria: SearchCriteria, medicines: tuple[EvidenceSearchTarget, ...]
     ) -> tuple[Evidence, ...]:
         assert list(medicines) == self.medicines
         assert criteria in (
@@ -881,12 +884,12 @@ async def test_clarification_does_not_create_or_call_provider(
     fake_evidence = RecordingEvidenceReader([], [])
     real_evidence = SqlAlchemyEvidenceReader(engine)
     evidence_requests: list[
-        tuple[SearchCriteria, tuple[AttachmentProductMatch, ...]]
+        tuple[SearchCriteria, tuple[EvidenceSearchTarget, ...]]
     ] = []
     real_search = real_evidence.search
 
     async def record_real_search(
-        criteria: SearchCriteria, medicines: tuple[AttachmentProductMatch, ...]
+        criteria: SearchCriteria, medicines: tuple[EvidenceSearchTarget, ...]
     ) -> tuple[Evidence, ...]:
         evidence_requests.append((criteria, deepcopy(medicines)))
         return await real_search(criteria, medicines)

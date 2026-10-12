@@ -61,17 +61,20 @@ def test_all_columns_are_preserved_without_document_information(tmp_path):
     medicine = records[0]
     assert medicine.yj_code.value == "2325003B2029"
     assert medicine.receipt_code.value == "610406079"
+    assert medicine.generic_name_code is not None
     assert medicine.generic_name_code.value == "2325003B2ZZZ"
     assert medicine.receipt_name.value == " ガスター散２％ "
     assert medicine.yj_name.value == "ガスター散２％"
+    assert medicine.generic_prescription_name is not None
     assert medicine.generic_prescription_name.value == "【般】ファモチジン散２％"
     assert medicine.effective_from == date(2022, 10, 31)
     assert medicine.effective_until is None
     assert medicine.receipt_discontinued_on is None
     assert medicine.yj_discontinued_on == date(2026, 3, 31)
     assert not hasattr(medicine, "document_id")
+    field_name = "yj_name"
     with pytest.raises((FrozenInstanceError, AttributeError)):
-        medicine.yj_name = None
+        setattr(medicine, field_name, None)
 
 
 def test_optional_codes_names_and_dates_remain_absent(tmp_path):

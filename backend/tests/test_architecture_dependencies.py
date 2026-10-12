@@ -81,6 +81,18 @@ OS_IO_FUNCTIONS = {
 
 
 def _allowed_module(module: str, *, caller: str) -> bool:
+    # 公開IDは内部モデルや共通カタログを経由して業務実装を公開しない。
+    caller_parts = caller.split(".")
+    if (
+        len(caller_parts) == 4
+        and caller_parts[:2] == ["backend", "domain"]
+        and caller_parts[-1] == "identifiers"
+    ):
+        return (
+            module.split(".")[0] in sys.stdlib_module_names
+            or module == "backend.domain.foundation.primitives.identifiers"
+            or module.startswith("backend.domain.foundation.primitives.identifiers.")
+        )
     caller_layer = next(
         (
             layer
@@ -111,6 +123,35 @@ def _allowed_module(module: str, *, caller: str) -> bool:
             or module in PURE_SHARED_MODULES
         )
     return True
+
+
+@pytest.mark.parametrize(
+    ("source", "allowed"),
+    [
+        ("from dataclasses import dataclass\n", True),
+        ("from ..foundation.primitives.identifiers import EntityStringId\n", True),
+        ("from backend.domain.foundation.primitives import identifiers\n", True),
+        ("from .primitives import SearchKeyword\n", False),
+        ("from ..attachment.identifiers import DocumentId\n", False),
+        ("from ..shared.services import normalize_match_text\n", False),
+        ("from package_inserts.catalog_models import PackageInsertCatalog\n", False),
+        ("from ..foundation.primitives.base import DomainPrimitive\n", False),
+        (
+            "from typing import TYPE_CHECKING\nif TYPE_CHECKING:\n"
+            "    from .entities import SearchUnit\n",
+            False,
+        ),
+    ],
+)
+def test_public_identifiers_only_depend_on_stdlib_and_id_base(
+    source: str, allowed: bool
+) -> None:
+    violations = find_inner_layer_violations(
+        source,
+        module_name="backend.domain.retrieval.identifiers",
+        filename="identifiers_fixture.py",
+    )
+    assert bool(violations) is not allowed, violations
 
 
 def _qualified_name(node: ast.AST, aliases: dict[str, str]) -> str:
@@ -416,7 +457,53 @@ def test_legacy_facades_are_not_required(tmp_path: Path) -> None:
     finally:
         engine.dispose()
 
-    app = create_app(structured, index_path)
+    # v5 prepared index includes explicit initial registration, never startup DDL.
+    import json
+
+    from backend.infrastructure.persistence.registration_publisher import (
+        RegistrationInput,
+        SqliteRegistrationPublisher,
+    )
+    from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
+    from backend.infrastructure.sources.attachment_import_store import (
+        FileAttachmentImportStore,
+    )
+    from backend.tests.attachment_import_fixtures import xml_source
+
+    raw = xml_source(
+        "<AdverseEvents><Detail><Lang>頭痛に注意してください。記載0 記載1 記載2</Lang></Detail></AdverseEvents>"
+    )
+    raw = (
+        raw.replace(b"000001", b"test")
+        .replace(
+            b"<PackageInsertNo>test</PackageInsertNo>",
+            b"<PackageInsertNo>001</PackageInsertNo>",
+        )
+        .replace(b"111111111111", b"1234567A0000")
+        .replace("製品A".encode(), "テスト薬".encode())
+    )
+    original = tmp_path / "source.xml"
+    original.write_bytes(raw)
+    document = structured / "test_001" / "document.json"
+    units = structured / "test_001" / "search_units.jsonl"
+    SqliteRegistrationPublisher(
+        index_path,
+        FileAttachmentImportStore(tmp_path / "imports"),
+        allowed_roots=(tmp_path,),
+    ).publish_inputs(
+        (
+            RegistrationInput(
+                PmdaXmlDecoder().decode(raw),
+                raw,
+                (original, document, units),
+                original,
+                json.loads(document.read_bytes()),
+            ),
+        ),
+        initial=True,
+    )
+
+    app = create_app(structured, index_path, import_directory=tmp_path / "imports")
     client = TestClient(app)
     with client:
         # /api プローブ

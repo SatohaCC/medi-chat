@@ -76,7 +76,7 @@ def _resolve_structured_dir(
     if environment_dir is not None:
         return resolve_project_path(Path(environment_dir))
     candidates = [
-        PROJECT_ROOT / "data_tools" / "structured",
+        PROJECT_ROOT / "data" / "pmda" / "structured",
         PROJECT_ROOT / "structured",
     ]
     default_dir = next((path for path in candidates if path.exists()), candidates[0])

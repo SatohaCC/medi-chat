@@ -2,12 +2,11 @@
 packages:
   - 'frontend'
   - 'backend'
-  - 'data_tools'
   # 作業用キャッシュをPythonプロジェクトとして検出しない。
   - '!tmp/**'
 
 python:
-  enabled: true
+  enabled: false
 
 allowBuilds:
   'unrs-resolver': true

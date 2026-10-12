@@ -12,6 +12,8 @@
     "format": "uv run --locked ruff format . ../package_inserts",
     "check": "uv run --locked ruff check --fix . ../package_inserts && uv run --locked ruff format . ../package_inserts",
     "typecheck": "uv run --locked mypy . ../package_inserts",
-    "build-index": "cd .. && uv run --project backend python -m backend.infrastructure.cli.build_search_index"
+    "build-index": "cd .. && uv run --project backend python -m backend.infrastructure.cli.build_search_index",
+    "build-data": "cd .. && uv run --project backend --locked python -m backend.infrastructure.cli.structure_pmda_xml --source-dir data/pmda/originals --register",
+    "build-autocomplete": "cd .. && uv run --project backend --locked python -m backend.infrastructure.cli.build_autocomplete_index"
   }
 }

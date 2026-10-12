@@ -2,35 +2,92 @@
 
 from __future__ import annotations
 
+import hashlib
+import html
 import json
 import shutil
+import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
+from xml.etree import ElementTree as ET
 
+from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
+from backend.domain.retrieval.primitives import IntentName, Probability
+from backend.domain.retrieval.value_objects import IntentCandidate
 from backend.infrastructure.persistence.index_writer import SqlAlchemyIndexWriter
 from backend.infrastructure.persistence.sqlite_engine import create_sqlite_engine
 from backend.infrastructure.sources.file_index_source import FileIndexSourceReader
 from backend.main import create_app
 from backend.tests.storage_fixtures import build_document_store
 from backend.tests.test_alembic_migrations import _migrate_database
+from backend.tests.test_interaction_xml_oracle import (
+    ORACLE,
+    assert_prompt_oracle,
+    assert_public_collection,
+)
+from backend.tests.test_product_identity_responses import CONFIRMATIONS
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy.engine import URL
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-STRUCTURED_DIR = REPO_ROOT / "data_tools" / "structured"
+STRUCTURED_DIR = REPO_ROOT / "data" / "pmda" / "structured"
+
+
+class UnavailableIntentClassifier:
+    is_available = False
+
+    def __init__(self, **kwargs: Any) -> None:
+        pass
+
+    async def classify(self, request: IntentRequest) -> IntentResult:
+        return IntentResult(is_available=False)
+
+    async def aclose(self) -> None:
+        pass
+
+
+class PromptEchoProvider:
+    """Observe supplied evidence deterministically; no clinical generation is claimed."""
+
+    def __init__(self) -> None:
+        self.calls: list[list[dict[str, str]]] = []
+
+    async def stream_response(self, messages, model=None):
+        self.calls.append([dict(message) for message in messages])
+        yield "\n".join(message["content"] for message in messages)
+
+
+class InteractionIntentClassifier:
+    is_available = True
+
+    async def classify(self, request: IntentRequest) -> IntentResult:
+        return IntentResult(
+            is_available=True,
+            candidates=(IntentCandidate(IntentName("interaction"), Probability(1.0)),),
+        )
+
+
+class InteractionKeywords:
+    def extract_keywords(self, text: str) -> tuple[str, ...]:
+        return ("158",)
 
 
 class ChatApiRouteTests(unittest.TestCase):
     temp_dir: tempfile.TemporaryDirectory[str]
+    index_path: Path
     client_context: Any
     client: TestClient
+    classifier_patch: Any
 
     @classmethod
     def setUpClass(cls) -> None:
         cls.temp_dir = tempfile.TemporaryDirectory()
         index_path = Path(cls.temp_dir.name) / "chat-search.sqlite3"
+        cls.index_path = index_path
         _migrate_database(index_path, STRUCTURED_DIR)
         engine = create_sqlite_engine(
             URL.create("sqlite", database=index_path.as_posix()).render_as_string(
@@ -43,12 +100,29 @@ class ChatApiRouteTests(unittest.TestCase):
             )
         finally:
             engine.dispose()
-        cls.client_context = TestClient(create_app(STRUCTURED_DIR, index_path))
+        from backend.tests.registration_runtime_fixtures import (
+            register_existing_test_source,
+        )
+
+        prepared = register_existing_test_source(STRUCTURED_DIR, index_path)
+        cls.classifier_patch = patch(
+            "backend.main.JevIntentClassifier", UnavailableIntentClassifier
+        )
+        cls.classifier_patch.start()
+        cls.client_context = TestClient(
+            create_app(
+                prepared,
+                index_path,
+                llm_provider_factory=lambda _: PromptEchoProvider(),
+                import_directory=Path(cls.temp_dir.name) / "imports",
+            )
+        )
         cls.client = cls.client_context.__enter__()
 
     @classmethod
     def tearDownClass(cls) -> None:
         cls.client_context.__exit__(None, None, None)
+        cls.classifier_patch.stop()
         cls.temp_dir.cleanup()
 
     def test_health_reports_loaded_documents_and_units(self) -> None:
@@ -72,75 +146,101 @@ class ChatApiRouteTests(unittest.TestCase):
                 "status": "ok",
                 "document_count": len(expected_documents),
                 "unit_count": expected_units,
+                "generation_id": self._published_generation(),
             },
         )
+
+    def _published_generation(self) -> str:
+        from contextlib import closing
+
+        with closing(
+            sqlite3.connect(self.index_path.as_uri() + "?mode=ro", uri=True)
+        ) as connection:
+            return connection.execute(
+                "SELECT generation_id FROM registration_state WHERE singleton=1"
+            ).fetchone()[0]
 
     def test_interaction_pair_returns_both_directions_with_row_context_and_sources(
         self,
     ) -> None:
-        response = self.client.post(
-            "/api/chat",
-            json={
-                "message": "イグザレルト錠2.5mgとイトラコナゾールの飲み合わせを教えて",
-                "product_yj_codes": ["3339003F5020", "6290004M1029", "6290004M1070"],
-            },
-        )
-
-        self.assertEqual(response.status_code, 200)
-        payload = response.json()
-        self.assertEqual(payload["intent"], "interaction")
-        self.assertIn("併用禁忌", payload["answer"])
-        self.assertEqual(len(payload["resolved_medicines"]), 2)
-        self.assertEqual(len(payload["sources"]), 3)
-        self.assertEqual(
-            {source["section"]["code"] for source in payload["sources"]}, {"10.1"}
-        )
-        self.assertEqual(
-            {source["document_id"] for source in payload["sources"]},
-            {
-                "630004_3339003F5020_1_08",
-                "800155_6290004M1029_1_47",
-                "300119_6290004M1070_1_17",
-            },
-        )
-        self.assertTrue(
-            all(
-                source["columns"]["drug_name"]
-                and source["columns"]["clinical_symptoms_and_measures"]
-                and source["columns"]["mechanism_and_risk_factors"]
-                for source in payload["sources"]
-            )
-        )
-        self.assertTrue(
-            all(
-                any(ref["target_section_code"] == "2" for ref in source["references"])
-                for source in payload["sources"]
-            )
-        )
+        self._assert_interaction_xml_contract(pair=True)
 
     def test_single_product_interaction_query_limits_results_to_interaction_sections(
         self,
     ) -> None:
-        response = self.client.post(
-            "/api/chat",
-            json={
-                "message": "イグザレルト錠2.5mgの飲み合わせ",
-                "product_yj_codes": ["3339003F5020"],
-                "max_sources": 5,
-            },
-        )
+        self._assert_interaction_xml_contract(pair=False)
 
+    def _assert_interaction_xml_contract(self, *, pair: bool) -> None:
+        documents = ORACLE if pair else ORACLE[:1]
+        question = (
+            "イグザレルト錠2.5mgとイトラコナゾールの飲み合わせを教えて"
+            if pair
+            else "イグザレルト錠2.5mgの飲み合わせ"
+        )
+        provider = PromptEchoProvider()
+        application = self.client.app
+        assert isinstance(application, FastAPI)
+        service = application.state.chat_service
+        with (
+            patch.object(service, "intent_classifier", InteractionIntentClassifier()),
+            patch.object(service, "keyword_extractor", InteractionKeywords()),
+            patch.object(service, "provider_factory", lambda _: provider),
+        ):
+            response = self.client.post(
+                "/api/chat",
+                json={
+                    "message": question,
+                    "product_yj_codes": [doc["yj"] for doc in documents],
+                },
+            )
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertIn("10.1（併用禁忌）", payload["answer"])
-        self.assertIn("10.2（併用注意）", payload["answer"])
-        self.assertEqual(len(payload["sources"]), 5)
-        self.assertTrue(
-            all(
-                source["section"]["code"] in {"10", "10.1", "10.2", "16.7"}
-                for source in payload["sources"]
-            )
+        self.assertEqual(payload["intent"], "interaction")
+        self.assertEqual(payload["retrieval_strategy"], "three_detectors")
+        self.assertFalse(payload["needs_clarification"])
+        assert_public_collection(payload["sources"], pair)
+        expected_groups = {
+            name: {
+                "generic_name": name,
+                "brand_names": [
+                    doc["product_name"]
+                    for doc in documents
+                    if doc["generic_name"] == name
+                ],
+                "yj_codes": [
+                    doc["yj"] for doc in documents if doc["generic_name"] == name
+                ],
+                "document_ids": [
+                    doc["document_id"]
+                    for doc in documents
+                    if doc["generic_name"] == name
+                ],
+                "matched_aliases": [],
+            }
+            for name in {doc["generic_name"] for doc in documents}
+        }
+
+        def normalize(group):
+            return {
+                key: sorted(value) if isinstance(value, list) else value
+                for key, value in group.items()
+            }
+
+        self.assertEqual(
+            {
+                group["generic_name"]: normalize(group)
+                for group in payload["resolved_medicines"]
+            },
+            {name: normalize(group) for name, group in expected_groups.items()},
         )
+        self.assertEqual(len(provider.calls), 1)
+        assert_prompt_oracle(provider.calls[0], documents, history=False)
+        self.assertEqual(
+            payload["answer"],
+            "\n".join(message["content"] for message in provider.calls[0]),
+        )
+        self.assertIn("10.1 併用禁忌", payload["answer"])
+        self.assertIn("10.2 併用注意", payload["answer"])
 
     def test_unmatched_counterpart_does_not_claim_combination_is_safe(self) -> None:
         response = self.client.post(
@@ -156,6 +256,12 @@ class ChatApiRouteTests(unittest.TestCase):
         self.assertTrue(payload["needs_clarification"])
         self.assertEqual(payload["sources"], [])
         self.assertNotIn("併用可能です", payload["answer"])
+        self.assertEqual(payload["retrieval_strategy"], "unresolved_counterpart")
+        self.assertEqual(payload["answer"], CONFIRMATIONS["unresolved_counterpart"][0])
+        self.assertEqual(
+            payload["notices"], [CONFIRMATIONS["unresolved_counterpart"][1]]
+        )
+        self.assertEqual(payload["resolved_medicines"][0]["yj_codes"], ["3339003F5020"])
 
     def test_adverse_event_question_filters_to_adverse_event_sections(self) -> None:
         response = self.client.post(
@@ -170,7 +276,39 @@ class ChatApiRouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         payload = response.json()
         self.assertEqual(payload["intent"], "adverse_events")
-        self.assertEqual(len(payload["sources"]), 6)
+        raw_source = next((REPO_ROOT / "data/pmda/originals").glob("*/*630004*.xml"))
+        raw_root = ET.parse(raw_source).getroot()
+        expected_sha = hashlib.sha256(raw_source.read_bytes()).hexdigest()
+        adverse = next(
+            node
+            for node in raw_root.iter()
+            if node.tag.rsplit("}", 1)[-1] == "AdverseEvents"
+        )
+        raw_leaf_texts = [
+            node.text
+            for node in adverse.iter()
+            if node.tag.rsplit("}", 1)[-1] == "Lang"
+            and not len(node)
+            and node.text
+            and node.text.strip()
+        ]
+        supplied_body = "".join(
+            html.unescape(
+                "\n".join(source["excerpt"] for source in payload["sources"])
+            ).split()
+        )
+        self.assertTrue(raw_leaf_texts)
+        for original_text in raw_leaf_texts:
+            self.assertIn("".join(original_text.split()), supplied_body)
+        self.assertEqual(
+            {source["unit_id"] for source in payload["sources"]},
+            {
+                f"630004_3339003F5020_1_08:{expected_sha}:11",
+                f"630004_3339003F5020_1_08:{expected_sha}:11.1",
+                f"630004_3339003F5020_1_08:{expected_sha}:11.2",
+            },
+        )
+        self.assertEqual(len(payload["sources"]), 3)
         self.assertTrue(
             all(
                 source["section"]["code"].startswith("11")
@@ -290,7 +428,12 @@ class ChatApiRouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         payload = response.json()
         self.assertTrue(payload["needs_clarification"])
-        self.assertEqual(payload["resolved_medicines"], [])
+        self.assertEqual(len(payload["resolved_medicines"]), 1)
+        self.assertEqual(payload["resolved_medicines"][0]["yj_codes"], ["3339003F5020"])
+        self.assertEqual(
+            payload["resolved_medicines"][0]["document_ids"],
+            ["630004_3339003F5020_1_08"],
+        )
         self.assertEqual(payload["sources"], [])
 
     def test_pair_interaction_requires_yj_code_for_each_product(self) -> None:
@@ -307,6 +450,12 @@ class ChatApiRouteTests(unittest.TestCase):
         self.assertTrue(payload["needs_clarification"])
         self.assertEqual(payload["retrieval_strategy"], "pair_yj_codes_required")
         self.assertEqual(payload["sources"], [])
+        self.assertEqual(payload["answer"], CONFIRMATIONS["pair_yj_codes_required"][0])
+        self.assertEqual(
+            payload["notices"], [CONFIRMATIONS["pair_yj_codes_required"][1]]
+        )
+        self.assertEqual(payload["resolved_medicines"][0]["yj_codes"], ["3339003F5020"])
+        self._assert_interaction_xml_contract(pair=True)
 
     def test_chat_uses_yj_code_as_product_identity(self) -> None:
         response = self.client.post(
@@ -507,7 +656,7 @@ class ChatApiRouteTests(unittest.TestCase):
         self.assertEqual(len(items), 1)
         self.assertIn("3961008F1020", items[0]["yj_codes"])
 
-        # 2. When message explicitly asks about Amaryl, it should override mismatched default chip (Xarelto)
+        # 2. A direct name conflict keeps the explicitly selected Xarelto chip.
         response = self.client.post(
             "/api/chat",
             json={
@@ -519,12 +668,40 @@ class ChatApiRouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         payload = response.json()
         self.assertEqual(payload["intent"], "indications")
+        self.assertEqual(payload["retrieval_strategy"], "product_identity_conflict")
+        self.assertTrue(payload["needs_clarification"])
+        self.assertEqual(payload["sources"], [])
+        self.assertEqual(
+            payload["answer"], CONFIRMATIONS["product_identity_conflict"][0]
+        )
+        self.assertEqual(
+            payload["notices"], [CONFIRMATIONS["product_identity_conflict"][1]]
+        )
+        self.assertEqual(payload["resolved_medicines"][0]["yj_codes"], ["3339003F5020"])
+        self.assertEqual(
+            payload["resolved_medicines"][0]["generic_name"], "リバーロキサバン"
+        )
+
+        # 3. Correct Amaryl selection preserves the original indication oracle.
+        correct = self.client.post(
+            "/api/chat",
+            json={
+                "message": "アマリールの効能は？",
+                "product_yj_codes": ["3961008F1020"],
+            },
+        )
+        self.assertEqual(correct.status_code, 200)
+        payload = correct.json()
+        self.assertEqual(payload["intent"], "indications")
+        self.assertFalse(payload["needs_clarification"])
+        self.assertEqual(payload["retrieval_strategy"], "three_detectors")
         self.assertGreater(len(payload["sources"]), 0)
         self.assertEqual(payload["sources"][0]["section"]["code"], "4")
         self.assertIn("2型糖尿病", payload["sources"][0]["excerpt"])
         self.assertEqual(
             payload["resolved_medicines"][0]["generic_name"], "グリメピリド"
         )
+        self.assertEqual(payload["resolved_medicines"][0]["yj_codes"], ["3961008F1020"])
 
     def test_xarelto_indications_has_scope_and_not_bare_adult_heading(self) -> None:
         response = self.client.post(

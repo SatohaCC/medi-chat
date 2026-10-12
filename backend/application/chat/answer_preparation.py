@@ -1,25 +1,33 @@
 """回答準備の技術非依存入口。"""
 
-import asyncio
 from collections.abc import Sequence
-from copy import deepcopy
 
 from package_inserts.catalog_models import PackageInsertCatalog
 
 from ...domain.attachment.repositories import AttachmentProductRepository
-from ...domain.attachment.value_objects import AttachmentProductMatch
+from ...domain.retrieval.product_identity import ProductIdentityReason
 from ...domain.retrieval.repositories import EvidenceRepository
-from ...domain.retrieval.services import (
-    detect_fixed_keyword_criteria as _detect_fixed_keyword_criteria,
-)
-from ...domain.retrieval.services import merge_evidence
-from ...domain.retrieval.value_objects import Evidence, SearchCriteria
-from ..indexing.medicine_catalog import AttachmentProductCatalog
-from ..retrieval.intent_contracts import IntentClassifier, IntentRequest
-from ..retrieval.jev_detector import JevDetectionResult, detect_jev_criteria
+from ...domain.retrieval.value_objects import Evidence
+from ..retrieval.intent_contracts import IntentClassifier
 from ..retrieval.keyword_contracts import KeywordExtractor
-from ..retrieval.morphology_detector import detect_morphology_criteria
+from ..retrieval.retrieve_evidence import retrieve_evidence
+from ..retrieval.snapshot_contracts import RetrievalSnapshotProvider
 from .chat_models import ChatMessage, ChatResponse
+
+_PRODUCT_CONFIRMATIONS = {
+    ProductIdentityReason.CONFLICT: (
+        "質問の医薬品名と選択されたYJコードが一致していません。対象製品を確認し、YJコードを選択し直してください。",
+        "質問の名称をもとに、選択されたYJコードを変更していません。",
+    ),
+    ProductIdentityReason.PAIR_REQUIRED: (
+        "飲み合わせを確認する両方の医薬品のYJコードを選択してください。",
+        "比較相手のYJコードを名称から自動補完していません。",
+    ),
+    ProductIdentityReason.UNRESOLVED: (
+        "比較相手の医薬品を同定できません。相手の名称とYJコードを確認してください。",
+        "比較相手を同定するまで、併用可否は回答できません。",
+    ),
+}
 
 
 async def prepare_reply(
@@ -31,67 +39,43 @@ async def prepare_reply(
     intent_classifier: IntentClassifier,
     keyword_extractor: KeywordExtractor,
     catalog: PackageInsertCatalog,
+    snapshot_provider: RetrievalSnapshotProvider | None = None,
 ) -> ChatResponse:
     message = next(
         (item.content for item in reversed(conversation) if item.role == "user"), ""
     )
-    medicine_catalog = AttachmentProductCatalog(await medicine_reader.read_medicines())
-    excluded_terms = medicine_catalog.aliases_for_yj_codes(product_yj_codes)
-    criteria, jev_response, qualifying_intents = await collect_search_criteria(
-        intent_classifier, keyword_extractor, message, excluded_terms, catalog=catalog
+    result = await retrieve_evidence(
+        message,
+        product_yj_codes,
+        medicine_reader=medicine_reader,
+        evidence_reader=evidence_reader,
+        intent_classifier=intent_classifier,
+        keyword_extractor=keyword_extractor,
+        catalog=catalog,
+        snapshot_provider=snapshot_provider,
     )
-
-    resolved = medicine_catalog.resolve_medicines(message, product_yj_codes)
-    needs_clarification = (
-        not resolved
-        or not medicine_catalog.covers_requested_products(resolved, product_yj_codes)
+    confirmation = (
+        _PRODUCT_CONFIRMATIONS[result.product_identity_reason]
+        if result.product_identity_reason is not None
+        else None
     )
-    intent = (
-        ", ".join(
-            dict.fromkeys(
-                item.intent.value
-                for item in criteria
-                if item.intent is not None and item.intent.value
-            )
-        )
-        or catalog.fallback_intent
-    )
-    if qualifying_intents:
-        intent = ", ".join(qualifying_intents)
-    if needs_clarification:
-        return ChatResponse(
-            answer="指定されたYJコードのすべてに対応する電子添文が、現在の検索データにありません。",
-            intent=intent,
-            retrieval_strategy="product_code_lookup",
-            resolved_medicines=resolved,
-            needs_clarification=True,
-            notices=[
-                "検索対象の構造化データに登録されているYJコードを指定してください。"
-            ],
-            jev_response=deepcopy(jev_response),
-            qualifying_intents=qualifying_intents,
-        )
-    sources = await _search_evidence(evidence_reader, tuple(resolved), criteria)
+    if confirmation is not None:
+        answer = confirmation[0]
+    elif result.needs_clarification:
+        answer = "指定されたYJコードのすべてに対応する電子添文が、現在の検索データにありません。"
+    else:
+        answer = _summarize_evidence(result.sources)
     return ChatResponse(
-        answer=_summarize_evidence(sources),
-        intent=intent,
-        retrieval_strategy="three_detectors",
-        resolved_medicines=resolved,
-        sources=sources,
-        jev_response=deepcopy(jev_response),
-        qualifying_intents=qualifying_intents,
+        answer=answer,
+        intent=result.intent,
+        retrieval_strategy=result.retrieval_strategy,
+        resolved_medicines=result.resolved_medicines,
+        sources=result.sources,
+        needs_clarification=result.needs_clarification,
+        notices=[confirmation[1]] if confirmation is not None else result.notices,
+        jev_response=result.jev_response,
+        qualifying_intents=result.qualifying_intents,
     )
-
-
-async def _search_evidence(
-    reader: EvidenceRepository,
-    medicines: tuple[AttachmentProductMatch, ...],
-    criteria: list[SearchCriteria],
-) -> list[Evidence]:
-    batches = []
-    for condition in criteria:
-        batches.append((await reader.search(condition, medicines), condition.source))
-    return list(merge_evidence(batches))
 
 
 def _summarize_evidence(sources: list[Evidence]) -> str:
@@ -107,48 +91,3 @@ def _summarize_evidence(sources: list[Evidence]) -> str:
         f"関連する添付文書の記載を{len(sources)}件取得しました。"
         f"対象項目: {', '.join(sections)}。"
     )
-
-
-async def collect_search_criteria(
-    intent_classifier: IntentClassifier,
-    keyword_extractor: KeywordExtractor,
-    message: str,
-    excluded_terms: list[str],
-    *,
-    catalog: PackageInsertCatalog,
-):
-    """全検出完了後の検索条件を、検索IOを行わず返す。"""
-    tasks = [
-        asyncio.create_task(
-            detect_jev_criteria(
-                intent_classifier, IntentRequest(message), catalog=catalog
-            )
-        ),
-        asyncio.create_task(
-            asyncio.to_thread(
-                detect_morphology_criteria, keyword_extractor, message, excluded_terms
-            )
-        ),
-        asyncio.create_task(
-            asyncio.to_thread(_detect_fixed_keyword_criteria, message, catalog)
-        ),
-    ]
-    criteria: list[SearchCriteria] = []
-    jev_response = None
-    qualifying_intents: tuple[str, ...] = ()
-    try:
-        for completed in asyncio.as_completed(tasks):
-            result = await completed
-            if isinstance(result, JevDetectionResult):
-                criteria.extend(result.search_criteria)
-                jev_response = result.raw_response
-                qualifying_intents = result.qualifying_intents
-            elif result is not None:
-                criteria.append(result)
-    finally:
-        for task in tasks:
-            if not task.done():
-                task.cancel()
-        await asyncio.gather(*tasks, return_exceptions=True)
-
-    return criteria, jev_response, qualifying_intents
