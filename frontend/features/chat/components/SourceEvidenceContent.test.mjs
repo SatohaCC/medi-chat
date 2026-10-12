@@ -9,8 +9,8 @@ import { loadTestComponent } from "../../../scripts/load-test-component.mjs";
 const { SourceEvidenceContent } = await loadTestComponent(
   fileURLToPath(new URL("./SourceEvidenceContent.tsx", import.meta.url)),
 );
-const render = (content) =>
-  renderToStaticMarkup(createElement(SourceEvidenceContent, { content }));
+const render = (content, highlightWords) =>
+  renderToStaticMarkup(createElement(SourceEvidenceContent, { content, highlightWords }));
 
 test("renders headings, table relationships, notes and escaped medical text", () => {
   const html = render(
@@ -69,3 +69,19 @@ test("SX-25/26: safe links and header scope survive while executable attributes 
   assert.match(html, /rel="noopener noreferrer"/);
   assert.doesNotMatch(html, /onclick|onmouseover|javascript:|style=|alert\(/i);
 });
+
+test("highlights specified words in text and tables with mark.search-highlight", () => {
+  const html = render(
+    "### 効能又は効果\n\n頭痛及び発熱の解熱・鎮痛。\n\n| 症状 | 用法 |\n| --- | --- |\n| 発熱 | 1回1錠 |",
+    ["頭痛", "発熱"],
+  );
+  assert.match(
+    html,
+    /<mark class="search-highlight">頭痛<\/mark>/,
+  );
+  assert.match(
+    html,
+    /<mark class="search-highlight">発熱<\/mark>/,
+  );
+});
+

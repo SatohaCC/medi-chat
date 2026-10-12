@@ -12,7 +12,10 @@ export function ImportScreen() {
 
   return (
     <main data-screen="imports" {...stylex.props(layout.root, styles.main)}>
-      <Link href="/">チャットへ戻る</Link>
+      <div style={{ display: "flex", gap: "16px" }}>
+        <Link href="/">チャットへ戻る</Link>
+        <Link href="/search">キーワード検索</Link>
+      </div>
       <h1>添付文書XMLの取り込み</h1>
       <p>原本XMLを登録し、対象製品の検索と候補に反映します。</p>
       <form {...stylex.props(styles.form)} onSubmit={submit}>
