@@ -22,8 +22,10 @@ from backend.domain.retrieval.primitives import (
     SearchKeyword,
 )
 from backend.domain.retrieval.value_objects import SearchCriteria
+from backend.infrastructure.package_insert_definitions.loader import (
+    get_package_insert_definitions,
+)
 from backend.tests.test_evidence_collection import make_evidence
-from package_inserts.catalog_loader import get_package_insert_catalog
 
 
 class MedicineReader:
@@ -104,7 +106,7 @@ async def test_preparation_failure_and_cancel_reclaim_async_children_and_release
             evidence_reader=OrderedEvidenceReader(False),
             intent_classifier=IntentClassifier(),
             keyword_extractor=KeywordExtractor(),
-            catalog=get_package_insert_catalog(),
+            intent_policy=get_package_insert_definitions().intent_policy,
         )
     )
     try:
@@ -206,7 +208,7 @@ async def test_detector_completion_order_preserves_intent_and_first_content(
             evidence_reader=reader,
             intent_classifier=UnusedIntentClassifier(),
             keyword_extractor=UnusedKeywordExtractor(),
-            catalog=get_package_insert_catalog(),
+            intent_policy=get_package_insert_definitions().intent_policy,
         )
     )
     try:
@@ -264,7 +266,7 @@ async def test_partially_unresolved_products_preserve_resolved_medicine_and_skip
         evidence_reader=reader,
         intent_classifier=UnusedIntentClassifier(),
         keyword_extractor=UnusedKeywordExtractor(),
-        catalog=get_package_insert_catalog(),
+        intent_policy=get_package_insert_definitions().intent_policy,
     )
     assert reply.needs_clarification is True
     assert reply.resolved_medicines[0].yj_codes == ("1234567A0000",)

@@ -17,6 +17,9 @@ from backend.application.retrieval.intent_contracts import IntentRequest, Intent
 from backend.infrastructure.intent import jev_classifier
 from backend.infrastructure.llm import gemini_provider, openai_provider
 from backend.infrastructure.llm.provider_factory import create_llm_provider
+from backend.infrastructure.package_insert_definitions.loader import (
+    get_package_insert_definitions,
+)
 from backend.presentation import chat_websocket_routes
 from backend.presentation.chat_models import ChatResponse as ApiChatResponse
 from backend.tests.test_application_port_contracts import (
@@ -25,7 +28,6 @@ from backend.tests.test_application_port_contracts import (
     RecordingMedicineReader,
 )
 from fastapi import FastAPI, WebSocketDisconnect
-from package_inserts.catalog_loader import get_package_insert_catalog
 from starlette.types import Message, Scope
 
 
@@ -230,7 +232,7 @@ async def test_owned_sdk_resources_close_on_all_exit_paths(
                         evidence_reader=RecordingEvidenceReader([], []),
                         intent_classifier=classifier,
                         keyword_extractor=RecordingKeywordExtractor(()),
-                        catalog=get_package_insert_catalog(),
+                        intent_policy=get_package_insert_definitions().intent_policy,
                     )
                 )
             else:

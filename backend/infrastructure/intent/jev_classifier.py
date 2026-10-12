@@ -5,11 +5,11 @@ import logging
 import os
 
 import typesafe_sdk as ts
-from package_inserts.catalog_loader import get_package_insert_catalog
-from package_inserts.catalog_models import PackageInsertCatalog
 
 from ...application.retrieval.intent_contracts import IntentRequest, IntentResult
 from ...domain.json_types import JsonValue
+from ..package_insert_definitions.loader import get_package_insert_definitions
+from .definition_settings import JevClassificationSettings
 from .jev_intent_mapping import map_jev_intent_result
 
 logger = logging.getLogger(__name__)
@@ -22,14 +22,18 @@ class JevIntentClassifier:
         self,
         api_key: str | None = None,
         *,
-        catalog: PackageInsertCatalog | None = None,
+        classification_settings: JevClassificationSettings | None = None,
     ) -> None:
         self.api_key = (
             api_key
             or os.environ.get("TYPESAFE_API_KEY")
             or os.environ.get("JEV_API_KEY")
         )
-        self._catalog = catalog
+        self._classification_settings = (
+            classification_settings
+            if classification_settings is not None
+            else get_package_insert_definitions().jev_settings
+        )
         self._client: ts.AsyncTypeSafeClient | None = None
         self._active_calls = 0
         self._idle = asyncio.Event()
@@ -50,14 +54,11 @@ class JevIntentClassifier:
         if client is None or self._closed:
             return IntentResult(is_available=False)
 
-        catalog = self._catalog
-        if catalog is None:
-            catalog = get_package_insert_catalog()
         question = ts.Choice(
             instructions=(
                 "ユーザーの質問から、参照すべき医療用医薬品添付文書の項目（セクション）を判定してください。"
             ),
-            criteria=catalog.build_classification_criteria(),
+            criteria=self._classification_settings.build_classification_criteria(),
         )
         try:
             self._active_calls += 1

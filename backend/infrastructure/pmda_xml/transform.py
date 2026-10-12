@@ -6,12 +6,18 @@ from pathlib import Path
 from ...application.attachment_import.import_errors import AttachmentImportError
 from ...application.indexing.attachment_projection import project_attachment
 from ...project_paths import resolve_project_path
+from ..package_insert_definitions.loader import get_package_insert_definitions
 from .artifact_mapping import PmdaArtifactEncoder
 from .decoder import PmdaXmlDecoder
+from .definition_settings import PmdaXmlSettings
 from .safe_parser import parse_source
 
 
-def transform(xml_path: Path, output_dir: Path) -> dict:
+def transform(
+    xml_path: Path, output_dir: Path, *, xml_settings: PmdaXmlSettings | None = None
+) -> dict:
+    if xml_settings is None:
+        xml_settings = get_package_insert_definitions().xml_settings
     source_path = resolve_project_path(xml_path)
     target = resolve_project_path(output_dir)
     source = source_path.read_bytes()
@@ -26,7 +32,10 @@ def transform(xml_path: Path, output_dir: Path) -> dict:
             if path.is_relative_to(source_path.parent) and path.is_file():
                 assets[filename] = path.read_bytes()
         decoded = PmdaXmlDecoder(
-            assets=assets, strict_assets=True, source_filename=source_path.as_posix()
+            xml_settings=xml_settings,
+            assets=assets,
+            strict_assets=True,
+            source_filename=source_path.as_posix(),
         ).decode(source)
         bundle = PmdaArtifactEncoder().encode(
             decoded.document, project_attachment(decoded.document), decoded.source_info

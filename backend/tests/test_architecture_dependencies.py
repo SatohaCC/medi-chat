@@ -39,10 +39,6 @@ ALLOWED_BACKEND_DIRECTORIES = {
     "migrations",
     "config",
 }
-PURE_SHARED_MODULES = (
-    "package_inserts.catalog_models",
-    "package_inserts.text_formatting",
-)
 FILESYSTEM_METHODS = {
     "open",
     "read_text",
@@ -118,10 +114,7 @@ def _allowed_module(module: str, *, caller: str) -> bool:
         }
         return caller_layer is None or dependency_layer in allowed_layers[caller_layer]
     if caller_layer in {"domain", "application"}:
-        return (
-            module.split(".")[0] in sys.stdlib_module_names
-            or module in PURE_SHARED_MODULES
-        )
+        return module.split(".")[0] in sys.stdlib_module_names
     return True
 
 
@@ -134,7 +127,10 @@ def _allowed_module(module: str, *, caller: str) -> bool:
         ("from .primitives import SearchKeyword\n", False),
         ("from ..attachment.identifiers import DocumentId\n", False),
         ("from ..shared.services import normalize_match_text\n", False),
-        ("from package_inserts.catalog_models import PackageInsertCatalog\n", False),
+        (
+            "from backend.infrastructure.package_insert_definitions.loader import PackageInsertDefinitions\n",
+            False,
+        ),
         ("from ..foundation.primitives.base import DomainPrimitive\n", False),
         (
             "from typing import TYPE_CHECKING\nif TYPE_CHECKING:\n"
@@ -388,10 +384,10 @@ def test_new_public_module_paths_are_importable_without_legacy_packages() -> Non
             id="type_checking_import",
         ),
         pytest.param(
-            "from package_inserts.catalog_models import PackageInsertCatalog\n"
-            "from package_inserts.text_formatting import format_scoped_text\n",
+            "from backend.domain.retrieval.value_objects import IntentPolicy\n"
+            "from backend.domain.retrieval.services import format_scoped_text\n",
             None,
-            id="pure_shared_imports",
+            id="owned_domain_imports",
         ),
     ],
 )
@@ -557,14 +553,20 @@ def test_domain_cannot_depend_on_application(source: str) -> None:
 @pytest.mark.parametrize(
     "module_name", ["backend.domain.fixture", "backend.application.fixture"]
 )
-def test_pure_shared_models_and_formatting_are_allowed(module_name: str) -> None:
-    source = "from package_inserts.catalog_models import PackageInsertCatalog\nfrom package_inserts.text_formatting import section_code_sort_key\n"
+def test_pure_owned_models_and_formatting_are_allowed(module_name: str) -> None:
+    source = "from backend.domain.retrieval.value_objects import IntentPolicy\nfrom backend.domain.retrieval.services import section_code_sort_key\n"
     assert (
         find_inner_layer_violations(
             source, module_name=module_name, filename="shared_fixture.py"
         )
         == []
     )
+    old_source = "from package_inserts.catalog_models import PackageInsertCatalog\nfrom package_inserts.text_formatting import section_code_sort_key\n"
+    violations = find_inner_layer_violations(
+        old_source, module_name=module_name, filename="old_shared_fixture.py"
+    )
+    assert len(violations) == 2
+    assert all("package_inserts" in violation for violation in violations)
 
 
 def test_application_can_depend_on_domain() -> None:
@@ -654,6 +656,11 @@ def test_public_modules_and_api_work_without_legacy_packages_in_subprocess(
     structured = write_structured_document(tmp_path)
     index_path = tmp_path / "isolated.sqlite3"
     build_document_store(structured, index_path)
+    from backend.tests.registration_runtime_fixtures import (
+        register_synthetic_prepared_index,
+    )
+
+    register_synthetic_prepared_index(structured, index_path)
     for package in ("chat", "retrieval", "medicines", "storage", "jev"):
         assert not (BACKEND_ROOT / package).exists()
     environment = dict(os.environ)
@@ -724,9 +731,9 @@ print("canonical modules and API smoke passed")
         ),
         (
             "backend.application.fixture",
-            "from package_inserts.catalog_loader import get_package_insert_catalog\n",
+            "from backend.infrastructure.package_insert_definitions.loader import get_package_insert_definitions\n",
             1,
-            "import package_inserts.catalog_loader.get_package_insert_catalog",
+            "import backend.infrastructure.package_insert_definitions.loader.get_package_insert_definitions",
         ),
         (
             "backend.domain.fixture",

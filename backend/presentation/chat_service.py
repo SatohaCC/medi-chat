@@ -4,11 +4,10 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator, Callable, Sequence
 
-from package_inserts.catalog_models import PackageInsertCatalog
-
 from ..application.chat.answer_preparation import (
     prepare_reply as app_prepare_reply,
 )
+from ..application.chat.answer_prompt_policy import AnswerPromptPolicy
 from ..application.chat.answer_question import (
     answer_question as app_answer_question,
 )
@@ -21,6 +20,7 @@ from ..application.retrieval.snapshot_contracts import RetrievalSnapshotProvider
 from ..config.generation_settings import GenerationDefaults, read_generation_defaults
 from ..domain.attachment.repositories import AttachmentProductRepository
 from ..domain.retrieval.repositories import EvidenceRepository
+from ..domain.retrieval.value_objects import IntentPolicy
 from .chat_dto_mapper import (
     chat_message_from_api,
     chat_response_from_api,
@@ -44,7 +44,8 @@ class AppChatService:
         evidence_reader: EvidenceRepository,
         intent_classifier: IntentClassifier,
         keyword_extractor: KeywordExtractor,
-        catalog: PackageInsertCatalog,
+        intent_policy: IntentPolicy,
+        answer_prompt_policy: AnswerPromptPolicy,
         provider_factory: Callable[[str | None], LLMProvider],
         defaults: Callable[[], GenerationDefaults] = read_generation_defaults,
         snapshot_provider: RetrievalSnapshotProvider | None = None,
@@ -53,7 +54,8 @@ class AppChatService:
         self.evidence_reader = evidence_reader
         self.intent_classifier = intent_classifier
         self.keyword_extractor = keyword_extractor
-        self.catalog = catalog
+        self.intent_policy = intent_policy
+        self.answer_prompt_policy = answer_prompt_policy
         self.provider_factory = provider_factory
         self.defaults = defaults
         self.snapshot_provider = snapshot_provider
@@ -75,7 +77,7 @@ class AppChatService:
             evidence_reader=self.evidence_reader,
             intent_classifier=self.intent_classifier,
             keyword_extractor=self.keyword_extractor,
-            catalog=self.catalog,
+            intent_policy=self.intent_policy,
             snapshot_provider=self.snapshot_provider,
         )
         return chat_response_to_api(pure_reply)
@@ -94,7 +96,7 @@ class AppChatService:
             app_stream_reply(
                 pure_reply,
                 pure_conversation,
-                catalog=self.catalog,
+                answer_prompt_policy=self.answer_prompt_policy,
                 provider_factory=self.provider_factory,
                 provider_name=provider_name or settings.provider,
                 model_name=model_name or settings.model,
@@ -119,7 +121,8 @@ class AppChatService:
             evidence_reader=self.evidence_reader,
             intent_classifier=self.intent_classifier,
             keyword_extractor=self.keyword_extractor,
-            catalog=self.catalog,
+            intent_policy=self.intent_policy,
+            answer_prompt_policy=self.answer_prompt_policy,
             provider_factory=self.provider_factory,
             provider_name=provider_name or settings.provider,
             model_name=model_name or settings.model,

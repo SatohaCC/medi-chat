@@ -9,9 +9,9 @@ from collections import Counter
 from pathlib import PurePosixPath
 from typing import Any
 
-from package_inserts.catalog_loader import get_package_insert_catalog
-
 from ...application.attachment_import.import_errors import InvalidAttachment
+from ..package_insert_definitions.loader import get_package_insert_definitions
+from .definition_settings import PmdaXmlSettings
 from .sections import make_section_index
 from .units import make_units
 from .xml_nodes import (
@@ -32,8 +32,10 @@ def build_artifacts(
     source_sha256: str,
     assets: dict[str, bytes],
     strict_assets: bool,
+    xml_settings: PmdaXmlSettings | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]], dict[str, Any]]:
-    catalog = get_package_insert_catalog()
+    if xml_settings is None:
+        xml_settings = get_package_insert_definitions().xml_settings
     if tag_name(root) != "PackIns" or root.attrib.get("drugType") != "Medicine":
         raise InvalidAttachment(
             "unsupported_pmda_document", "Expected a PMDA medicine PackIns document"
@@ -42,16 +44,18 @@ def build_artifacts(
         str(root.tag).split("}", 1)[0].lstrip("{") if "}" in str(root.tag) else None
     )
     parents, paths = build_paths(root)
-    insert_no = field(root, "PackageInsertNo")
-    company = field(root, "CompanyIdentifier")
+    insert_no = field(root, "PackageInsertNo", xml_settings=xml_settings)
+    company = field(root, "CompanyIdentifier", xml_settings=xml_settings)
     if not insert_no or not company:
         raise InvalidAttachment(
             "missing_document_identity", "Document identity is required"
         )
     pmda_key = f"{company}_{insert_no}"
     pmda_url = f"https://www.pmda.go.jp/PmdaSearch/iyakuDetail/{pmda_key}"
-    doc_meta = metadata(root, pmda_url)
-    sections, section_by_element = make_section_index(root, parents, paths, pmda_url)
+    doc_meta = metadata(root, pmda_url, xml_settings=xml_settings)
+    sections, section_by_element = make_section_index(
+        root, parents, paths, pmda_url, xml_settings=xml_settings
+    )
     root_misc = [
         child
         for child in root
@@ -61,8 +65,8 @@ def build_artifacts(
         tag_name(child)
         for child in root
         if tag_name(child)
-        not in catalog.xml.header_tags
-        | catalog.sections_by_xml_tag.keys()
+        not in xml_settings.header_tags
+        | xml_settings.sections_by_xml_tag.keys()
         | {"#comment", "#processing_instruction"}
     ]
     if unknown_root:
@@ -77,7 +81,7 @@ def build_artifacts(
     all_refs = [
         {"kind": tag_name(element), "target": element.attrib.get("ref")}
         for element in root.iter()
-        if tag_name(element) in catalog.xml.reference_tags
+        if tag_name(element) in xml_settings.reference_tags
     ]
     all_refs += [
         {"kind": name, "target": element.attrib[name]}
@@ -109,11 +113,12 @@ def build_artifacts(
         pmda_key,
         pmda_url,
         doc_meta["products"],
+        xml_settings=xml_settings,
     )
     section_langs = {
         element
         for child in root
-        if tag_name(child) not in catalog.xml.header_tags
+        if tag_name(child) not in xml_settings.header_tags
         for element in child.iter()
         if tag_name(element) == "Lang"
     }
@@ -132,8 +137,11 @@ def build_artifacts(
     unrepresented_text = [
         paths[element]
         for element in section_langs
-        if text_of(element)
-        and not any(text_of(element) in unit_text for unit_text in unit_texts)
+        if text_of(element, xml_settings=xml_settings)
+        and not any(
+            text_of(element, xml_settings=xml_settings) in unit_text
+            for unit_text in unit_texts
+        )
     ]
     document = {
         "schema_version": "medi-chat.pmda-prescription-xml.v1",
@@ -153,7 +161,7 @@ def build_artifacts(
         "header_nodes": [
             source_node(child)
             for child in root
-            if tag_name(child) in catalog.xml.header_tags
+            if tag_name(child) in xml_settings.header_tags
         ],
         "section_index": sections,
         "sections": [

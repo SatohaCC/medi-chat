@@ -90,12 +90,14 @@ def test_tc091_deleted_receipt_retains_no_document_body(publisher):
 
 def test_tc093_same_document_versions_read_their_own_original_metadata(publisher):
     from backend.domain.retrieval.primitives import DetectionSource
+    from backend.infrastructure.package_insert_definitions.loader import (
+        get_package_insert_definitions,
+    )
     from backend.infrastructure.persistence import schema
     from backend.infrastructure.persistence.evidence_reader import (
         _read_evidence,
         _unit_document_select,
     )
-    from package_inserts.catalog_loader import get_package_insert_catalog
     from sqlalchemy import create_engine
 
     old = source("旧版B本文", ("111111111111", "222222222222"))
@@ -113,7 +115,7 @@ def test_tc093_same_document_versions_read_their_own_original_metadata(publisher
                 connection,
                 _unit_document_select(schema.units),
                 DetectionSource.LOGIC,
-                get_package_insert_catalog(),
+                get_package_insert_definitions().text_search_policy,
             )
         by_yj = {
             tuple(code.value for code in item.product_yj_codes): item

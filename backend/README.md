@@ -34,7 +34,7 @@
 | `infrastructure/composition` / `main.py` | 具象の生成・接続、準備済みDBの検証、SDK/worker/engineの所有終了 |
 | `config` | 接続設定と生成provider/modelの環境default供給 |
 | `infrastructure/cli` | `build_search_index`、`migrate_legacy_index`の公開module入口 |
-| `../package_inserts` | backendが共有する添付文書カタログ（Shared Kernel）と純粋整形 |
+| `infrastructure/package_insert_definitions` | 単一JSONのIO/検証と用途別組立。正式名称はattachment、検索規則・整形はretrieval、回答指示はApplicationが所有する |
 
 公開DTOの`ChatMessage`/`ChatResponse`/`ChatSource`/`MedicineMatch`は`presentation`に置き、REST JSON・WSイベント・OpenAPIの名前を維持します。applicationの同名モデルはフレームワーク非依存の入出力です。`IntentResult.candidates`が意図判定の業務契約で、`raw_response`は公開原本として保持します。applicationはSDKの`answers`/`choice`/`probabilities`を読まず、presentation mapperが公開JSONとの往復を担当します。
 
@@ -110,11 +110,9 @@ flowchart LR
   Infra --> Domain
   Main[main / composition root] --> Presentation
   Main --> Infra
-  Domain --> Shared[純粋な共通定義 / 整形]
-  App --> Shared
 ```
 
-`domain`から`application`、presentation、infrastructure、SDK、catalog_loaderへの依存は禁止します。`application`はdomainと標準ライブラリ、純粋な`package_inserts.catalog_models`/`text_formatting`だけを参照します。永続化の具象IOは各 bounded context の `repositories.py` に定義したInterface越しに注入します。型確認用import・相対importも依存検査の対象です。
+`domain`から`application`、presentation、infrastructure、SDK、JSON loaderへの依存は禁止します。`application`はdomainと標準ライブラリだけを参照します。添付文書の正式名称はattachmentのSectionTaxonomyが所有し、Applicationのdefinition_projectionで用途側へ写します。検索規則/整形はretrieval、回答指示はApplication、JSON/XML/Jev/Janome設定はInfrastructureに置きます。永続化の具象IOは各 bounded context の `repositories.py` に定義したInterface越しに注入します。型確認用import・相対importも依存検査の対象です。
 
 次は実行時の呼出しです。Reader/SDKは注入されたportの実装です。
 
@@ -166,11 +164,11 @@ backend/
 └── tests/               # legacy_v3は未管理旧形式DBの生成専用Fixture
 ```
 
-旧`backend.chat`/`retrieval`/`medicines`/`storage`/`jev`とcompositionの旧サービス再公開は削除しました。ドメインモデルも責務別の正本へ統一し、既知のリポジトリ内利用側は正本へ移行しています。公開起動点は`backend.main:app`/`create_app`、既存REST/WSルート、FastAPI DI関数、2つのCLI moduleです。リポジトリ外の旧Python import利用は確認対象外です。
+旧`backend.chat`/`retrieval`/`medicines`/`storage`/`jev`とcompositionの旧サービス再公開は削除しました。ドメインモデルも責務別の正本へ統一し、既知のリポジトリ内利用側は正本へ移行しています。公開起動点は`backend.main:app`/`create_app`、既存REST/WSルート、FastAPI DI関数、6つのCLI moduleです。リポジトリ外の旧Python import利用は確認対象外です。
 
 ## 命名規則
 
-ファイルは`snake_case`で責務を示し、クラスは`PascalCase`、関数は動詞を先頭にします。APIルートは`*_routes.py`、外部判定adapterは`*_detector.py`/`*_classifier.py`、純粋な業務判断は`*_policy.py`、外部表現の変換は`*_mapping.py`/`*_mapper.py`です。添付文書の対応表は共通カタログに置きます。公開APIのスキーマ・項目・ルート名は互換性を維持します。基本型を業務上の意味で包むものは`primitives`、同一性を持たない不変値は`value_objects`、同一性とライフサイクルを持つものは`entities`、複数モデルを組み合わせる処理は`services`へ置きます。
+ファイルは`snake_case`で責務を示し、クラスは`PascalCase`、関数は動詞を先頭にします。APIルートは`*_routes.py`、外部判定adapterは`*_detector.py`/`*_classifier.py`、純粋な業務判断は`*_policy.py`、外部表現の変換は`*_mapping.py`/`*_mapper.py`です。添付文書の編集規約は[Infrastructure定義ソース](infrastructure/package_insert_definitions/README.md)を参照します。組立束をサービスへ渡さず、用途別policy/settingsだけを注入します。公開APIのスキーマ・項目・ルート名は互換性を維持します。基本型を業務上の意味で包むものは`primitives`、同一性を持たない不変値は`value_objects`、同一性とライフサイクルを持つものは`entities`、複数モデルを組み合わせる処理は`services`へ置きます。
 
 ## データベース運用とマイグレーション
 
@@ -262,8 +260,8 @@ pnpm install
 pnpm typecheck:python
 
 # リンター & フォーマッター
-uv run --project backend python -m ruff check backend package_inserts
-uv run --project backend python -m ruff format --check backend package_inserts
+uv run --project backend python -m ruff check backend
+uv run --project backend python -m ruff format --check backend
 
 # 全体テストスイートの実行
 uv run --project backend pytest backend/tests

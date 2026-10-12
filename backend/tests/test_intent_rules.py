@@ -5,11 +5,15 @@ from __future__ import annotations
 import unittest
 
 from backend.domain.retrieval.services import detect_intent_from_keywords
-from package_inserts.catalog_loader import get_package_insert_catalog
+from backend.infrastructure.package_insert_definitions.loader import (
+    get_package_insert_definitions,
+)
 
 
 def get_section_codes_for_intent(intent: str) -> list[str] | None:
-    codes = get_package_insert_catalog().section_codes_for_intent(intent)
+    codes = get_package_insert_definitions().intent_policy.section_codes_for_intent(
+        intent
+    )
     return list(codes) if codes else None
 
 
@@ -17,37 +21,43 @@ class IntentRuleTests(unittest.TestCase):
     def test_detect_intent_from_keywords(self) -> None:
         self.assertEqual(
             detect_intent_from_keywords(
-                "副作用について教えて", catalog=get_package_insert_catalog()
+                "副作用について教えて",
+                intent_policy=get_package_insert_definitions().intent_policy,
             ),
             "adverse_events",
         )
         self.assertEqual(
             detect_intent_from_keywords(
-                "1日何錠飲みますか？", catalog=get_package_insert_catalog()
+                "1日何錠飲みますか？",
+                intent_policy=get_package_insert_definitions().intent_policy,
             ),
             "dosage",
         )
         self.assertEqual(
             detect_intent_from_keywords(
-                "併用しても大丈夫？", catalog=get_package_insert_catalog()
+                "併用しても大丈夫？",
+                intent_policy=get_package_insert_definitions().intent_policy,
             ),
             "interaction",
         )
         self.assertEqual(
             detect_intent_from_keywords(
-                "妊娠中に飲める？", catalog=get_package_insert_catalog()
+                "妊娠中に飲める？",
+                intent_policy=get_package_insert_definitions().intent_policy,
             ),
             "pregnancy",
         )
         self.assertEqual(
             detect_intent_from_keywords(
-                "薬のメカニズムは？", catalog=get_package_insert_catalog()
+                "薬のメカニズムは？",
+                intent_policy=get_package_insert_definitions().intent_policy,
             ),
             "pharmacology",
         )
         self.assertEqual(
             detect_intent_from_keywords(
-                "一般質問です", catalog=get_package_insert_catalog()
+                "一般質問です",
+                intent_policy=get_package_insert_definitions().intent_policy,
             ),
             "document_search",
         )

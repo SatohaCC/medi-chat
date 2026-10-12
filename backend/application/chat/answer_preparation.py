@@ -2,12 +2,10 @@
 
 from collections.abc import Sequence
 
-from package_inserts.catalog_models import PackageInsertCatalog
-
 from ...domain.attachment.repositories import AttachmentProductRepository
 from ...domain.retrieval.product_identity import ProductIdentityReason
 from ...domain.retrieval.repositories import EvidenceRepository
-from ...domain.retrieval.value_objects import Evidence
+from ...domain.retrieval.value_objects import Evidence, IntentPolicy
 from ..retrieval.intent_contracts import IntentClassifier
 from ..retrieval.keyword_contracts import KeywordExtractor
 from ..retrieval.retrieve_evidence import retrieve_evidence
@@ -38,7 +36,7 @@ async def prepare_reply(
     evidence_reader: EvidenceRepository,
     intent_classifier: IntentClassifier,
     keyword_extractor: KeywordExtractor,
-    catalog: PackageInsertCatalog,
+    intent_policy: IntentPolicy,
     snapshot_provider: RetrievalSnapshotProvider | None = None,
 ) -> ChatResponse:
     message = next(
@@ -51,7 +49,7 @@ async def prepare_reply(
         evidence_reader=evidence_reader,
         intent_classifier=intent_classifier,
         keyword_extractor=keyword_extractor,
-        catalog=catalog,
+        intent_policy=intent_policy,
         snapshot_provider=snapshot_provider,
     )
     confirmation = (

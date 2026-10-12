@@ -23,6 +23,9 @@ from backend.domain.retrieval.primitives import (
     SearchSectionCode,
 )
 from backend.domain.retrieval.value_objects import IntentCandidate, SearchCriteria
+from backend.infrastructure.package_insert_definitions.loader import (
+    get_package_insert_definitions,
+)
 from backend.infrastructure.persistence.generation_runtime import GenerationRuntime
 from backend.infrastructure.persistence.read_workers import ReadWorkers
 from backend.tests.interaction_raw_oracle import DOCUMENTS, ROOT, read_raw_oracle
@@ -32,7 +35,6 @@ from backend.tests.test_registration_publisher import (
     SqliteRegistrationPublisher,
     publish,
 )
-from package_inserts.catalog_loader import get_package_insert_catalog
 
 FIXTURE = Path(__file__).parent / "fixtures/interaction_oracle_v6.json"
 ORACLE = json.loads(FIXTURE.read_text(encoding="utf-8"))
@@ -347,7 +349,7 @@ async def test_tc120_122_all_detector_collection_and_tc121_original_tables(
                 evidence_reader=RecordingReader(),
                 intent_classifier=Classifier(),
                 keyword_extractor=Keywords(),
-                catalog=get_package_insert_catalog(),
+                intent_policy=get_package_insert_definitions().intent_policy,
             )
         expected_docs = ORACLE if pair else ORACLE[:1]
         expected = sorted(
@@ -563,7 +565,8 @@ async def test_tc123_all_evidence_reaches_recording_provider_and_conversation(
                 evidence_reader=snapshot.evidence_reader,
                 intent_classifier=Classifier(),
                 keyword_extractor=Keywords(),
-                catalog=get_package_insert_catalog(),
+                intent_policy=get_package_insert_definitions().intent_policy,
+                answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
                 provider_factory=lambda _: provider,
                 provider_name=None,
                 model_name=None,

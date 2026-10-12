@@ -7,13 +7,15 @@ from backend.domain.retrieval.services import detect_fixed_keyword_criteria
 from backend.infrastructure.morphology.janome_keyword_extractor import (
     JanomeKeywordExtractor,
 )
-from package_inserts.catalog_loader import get_package_insert_catalog
+from backend.infrastructure.package_insert_definitions.loader import (
+    get_package_insert_definitions,
+)
 
 
 class SearchDetectorTests(unittest.TestCase):
     def test_fixed_keyword_detector_returns_section_codes(self) -> None:
         target = detect_fixed_keyword_criteria(
-            "副作用について教えて", get_package_insert_catalog()
+            "副作用について教えて", get_package_insert_definitions().intent_policy
         )
 
         self.assertIsNotNone(target)
@@ -27,7 +29,11 @@ class SearchDetectorTests(unittest.TestCase):
 
     def test_morphology_detector_returns_nouns(self) -> None:
         target = detect_morphology_criteria(
-            JanomeKeywordExtractor(catalog=get_package_insert_catalog()), "頭痛がする"
+            JanomeKeywordExtractor(
+                search_policy=get_package_insert_definitions().text_search_policy,
+                morphology_settings=get_package_insert_definitions().morphology_settings,
+            ),
+            "頭痛がする",
         )
 
         self.assertIsNotNone(target)

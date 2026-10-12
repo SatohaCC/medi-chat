@@ -4,25 +4,22 @@ from __future__ import annotations
 
 import json
 import re
-from functools import lru_cache
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any
 
-from .catalog_models import (
+from .schema_models import (
     SECTION_REFERENCE,
     AnswerGuidance,
     AnswerPromptDefinition,
     IntentDefinition,
     IntentKeyword,
     InteractionColumn,
-    PackageInsertCatalog,
     SectionDefinition,
     TextSearchDefinition,
+    ValidatedDefinitionSource,
     XmlDefinition,
 )
-
-CATALOG_PATH = Path(__file__).with_name("package_insert_catalog.json")
 
 
 def _object(value: Any, path: str, required: str, optional: str = "") -> dict[str, Any]:
@@ -73,7 +70,7 @@ def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     return result
 
 
-def load_package_insert_catalog(path: Path) -> PackageInsertCatalog:
+def read_validated_source(path: Path) -> ValidatedDefinitionSource:
     """指定JSONを検証して読み込む。構成ミスは利用開始前に ValueError にする。"""
     data = _object(
         json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_unique_object),
@@ -100,12 +97,16 @@ def load_package_insert_catalog(path: Path) -> PackageInsertCatalog:
             code=code,
             title=title,
             display_title=_text(
-                entry.get("display_title", title), f"sections.{code}.display_title"
-            ),
+                entry["display_title"], f"sections.{code}.display_title"
+            )
+            if "display_title" in entry
+            else None,
             classification_title=_text(
-                entry.get("classification_title", title),
+                entry["classification_title"],
                 f"sections.{code}.classification_title",
-            ),
+            )
+            if "classification_title" in entry
+            else None,
             parent_code=code.rpartition(".")[0] or None,
         )
         sections[code] = section
@@ -340,17 +341,11 @@ def load_package_insert_catalog(path: Path) -> PackageInsertCatalog:
             "answer_prompt.citation_examples: expected at least one section"
         )
 
-    return PackageInsertCatalog(
+    return ValidatedDefinitionSource(
         sections=MappingProxyType(sections),
         sections_by_xml_tag=MappingProxyType(tags),
         sections_by_xml_context=MappingProxyType(contexts),
         intents=MappingProxyType(intents),
-        keyword_intents=tuple(
-            sorted(
-                (intent for intent in intents.values() if intent.keywords),
-                key=lambda intent: intent.keyword_priority or 0,
-            )
-        ),
         fallback_intent=fallback,
         general_intent=general,
         text_search=TextSearchDefinition(
@@ -375,8 +370,3 @@ def load_package_insert_catalog(path: Path) -> PackageInsertCatalog:
             ),
         ),
     )
-
-
-@lru_cache(maxsize=1)
-def get_package_insert_catalog() -> PackageInsertCatalog:
-    return load_package_insert_catalog(CATALOG_PATH)

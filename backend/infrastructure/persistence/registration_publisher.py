@@ -47,12 +47,14 @@ from ...domain.attachment.value_objects import (
 from ...domain.medicine.identifiers import YjCode
 from ..index_payloads import build_index_document, build_index_unit
 from ..json_payloads import parse_json_object
+from ..package_insert_definitions.loader import get_package_insert_definitions
 from ..pmda_xml.artifact_mapping import (
     PmdaArtifactEncoder,
     result_dict,
     result_from_dict,
 )
 from ..pmda_xml.decoder import PmdaXmlDecoder, SourceInformation
+from ..pmda_xml.definition_settings import PmdaXmlSettings
 from ..pmda_xml.registration_artifacts import encode_registered_units
 from ..sources.attachment_import_store import FileAttachmentImportStore
 from . import registration_schema as registration
@@ -118,8 +120,14 @@ class SqliteRegistrationPublisher:
         *,
         fault: Callable[[str], None] = lambda phase: None,
         allowed_roots: tuple[Path, ...] = (),
+        xml_settings: PmdaXmlSettings | None = None,
     ) -> None:
         self.index_path = index_path.resolve()
+        self._xml_settings = (
+            xml_settings
+            if xml_settings is not None
+            else get_package_insert_definitions().xml_settings
+        )
         self.store = store
         self.fault = fault
         self.allowed_roots = (store.root, *(root.resolve() for root in allowed_roots))
@@ -494,7 +502,7 @@ class SqliteRegistrationPublisher:
                     "Published source is inconsistent",
                     phase="projection",
                 )
-            decoded = PmdaXmlDecoder().decode(source)
+            decoded = PmdaXmlDecoder(xml_settings=self._xml_settings).decode(source)
             if not isinstance(decoded.source_info, SourceInformation):
                 raise ValueError("invalid source information")
             projection = project_active_attachment(decoded.document, frozenset(codes))
