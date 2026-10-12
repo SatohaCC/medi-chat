@@ -3,9 +3,9 @@ export const styles = stylex.create({
   root: {
     paddingBlock: "10px",
     paddingInline: "20px",
-    borderBottomWidth: "1px",
-    borderBottomStyle: "solid",
-    borderBottomColor: "var(--border)",
+    borderTopWidth: "1px",
+    borderTopStyle: "solid",
+    borderTopColor: "var(--border)",
     backgroundColor: "var(--assistant-bg)",
     display: "flex",
     flexDirection: "column",

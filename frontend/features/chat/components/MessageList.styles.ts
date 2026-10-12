@@ -4,10 +4,15 @@ export const styles = stylex.create({
     flex: "1",
     minHeight: "0",
     overflowY: "auto",
-    padding: "20px",
+    paddingTop: "20px",
+    paddingInline: "20px",
+    paddingBottom: "20px",
     display: "flex",
     flexDirection: "column",
     gap: "12px",
+  },
+  withBottomPadding: {
+    paddingBottom: "70vh",
   },
   empty: { margin: "auto", color: "var(--muted)", fontSize: "15px" },
 });
