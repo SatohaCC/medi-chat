@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator, Callable, Sequence
+from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
 
 from ..application.chat.answer_preparation import (
     prepare_reply as app_prepare_reply,
@@ -20,7 +20,7 @@ from ..application.retrieval.snapshot_contracts import RetrievalSnapshotProvider
 from ..config.generation_settings import GenerationDefaults, read_generation_defaults
 from ..domain.attachment.repositories import AttachmentProductRepository
 from ..domain.retrieval.repositories import EvidenceRepository
-from ..domain.retrieval.value_objects import IntentPolicy
+from ..domain.retrieval.value_objects import Evidence, IntentPolicy
 from .chat_dto_mapper import (
     chat_message_from_api,
     chat_response_from_api,
@@ -32,6 +32,7 @@ from .chat_models import (
 from .chat_models import (
     ChatResponse as ApiChatResponse,
 )
+from .evidence_models import ChatSource
 
 
 class AppChatService:
@@ -68,8 +69,17 @@ class AppChatService:
         self,
         conversation: Sequence[ApiChatMessage],
         product_yj_codes: list[str],
+        *,
+        on_logic_sources: Callable[[list[ChatSource]], Awaitable[None]] | None = None,
     ) -> ApiChatResponse:
         pure_conversation = [chat_message_from_api(m) for m in conversation]
+
+        async def publish_logic(sources: list[Evidence]) -> None:
+            if on_logic_sources is not None:
+                await on_logic_sources(
+                    [ChatSource.model_validate(source.to_dict()) for source in sources]
+                )
+
         pure_reply = await app_prepare_reply(
             pure_conversation,
             product_yj_codes,
@@ -79,6 +89,7 @@ class AppChatService:
             keyword_extractor=self.keyword_extractor,
             intent_policy=self.intent_policy,
             snapshot_provider=self.snapshot_provider,
+            on_logic_sources=publish_logic if on_logic_sources is not None else None,
         )
         return chat_response_to_api(pure_reply)
 

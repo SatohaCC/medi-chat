@@ -12,6 +12,7 @@ from ..application.chat.stream_closing import closing_stream
 from .chat_models import ChatMessage
 from .chat_service import AppChatService as ChatService
 from .dependencies import get_chat_service
+from .evidence_models import ChatSource
 from .medicine_models import YJCode
 
 ALLOWED_PROVIDER_NAMES: set[str] = {"openai", "gemini"}
@@ -138,8 +139,16 @@ async def stream_chat_response(
                 await websocket.send_json(
                     {"type": "retrieval_status", "stage": "jev_searching"}
                 )
+
+            async def publish_logic(sources: list[ChatSource]) -> None:
+                await websocket.send_json(
+                    {"type": "sources", "sources": [s.model_dump() for s in sources]}
+                )
+
             reply = await service.prepare_reply(
-                payload.messages, payload.product_yj_codes
+                payload.messages,
+                payload.product_yj_codes,
+                on_logic_sources=publish_logic if jev_was_searched else None,
             )
 
             if not reply.needs_clarification:

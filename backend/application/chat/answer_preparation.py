@@ -8,7 +8,7 @@ from ...domain.retrieval.repositories import EvidenceRepository
 from ...domain.retrieval.value_objects import Evidence, IntentPolicy
 from ..retrieval.intent_contracts import IntentClassifier
 from ..retrieval.keyword_contracts import KeywordExtractor
-from ..retrieval.retrieve_evidence import retrieve_evidence
+from ..retrieval.retrieve_evidence import SourcesCallback, retrieve_evidence
 from ..retrieval.snapshot_contracts import RetrievalSnapshotProvider
 from .chat_models import ChatMessage, ChatResponse
 
@@ -38,6 +38,7 @@ async def prepare_reply(
     keyword_extractor: KeywordExtractor,
     intent_policy: IntentPolicy,
     snapshot_provider: RetrievalSnapshotProvider | None = None,
+    on_logic_sources: SourcesCallback | None = None,
 ) -> ChatResponse:
     message = next(
         (item.content for item in reversed(conversation) if item.role == "user"), ""
@@ -51,6 +52,7 @@ async def prepare_reply(
         keyword_extractor=keyword_extractor,
         intent_policy=intent_policy,
         snapshot_provider=snapshot_provider,
+        on_logic_sources=on_logic_sources,
     )
     confirmation = (
         _PRODUCT_CONFIRMATIONS[result.product_identity_reason]

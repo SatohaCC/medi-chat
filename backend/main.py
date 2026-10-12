@@ -30,6 +30,7 @@ from .infrastructure.llm.provider_factory import create_llm_provider
 from .infrastructure.morphology.janome_keyword_extractor import (
     JanomeKeywordExtractor,
 )
+from .infrastructure.morphology.keyword_extraction import get_janome_tokenizer
 from .infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,
 )
@@ -81,6 +82,7 @@ def create_app(
         await asyncio.to_thread(
             verify_index_readiness, settings.structured_dir, settings.index_path
         )
+        await asyncio.to_thread(get_janome_tokenizer)
         engine = create_readonly_engine(settings.index_path)
         workers = ReadWorkers(max_workers=4)
         application.state.index_engine = engine
