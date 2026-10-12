@@ -11,13 +11,17 @@
       "app/**",
       "e2e/**",
       "e2e-real/**",
+      "manual-e2e/**",
       "scripts/**",
-      "components/**",
-      "lib/**",
+      "features/**",
+      "shared/**",
+      "styles/**",
       "*.ts",
       "*.tsx",
       "*.js",
       "*.jsx",
+      "*.mjs",
+      "*.cjs",
       "*.json"
     ]
   },
@@ -27,7 +31,13 @@
     "indentWidth": 2,
     "lineWidth": 90
   },
-  "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
   "linter": {
     "enabled": true,
     "rules": {
@@ -36,7 +46,13 @@
         "noSvgWithoutTitle": "off"
       },
       "suspicious": {
-        "noArrayIndexKey": "off"
+        "noArrayIndexKey": "off",
+        "noUnknownAtRules": {
+          "level": "error",
+          "options": {
+            "ignore": ["stylex"]
+          }
+        }
       }
     }
   },

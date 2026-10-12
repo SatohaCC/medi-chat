@@ -27,7 +27,7 @@ def section_definition(
     parent = parents.get(element)
     if parent is None:
         return None
-    ancestor = parent
+    ancestor: ET.Element | None = parent
     while ancestor is not None:
         ancestor_name = tag_name(ancestor)
         definition = xml_settings.sections_by_xml_context.get((ancestor_name, name))
@@ -49,7 +49,7 @@ def make_section_index(
     xml_settings: PmdaXmlSettings | None = None,
 ) -> tuple[list[dict[str, Any]], dict[ET.Element, dict[str, Any]]]:
     index = []
-    by_element = {}
+    by_element: dict[ET.Element, dict[str, Any]] = {}
     for element in root.iter():
         name = tag_name(element)
         definition = section_definition(element, parents, xml_settings=xml_settings)
@@ -103,6 +103,40 @@ def reference_section_code(
     Typed references preserve the original numbered destination within a section.
     """
     section = nearest_section(element, parents, section_by_element)
+
+    def list_scope(ordered: ET.Element) -> ET.Element:
+        owner = parents[ordered]
+        container = parents.get(owner)
+        # SimpleList Item groups carry headings, while their numbered lists
+        # continue within the shared container. A numbered Item owns its own
+        # nested numbering and must not inherit another parent's count.
+        if (
+            tag_name(owner) == "Item"
+            and container is not None
+            and tag_name(container) == "SimpleList"
+        ):
+            return container
+        return owner
+
+    def item_number(item: ET.Element, ordered: ET.Element) -> int:
+        scope = list_scope(ordered)
+        offset = 0
+        for candidate in scope.iter():
+            if (
+                tag_name(candidate) != "OrderedList"
+                or list_scope(candidate) is not scope
+            ):
+                continue
+            if nearest_section(candidate, parents, section_by_element) is not section:
+                continue
+            if candidate.attrib.get("numberContinued") != "true":
+                offset = 0
+            items = [child for child in candidate if tag_name(child) == "Item"]
+            if candidate is ordered:
+                return offset + items.index(item) + 1
+            offset += len(items)
+        raise ValueError("Numbered item is outside its list scope")
+
     suffix = []
     current: ET.Element | None = element
     while current is not None and current not in section_by_element:
@@ -112,7 +146,6 @@ def reference_section_code(
             and parent is not None
             and tag_name(parent) == "OrderedList"
         ):
-            items = [child for child in parent if tag_name(child) == "Item"]
-            suffix.append(str(items.index(current) + 1))
+            suffix.append(str(item_number(current, parent)))
         current = parent
     return ".".join((section["code"], *reversed(suffix)))

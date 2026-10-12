@@ -478,7 +478,12 @@ class PmdaXmlDecoder:
                     if "id" in element.attrib
                 ),
             )
-        except AttachmentDomainError, DomainValidationError, ValueError, TypeError:
+        except (
+            AttachmentDomainError,
+            DomainValidationError,
+            ValueError,
+            TypeError,
+        ):
             raise InvalidAttachment(
                 "invalid_document_structure", "Original document structure is invalid"
             ) from None

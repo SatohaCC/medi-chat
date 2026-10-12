@@ -1,0 +1,35 @@
+import * as stylex from "@stylexjs/stylex";
+export const styles = stylex.create({
+  main: {
+    flex: "1",
+    minHeight: "0",
+    overflowY: "auto",
+    padding: "20px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+  },
+  form: {
+    display: "flex",
+    gap: "8px",
+    paddingBlock: "16px",
+    paddingInline: "20px",
+    borderTopWidth: "1px",
+    borderTopStyle: "solid",
+    borderTopColor: "var(--border)",
+  },
+  fileInput: {
+    flex: "1",
+    paddingBlock: "10px",
+    paddingInline: "14px",
+    backgroundColor: "var(--assistant-bg)",
+    color: "var(--fg)",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderRadius: "8px",
+    fontSize: "15px",
+    outline: "none",
+    borderColor: { default: "var(--border)", ":focus": "var(--user-bg)" },
+    opacity: { default: null, ":disabled": "0.5" },
+  },
+});

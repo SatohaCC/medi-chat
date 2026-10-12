@@ -25,7 +25,7 @@ pnpm-workspaceの`python.enabled=false`でpnpmの別Python環境管理を停止�
 | lintとformat確認 | `pnpm --filter frontend exec biome check .` |
 | 型 | `pnpm typecheck:frontend` |
 | ビルド | `pnpm build` |
-| 接続ヘルパー単体 | `node --experimental-strip-types --test frontend/app/lib/chatWebSocket.test.mjs`（対応するNodeが必要） |
+| 接続ヘルパー単体 | `node --experimental-strip-types --test frontend/features/chat/api/chatWebSocket.test.mjs`（対応するNodeが必要） |
 | チャット画面（Playwright / Chromium） | 初回は`pnpm --filter frontend exec playwright install chromium`、実行は`pnpm test:e2e` |
 
 ルート`pnpm test`はbackend（旧data_toolsテスト移行済み）であり、frontendのNodeテストを含まない。ブラウザ・実サーバー接続も別に確認する。
@@ -33,6 +33,27 @@ pnpm-workspaceの`python.enabled=false`でpnpmの別Python環境管理を停止�
 モック層はチャット画面とイベントを検証する。実接続層は一時DB・実backendを使い、外部LLM/検出SDKの固定ダブルは実通信として扱わない。
 
 明示的な単独実行は`pnpm --filter frontend test:e2e:mock`/`test:e2e:real`。実接続は専用Next/backendと一時SQLite/import rootを使い、APIをinterceptせず、登録・同YJ置換・一部旧版保持・参照0旧ファイル削除・同原本再送の非復活・OS再起動後GET/候補/検索の維持を検証する。更新対象の一時DBと、変更してはいけない運用DB/原物/backupを区別する。fresh prepared正常系に加えて、実旧manifest DBの整合copy→明示Alembic/初期登録CLI→同copy実browserの回帰を維持する。copy suiteでは外部LLM keysを空・dotenv無効にし、configured smokeへ漏らさない。Next試験出力は`.next-e2e-mock`/`.next-e2e-real`（必要時buildは`.next-e2e-build`）で通常`.next`と分離する。
+
+## 原本XML・添付文書の検証規則（内容・文脈保持と許容される表示形式差）
+
+PMDA XML原本から添付文書データへの変換・照合（Oracle検証）では、原文の内容と文脈が完全に保持されていることを必須としつつ、以下の既存の表示形式差を許容される表現として判定規則に明記する。
+
+1. **ブロック順序の緩和（兄弟Detail要素の先行結合）**:
+   - 項目 13, 16.1, 16.6, 17.1 などにおいて、親要素に属する兄弟 Detail 要素が介在する表・図・リスト・脚注より前に結合されて段落化される（例: 16.1 で日本人志願者Detail→図→日本人表→脚注→外国人志願者Detailが、日本人+外国人統合段落→図→日本人表→脚注→外国人表となる等）。
+   - すべての散文（prose）値が完全であり、親・治験・適応症の文脈が保持されている場合は、原本出現順からの並び替えを許容される既存表現とする。
+2. **生成される文脈ラベル・強調段落・山括弧表現**:
+   - 原本見出し（Headers）や一部の親Detailは、文脈ラベルや生成された強調段落（`<strong>`等）として展開される（項目 1, 2, 4, 7, 8, 9.2, 9.7, 16.2等）。
+   - 同一のItem/Header文脈に対応する見出し反復（例: 16.1における複数の`〈単回投与〉`生成）や、既存山括弧の重複（`〈`の二重化等）は生成表示形式として扱い、余分な生XMLノードの混入と誤認しない。
+3. **図（Graphic / Figure）の空段落レンダリング**:
+   - 項目 16.1 および 19 などの図要素は、`figure.reference` にファイル名（例: fig05, fig06）を保持するが、HTMLレンダリングでは空段落 `<p></p>` として出力され、画像バイナリやファイル名文字列はHTML本文に現れない。
+   - 性状 3.2 の InlineGraphic もプレースホルダと原本順を保持していれば、HTML本文上の空段落表現を許容する。
+4. **表の `td` 出力とアクセシビリティヘッダー（`th` / `scope`）の非付与**:
+   - 表（SimpleTable等）はすべて `<td>` で出力され、`<th>` や `scope` 属性を持たない。原本のヘッダー構造・グリッド・ペイロード列がセルテキストとして保持されている場合、HTML上の `th`/`scope` の欠如を既存表現として受容する。原本に指定がない限り `th`/`scope` を捏造しない。
+   - 相互作用・副作用の生成列タイトルはペイロード列に存在するが、表示ヘッダーセルではない。
+5. **参照（Reference）の集約レベル**:
+   - 相互作用 10.1 および 10.2 の参照は、セル単位ではなく表/ブロック単位に集約され、原本の出現順・対象が表参照として保持される（SimpleTableのセル参照はセル単位で保持）。この集約レベルの差を許容する。
+6. **グループ化段落内での参照重複排除**:
+   - グループ化された段落内における同一参照の重複は、初出の順序を保持した上で重複排除される（例: 16.1 で 6 件 → 5 件、16.7 で 25 件 → 22 件）。出現件数の絶対一致ではなく、グループ化された意味論として許容する。
 
 ## 自動修正と最終確認
 

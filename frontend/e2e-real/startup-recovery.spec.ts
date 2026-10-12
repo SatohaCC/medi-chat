@@ -8,6 +8,7 @@ import {
   ensureOwnedRestartPortAvailable,
   ensurePortAvailable,
 } from "../scripts/owned-server.mjs";
+import { restoreHistoricalManifest } from "./helpers/sqlite-fixture";
 
 const root = resolve("..");
 const evidence = resolve(
@@ -29,7 +30,7 @@ test("TC117 real legacy migration O→N(A)→P(B), search cleanup replay restart
   request,
 }, testInfo) => {
   const isolated = mkdtempSync(join(tmpdir(), "medi-chat-registration-browser-"));
-  const oldIndex = join(root, "data_tools/structured/.chat-search.sqlite3");
+  const oldIndex = restoreHistoricalManifest(root, isolated, process.env);
   const original = digest(readFileSync(oldIndex));
   const environment = {
     ...process.env,
@@ -46,7 +47,10 @@ test("TC117 real legacy migration O→N(A)→P(B), search cleanup replay restart
     MEDI_CHAT_DATABASE_URL: `sqlite:///${join(isolated, "index.sqlite3").replaceAll("\\", "/")}`,
     MEDI_CHAT_IMPORT_DIR: join(isolated, "imports"),
   };
-  const python = join(root, "backend/.venv/Scripts/python.exe");
+  const python =
+    process.platform === "win32"
+      ? join(root, "backend/.venv/Scripts/python.exe")
+      : join(root, "backend/.venv/bin/python");
   const command = (args: string[]) =>
     spawnSync(python, args, {
       cwd: root,

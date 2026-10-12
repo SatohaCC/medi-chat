@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { expect, test } from "@playwright/test";
 import { ensurePortAvailable } from "../scripts/owned-server.mjs";
+import { restoreHistoricalManifest } from "./helpers/sqlite-fixture";
 
 const root = resolve("..");
 const evidence = resolve(
@@ -17,7 +18,10 @@ test("TC137 real browser three confirmations and normal single/pair without API 
 }) => {
   const isolated = mkdtempSync(join(tmpdir(), "medi-chat-confirmation-browser-"));
   const metricsFile = join(isolated, "sdk-metrics.json");
-  const python = join(root, "backend/.venv/Scripts/python.exe");
+  const python =
+    process.platform === "win32"
+      ? join(root, "backend/.venv/Scripts/python.exe")
+      : join(root, "backend/.venv/bin/python");
   const environment = {
     ...process.env,
     PYTHON_DOTENV_DISABLED: "1",
@@ -29,13 +33,9 @@ test("TC137 real browser three confirmations and normal single/pair without API 
     TYPESAFE_API_KEY: "",
     ALLOWED_ORIGINS: "http://127.0.0.1:3110",
   };
+  const oldIndex = restoreHistoricalManifest(root, isolated, environment);
   for (const args of [
-    [
-      "--root",
-      isolated,
-      "--old-index",
-      join(root, "data_tools/structured/.chat-search.sqlite3"),
-    ],
+    ["--root", isolated, "--old-index", oldIndex],
     ["--root", isolated, "--initialize"],
   ]) {
     const result = spawnSync(
@@ -166,7 +166,7 @@ test("TC137 real browser three confirmations and normal single/pair without API 
     );
     const panels = page.getByRole("complementary", { name: "添付文書の根拠引用" });
     await expect(panels).toHaveCount(2);
-    const cards = panels.last().locator(".source-evidence-card");
+    const cards = panels.last().locator("[data-evidence-card]");
     await expect(cards).toHaveCount(10);
     const originalOracle: { sections: Record<string, { unit_id: string }> }[] =
       JSON.parse(

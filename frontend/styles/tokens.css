@@ -1,0 +1,16 @@
+:root {
+  --bg: #0a0a0a;
+  --fg: #ededed;
+  --muted: #888;
+  --border: #222;
+  --user-bg: #2563eb;
+  --user-fg: #fff;
+  --assistant-bg: #1a1a1a;
+  --error: #ef4444;
+  --action-hover-bg: #1d4ed8;
+  --control-padding-block: 10px;
+  --control-padding-inline: 20px;
+  --control-radius: 8px;
+  --control-font-size: 15px;
+  --control-font-weight: 500;
+}

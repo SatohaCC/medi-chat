@@ -3,6 +3,7 @@ import json
 import os
 import re
 import shutil
+import sys
 import time
 import uuid
 from collections.abc import Callable, Iterator
@@ -76,7 +77,7 @@ class FileAttachmentImportStore:
             ):
                 raise ValueError("saved identity differs")
             return result
-        except OSError, ValueError, TypeError, KeyError:
+        except (OSError, ValueError, TypeError, KeyError):
             raise ImportConflict(
                 "storage_conflict", "Stored import is inconsistent"
             ) from None
@@ -238,7 +239,7 @@ class FileAttachmentImportStore:
     @staticmethod
     def _file_lock(stream: BinaryIO, *, unlock: bool) -> None:
         stream.seek(0)
-        if os.name == "nt":
+        if sys.platform == "win32":
             import msvcrt
 
             msvcrt.locking(

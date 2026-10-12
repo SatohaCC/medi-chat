@@ -10,14 +10,18 @@
     "dev:frontend": "next dev",
     "build": "next build",
     "lint": "biome lint .",
+    "lint:stylex": "eslint --config eslint.stylex.config.mjs --no-error-on-unmatched-pattern app/**/*.ts app/**/*.tsx features/**/*.ts features/**/*.tsx shared/**/*.ts shared/**/*.tsx styles/**/*.ts",
     "format": "biome format --write .",
     "check": "biome check --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:ime:manual": "playwright test --config=playwright.ime-manual.config.ts"
   },
   "dependencies": {
+    "@stylexjs/stylex": "0.19.1",
     "lucide-react": "^1.48.0",
     "next": "16.3.6",
     "react": "19.2.8",
+    "react-aria-components": "1.22.1",
     "react-dom": "19.2.8",
     "react-markdown": "^10.1.0",
     "rehype-raw": "^7.0.0",
@@ -27,12 +31,15 @@
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
     "@playwright/test": "^1.64.0",
-    "@tailwindcss/postcss": "^4",
+    "@stylexjs/babel-plugin": "0.19.1",
+    "@stylexjs/eslint-plugin": "0.19.1",
+    "@stylexjs/postcss-plugin": "0.19.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "eslint": "10.12.0",
+    "typescript": "^5",
+    "typescript-eslint": "8.71.1"
   }
 }

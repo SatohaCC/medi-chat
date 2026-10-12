@@ -1,13 +1,8 @@
-import { expect, type Page, test, type WebSocketRoute } from "@playwright/test";
-import type { SourceItem, WsServerMessage } from "../app/types/chat";
-
-interface ChatRequest {
-  type: string;
-  provider: string;
-  model: string;
-  product_yj_codes: string[];
-  messages: { role: string; content: string }[];
-}
+import { expect, test } from "@playwright/test";
+import type { SourceItem } from "../features/chat/model/chat";
+import { zeroSelectionBundle } from "./harness/bundle";
+import { openChat } from "./helpers/chat";
+import { visualSource } from "./helpers/presentation";
 
 const source: SourceItem = {
   unit_id: "test-section-2",
@@ -24,72 +19,75 @@ const source: SourceItem = {
   retrieved_by: ["logic"],
 };
 
-async function openChat(page: Page) {
-  const requests: ChatRequest[] = [];
-  let socket: WebSocketRoute | undefined;
-  await page.route("**/api/medicines", (route) =>
-    route.fulfill({
-      json: {
-        generation_id: "chat-gen",
-        items: [
-          {
-            generic_name: "テスト成分",
-            brand_names: ["テスト医薬品A", "テスト医薬品B"],
-            yj_codes: ["3339003F5020", "1141007F1063"],
-            document_ids: ["test-document", "test-document-b"],
-            matched_aliases: [],
-          },
-        ],
-      },
-    }),
-  );
-  // Keep autocomplete data deterministic too; no external API is contacted.
-  await page.route("**/api/medicines/autocomplete", (route) =>
-    route.fulfill({
-      json: {
-        generation_id: "chat-gen",
-        items: [
-          {
-            n: "テスト医薬品A",
-            k: "テストイヤクヒンA",
-            h: "てすといやくひんA",
-            y: "3339003F5020",
-            g: "テスト成分",
-            c: "他",
-          },
-          {
-            n: "テスト医薬品B",
-            k: "テストイヤクヒンB",
-            h: "てすといやくひんB",
-            y: "1141007F1063",
-            g: "テスト成分",
-            c: "他",
-          },
-        ],
-      },
-    }),
-  );
-  await page.routeWebSocket("**/api/ws", (ws) => {
-    socket = ws;
-    ws.onMessage((message) => requests.push(JSON.parse(String(message))));
+for (const operation of ["pointer", "Enter", "Space", "input Enter"] as const) {
+  test(`SX-05: ${operation}で一操作につき一回だけ送信する`, async ({ page }) => {
+    const chat = await openChat(page);
+    await chat.input.fill("  確認する質問  ");
+    if (operation === "pointer") await chat.send.click();
+    else if (operation === "input Enter") await chat.input.press("Enter");
+    else {
+      await chat.send.focus();
+      await chat.send.press(operation);
+    }
+    await expect.poll(() => chat.requests.length).toBe(1);
+    expect(chat.requests[0].messages).toEqual([
+      { role: "user", content: "確認する質問" },
+    ]);
+    expect(chat.requests[0].product_yj_codes).toEqual(["3339003F5020"]);
+    await expect(chat.send).toBeDisabled();
+    await page.keyboard.press("Enter");
+    await page.keyboard.press("Space");
+    expect(chat.requests).toHaveLength(1);
+    chat.respond({ type: "text_done" });
+    await expect(chat.input).toBeEnabled();
+    expect(chat.requests).toHaveLength(1);
   });
-  await page.goto("/");
-  await expect(page.getByText("connected", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "テスト医薬品A" })).toBeVisible();
-  return {
-    requests,
-    input: page.getByPlaceholder("確認したい内容を入力", { exact: false }),
-    send: page.getByRole("button", { name: "Send", exact: true }),
-    respond(message: WsServerMessage) {
-      if (!socket) throw new Error("Chat WebSocket is not connected");
-      socket.send(JSON.stringify(message));
-    },
-    async disconnect() {
-      if (!socket) throw new Error("Chat WebSocket is not connected");
-      await socket.close({ code: 1001, reason: "Test connection interruption" });
-    },
-  };
 }
+
+test("SX-R07 / SX-06: 実formとhookで薬剤0の送信禁止と復帰を観測する", async ({
+  page,
+}) => {
+  const bundle = await zeroSelectionBundle();
+  await page.route("**/zero-selection-harness", (route) =>
+    route.fulfill({
+      contentType: "text/html",
+      body: '<!doctype html><html lang="ja"><body><div id="root"></div><script src="/zero-selection-harness.js"></script></body></html>',
+    }),
+  );
+  await page.route("**/zero-selection-harness.js", (route) =>
+    route.fulfill({
+      contentType: "application/javascript",
+      body: bundle,
+    }),
+  );
+  const chat = await openChat(page);
+  await page.goto("/zero-selection-harness");
+  await expect(page.getByText("connected", { exact: true })).toBeVisible();
+  await chat.input.fill("確認する質問");
+  await expect(chat.send).toBeDisabled();
+  await chat.input.press("Enter");
+  expect(chat.requests).toHaveLength(0);
+  await page.getByRole("button", { name: "選択を復帰" }).click();
+  await expect(chat.send).toBeEnabled();
+  await chat.input.press("Enter");
+  await expect.poll(() => chat.requests.length).toBe(1);
+  expect(chat.requests[0].product_yj_codes).toEqual(["3339003F5020"]);
+});
+
+test("SX-06: 切断中は送信できず、復帰後に再開する", async ({ page }) => {
+  const chat = await openChat(page);
+  await chat.input.fill("確認する質問");
+  await chat.disconnect();
+  await expect(chat.input).toBeDisabled();
+  await expect(chat.send).toBeDisabled();
+  await page.keyboard.press("Enter");
+  expect(chat.requests).toHaveLength(0);
+  await expect(page.getByText("connected", { exact: true })).toBeVisible();
+  await expect(chat.input).toBeEnabled();
+  await chat.send.click();
+  await expect.poll(() => chat.requests.length).toBe(1);
+  chat.respond({ type: "text_done" });
+});
 
 test("空白の質問を送れず、回答中は追加入力・二重送信を防ぐ", async ({ page }) => {
   const chat = await openChat(page);
@@ -105,7 +103,9 @@ test("空白の質問を送れず、回答中は追加入力・二重送信を�
   await expect(chat.input).toBeDisabled();
   await expect(chat.send).toBeDisabled();
   chat.respond({ type: "text_delta", content: "テスト回答です。" });
-  await expect(page.locator(".message.assistant")).toContainText("テスト回答です。");
+  await expect(page.locator('[data-message-role="assistant"]')).toContainText(
+    "テスト回答です。",
+  );
   await expect(chat.input).toBeDisabled();
   chat.respond({ type: "text_done" });
   await expect(chat.input).toBeEnabled();
@@ -118,10 +118,8 @@ test("薬剤・モデルを指定して質問し、回答と根拠を表示し�
 }) => {
   const chat = await openChat(page);
   await page.getByRole("button", { name: "テスト医薬品B" }).click();
-  await page
-    .locator("header")
-    .getByRole("combobox")
-    .selectOption("gemini:gemini-3.8-flash");
+  await page.getByRole("button", { name: "回答モデル" }).click();
+  await page.getByRole("option", { name: "Google (Gemini 3.8 Flash)" }).click();
   await chat.input.fill("  根拠を確認したい  ");
   await chat.input.press("Enter");
   await expect.poll(() => chat.requests.length).toBe(1);
@@ -132,16 +130,18 @@ test("薬剤・モデルを指定して質問し、回答と根拠を表示し�
     product_yj_codes: ["3339003F5020", "1141007F1063"],
     messages: [{ role: "user", content: "根拠を確認したい" }],
   });
-  await expect(page.locator(".message.user")).toHaveText("根拠を確認したい");
+  await expect(page.locator('[data-message-role="user"]')).toHaveText("根拠を確認したい");
   chat.respond({ type: "retrieval_status", stage: "unavailable" });
   chat.respond({ type: "sources", sources: [source] });
   chat.respond({ type: "text_delta", content: "最初の" });
-  await expect(page.locator(".message.assistant .bubble")).toContainText("最初の");
+  await expect(
+    page.locator('[data-message-role="assistant"] [data-message-bubble]'),
+  ).toContainText("最初の");
   chat.respond({ type: "text_delta", content: "テスト回答です。" });
   chat.respond({ type: "text_done" });
-  await expect(page.locator(".message.assistant .bubble")).toContainText(
-    "最初のテスト回答です。",
-  );
+  await expect(
+    page.locator('[data-message-role="assistant"] [data-message-bubble]'),
+  ).toContainText("最初のテスト回答です。");
   const evidence = page.getByRole("complementary", { name: "添付文書の根拠引用" });
   await expect(evidence).toContainText(source.excerpt);
   await expect(evidence).toContainText("禁忌");
@@ -156,7 +156,7 @@ test("薬剤・モデルを指定して質問し、回答と根拠を表示し�
   ]);
   chat.respond({ type: "text_delta", content: "続きのテスト回答です。" });
   chat.respond({ type: "text_done" });
-  await expect(page.locator(".message.assistant").last()).toContainText(
+  await expect(page.locator('[data-message-role="assistant"]').last()).toContainText(
     "続きのテスト回答です。",
   );
 });
@@ -167,9 +167,9 @@ test("サーバーエラーを表示し、エラー回答を履歴に含めず�
   await chat.send.click();
   await expect.poll(() => chat.requests.length).toBe(1);
   chat.respond({ type: "error", content: "テスト用サーバーエラー" });
-  await expect(page.locator(".message.assistant.error")).toContainText(
-    "テスト用サーバーエラー",
-  );
+  await expect(
+    page.locator('[data-message-role="assistant"][data-message-error="true"]'),
+  ).toContainText("テスト用サーバーエラー");
   await expect(chat.input).toBeEnabled();
   await chat.input.fill("再送信する質問");
   await chat.send.click();
@@ -180,7 +180,7 @@ test("サーバーエラーを表示し、エラー回答を履歴に含めず�
   ]);
   chat.respond({ type: "text_delta", content: "回復後のテスト回答です。" });
   chat.respond({ type: "text_done" });
-  await expect(page.locator(".message.assistant").last()).toContainText(
+  await expect(page.locator('[data-message-role="assistant"]').last()).toContainText(
     "回復後のテスト回答です。",
   );
 });
@@ -193,7 +193,7 @@ test("切断された回答を中断と表示し、再接続後の履歴から�
   await chat.send.click();
   await expect.poll(() => chat.requests.length).toBe(1);
   chat.respond({ type: "text_delta", content: "回答途中" });
-  await expect(page.locator(".message.assistant")).toContainText("回答途中");
+  await expect(page.locator('[data-message-role="assistant"]')).toContainText("回答途中");
   await chat.disconnect();
   await expect(
     page.getByText("通信が切断され、回答が中断されました。未完了の回答です。"),
@@ -208,7 +208,60 @@ test("切断された回答を中断と表示し、再接続後の履歴から�
   ]);
   chat.respond({ type: "text_delta", content: "再接続後の回答です。" });
   chat.respond({ type: "text_done" });
-  await expect(page.locator(".message.assistant").last()).toContainText(
+  await expect(page.locator('[data-message-role="assistant"]').last()).toContainText(
     "再接続後の回答です。",
   );
+});
+
+test("SX-26/27: section/all/zero selection, references and safe Markdown remain", async ({
+  page,
+}) => {
+  const chat = await openChat(page);
+  await chat.input.fill("原文を確認");
+  await chat.send.click();
+  const second = {
+    ...visualSource,
+    unit_id: "second-unit",
+    section: { code: "2", title: "禁忌" },
+    excerpt: "禁忌の正文",
+    retrieved_by: ["logic"] as const,
+  };
+  chat.respond({
+    type: "sources",
+    sources: [visualSource, { ...second, retrieved_by: ["logic"] }],
+  });
+  chat.respond({ type: "retrieval_status", stage: "complete" });
+  chat.respond({
+    type: "text_delta",
+    content:
+      "### Markdownの見出し\n\n- 原文の一覧\n\n```text\n安全なcode\n```\n\n|列|値|\n|---|---|\n|正文|保持|\n\n[安全なURL](https://example.invalid/safe) [危険なURL](javascript:alert(1))\n\n<script>alert(2)</script>",
+  });
+  chat.respond({ type: "text_done" });
+  const evidence = page.getByRole("complementary");
+  await expect(evidence).toContainText("合計：2件");
+  await evidence.getByRole("button", { name: "[2] 禁忌 (1)", exact: true }).click();
+  await expect(evidence.getByText("禁忌の正文", { exact: true })).toBeVisible();
+  await expect(evidence.getByRole("heading", { name: "原文の見出し" })).not.toBeVisible();
+  await evidence.getByRole("button", { name: "すべて (2)", exact: true }).click();
+  await expect(evidence.getByRole("heading", { name: "原文の見出し" })).toBeVisible();
+  await expect(
+    evidence.locator('a[href="https://example.invalid/reference#2.12"]'),
+  ).toHaveCount(2);
+  const safe = page.getByRole("link", { name: "安全なURL", exact: true });
+  await expect(safe).toHaveAttribute("href", "https://example.invalid/safe");
+  await expect(safe).toHaveAttribute("target", "_blank");
+  await expect(safe).toHaveAttribute("rel", "noopener noreferrer");
+  await expect(page.locator('a[href^="javascript:"]')).toHaveCount(0);
+  await expect(page.locator("main script")).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", { name: "Markdownの見出し", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText("安全なcode", { exact: true })).toBeVisible();
+  await chat.input.fill("根拠0");
+  await chat.send.click();
+  chat.respond({ type: "sources", sources: [] });
+  chat.respond({ type: "retrieval_status", stage: "complete" });
+  chat.respond({ type: "text_delta", content: "根拠0の回答" });
+  chat.respond({ type: "text_done" });
+  await expect(page.getByRole("complementary").last()).toContainText("合計：0件");
 });

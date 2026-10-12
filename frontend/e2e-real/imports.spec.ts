@@ -9,6 +9,11 @@ import {
   ensureOwnedRestartPortAvailable,
   ensurePortAvailable,
 } from "../scripts/owned-server.mjs";
+import {
+  assertImportSemantic,
+  logicalSnapshot,
+  pythonBinary,
+} from "./helpers/sqlite-fixture";
 
 const root = resolve("..");
 const evidence = resolve(
@@ -28,7 +33,7 @@ test("real browser upload, resend, process restart GET and active registration",
     if (process) await ensureOwnedRestartPortAvailable(3211);
     else await ensurePortAvailable(3211);
     process = spawn(
-      join(root, "backend/.venv/Scripts/python.exe"),
+      pythonBinary(root),
       [
         "-m",
         "backend.tests.attachment_import_e2e_server",
@@ -107,7 +112,9 @@ test("real browser upload, resend, process restart GET and active registration",
       },
     });
     const index = join(isolated, "index.sqlite3");
-    const initial = hash(readFileSync(index));
+    const initialFileHash = hash(readFileSync(index));
+    const initial = logicalSnapshot(root, index);
+    expect(initial.integrity).toBe("ok");
     const medicinesBefore = await (
       await request.get("http://127.0.0.1:3211/api/medicines")
     ).json();
@@ -156,6 +163,42 @@ test("real browser upload, resend, process restart GET and active registration",
       fullPage: true,
     });
     const location = response.headers().location;
+    const registered = logicalSnapshot(root, index);
+    expect(registered.integrity).toBe("ok");
+    expect(registered).not.toEqual(initial);
+    const registeredData = JSON.stringify(registered.tables);
+    expect(registeredData).toContain(result.document_id);
+    expect(registeredData).toContain(result.source_sha256);
+    expect(registeredData).toContain("3339003F5020");
+    expect(registeredData).toContain(result.generation_id);
+    const receipts = registered.tables.registration_receipts;
+    const receipt = receipts.rows.find(
+      (row) => row[receipts.columns.indexOf("document_id")] === result.document_id,
+    );
+    expect(receipt?.[receipts.columns.indexOf("source_sha256")]).toBe(
+      result.source_sha256,
+    );
+    expect(receipt?.[receipts.columns.indexOf("sequence")]).toBe(
+      result.registration_sequence,
+    );
+    const candidates = await (
+      await request.get("http://127.0.0.1:3211/api/medicines")
+    ).json();
+    expect(candidates.generation_id).toBe(result.generation_id);
+    expect(candidates.generation_id).not.toBe(medicinesBefore.generation_id);
+    // Observe the old byte oracle separately; WAL pages need not change the main file.
+    const walDiagnosis = JSON.stringify({
+      initialFileHash,
+      registeredFileHash: hash(readFileSync(index)),
+      walBytes: readFileSync(`${index}-wal`).length,
+      initial,
+      registered,
+    });
+    writeFileSync(join(evidence, "wal-diagnosis.json"), walDiagnosis);
+    await testInfo.attach("wal-diagnosis", {
+      body: walDiagnosis,
+      contentType: "application/json",
+    });
     const repeated = page.waitForResponse(
       (response) =>
         response.url().endsWith("/api/attachment-imports") &&
@@ -165,6 +208,11 @@ test("real browser upload, resend, process restart GET and active registration",
     const repeat = await repeated;
     expect(repeat.status()).toBe(200);
     expect(repeat.headers().location).toBe(location);
+    const repeatResult = await repeat.json();
+    expect(repeatResult.registration_sequence).toBe(result.registration_sequence);
+    expect(repeatResult.generation_id).toBe(result.generation_id);
+    expect(repeatResult.reused).toBe(true);
+    expect(logicalSnapshot(root, index)).toEqual(registered);
     const version = join(
       isolated,
       "imports/versions",
@@ -179,14 +227,12 @@ test("real browser upload, resend, process restart GET and active registration",
     expect(units).toHaveLength(result.search_unit_count);
     expect(units).toEqual(expectedUnits);
     expect(readdirSync(version)).toContain("document.json");
-    expect(hash(readFileSync(index))).not.toBe(initial);
-    const publishedHash = hash(readFileSync(index));
     await stop();
     await start();
     const saved = await request.get(`http://127.0.0.1:3211${location}`);
     expect(saved.status()).toBe(200);
     expect(await saved.json()).toEqual(result);
-    expect(hash(readFileSync(index))).toBe(publishedHash);
+    expect(logicalSnapshot(root, index)).toEqual(registered);
     const medicinesAfter = await (
       await request.get("http://127.0.0.1:3211/api/medicines")
     ).json();
@@ -195,13 +241,26 @@ test("real browser upload, resend, process restart GET and active registration",
     expect(
       medicinesAfter.items.flatMap((item: { yj_codes: string[] }) => item.yj_codes),
     ).toContain("3339003F5020");
+    expect(assertImportSemantic(root, index)).toEqual({
+      sections: 40,
+      semantic: "passed",
+    });
     await testInfo.attach("real-state", {
-      body: JSON.stringify({ isolated, result, location, index_sha256: initial }),
+      body: JSON.stringify({
+        isolated,
+        result,
+        location,
+        initial_logical_sha256: initial.logical_sha256,
+      }),
       contentType: "application/json",
     });
     writeFileSync(
       join(evidence, "real-state.json"),
-      JSON.stringify({ isolated, result, location, index_sha256: initial }, null, 2),
+      JSON.stringify(
+        { isolated, result, location, initial_logical_sha256: initial.logical_sha256 },
+        null,
+        2,
+      ),
     );
   } finally {
     await stop();

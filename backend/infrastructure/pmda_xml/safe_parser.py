@@ -47,7 +47,7 @@ def parse_source(source: bytes) -> tuple[ET.Element, list[dict[str, object]]]:
         raise UnsupportedAttachment("unsupported_input", "Input is not supported XML")
     try:
         text = _decode_text(source)
-    except UnicodeError, LookupError:
+    except (UnicodeError, LookupError):
         raise InvalidAttachment("xml_parse_error", "XML encoding is invalid") from None
     if not text.lstrip("\ufeff \r\n\t").startswith("<"):
         raise UnsupportedAttachment("unsupported_input", "Input is not supported XML")
@@ -131,7 +131,7 @@ def parse_source(source: bytes) -> tuple[ET.Element, list[dict[str, object]]]:
                 target=ET.TreeBuilder(insert_comments=True, insert_pis=True)
             ),
         )
-    except expat.ExpatError, ET.ParseError, ValueError:
+    except (expat.ExpatError, ET.ParseError, ValueError):
         raise InvalidAttachment("xml_parse_error", "XML cannot be parsed") from None
     if any(
         isinstance(element.tag, str)
