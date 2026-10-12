@@ -27,7 +27,7 @@ def section_definition(
     parent = parents.get(element)
     if parent is None:
         return None
-    ancestor = parent
+    ancestor: ET.Element | None = parent
     while ancestor is not None:
         ancestor_name = tag_name(ancestor)
         definition = xml_settings.sections_by_xml_context.get((ancestor_name, name))
@@ -49,7 +49,7 @@ def make_section_index(
     xml_settings: PmdaXmlSettings | None = None,
 ) -> tuple[list[dict[str, Any]], dict[ET.Element, dict[str, Any]]]:
     index = []
-    by_element = {}
+    by_element: dict[ET.Element, dict[str, Any]] = {}
     for element in root.iter():
         name = tag_name(element)
         definition = section_definition(element, parents, xml_settings=xml_settings)
