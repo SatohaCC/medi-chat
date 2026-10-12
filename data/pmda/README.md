@@ -83,3 +83,9 @@ uv run --project backend python -m backend.infrastructure.cli.build_search_index
 保存済みJSON内の旧source pathは歴史的出典として保持しています。元データを再生成せず移行しました。
 明示MEDI_CHAT_STRUCTURED_DIR/MEDI_CHAT_INDEX_PATH/MEDI_CHAT_DATABASE_URLは優先を維持します。旧pathの運用設定は移行先へ明示変更してください。明示旧DBを別DBへ自動切替えません。
 新しいWeb版はpublisherが即時公開します。手動でstructuredへ配置する操作や、Web登録後のbuild_search_index実行は不要です。
+
+## ローカルデータについて
+
+実添付文書のXML・図、本文を含む構造化JSON/JSONL、登録世代データ、実データ由来のoracle・SQLite fixtureはGit管理対象外です。各自のローカル環境に用意し、リポジトリへ追加しないでください。項目体系の定義・変換コードと、合成データのテストは引き続き管理します。
+
+実データを使う回帰テストにはローカルの原本・派生データ・fixtureが必要です。データがないcheckoutで、その検証が成功したとは扱いません。今回の除去ではローカルファイルを保持し、コードやテストの期待値は変更していません。
