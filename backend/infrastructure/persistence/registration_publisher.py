@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from sqlalchemy import delete, insert, select, update
-from sqlalchemy.engine import Connection
+from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.exc import SQLAlchemyError
 
 from ...application.attachment_import.import_errors import (
@@ -121,8 +121,10 @@ class SqliteRegistrationPublisher:
         fault: Callable[[str], None] = lambda phase: None,
         allowed_roots: tuple[Path, ...] = (),
         xml_settings: PmdaXmlSettings | None = None,
+        engine: Engine | None = None,
     ) -> None:
         self.index_path = index_path.resolve()
+        self._shared_engine = engine
         self._xml_settings = (
             xml_settings
             if xml_settings is not None
@@ -136,7 +138,14 @@ class SqliteRegistrationPublisher:
         return registration_lock(self.index_path, check_cancel)
 
     def _engine(self):
+        if self._shared_engine is not None:
+            return self._shared_engine
         return create_sqlite_engine("sqlite:///" + self.index_path.as_posix())
+
+    def _dispose_engine(self, engine: Engine) -> None:
+        # Injected pools belong to the composition root, not individual operations.
+        if engine is not self._shared_engine:
+            engine.dispose()
 
     def _owned(self, paths: tuple[Path, ...]) -> list[dict[str, str]]:
         files = []
@@ -465,7 +474,7 @@ class SqliteRegistrationPublisher:
                         attempt.path.unlink(missing_ok=True)
                     else:
                         attempt.finish()
-            engine.dispose()
+            self._dispose_engine(engine)
 
     def _build(
         self,
@@ -829,7 +838,7 @@ class SqliteRegistrationPublisher:
         try:
             return self._result(engine, f"{document_id}:{digest}", get=True)
         finally:
-            engine.dispose()
+            self._dispose_engine(engine)
 
     def recover(self) -> None:
         from ..sources.registration_source import read_registered_snapshot
@@ -843,4 +852,4 @@ class SqliteRegistrationPublisher:
                     raise RuntimeError("initial_registration_required")
                 self._cleanup(engine)
         finally:
-            engine.dispose()
+            self._dispose_engine(engine)

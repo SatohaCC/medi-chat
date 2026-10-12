@@ -43,6 +43,7 @@ from .infrastructure.persistence.readonly_engine import create_readonly_engine
 from .infrastructure.persistence.registration_publisher import (
     SqliteRegistrationPublisher,
 )
+from .infrastructure.persistence.sqlite_engine import create_sqlite_engine
 from .infrastructure.persistence.sqlite_recovery import recover_sqlite_journal
 from .infrastructure.pmda_xml.artifact_mapping import PmdaArtifactEncoder
 from .infrastructure.pmda_xml.decoder import PmdaXmlDecoder
@@ -136,6 +137,7 @@ def create_app(
             provider_factory=llm_provider_factory or create_llm_provider,
             defaults=read_generation_defaults,
         )
+        registration_engine = None
         try:
             if _readonly_probe:
                 application.state.generation_runtime = ReadOnlyGenerationProbe(
@@ -147,10 +149,12 @@ def create_app(
                 FileAttachmentImportStore,
                 import_directory or resolve_import_directory(),
             )
+            registration_engine = create_sqlite_engine(settings.database_url)
             publisher = SqliteRegistrationPublisher(
                 settings.index_path,
                 store,
                 xml_settings=definitions.xml_settings,
+                engine=registration_engine,
                 allowed_roots=(
                     settings.structured_dir,
                     settings.structured_dir.parent / "originals",
@@ -173,6 +177,7 @@ def create_app(
                 )
                 application.state.generation_runtime = runtime
                 application.state.chat_service.snapshot_provider = runtime
+                await runtime.warmup()
                 yield
             finally:
                 await import_service.aclose()
@@ -183,7 +188,11 @@ def create_app(
                 try:
                     await workers.aclose()
                 finally:
-                    await asyncio.to_thread(engine.dispose)
+                    try:
+                        if registration_engine is not None:
+                            await asyncio.to_thread(registration_engine.dispose)
+                    finally:
+                        await asyncio.to_thread(engine.dispose)
 
     application = FastAPI(
         title="medi-chat API",
