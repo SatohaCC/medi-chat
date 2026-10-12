@@ -201,10 +201,12 @@ async def test_tc095_all_detectors_and_search_pin_one_generation_then_release(
 ):
     from backend.application.retrieval.intent_contracts import IntentResult
     from backend.application.retrieval.retrieve_evidence import retrieve_evidence
+    from backend.infrastructure.package_insert_definitions.loader import (
+        get_package_insert_definitions,
+    )
     from backend.infrastructure.persistence.medicine_reader import (
         SqlAlchemyMedicineReader,
     )
-    from package_inserts.catalog_loader import get_package_insert_catalog
 
     old = source("旧世代警告本文", ("111111111111", "222222222222"))
     publish(publisher, old)
@@ -236,7 +238,7 @@ async def test_tc095_all_detectors_and_search_pin_one_generation_then_release(
             evidence_reader=SqlAlchemyEvidenceReader(engine, workers=workers),
             intent_classifier=Detector(),
             keyword_extractor=Keywords(),
-            catalog=get_package_insert_catalog(),
+            intent_policy=get_package_insert_definitions().intent_policy,
             snapshot_provider=runtime,
         )
         assert result.sources and all(
@@ -260,12 +262,14 @@ async def test_tc096_chat_materializes_before_stream_and_retains_inline_old_snap
     publisher,
 ):
     from backend.application.retrieval.intent_contracts import IntentResult
+    from backend.infrastructure.package_insert_definitions.loader import (
+        get_package_insert_definitions,
+    )
     from backend.infrastructure.persistence.medicine_reader import (
         SqlAlchemyMedicineReader,
     )
     from backend.presentation.chat_models import ChatMessage
     from backend.presentation.chat_service import AppChatService
-    from package_inserts.catalog_loader import get_package_insert_catalog
 
     old = source("過去inline原文")
     publish(publisher, old)
@@ -300,7 +304,8 @@ async def test_tc096_chat_materializes_before_stream_and_retains_inline_old_snap
         evidence_reader=SqlAlchemyEvidenceReader(engine, workers=workers),
         intent_classifier=Detector(),
         keyword_extractor=Keywords(),
-        catalog=get_package_insert_catalog(),
+        intent_policy=get_package_insert_definitions().intent_policy,
+        answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
         provider_factory=lambda _: Provider(),
         snapshot_provider=runtime,
     )

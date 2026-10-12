@@ -68,6 +68,9 @@ from backend.infrastructure.intent.jev_classifier import JevIntentClassifier
 from backend.infrastructure.morphology.janome_keyword_extractor import (
     JanomeKeywordExtractor,
 )
+from backend.infrastructure.package_insert_definitions.loader import (
+    get_package_insert_definitions,
+)
 from backend.infrastructure.persistence import schema
 from backend.infrastructure.persistence.evidence_reader import SqlAlchemyEvidenceReader
 from backend.infrastructure.persistence.index_writer import SqlAlchemyIndexWriter
@@ -75,7 +78,6 @@ from backend.infrastructure.persistence.medicine_reader import SqlAlchemyMedicin
 from backend.infrastructure.sources.file_index_source import FileIndexSourceReader
 from backend.presentation.chat_dto_mapper import chat_response_to_api
 from backend.tests.test_package_insert_index import migrated_index as migrated_index
-from package_inserts.catalog_loader import get_package_insert_catalog
 from sqlalchemy import select, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import IntegrityError
@@ -188,8 +190,10 @@ async def test_intent_classifier_contract(
             raw_response={"error": "Jev test transport failed"}
         )
 
-    catalog = get_package_insert_catalog()
-    adapter = JevIntentClassifier(api_key="", catalog=catalog)
+    catalog = get_package_insert_definitions()
+    adapter = JevIntentClassifier(
+        api_key="", classification_settings=catalog.jev_settings
+    )
     sdk = RecordingSdkClient(payload, fail=scenario == "sdk_error")
     monkeypatch.setattr(adapter, "_client", None if scenario == "unavailable" else sdk)
     fake = RecordingIntentClassifier(expected_intent)
@@ -201,8 +205,12 @@ async def test_intent_classifier_contract(
         assert result == expected_intent
         _assert_json_values(result.raw_response)
     else:
-        fake_detection = await detect_jev_criteria(fake, request, catalog=catalog)
-        adapter_detection = await detect_jev_criteria(adapter, request, catalog=catalog)
+        fake_detection = await detect_jev_criteria(
+            fake, request, intent_policy=catalog.intent_policy
+        )
+        adapter_detection = await detect_jev_criteria(
+            adapter, request, intent_policy=catalog.intent_policy
+        )
         assert type(fake_detection) is JevDetectionResult
         assert type(adapter_detection) is JevDetectionResult
         assert fake_detection == adapter_detection == expected_detection
@@ -275,7 +283,10 @@ def test_keyword_extractor_contract(
     expected_keywords: tuple[str, ...],
     expected_criteria: SearchCriteria | None,
 ) -> None:
-    adapter = JanomeKeywordExtractor(catalog=get_package_insert_catalog())
+    adapter = JanomeKeywordExtractor(
+        search_policy=get_package_insert_definitions().text_search_policy,
+        morphology_settings=get_package_insert_definitions().morphology_settings,
+    )
     fake = RecordingKeywordExtractor(expected_keywords)
 
     if target == "adapter":
@@ -689,7 +700,9 @@ async def _assert_prepared_answer(
     assert reply == case.expected_reply
     _assert_answer_values(reply)
     messages = build_answer_messages(
-        reply, case.conversation, catalog=get_package_insert_catalog()
+        reply,
+        case.conversation,
+        answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
     )
     assert messages == case.expected_messages
     _assert_json_values(messages)
@@ -745,7 +758,7 @@ async def test_answer_preparation_accepts_real_and_fake_readers(
         evidence_reader=evidence_reader,
         intent_classifier=intent,
         keyword_extractor=keywords,
-        catalog=get_package_insert_catalog(),
+        intent_policy=get_package_insert_definitions().intent_policy,
     )
     assert case.conversation == conversation_before
     assert case.product_yj_codes == codes_before
@@ -923,7 +936,8 @@ async def test_clarification_does_not_create_or_call_provider(
         evidence_reader=evidence_reader,
         intent_classifier=intent,
         keyword_extractor=keywords,
-        catalog=get_package_insert_catalog(),
+        intent_policy=get_package_insert_definitions().intent_policy,
+        answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
         provider_factory=factory,
         provider_name="openai",
         model_name="gpt-6-luna",

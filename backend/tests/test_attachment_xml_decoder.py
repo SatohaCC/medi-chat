@@ -7,9 +7,12 @@ from pathlib import Path
 
 import pytest
 from backend.application.attachment_import.import_errors import InvalidAttachment
+from backend.infrastructure.package_insert_definitions.loader import (
+    get_package_insert_definitions,
+)
 from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
+from backend.project_paths import PROJECT_ROOT
 from backend.tests.attachment_import_fixtures import encoded, json_artifact, xml_source
-from package_inserts.catalog_loader import get_package_insert_catalog
 
 
 @pytest.mark.parametrize(
@@ -72,7 +75,7 @@ def test_namespace_pi_comments_and_mixed_text_are_preserved_without_stylesheet_f
         ).replace(b"</PackIns>", b"</q:PackIns>")
     else:
         source = source.replace(b"<PackIns ", b'<PackIns xmlns="urn:document" ')
-    get_package_insert_catalog()
+    get_package_insert_definitions()
 
     def forbidden(*args, **kwargs):
         pytest.fail("external resource was fetched")
@@ -122,7 +125,7 @@ def test_dtd_and_entities_are_rejected_before_external_io(
         prefix=f'<?xml version="1.0" encoding="{"UTF-16" if encoding.startswith("utf-16") else "UTF-8"}"?>{declaration}',
         encoding=encoding,
     )
-    get_package_insert_catalog()
+    get_package_insert_definitions()
     monkeypatch.setattr(
         socket, "create_connection", lambda *a, **k: pytest.fail("external connection")
     )
@@ -229,7 +232,7 @@ def test_fatal_validation_is_never_downgraded_to_figure_warning(body, code):
 
 @pytest.mark.parametrize(
     "source",
-    sorted(Path("data/pmda/originals").rglob("*.xml")),
+    sorted((PROJECT_ROOT / "data/pmda/originals").rglob("*.xml")),
     ids=lambda path: path.stem,
 )
 def test_new_decoder_and_encoder_match_all_legacy_document_fields_and_rows(source):
@@ -240,14 +243,15 @@ def test_new_decoder_and_encoder_match_all_legacy_document_fields_and_rows(sourc
         for path in source.parent.iterdir()
         if path.is_file() and path != source
     }
+    filename = source.relative_to(PROJECT_ROOT).as_posix()
     decoder = PmdaXmlDecoder(
-        assets=assets, strict_assets=True, source_filename=source.as_posix()
+        assets=assets, strict_assets=True, source_filename=filename
     )
-    bundle = encoded(raw, filename=source.as_posix(), decoder=decoder)
+    bundle = encoded(raw, filename=filename, decoder=decoder)
     expected = json.loads(
-        (Path("data/pmda/structured") / source.stem / "document.json").read_text(
-            encoding="utf-8"
-        )
+        (
+            PROJECT_ROOT / "data/pmda/structured" / source.stem / "document.json"
+        ).read_text(encoding="utf-8")
     )
     expected["source"]["sha256"] = hashlib.sha256(raw).hexdigest()
     expected["source"]["file"] = expected["source"]["file"].replace(
@@ -266,7 +270,9 @@ def test_new_decoder_and_encoder_match_all_legacy_document_fields_and_rows(sourc
     ]
     old_rows = [
         json.loads(line)
-        for line in (Path("data/pmda/structured") / source.stem / "search_units.jsonl")
+        for line in (
+            PROJECT_ROOT / "data/pmda/structured" / source.stem / "search_units.jsonl"
+        )
         .read_bytes()
         .splitlines()
     ]

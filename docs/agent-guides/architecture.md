@@ -3,5 +3,5 @@
 - 全体構成は[README](../../README.md)、バックエンドの責務・依存・命名は[backend/README](../../backend/README.md)の関連節を参照する。既存の図や詳細をここへ複製しない。
 - READMEと現在のコード・差分を照合する。進行中の配置変更や未承認の提案を、確定した設計として扱わない。
 - 公開APIのJSON項目、REST/WebSocketのイベント、LLMへ渡す会話・根拠、CLI/module起動の契約に影響する変更を計画で明示する。
-- 共通の添付文書定義は[package_inserts/README](../../package_inserts/README.md)に従う。検索・Jev・プロンプト・XML変換で別々の対応表を追加しない。
+- 共通の添付文書定義は[Infrastructure定義README](../../backend/infrastructure/package_insert_definitions/README.md)に従う。検索・Jev・プロンプト・XML変換で別々の対応表を追加しない。
 - モジュール移動や再公開の削除では利用側・テスト・CLI・起動点を確認し、必要な検証を計画する。ファイル移動や構文確認だけでは実行時の互換性を確認したことにしない。

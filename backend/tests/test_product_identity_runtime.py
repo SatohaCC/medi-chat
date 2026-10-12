@@ -17,13 +17,15 @@ from backend.application.retrieval.intent_contracts import IntentRequest, Intent
 from backend.application.retrieval.retrieve_evidence import retrieve_evidence
 from backend.application.retrieval.snapshot_contracts import RetrievalSnapshot
 from backend.domain.attachment.entities import AttachmentProductRecord
+from backend.domain.retrieval.value_objects import IntentPolicy
+from backend.infrastructure.package_insert_definitions.loader import (
+    get_package_insert_definitions,
+)
 from backend.infrastructure.persistence.generation_runtime import GenerationRuntime
 from backend.infrastructure.persistence.read_workers import ReadWorkers
 from backend.tests.test_product_identity_retrieval import Classifier, Keywords
 from backend.tests.test_registration_publisher import publish, source
 from backend.tests.test_registration_publisher import publisher as publisher
-from package_inserts.catalog_loader import get_package_insert_catalog
-from package_inserts.catalog_models import PackageInsertCatalog
 
 X = "111111111111"
 A = "222222222222"
@@ -88,7 +90,7 @@ class Dependencies(TypedDict):
     evidence_reader: ForbiddenSearch
     intent_classifier: Classifier
     keyword_extractor: Keywords
-    catalog: PackageInsertCatalog
+    intent_policy: IntentPolicy
     snapshot_provider: ObservedRuntime
 
 
@@ -120,7 +122,7 @@ async def test_tc132_all_early_entries_release_real_lease_without_search_generat
         "evidence_reader": search,
         "intent_classifier": Classifier(),
         "keyword_extractor": Keywords(),
-        "catalog": get_package_insert_catalog(),
+        "intent_policy": get_package_insert_definitions().intent_policy,
         "snapshot_provider": observed,
     }
 
@@ -130,6 +132,7 @@ async def test_tc132_all_early_entries_release_real_lease_without_search_generat
                 conversation,
                 codes,
                 **kwargs,
+                answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
                 provider_factory=provider.factory,
                 provider_name=None,
                 model_name=None,
@@ -142,7 +145,7 @@ async def test_tc132_all_early_entries_release_real_lease_without_search_generat
                     async for chunk in stream_reply(
                         reply,
                         conversation,
-                        catalog=get_package_insert_catalog(),
+                        answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
                         provider_factory=provider.factory,
                         provider_name=None,
                         model_name=None,
@@ -186,7 +189,7 @@ async def test_tc132_classifier_exception_cancel_release_real_lease(publisher, f
             evidence_reader=ForbiddenSearch(),
             intent_classifier=BlockingClassifier(),
             keyword_extractor=Keywords(),
-            catalog=get_package_insert_catalog(),
+            intent_policy=get_package_insert_definitions().intent_policy,
             snapshot_provider=runtime,
         )
     )
@@ -249,7 +252,7 @@ async def test_tc135_identity_and_materialize_stay_old_across_os_publish(
             evidence_reader=ForbiddenSearch(),
             intent_classifier=classifier,
             keyword_extractor=BodyKeywords(),
-            catalog=get_package_insert_catalog(),
+            intent_policy=get_package_insert_definitions().intent_policy,
             snapshot_provider=runtime,
         )
 
@@ -362,7 +365,8 @@ async def test_tc130_correct_amaryl_original_indication_reaches_generation(publi
             evidence_reader=ForbiddenSearch(),
             intent_classifier=EfficacyClassifier(),
             keyword_extractor=Keywords(),
-            catalog=get_package_insert_catalog(),
+            intent_policy=get_package_insert_definitions().intent_policy,
+            answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
             provider_factory=provider.factory,
             provider_name=None,
             model_name=None,

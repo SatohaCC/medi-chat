@@ -2,10 +2,9 @@
 
 from collections.abc import Sequence
 
-from package_inserts.catalog_models import PackageInsertCatalog
-
 from ...domain.attachment.value_objects import AttachmentProductMatch
 from ...domain.retrieval.value_objects import Evidence
+from .answer_prompt_policy import AnswerPromptPolicy
 from .chat_models import ChatMessage, ChatResponse
 
 
@@ -15,7 +14,7 @@ def build_answer_system_prompt(
     intent: str,
     qualifying_intents: list[str] | None = None,
     *,
-    catalog: PackageInsertCatalog,
+    answer_prompt_policy: AnswerPromptPolicy,
 ) -> str:
     """取得された添付文書ソース、薬剤情報、インテントに基づいてグラウンディングシステムプロンプトを構築する"""
     medicine_lines = []
@@ -52,7 +51,7 @@ def build_answer_system_prompt(
         if s.columns:
             details.extend(
                 f"{column.title}: {s.columns[column.id]}"
-                for column in catalog.interaction_columns
+                for column in answer_prompt_policy.interaction_columns
                 if s.columns.get(column.id)
             )
         if not details and s.excerpt:
@@ -77,17 +76,20 @@ def build_answer_system_prompt(
 
     multi_rule = ""
     if qualifying_intents and len(qualifying_intents) > 1:
-        labels = [f"{catalog.intent_display_name(k)} ({k})" for k in qualifying_intents]
+        labels = [
+            f"{answer_prompt_policy.intent_display_name(k)} ({k})"
+            for k in qualifying_intents
+        ]
         intent_display = f"複合項目（マルチセクション）: {' + '.join(labels)}"
-        multi_rule = "6. " + catalog.render_section_titles(
-            catalog.answer_prompt.multiple_intents_template
-        )
+        multi_rule = "6. " + answer_prompt_policy.multiple_intents_template
     else:
-        label = catalog.intent_display_name(intent)
+        label = answer_prompt_policy.intent_display_name(intent)
         intent_display = f"{label} ({intent})" if label != intent else intent
 
     specific_rule = ""
-    guidance = catalog.answer_guidance_for_intent(intent, len(resolved_medicines))
+    guidance = answer_prompt_policy.answer_guidance_for_intent(
+        intent, len(resolved_medicines)
+    )
     if guidance:
         rule_num = "7" if multi_rule else "6"
         specific_rule = f"{rule_num}. {guidance}"
@@ -99,7 +101,7 @@ def build_answer_system_prompt(
         "【ルール】\n"
         "1. 必ず以下の【提供された添付文書情報】に記載された内容のみを根拠として回答してください。\n"
         "2. 提供された情報に明確な記載がない内容を推測して回答してはいけません。記載がない場合は「添付文書には記載がありません」と明確に回答してください。\n"
-        f"3. 回答の際には、根拠となった項目名・項目番号（例: {catalog.citation_examples_text()} など）や医薬品名を引用してわかりやすく説明してください。\n"
+        f"3. 回答の際には、根拠となった項目名・項目番号（例: {answer_prompt_policy.citation_examples_text()} など）や医薬品名を引用してわかりやすく説明してください。\n"
         "4. 添付文書に書かれている事実と、そこから判断できない点を分けて説明してください。\n"
         "5. 回答には、使用した根拠の改訂情報と出典URLを明記してください。\n"
         + multi_rule
@@ -116,7 +118,7 @@ def build_answer_messages(
     reply: ChatResponse,
     conversation: Sequence[ChatMessage],
     *,
-    catalog: PackageInsertCatalog,
+    answer_prompt_policy: AnswerPromptPolicy,
 ) -> list[dict[str, str]]:
     """取得結果を会話履歴に反映した、LLM送信用メッセージを構築する"""
     system_prompt = build_answer_system_prompt(
@@ -124,7 +126,7 @@ def build_answer_messages(
         reply.resolved_medicines,
         reply.intent,
         qualifying_intents=list(reply.qualifying_intents),
-        catalog=catalog,
+        answer_prompt_policy=answer_prompt_policy,
     )
     messages = [{"role": "system", "content": system_prompt}]
     messages.extend(

@@ -12,7 +12,6 @@ from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from package_inserts.catalog_loader import get_package_insert_catalog
 
 from .application.attachment_import.import_document import AttachmentImportService
 from .application.indexing.medicine_catalog import get_weighted_aliases
@@ -30,6 +29,9 @@ from .infrastructure.intent.jev_classifier import JevIntentClassifier
 from .infrastructure.llm.provider_factory import create_llm_provider
 from .infrastructure.morphology.janome_keyword_extractor import (
     JanomeKeywordExtractor,
+)
+from .infrastructure.package_insert_definitions.loader import (
+    get_package_insert_definitions,
 )
 from .infrastructure.persistence.evidence_reader import SqlAlchemyEvidenceReader
 from .infrastructure.persistence.generation_runtime import GenerationRuntime
@@ -63,7 +65,7 @@ def create_app(
     _readonly_probe: bool = False,
 ) -> FastAPI:
     """FastAPI アプリケーションインスタンスを生成・設定する"""
-    get_package_insert_catalog()
+    definitions = get_package_insert_definitions()
     settings = resolve_database_settings(
         structured_dir=structured_dir,
         index_path=index_path,
@@ -86,7 +88,9 @@ def create_app(
 
         index_reader = SqlAlchemyIndexReader(engine, workers=workers)
         medicine_reader = SqlAlchemyMedicineReader(engine, workers=workers)
-        evidence_reader = SqlAlchemyEvidenceReader(engine, workers=workers)
+        evidence_reader = SqlAlchemyEvidenceReader(
+            engine, workers=workers, text_search_policy=definitions.text_search_policy
+        )
         application.state.index_reader = index_reader
         application.state.medicine_reader = medicine_reader
         application.state.evidence_reader = evidence_reader
@@ -113,15 +117,20 @@ def create_app(
             medicines=medicines,
         )
 
-        catalog = get_package_insert_catalog()
-        intent_classifier = JevIntentClassifier(catalog=catalog)
-        keyword_extractor = JanomeKeywordExtractor(catalog=catalog)
+        intent_classifier = JevIntentClassifier(
+            classification_settings=definitions.jev_settings
+        )
+        keyword_extractor = JanomeKeywordExtractor(
+            search_policy=definitions.text_search_policy,
+            morphology_settings=definitions.morphology_settings,
+        )
         application.state.chat_service = AppChatService(
             medicine_reader=medicine_reader,
             evidence_reader=evidence_reader,
             intent_classifier=intent_classifier,
             keyword_extractor=keyword_extractor,
-            catalog=catalog,
+            intent_policy=definitions.intent_policy,
+            answer_prompt_policy=definitions.answer_prompt_policy,
             provider_factory=llm_provider_factory or create_llm_provider,
             defaults=read_generation_defaults,
         )
@@ -139,13 +148,14 @@ def create_app(
             publisher = SqliteRegistrationPublisher(
                 settings.index_path,
                 store,
+                xml_settings=definitions.xml_settings,
                 allowed_roots=(
                     settings.structured_dir,
                     settings.structured_dir.parent / "originals",
                 ),
             )
             import_service = AttachmentImportService(
-                decoder=PmdaXmlDecoder(),
+                decoder=PmdaXmlDecoder(xml_settings=definitions.xml_settings),
                 encoder=PmdaArtifactEncoder(),
                 store=store,
                 publisher=publisher,
@@ -153,7 +163,12 @@ def create_app(
             application.state.attachment_import_service = import_service
             try:
                 await workers.run(publisher.recover)
-                runtime = GenerationRuntime(publisher, workers=workers)
+                runtime = GenerationRuntime(
+                    publisher,
+                    workers=workers,
+                    text_search_policy=definitions.text_search_policy,
+                    xml_settings=definitions.xml_settings,
+                )
                 application.state.generation_runtime = runtime
                 application.state.chat_service.snapshot_provider = runtime
                 yield

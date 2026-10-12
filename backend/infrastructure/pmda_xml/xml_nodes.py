@@ -9,7 +9,8 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from package_inserts.catalog_loader import get_package_insert_catalog
+from ..package_insert_definitions.loader import get_package_insert_definitions
+from .definition_settings import PmdaXmlSettings
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
@@ -91,29 +92,37 @@ def find_path(element: ET.Element, *names: str) -> ET.Element | None:
     return current
 
 
-def render_inline(element: ET.Element) -> str:
+def render_inline(
+    element: ET.Element, *, xml_settings: PmdaXmlSettings | None = None
+) -> str:
+    if xml_settings is None:
+        xml_settings = get_package_insert_definitions().xml_settings
     tag = tag_name(element)
     if tag == "#processing_instruction":
         return "\ue000" if (element.text or "").split(" ", 1)[0] == "enter" else ""
-    if tag in get_package_insert_catalog().xml.reference_tags:
+    if tag in xml_settings.reference_tags:
         return ""
     if tag in {"InlineGraphic", "GraphicBody"}:
         return f"［図:{element.attrib.get('gfname', '')}］"
     if tag == "Sup":
-        return render_children(element).translate(SUPERSCRIPTS)
+        return render_children(element, xml_settings=xml_settings).translate(
+            SUPERSCRIPTS
+        )
     if tag == "Sub":
-        return "_{" + render_children(element) + "}"
-    return render_children(element)
+        return "_{" + render_children(element, xml_settings=xml_settings) + "}"
+    return render_children(element, xml_settings=xml_settings)
 
 
-def render_children(element: ET.Element) -> str:
+def render_children(
+    element: ET.Element, *, xml_settings: PmdaXmlSettings | None = None
+) -> str:
+    if xml_settings is None:
+        xml_settings = get_package_insert_definitions().xml_settings
     pieces = [element.text or ""]
     for child in element:
-        pieces.append(render_inline(child))
+        pieces.append(render_inline(child, xml_settings=xml_settings))
         tail = child.tail or ""
-        if tag_name(
-            child
-        ) in get_package_insert_catalog().xml.reference_tags and re.fullmatch(
+        if tag_name(child) in xml_settings.reference_tags and re.fullmatch(
             r"[\s,，、]*", tail
         ):
             tail = ""
@@ -126,30 +135,38 @@ def clean_text(raw: str) -> str:
     return "\n".join(chunk for chunk in chunks if chunk)
 
 
-def text_of(element: ET.Element | None) -> str:
+def text_of(
+    element: ET.Element | None, *, xml_settings: PmdaXmlSettings | None = None
+) -> str:
     if element is None:
         return ""
-    return clean_text(render_inline(element))
+    return clean_text(render_inline(element, xml_settings=xml_settings))
 
 
-def text_lines(element: ET.Element | None) -> list[str]:
+def text_lines(
+    element: ET.Element | None, *, xml_settings: PmdaXmlSettings | None = None
+) -> list[str]:
     if element is None:
         return []
     lines = []
     for child in element.iter():
         if tag_name(child) == "Lang":
-            value = text_of(child)
+            value = text_of(child, xml_settings=xml_settings)
             if value:
                 lines.append(value)
     return lines
 
 
-def field(element: ET.Element, *names: str) -> str | None:
-    value = text_of(find_path(element, *names))
+def field(
+    element: ET.Element, *names: str, xml_settings: PmdaXmlSettings | None = None
+) -> str | None:
+    value = text_of(find_path(element, *names), xml_settings=xml_settings)
     return value or None
 
 
-def metadata(root: ET.Element, pmda_url: str) -> dict[str, Any]:
+def metadata(
+    root: ET.Element, pmda_url: str, *, xml_settings: PmdaXmlSettings | None = None
+) -> dict[str, Any]:
     approval = direct_child(root, "ApprovalEtc")
     products: list[dict[str, Any]] = []
     if approval is not None:
@@ -159,16 +176,39 @@ def metadata(root: ET.Element, pmda_url: str) -> dict[str, Any]:
             products.append(
                 {
                     "xml_id": brand.attrib.get("id"),
-                    "brand_name": field(brand, "ApprovalBrandName"),
-                    "yj_code": field(brand, "BrandCode", "YJCode"),
-                    "english_name": field(brand, "TrademarkInEnglish", "TrademarkName"),
-                    "hiragana_name": field(
-                        brand, "BrandNameInHiragana", "NameInHiragana"
+                    "brand_name": field(
+                        brand, "ApprovalBrandName", xml_settings=xml_settings
                     ),
-                    "approval_no": field(brand, "ApprovalAndLicenseNo", "ApprovalNo"),
-                    "marketing_start_month": field(brand, "StartingDateOfMarketing"),
-                    "storage_method": field(brand, "Storage", "StorageMethod"),
-                    "shelf_life": field(brand, "Storage", "ShelfLife"),
+                    "yj_code": field(
+                        brand, "BrandCode", "YJCode", xml_settings=xml_settings
+                    ),
+                    "english_name": field(
+                        brand,
+                        "TrademarkInEnglish",
+                        "TrademarkName",
+                        xml_settings=xml_settings,
+                    ),
+                    "hiragana_name": field(
+                        brand,
+                        "BrandNameInHiragana",
+                        "NameInHiragana",
+                        xml_settings=xml_settings,
+                    ),
+                    "approval_no": field(
+                        brand,
+                        "ApprovalAndLicenseNo",
+                        "ApprovalNo",
+                        xml_settings=xml_settings,
+                    ),
+                    "marketing_start_month": field(
+                        brand, "StartingDateOfMarketing", xml_settings=xml_settings
+                    ),
+                    "storage_method": field(
+                        brand, "Storage", "StorageMethod", xml_settings=xml_settings
+                    ),
+                    "shelf_life": field(
+                        brand, "Storage", "ShelfLife", xml_settings=xml_settings
+                    ),
                 }
             )
     revisions = []
@@ -179,20 +219,28 @@ def metadata(root: ET.Element, pmda_url: str) -> dict[str, Any]:
                 revisions.append(
                     {
                         "source_label": entry.attrib.get("id"),
-                        "year_month": field(entry, "YearMonth"),
-                        "version": field(entry, "Version"),
+                        "year_month": field(
+                            entry, "YearMonth", xml_settings=xml_settings
+                        ),
+                        "version": field(entry, "Version", xml_settings=xml_settings),
                     }
                 )
     return {
-        "package_insert_no": field(root, "PackageInsertNo"),
-        "company_identifier": field(root, "CompanyIdentifier"),
+        "package_insert_no": field(root, "PackageInsertNo", xml_settings=xml_settings),
+        "company_identifier": field(
+            root, "CompanyIdentifier", xml_settings=xml_settings
+        ),
         "drug_type": root.attrib.get("drugType"),
         "xml_kind": root.attrib.get("xmlKind"),
         "xml_version": root.attrib.get("version"),
         "revisions": revisions,
-        "japanese_standard_commodity_classification": field(root, "Sccj", "SccjNo"),
-        "therapeutic_classification": field(root, "TherapeuticClassification"),
-        "generic_name": field(root, "GenericName"),
+        "japanese_standard_commodity_classification": field(
+            root, "Sccj", "SccjNo", xml_settings=xml_settings
+        ),
+        "therapeutic_classification": field(
+            root, "TherapeuticClassification", xml_settings=xml_settings
+        ),
+        "generic_name": field(root, "GenericName", xml_settings=xml_settings),
         "products": products,
         "pmda_url": pmda_url,
     }

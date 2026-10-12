@@ -3,8 +3,6 @@
 import asyncio
 from copy import deepcopy
 
-from package_inserts.catalog_models import PackageInsertCatalog
-
 from ...domain.attachment.repositories import AttachmentProductRepository
 from ...domain.attachment.value_objects import AttachmentProductMatch
 from ...domain.medicine.identifiers import YjCode
@@ -17,7 +15,7 @@ from ...domain.retrieval.services import (
     detect_fixed_keyword_criteria as _detect_fixed_keyword_criteria,
 )
 from ...domain.retrieval.services import merge_evidence
-from ...domain.retrieval.value_objects import Evidence, SearchCriteria
+from ...domain.retrieval.value_objects import Evidence, IntentPolicy, SearchCriteria
 from ..indexing.medicine_catalog import AttachmentProductCatalog
 from .intent_contracts import IntentClassifier, IntentRequest
 from .jev_detector import JevDetectionResult, detect_jev_criteria
@@ -35,7 +33,7 @@ async def retrieve_evidence(
     evidence_reader: EvidenceRepository,
     intent_classifier: IntentClassifier,
     keyword_extractor: KeywordExtractor,
-    catalog: PackageInsertCatalog,
+    intent_policy: IntentPolicy,
     snapshot_provider: RetrievalSnapshotProvider | None = None,
 ) -> RetrievalResult:
     if snapshot_provider is not None:
@@ -47,7 +45,7 @@ async def retrieve_evidence(
                 evidence_reader=snapshot.evidence_reader,
                 intent_classifier=intent_classifier,
                 keyword_extractor=keyword_extractor,
-                catalog=catalog,
+                intent_policy=intent_policy,
             )
     medicine_catalog = AttachmentProductCatalog(await medicine_reader.read_medicines())
     resolved = medicine_catalog.resolve_medicines(message, product_yj_codes)
@@ -57,7 +55,11 @@ async def retrieve_evidence(
     )
     excluded_terms = medicine_catalog.aliases_for_yj_codes(product_yj_codes)
     criteria, jev_response, qualifying_intents = await collect_search_criteria(
-        intent_classifier, keyword_extractor, message, excluded_terms, catalog=catalog
+        intent_classifier,
+        keyword_extractor,
+        message,
+        excluded_terms,
+        intent_policy=intent_policy,
     )
 
     intent = (
@@ -68,7 +70,7 @@ async def retrieve_evidence(
                 if item.intent is not None and item.intent.value
             )
         )
-        or catalog.fallback_intent
+        or intent_policy.fallback_intent.value
     )
     if qualifying_intents:
         intent = ", ".join(qualifying_intents)
@@ -135,13 +137,13 @@ async def collect_search_criteria(
     message: str,
     excluded_terms: list[str],
     *,
-    catalog: PackageInsertCatalog,
+    intent_policy: IntentPolicy,
 ):
     """全検出完了後の検索条件を、検索IOを行わず返す。"""
     tasks = [
         asyncio.create_task(
             detect_jev_criteria(
-                intent_classifier, IntentRequest(message), catalog=catalog
+                intent_classifier, IntentRequest(message), intent_policy=intent_policy
             )
         ),
         asyncio.create_task(
@@ -150,7 +152,7 @@ async def collect_search_criteria(
             )
         ),
         asyncio.create_task(
-            asyncio.to_thread(_detect_fixed_keyword_criteria, message, catalog)
+            asyncio.to_thread(_detect_fixed_keyword_criteria, message, intent_policy)
         ),
     ]
     criteria: list[SearchCriteria] = []

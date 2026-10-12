@@ -16,7 +16,9 @@ from backend.domain.retrieval.value_objects import (
     EvidenceSection,
 )
 from backend.domain.retrieval.value_objects import Evidence as ChatSource
-from package_inserts.catalog_loader import get_package_insert_catalog
+from backend.infrastructure.package_insert_definitions.loader import (
+    get_package_insert_definitions,
+)
 
 
 class AnswerPromptBuilderTests(unittest.TestCase):
@@ -63,7 +65,10 @@ class AnswerPromptBuilderTests(unittest.TestCase):
         )
 
         prompt = build_answer_system_prompt(
-            [source], [medicine], "interaction", catalog=get_package_insert_catalog()
+            [source],
+            [medicine],
+            "interaction",
+            answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
         )
 
         self.assertIn("1234567A8901", prompt)

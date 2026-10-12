@@ -5,18 +5,22 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 from typing import Any
 
-from package_inserts.catalog_loader import get_package_insert_catalog
-
+from ..package_insert_definitions.loader import get_package_insert_definitions
+from .definition_settings import PmdaXmlSettings
 from .xml_nodes import tag_name
 
 
 def section_definition(
-    element: ET.Element, parents: dict[ET.Element, ET.Element]
+    element: ET.Element,
+    parents: dict[ET.Element, ET.Element],
+    *,
+    xml_settings: PmdaXmlSettings | None = None,
 ) -> tuple[str, str] | None:
     """Return the fixed section represented by a typed or contextual XML node."""
-    catalog = get_package_insert_catalog()
+    if xml_settings is None:
+        xml_settings = get_package_insert_definitions().xml_settings
     name = tag_name(element)
-    definition = catalog.sections_by_xml_tag.get(name)
+    definition = xml_settings.sections_by_xml_tag.get(name)
     if definition is not None:
         return definition.code, definition.title
 
@@ -26,11 +30,11 @@ def section_definition(
     ancestor = parent
     while ancestor is not None:
         ancestor_name = tag_name(ancestor)
-        definition = catalog.sections_by_xml_context.get((ancestor_name, name))
+        definition = xml_settings.sections_by_xml_context.get((ancestor_name, name))
         if definition is not None:
             return definition.code, definition.title
 
-        if ancestor_name in catalog.sections_by_xml_tag:
+        if ancestor_name in xml_settings.sections_by_xml_tag:
             return None
         ancestor = parents.get(ancestor)
     return None
@@ -41,12 +45,14 @@ def make_section_index(
     parents: dict[ET.Element, ET.Element],
     paths: dict[ET.Element, str],
     pmda_url: str,
+    *,
+    xml_settings: PmdaXmlSettings | None = None,
 ) -> tuple[list[dict[str, Any]], dict[ET.Element, dict[str, Any]]]:
     index = []
     by_element = {}
     for element in root.iter():
         name = tag_name(element)
-        definition = section_definition(element, parents)
+        definition = section_definition(element, parents, xml_settings=xml_settings)
         if definition is None:
             continue
         code, title = definition
@@ -88,6 +94,8 @@ def reference_section_code(
     element: ET.Element,
     parents: dict[ET.Element, ET.Element],
     section_by_element: dict[ET.Element, dict[str, Any]],
+    *,
+    xml_settings: PmdaXmlSettings | None = None,
 ) -> str:
     """Resolve ordered child targets without adding child search units.
 

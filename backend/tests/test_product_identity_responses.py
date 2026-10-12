@@ -5,6 +5,9 @@ from backend.application.chat.answer_preparation import prepare_reply
 from backend.application.chat.answer_question import answer_question
 from backend.application.chat.chat_models import ChatMessage
 from backend.application.chat.stream_reply import stream_reply
+from backend.infrastructure.package_insert_definitions.loader import (
+    get_package_insert_definitions,
+)
 from backend.tests.test_product_identity_retrieval import (
     Classifier,
     EvidenceReader,
@@ -12,7 +15,6 @@ from backend.tests.test_product_identity_retrieval import (
     Medicines,
     X,
 )
-from package_inserts.catalog_loader import get_package_insert_catalog
 
 CONFIRMATIONS = {
     "product_identity_conflict": (
@@ -86,7 +88,7 @@ async def test_fixed_reason_full_text_priority_and_generation_zero(
             evidence_reader=reader,
             intent_classifier=Classifier(),
             keyword_extractor=Keywords(),
-            catalog=get_package_insert_catalog(),
+            intent_policy=get_package_insert_definitions().intent_policy,
         )
 
     if entry == "answer":
@@ -97,7 +99,8 @@ async def test_fixed_reason_full_text_priority_and_generation_zero(
             evidence_reader=reader,
             intent_classifier=Classifier(),
             keyword_extractor=Keywords(),
-            catalog=get_package_insert_catalog(),
+            intent_policy=get_package_insert_definitions().intent_policy,
+            answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
             provider_factory=provider.factory,
             provider_name=None,
             model_name=None,
@@ -120,7 +123,7 @@ async def test_fixed_reason_full_text_priority_and_generation_zero(
             async for chunk in stream_reply(
                 reply,
                 conversation,
-                catalog=get_package_insert_catalog(),
+                answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
                 provider_factory=provider.factory,
                 provider_name=None,
                 model_name=None,

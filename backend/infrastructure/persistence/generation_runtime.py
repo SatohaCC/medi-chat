@@ -9,7 +9,6 @@ from contextlib import asynccontextmanager, closing, suppress
 from dataclasses import dataclass
 from pathlib import Path
 
-from package_inserts.catalog_loader import get_package_insert_catalog
 from sqlalchemy import delete, insert, select
 
 from ...application.indexing.attachment_projection import project_active_attachment
@@ -22,12 +21,14 @@ from ...domain.json_types import JsonValue
 from ...domain.medicine.identifiers import YjCode
 from ...domain.retrieval.identifiers import SearchGenerationId
 from ...domain.retrieval.repositories import EvidenceSearchTarget
-from ...domain.retrieval.value_objects import Evidence, SearchCriteria
+from ...domain.retrieval.value_objects import Evidence, SearchCriteria, TextSearchPolicy
 from ...domain.shared.services import normalize_match_text, normalize_search_text
 from ..evidence_mapping import build_evidence, is_scope_heading_only
 from ..index_payloads import build_index_unit
 from ..json_payloads import parse_json_object
+from ..package_insert_definitions.loader import get_package_insert_definitions
 from ..pmda_xml.decoder import PmdaXmlDecoder
+from ..pmda_xml.definition_settings import PmdaXmlSettings
 from ..pmda_xml.registration_artifacts import encode_registered_units
 from ..sources.registration_source import read_registered_snapshot
 from . import registration_schema as schema
@@ -54,7 +55,13 @@ class _Generation:
 
 
 class _SnapshotReader:
-    def __init__(self, generation: _Generation, workers: ReadWorkers):
+    def __init__(
+        self,
+        generation: _Generation,
+        workers: ReadWorkers,
+        text_search_policy: TextSearchPolicy,
+    ):
+        self._text_search_policy = text_search_policy
         self.generation = generation
         self.workers = workers
         self._closed = False
@@ -81,7 +88,6 @@ class _SnapshotReader:
         if not requested:
             return ()
         document_ids = {key for target in medicines for key in target.document_ids}
-        catalog = get_package_insert_catalog()
         rows: list[tuple[dict[str, JsonValue], dict[str, JsonValue]]] = []
         for entry in self.generation.documents:
             if document_ids and entry.document.document_id.value not in document_ids:
@@ -99,7 +105,9 @@ class _SnapshotReader:
             )
             for line in content.decode("utf-8").splitlines():
                 unit = parse_json_object(line)
-                if not is_scope_heading_only(unit, catalog=catalog):
+                if not is_scope_heading_only(
+                    unit, text_search_policy=self._text_search_policy
+                ):
                     rows.append((unit, entry.metadata.to_dict()))
         selected: list[int] = []
         sections = {code.value for code in criteria.section_codes}
@@ -155,7 +163,24 @@ class _SnapshotReader:
 
 
 class GenerationRuntime:
-    def __init__(self, publisher: SqliteRegistrationPublisher, *, workers: ReadWorkers):
+    def __init__(
+        self,
+        publisher: SqliteRegistrationPublisher,
+        *,
+        workers: ReadWorkers,
+        text_search_policy: TextSearchPolicy | None = None,
+        xml_settings: PmdaXmlSettings | None = None,
+    ):
+        self._xml_settings = (
+            xml_settings
+            if xml_settings is not None
+            else get_package_insert_definitions().xml_settings
+        )
+        self._text_search_policy = (
+            text_search_policy
+            if text_search_policy is not None
+            else get_package_insert_definitions().text_search_policy
+        )
         self.publisher = publisher
         self.workers = workers
         self._cache: _Generation | None = None
@@ -222,9 +247,9 @@ class GenerationRuntime:
                                     == version
                                 )
                             ).scalar_one()
-                            decoded = PmdaXmlDecoder().decode(
-                                Path(receipt["source_path"]).read_bytes()
-                            )
+                            decoded = PmdaXmlDecoder(
+                                xml_settings=self._xml_settings
+                            ).decode(Path(receipt["source_path"]).read_bytes())
                             documents.append(
                                 _Document(
                                     decoded.document,
@@ -290,7 +315,7 @@ class GenerationRuntime:
             lease_id, _ = acquisition.result()
             await self._finish_release(lease_id)
             raise
-        reader = _SnapshotReader(generation, self.workers)
+        reader = _SnapshotReader(generation, self.workers, self._text_search_policy)
         try:
             yield RetrievalSnapshot(
                 generation.generation_id,

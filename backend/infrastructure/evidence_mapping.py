@@ -2,8 +2,6 @@
 
 from dataclasses import dataclass
 
-from package_inserts.catalog_models import PackageInsertCatalog
-
 from ..domain.attachment.identifiers import DocumentId
 from ..domain.json_types import JsonValue
 from ..domain.medicine.identifiers import YjCode
@@ -28,6 +26,7 @@ from ..domain.retrieval.value_objects import (
     EvidenceProduct,
     EvidenceReference,
     EvidenceSection,
+    TextSearchPolicy,
 )
 
 
@@ -60,13 +59,13 @@ def _string_object(value: JsonValue) -> dict[str, str]:
 
 
 def is_scope_heading_only(
-    unit: dict[str, JsonValue], *, catalog: PackageInsertCatalog
+    unit: dict[str, JsonValue], *, text_search_policy: TextSearchPolicy
 ) -> bool:
     kind = unit.get("kind")
     return scope_heading_only(
         kind if isinstance(kind, str) else None,
         _string(unit.get("text") or ""),
-        catalog=catalog,
+        text_search_policy=text_search_policy,
     )
 
 

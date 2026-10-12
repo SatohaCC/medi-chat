@@ -8,6 +8,7 @@ from pathlib import Path
 
 from ...application.attachment_import.import_errors import AttachmentImportError
 from ..composition.index_verifier import verify_schema_readiness
+from ..package_insert_definitions.loader import get_package_insert_definitions
 from ..persistence.registration_publisher import (
     RegistrationInput,
     SqliteRegistrationPublisher,
@@ -22,6 +23,7 @@ def main() -> int:
     for name in ("originals-dir", "structured-dir", "index-path", "import-dir"):
         parser.add_argument("--" + name, type=Path, required=True)
     args = parser.parse_args()
+    xml_settings = get_package_insert_definitions().xml_settings
     originals = args.originals_dir.resolve()
     structured = args.structured_dir.resolve()
     index = args.index_path.resolve()
@@ -57,6 +59,7 @@ def main() -> int:
                     assets[name] = path.read_bytes()
                     paths.append(path)
             decoded = PmdaXmlDecoder(
+                xml_settings=xml_settings,
                 assets=assets,
                 strict_assets=True,
                 source_filename=source_path.as_posix(),
@@ -88,6 +91,7 @@ def main() -> int:
         publisher = SqliteRegistrationPublisher(
             index,
             FileAttachmentImportStore(imports),
+            xml_settings=xml_settings,
             allowed_roots=(originals, structured),
         )
         results = publisher.publish_inputs(tuple(inputs), initial=True)

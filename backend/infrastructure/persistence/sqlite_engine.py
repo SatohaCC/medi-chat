@@ -3,11 +3,11 @@
 import sqlite3
 from contextlib import closing
 
-from package_inserts.text_formatting import section_code_sort_key
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.pool import ConnectionPoolEntry
 
+from ...domain.retrieval.services import section_code_sort_key
 from .owned_sqlite import OwnedSqliteConnection
 
 

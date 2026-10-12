@@ -92,6 +92,24 @@ class AttachmentSectionTitle(BaseString):
 
 
 @dataclass(frozen=True, slots=True)
+class DefinitionTitle(DomainPrimitive[str]):
+    """定義正本の名称。空白と全半角を含む原表記を保持する。"""
+
+    def validate(self) -> None:
+        if not isinstance(self.value, str) or not self.value.strip():
+            raise DomainValidationError("definition title must be nonempty text")
+
+
+@dataclass(frozen=True, slots=True)
+class InteractionColumnId(DomainPrimitive[str]):
+    """添付文書の構造化列識別子。既存識別値を保持する。"""
+
+    def validate(self) -> None:
+        if not isinstance(self.value, str) or not self.value.strip():
+            raise DomainValidationError("interaction column ID must be nonempty text")
+
+
+@dataclass(frozen=True, slots=True)
 class NumberedSectionCode(SectionCode):
     """原本項目で使う番号形式の項目コード。"""
 

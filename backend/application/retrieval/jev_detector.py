@@ -3,12 +3,10 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
 
-from package_inserts.catalog_models import PackageInsertCatalog
-
 from ...domain.json_types import JsonValue
 from ...domain.retrieval.primitives import DetectionSource
 from ...domain.retrieval.services import select_intents
-from ...domain.retrieval.value_objects import SearchCriteria
+from ...domain.retrieval.value_objects import IntentPolicy, SearchCriteria
 from .intent_contracts import IntentClassifier, IntentRequest
 
 
@@ -25,7 +23,7 @@ async def detect_jev_criteria(
     classifier: IntentClassifier,
     request: IntentRequest,
     *,
-    catalog: PackageInsertCatalog,
+    intent_policy: IntentPolicy,
     baseline_intent: str | None = None,
 ) -> JevDetectionResult:
     """交換可能な意図判定の結果を添付文書検索の条件へ変換する。"""
@@ -36,7 +34,7 @@ async def detect_jev_criteria(
     selection = select_intents(
         result.candidates,
         result.choice,
-        catalog=catalog,
+        intent_policy=intent_policy,
         baseline_intent=baseline_intent,
     )
     response_for_client = deepcopy(result.raw_response)
@@ -48,7 +46,7 @@ async def detect_jev_criteria(
     if (
         selection.primary is not None
         and selection.primary.value
-        and selection.primary.value != catalog.general_intent
+        and selection.primary.value != intent_policy.general_intent.value
         and selection.section_codes
     ):
         criteria.append(

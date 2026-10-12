@@ -4,6 +4,9 @@ import asyncio
 from collections.abc import AsyncGenerator
 
 import pytest
+from backend.infrastructure.package_insert_definitions.loader import (
+    get_package_insert_definitions,
+)
 from backend.presentation.chat_models import ChatMessage, ChatResponse
 from backend.presentation.chat_service import AppChatService
 from backend.tests.test_answer_preparation import (
@@ -12,7 +15,6 @@ from backend.tests.test_answer_preparation import (
     UnusedKeywordExtractor,
 )
 from backend.tests.test_jev_intent_mapping import RecordingReader
-from package_inserts.catalog_loader import get_package_insert_catalog
 
 
 class RecordingProvider:
@@ -48,7 +50,8 @@ async def test_api_service_closes_owned_stream_and_preserves_generation_defaults
         evidence_reader=RecordingReader(),
         intent_classifier=UnusedIntentClassifier(),
         keyword_extractor=UnusedKeywordExtractor(),
-        catalog=get_package_insert_catalog(),
+        intent_policy=get_package_insert_definitions().intent_policy,
+        answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
         provider_factory=factory,
     )
     reply = ChatResponse(

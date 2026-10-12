@@ -1,20 +1,19 @@
 """SQLAlchemyによる根拠読取りの境界。"""
 
-from package_inserts.catalog_loader import get_package_insert_catalog
-from package_inserts.catalog_models import PackageInsertCatalog
 from sqlalchemy import Text, column, func, select, table, text
 from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.sql.selectable import FromClause, Select
 
 from ...domain.retrieval.primitives import DetectionSource
 from ...domain.retrieval.repositories import EvidenceRepository, EvidenceSearchTarget
-from ...domain.retrieval.value_objects import Evidence, SearchCriteria
+from ...domain.retrieval.value_objects import Evidence, SearchCriteria, TextSearchPolicy
 from ...domain.shared.services import (
     normalize_match_text,
     normalize_search_text,
 )
 from ..evidence_mapping import build_evidence, is_scope_heading_only
 from ..json_payloads import parse_json_object
+from ..package_insert_definitions.loader import get_package_insert_definitions
 from . import registration_schema, schema
 from .read_workers import ReadWorkers, read_workers_for_engine
 
@@ -42,7 +41,7 @@ def _read_evidence(
     connection: Connection,
     statement: Select[str, str | None],
     source: DetectionSource,
-    catalog: PackageInsertCatalog,
+    text_search_policy: TextSearchPolicy,
     requested_yj_codes: frozenset[str] = frozenset(),
 ) -> list[Evidence]:
     evidence: list[Evidence] = []
@@ -57,7 +56,7 @@ def _read_evidence(
                 code for code in codes if isinstance(code, str)
             ):
                 continue
-        if is_scope_heading_only(unit, catalog=catalog):
+        if is_scope_heading_only(unit, text_search_policy=text_search_policy):
             continue
         document = (
             parse_json_object(row["document_payload_json"])
@@ -83,11 +82,15 @@ class SqlAlchemyEvidenceReader(EvidenceRepository):
         self,
         engine: Engine,
         *,
-        catalog: PackageInsertCatalog | None = None,
+        text_search_policy: TextSearchPolicy | None = None,
         workers: ReadWorkers | None = None,
     ) -> None:
         self._engine = engine
-        self._catalog = catalog if catalog is not None else get_package_insert_catalog()
+        self._text_search_policy = (
+            text_search_policy
+            if text_search_policy is not None
+            else get_package_insert_definitions().text_search_policy
+        )
         self._workers = (
             workers if workers is not None else read_workers_for_engine(engine)
         )
@@ -131,7 +134,7 @@ class SqlAlchemyEvidenceReader(EvidenceRepository):
                             connection,
                             statement,
                             criteria.source,
-                            self._catalog,
+                            self._text_search_policy,
                             requested_yj_codes,
                         )
                     )
@@ -175,7 +178,7 @@ class SqlAlchemyEvidenceReader(EvidenceRepository):
                         connection,
                         statement,
                         criteria.source,
-                        self._catalog,
+                        self._text_search_policy,
                         requested_yj_codes,
                     )
                 )
