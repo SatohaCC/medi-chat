@@ -10,7 +10,7 @@
 | Core Subdomain | 添付文書根拠 | 出典付きの根拠を選び、文書単位の整合性を保持する | `domain/attachment` |
 | Supporting Subdomain | 医薬品マスター | YJコードを識別子として医薬品コード対応表の10列を保持する | `domain/medicine` |
 | Application | 回答準備・生成 | 2つのサブドメインとReader/Providerを順序付けて回答を作る | `application/chat` |
-| Supporting Context | 知識取り込み・索引 | PMDA XMLを構造化し、検索可能な索引を作る | `data_tools`、`application/indexing` |
+| Supporting Context | 知識取り込み・索引 | PMDA XMLを構造化し、検索可能な索引を作る | `application/attachment_import`、`infrastructure/pmda_xml`、`application/indexing` |
 | Delivery / Generic | 対話配信 | REST/WebSocket、公開DTO、LLMストリームを提供する | `presentation`、`infrastructure/llm` |
 
 `backend/domain` は一つのドメイン境界であり、bounded context ごとに純粋なモデルと規則を持ちます。`ChatMessage` や `ChatResponse` は回答ユースケースの入出力で、会話集約ではありません。会話履歴、権限、監査などに固有の業務規則が生じるまで、チャットを独立したドメインとして追加しません。
@@ -24,9 +24,9 @@
 | `domain/retrieval` | 検索 bounded context。検索Primitive、検索条件、意図選択、根拠・取得経路の統合、根拠取得ポート、検索ポリシーを置く |
 | `domain/foundation` | 業務非依存のPrimitive、Value Object、Entity/Aggregate Rootの基底、宣言型ガード、例外基底 |
 | `domain/shared` | 複数コンテキストで共有する汎用正規化処理を置く。YJコードはmedicineが所有する |
-| `application/chat` | 回答ユースケースの準備・生成・プロンプト・所有stream終了。`collect_search_criteria`は全検出器の完了を待ち、検索はその後に行う |
+| `application/chat` | 会話から質問を取り出し、retrievalの結果を使って回答を準備・生成する。プロンプトと所有stream終了を担当する |
 | `application/medicine` | フォームの医薬品候補提示。入力スナップショットから候補を選び、根拠検索には依存しない |
-| `application/retrieval` | 意図・検索語のProtocolと検索条件生成 |
+| `application/retrieval` | 質問とYJコードから医薬品を解決し、検索条件を生成して根拠を取得・統合する。`collect_search_criteria`は全検出器の完了を待ち、検索はその後に行う |
 | `application/indexing` | 索引構築のユースケース・入出力契約 |
 | `presentation` | Pydantic公開DTO、JSON変換、`AppChatService`、REST/WS、FastAPI依存関数 |
 | `infrastructure` | SDK JSON解釈、JSON読取、Janome、SQLAlchemy Reader/Writer、Alembic runner、旧v3検証・移行 |
@@ -34,7 +34,7 @@
 | `infrastructure/composition` / `main.py` | 具象の生成・接続、準備済みDBの検証、SDK/worker/engineの所有終了 |
 | `config` | 接続設定と生成provider/modelの環境default供給 |
 | `infrastructure/cli` | `build_search_index`、`migrate_legacy_index`の公開module入口 |
-| `../package_inserts` | backend/data_toolsが共有する添付文書カタログ（Shared Kernel）と純粋整形 |
+| `../package_inserts` | backendが共有する添付文書カタログ（Shared Kernel）と純粋整形 |
 
 公開DTOの`ChatMessage`/`ChatResponse`/`ChatSource`/`MedicineMatch`は`presentation`に置き、REST JSON・WSイベント・OpenAPIの名前を維持します。applicationの同名モデルはフレームワーク非依存の入出力です。`IntentResult.candidates`が意図判定の業務契約で、`raw_response`は公開原本として保持します。applicationはSDKの`answers`/`choice`/`probabilities`を読まず、presentation mapperが公開JSONとの往復を担当します。
 
@@ -92,6 +92,12 @@ backendの実行環境はPython 3.14以上が必要です。
 旧 `domain.shared.exceptions` の利用側は `domain.foundation.exceptions` に移行します。
 
 ## 依存関係と実行時の呼出し
+
+`application/chat` は `application/retrieval.retrieve_evidence` を呼び、
+チャットやLLMに依存しない `RetrievalResult` を受け取ります。
+retrievalは会話メッセージ・回答生成・LLM Providerを参照しません。
+この依存方向はImport Linterで間接依存も含めて検査します。
+LLMによる回答生成の契約はchat、SDKの実装はInfrastructureが所有します。
 
 次はimport依存の図です。矢印の先の型・契約を参照します。
 
@@ -182,16 +188,34 @@ uv run --project backend alembic -c backend/alembic.ini downgrade base
 
 ### 検索インデックスの構築
 
-インデックス構築は、あらかじめマイグレーションが完了したデータベースに対して、単一トランザクションで安全に実行されます：
+登録済みactive集合を検証します。旧ディレクトリを走査して旧版を再登録しません。
+旧索引は利用中writerを停止し、整合backup・復元検査後に明示Alembicと初期登録を行ってください。
+起動時にschema作成や初期登録は行いません。まずコピー先で照合してください。
 
 ```bash
-# 既定のパス (data_tools/structured/ -> .chat-search.sqlite3) でインデックス構築
+uv run --project backend alembic -c backend/alembic.ini -x index_path=copy/index.sqlite3 upgrade head
+uv run --project backend python -m backend.infrastructure.cli.initialize_registrations \
+  --originals-dir copy/originals --structured-dir copy/structured \
+  --index-path copy/index.sqlite3 --import-dir copy/imports
+```
+
+既存変換CLIの引数と厳格な図検査は維持しています。通常modeはoffline変換で公開登録しません。
+登録済み所有artifactへの直接上書きは拒否します。`--register`を明示するとWebと同じpublisherで
+登録します（`--output-dir`は純変換専用）。`build:data`はこの登録modeを利用します。
+
+```bash
+uv run --project backend python -m backend.infrastructure.cli.structure_pmda_xml \
+  copy/new.xml --register --index-path copy/index.sqlite3 --import-dir copy/imports
+```
+
+```bash
+# 既定のパス (data/pmda/structured/ -> .chat-search.sqlite3) でインデックス構築
 uv run --project backend python -m backend.infrastructure.cli.build_search_index
 
 # 任意のパスを指定して実行
 uv run --project backend python -m backend.infrastructure.cli.build_search_index \
-  --structured-dir data_tools/structured \
-  --index-path data_tools/structured/.chat-search.sqlite3
+  --structured-dir data/pmda/structured \
+  --index-path data/pmda/structured/.chat-search.sqlite3
 ```
 
 ### 未管理旧v3 SQLiteデータベースの移行
@@ -200,8 +224,8 @@ uv run --project backend python -m backend.infrastructure.cli.build_search_index
 
 ```bash
 uv run --project backend python -m backend.infrastructure.cli.migrate_legacy_index \
-  --source-index data_tools/structured/old-index.sqlite3 \
-  --output-index data_tools/structured/.chat-search.sqlite3
+  --source-index data/pmda/structured/old-index.sqlite3 \
+  --output-index data/pmda/structured/.chat-search.sqlite3
 ```
 - 元データベースの整合性を検証（PRAGMA integrity_check、JSONスキーマ、FTS5整合性）
 - SQLite Online Backup API を用いて安全に整合複製（WALコミット済みデータも完全に反映）
@@ -238,11 +262,11 @@ pnpm install
 pnpm typecheck:python
 
 # リンター & フォーマッター
-uv run --project backend python -m ruff check backend data_tools package_inserts
-uv run --project backend python -m ruff format --check backend data_tools package_inserts
+uv run --project backend python -m ruff check backend package_inserts
+uv run --project backend python -m ruff format --check backend package_inserts
 
 # 全体テストスイートの実行
-uv run --project backend pytest backend/tests data_tools/tests
+uv run --project backend pytest backend/tests
 
 # 開発サーバー起動
 pnpm dev:backend
@@ -291,3 +315,25 @@ Value Objectとして保持します。検索ポートは文書IDを公開する
 文書内の製品重複と項目の親子関係は `AttachmentDocument` が検証し、
 取得経路は `frozenset[DetectionSource]` で保持し、公開JSONはEnum定義順の配列に変換します。
 経路がない場合は空集合・空配列とし、組み合わせ専用のEnumや対応表は定義しません。
+
+## XML取り込みの公開境界
+
+`POST /api/attachment-imports`はmultipartの`file`1つを受け取り、`GET /api/attachment-imports/{document_id}/{source_sha256}`は保存結果metadataを返します。新規201・同原本200、入力数/空400、上限413、非XML415、構造/解析422、保存矛盾409、保存IO500。新APIのエラーは`detail: {code, message}`です。
+
+lifespanが取り込みworkerを所有し、decoder/encoder/保存IOをevent loop外で実行して終了を待ちます。既定保存先は`data/pmda/imports`、環境変数は`MEDI_CHAT_IMPORT_DIR`です。Alembic移行と初期登録済みの検索DBが起動前提です。既存DBはwriter停止・整合backup・コピー復元検査後、上記「検索インデックスの構築」の明示手順で移行してください。起動時に自動DDL・初期登録はしません。
+
+Web取り込みは保存だけでなく、`SqliteRegistrationPublisher`でactive製品・検索本文・候補・fingerprintを同一SQLite transactionで公開します。旧structured/manifestは直接上書きせず、import rootに版と世代成果物を保存します。同YJは改訂日ではなく初回成功登録順の新版へ切り替え、旧文書の未置換YJは保持します。active参照とreader leaseがない旧版の所有ファイルだけを削除し、削除待ちは再試行します。同原本の再送はreceiptを再利用し、旧版を復活させません。登録に利用できるYJがないXMLは422で拒否します。原本/保存絶対パスの公開APIは追加していません。
+
+### 通常E2Eと索引の明示回復
+
+`pnpm test:e2e`は通常devと同じdotenv読み込み・DB設定解決を使い、read-only readinessと通常mainの内部read-only probe compositionによる実OS healthを確認してから画面suiteへ進みます。`uv run --project backend --locked python -m backend.infrastructure.cli.configured_e2e_gate --resolve-only`で秘密値を出さず絶対source/indexを確認できます。未準備・staleでは非0で止まり、起動時の自動build/migrateは行いません。
+
+運用索引の再構築は対象の絶対source/indexを明示し、その対象を利用するbackend/writerを利用者が停止した後に行います。試験から既存serverを停止しません。Windowsでは`infrastructure.cli.index_maintenance.assert_stopped`がDBと存在するWAL/SHMの排他可否を検査します。`checked_backup(target, backup)`でmanaged schema・integrity・全テーブルの論理内容・保存fingerprintを照合したread-only SQLite backupを作成し、別一時DBへ復元して同じ論理snapshotであることを確認します。backupは保存し、`verify_rebuild_preconditions(target, backup)`成立後、既存`build_search_index` moduleへ絶対source/indexを渡して明示再構築してください。対象未明示・backup未確認・open writer・unmanaged schemaでは更新せず、必要な停止/backup/migration判断へ戻します。
+
+再構築後はsource/index/fingerprint/件数/前後hashと実healthを記録します。原XML・図・document.json・search_units.jsonl・manifest・旧保全物を再生成しません。登録済みモデルではWeb登録と明示登録CLIが同じpublisherを使い、active製品・検索本文・候補・fingerprintを一つのSQLite transactionで公開します。純粋なoffline変換は公開登録ではありません。
+
+### 公開世代と取得の所有
+
+医薬品解決からdetector・検索・改訂のmaterializeまで、一つのgeneration leaseを所有します。取得の終了・例外・取消でleaseを解放し、LLM streamは解放後の不変な根拠snapshotを使います。別processで新版が公開されても旧取得へ新本文を混ぜず、新しい要求だけが新世代を読みます。旧版ファイルと派生世代は参照と生存owner leaseがなくなった後に所有manifestを再確認して削除します。ownerの生存はPIDとprocess開始時刻で確認し、固定TTLでは追い出しません。
+
+通常startupと明示CLIはSQLite自身のjournal回復と所有cleanupを行います。公開済みartifactの破損は起動拒否で、旧世代fallback・自動DDL・再構築を行いません。configured E2E gateのreadinessはread-onlyです。cleanup待ち・lease・未公開attempt/stageがあれば明示startup/CLI回復へ返します。前検査後の競合もprobe起動側・health側で再確認し、probeはjournal回復・store cleanup・publisher recoveryを実行しません。通常mainの既定回復は維持します。healthの件数・generation_idはread-only snapshotから取得し、leaseを書きません。

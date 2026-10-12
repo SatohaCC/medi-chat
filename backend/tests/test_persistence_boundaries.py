@@ -87,6 +87,65 @@ def source_snapshot() -> SourceSnapshot:
     )
 
 
+def _private_memory_fts_ddl(tree: ast.AST) -> set[ast.Call]:
+    allowed: set[ast.Call] = set()
+    for scope in ast.walk(tree):
+        if not isinstance(scope, ast.With):
+            continue
+        for item in scope.items:
+            if not isinstance(item.optional_vars, ast.Name):
+                continue
+            binding = item.optional_vars.id
+            context = item.context_expr
+            if not (
+                isinstance(context, ast.Call)
+                and isinstance(context.func, ast.Name)
+                and context.func.id == "closing"
+                and len(context.args) == 1
+            ):
+                continue
+            connection = context.args[0]
+            if not (
+                isinstance(connection, ast.Call)
+                and isinstance(connection.func, ast.Attribute)
+                and isinstance(connection.func.value, ast.Name)
+                and connection.func.value.id == "sqlite3"
+                and connection.func.attr == "connect"
+                and connection.args
+                and isinstance(connection.args[0], ast.Constant)
+                and connection.args[0].value == ":memory:"
+            ):
+                continue
+            body = ast.Module(body=scope.body, type_ignores=[])
+            if any(
+                isinstance(n, ast.Name)
+                and n.id == binding
+                and isinstance(n.ctx, ast.Store)
+                for n in ast.walk(body)
+            ):
+                continue
+            for call in ast.walk(body):
+                if not isinstance(call, ast.Call) or not isinstance(
+                    call.func, ast.Attribute
+                ):
+                    continue
+                if not (
+                    isinstance(call.func.value, ast.Name)
+                    and call.func.value.id == binding
+                    and call.func.attr == "execute"
+                    and call.args
+                    and isinstance(call.args[0], ast.Constant)
+                ):
+                    continue
+                if re.match(
+                    r"\s*CREATE VIRTUAL TABLE \w+ USING fts5\(",
+                    str(call.args[0].value),
+                    re.I,
+                ):
+                    allowed.add(call)
+    return allowed
+
+
 def _assert_new_persistence_sources() -> None:
     backend_dir = Path(__file__).resolve().parents[1]
     persistence_dir = backend_dir / "infrastructure" / "persistence"
@@ -96,7 +155,9 @@ def _assert_new_persistence_sources() -> None:
         *(backend_dir / "application").rglob("*.py"),
     ]
     for path in paths:
-        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        private_ddl = _private_memory_fts_ddl(tree)
+        for node in ast.walk(tree):
             if not isinstance(node, ast.Call):
                 continue
             name = (
@@ -124,9 +185,47 @@ def _assert_new_persistence_sources() -> None:
                     f"{path}:{node.lineno}: FTS SQLが外側へ漏れる"
                 )
             if name in {"text", "execute", "exec_driver_sql"}:
-                assert not re.match(r"\s*(?:create|alter|drop)\b", value, re.I), (
-                    f"{path}:{node.lineno}: 通常処理にDDL SQLがある"
-                )
+                assert (
+                    not re.match(r"\s*(?:create|alter|drop)\b", value, re.I)
+                    or node in private_ddl
+                    and path.is_relative_to(persistence_dir)
+                ), f"{path}:{node.lineno}: 通常処理にDDL SQLがある"
+
+
+def test_private_fts_ddl_exemption_requires_memory_connection(monkeypatch):
+    path = (
+        Path(__file__).resolve().parents[1]
+        / "infrastructure/persistence/generation_runtime.py"
+    )
+    content = path.read_text(encoding="utf-8")
+    assert len(_private_memory_fts_ddl(ast.parse(content))) == 1
+    persisted = ast.parse(
+        content.replace(
+            'sqlite3.connect(":memory:")', 'sqlite3.connect("index.sqlite3")'
+        )
+    )
+    assert _private_memory_fts_ddl(persisted) == set()
+    assert any(
+        isinstance(n, ast.Constant)
+        and isinstance(n.value, str)
+        and n.value.startswith("CREATE VIRTUAL TABLE")
+        for n in ast.walk(persisted)
+    )
+    original_read = Path.read_text
+
+    def read_with_persisted_connection(self, *args, **kwargs):
+        value = original_read(self, *args, **kwargs)
+        return (
+            value.replace(
+                'sqlite3.connect(":memory:")', 'sqlite3.connect("index.sqlite3")'
+            )
+            if self == path
+            else value
+        )
+
+    monkeypatch.setattr(Path, "read_text", read_with_persisted_connection)
+    with pytest.raises(AssertionError, match="通常処理にDDL SQLがある"):
+        _assert_new_persistence_sources()
 
 
 def _select_uses_table(statement: Select, table: Table) -> bool:

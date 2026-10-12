@@ -101,7 +101,14 @@ def test_application_lifespan_closes_owned_intent_sdk(tmp_path, monkeypatch):
         )
     finally:
         engine.dispose()
-    with TestClient(main.create_app(source, index)) as client:
+    from backend.tests.registration_runtime_fixtures import (
+        register_synthetic_prepared_index,
+    )
+
+    register_synthetic_prepared_index(source, index)
+    with TestClient(
+        main.create_app(source, index, import_directory=tmp_path / "imports")
+    ) as client:
         assert client.get("/health").status_code == 200
         assert classifier.closed is False
     assert classifier.closed is True

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { ChatHeader } from "./components/ChatHeader";
 import { ChatInputForm } from "./components/ChatInputForm";
@@ -14,6 +15,7 @@ export default function Chat() {
 
   const {
     selectedYjCodes,
+    missingSelectedYjCodes,
     medicineOptions,
     medicineCatalogStatus,
     customMedicines,
@@ -33,12 +35,19 @@ export default function Chat() {
 
   return (
     <div className="container">
+      <Link href="/imports">添付文書XMLを取り込む</Link>
       <ChatHeader
         selectedModel={selectedModel}
         onModelChange={setSelectedModel}
         status={status}
       />
 
+      {missingSelectedYjCodes.length > 0 && (
+        <p role="alert" aria-label="選択YJの消失">
+          選択したYJコードが現在の候補にありません: {missingSelectedYjCodes.join(", ")}
+          。別の薬へ自動変更していません。
+        </p>
+      )}
       <MedicineSelector
         medicineOptions={medicineOptions}
         medicineCatalogStatus={medicineCatalogStatus}

@@ -1,6 +1,6 @@
 # 添付文書の共通カタログ
 
-定義の編集先は [package_insert_catalog.json](package_insert_catalog.json) です。`backend` と `data_tools` が同じファイルを読み込みます。Python標準ライブラリのみで動作します。
+定義の編集先は [package_insert_catalog.json](package_insert_catalog.json) です。`backend` の検索・XML変換 が同じファイルを読み込みます。Python標準ライブラリのみで動作します。
 
 | JSONの項目 | 管理する内容 |
 | --- | --- |

@@ -113,9 +113,9 @@ def test_構築済み索引は元データなしで検索できる(
     medicines = (
         AttachmentProductMatch(
             generic_name="テスト成分",
-            brand_names=["テスト薬"],
-            yj_codes=["1234567A0000"],
-            document_ids=["test_001"],
+            brand_names=("テスト薬",),
+            yj_codes=("1234567A0000",),
+            document_ids=("test_001",),
         ),
     )
     evidence_reader = SqlAlchemyEvidenceReader(engine)
@@ -213,9 +213,9 @@ def test_ソースが変わったときだけ索引を再構築する(
             (
                 AttachmentProductMatch(
                     generic_name="テスト成分",
-                    brand_names=["テスト薬"],
-                    yj_codes=["1234567A0000"],
-                    document_ids=["test_001"],
+                    brand_names=("テスト薬",),
+                    yj_codes=("1234567A0000",),
+                    document_ids=("test_001",),
                 ),
             ),
         )
@@ -263,9 +263,9 @@ def test_構築に失敗しても既存索引が失われない(
     medicines = (
         AttachmentProductMatch(
             generic_name="テスト成分",
-            brand_names=["テスト薬"],
-            yj_codes=["1234567A0000"],
-            document_ids=["test_001"],
+            brand_names=("テスト薬",),
+            yj_codes=("1234567A0000",),
+            document_ids=("test_001",),
         ),
     )
     criteria = (

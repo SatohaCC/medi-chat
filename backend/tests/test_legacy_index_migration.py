@@ -675,11 +675,30 @@ def test_valid_v3_copy_preserves_search_and_source(
     ):
         migrated = _snapshot_existing_database(output)
         assert migrated.revision == (head,)
+        registration_tables = {
+            "registration_receipts",
+            "registration_version_artifacts",
+            "active_registrations",
+            "registration_generations",
+            "registration_state",
+            "generation_leases",
+            "registration_owned_files",
+        }
+        assert set(migrated.rows) - set(source_before.rows) == registration_tables | {
+            "alembic_version"
+        }
+        assert all(migrated.rows[name] == () for name in registration_tables)
         assert {
-            key: rows for key, rows in migrated.rows.items() if key != "alembic_version"
+            key: rows
+            for key, rows in migrated.rows.items()
+            if key in source_before.rows
         } == source_before.rows
         assert (
-            tuple(row for row in migrated.schema if row[2] != "alembic_version")
+            tuple(
+                row
+                for row in migrated.schema
+                if row[2] not in registration_tables | {"alembic_version"}
+            )
             == source_before.schema
         )
         assert str(source) in report

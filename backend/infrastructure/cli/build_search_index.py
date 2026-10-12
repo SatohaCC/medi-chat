@@ -9,10 +9,15 @@ from pathlib import Path
 from sqlalchemy.engine import URL
 
 from ...config.database_settings import resolve_database_settings
+from ...config.import_settings import resolve_import_directory
 from ..composition.index_verifier import verify_schema_readiness
 from ..persistence.index_writer import SqlAlchemyIndexWriter
+from ..persistence.registration_lock import registration_lock
+from ..persistence.registration_publisher import SqliteRegistrationPublisher
 from ..persistence.sqlite_engine import create_sqlite_engine
-from ..sources.file_index_source import FileIndexSourceReader
+from ..persistence.sqlite_recovery import recover_sqlite_journal
+from ..sources.attachment_import_store import FileAttachmentImportStore
+from ..sources.registration_source import read_registered_snapshot
 
 
 def main() -> int:
@@ -44,6 +49,7 @@ def main() -> int:
     )
 
     try:
+        recover_sqlite_journal(settings.index_path)
         verify_schema_readiness(settings.index_path)
     except RuntimeError as exc:
         print(f"Error: {exc}", file=sys.stderr)
@@ -59,8 +65,30 @@ def main() -> int:
         )
     )
     try:
-        snapshot = FileIndexSourceReader(settings.structured_dir).read_snapshot()
-        result = SqlAlchemyIndexWriter(engine).replace(snapshot)
+        with registration_lock(settings.index_path):
+            if read_registered_snapshot(settings.index_path) is None:
+                print(
+                    "Error: initial_registration_required; run initialize_registrations after backup and migration",
+                    file=sys.stderr,
+                )
+                return 1
+        SqliteRegistrationPublisher(
+            settings.index_path,
+            FileAttachmentImportStore(resolve_import_directory()),
+            allowed_roots=(
+                settings.structured_dir,
+                settings.structured_dir.parent / "originals",
+            ),
+        ).recover()
+        with registration_lock(settings.index_path):
+            snapshot = read_registered_snapshot(settings.index_path)
+            if snapshot is None:
+                print(
+                    "Error: initial_registration_required; run initialize_registrations after backup and migration",
+                    file=sys.stderr,
+                )
+                return 1
+            result = SqlAlchemyIndexWriter(engine).replace(snapshot)
     finally:
         engine.dispose()
 

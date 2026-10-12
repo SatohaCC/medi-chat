@@ -15,8 +15,11 @@ def get_chat_service(connection: HTTPConnection) -> ChatService:
     return getattr(connection.app.state, "chat_service", None)  # type: ignore[no-any-return]
 
 
-def get_medicine_suggester(connection: HTTPConnection) -> MedicineSuggester:
+async def get_medicine_suggester(connection: HTTPConnection) -> MedicineSuggester:
     """医薬品候補提示サービスを取得する依存関係関数"""
+    runtime = getattr(connection.app.state, "generation_runtime", None)
+    if runtime is not None:
+        return await runtime.catalogue()
     return getattr(connection.app.state, "medicine_suggester", None)  # type: ignore[no-any-return]
 
 

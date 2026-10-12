@@ -40,12 +40,12 @@ from backend.infrastructure.intent.jev_classifier import JevIntentClassifier
 from backend.infrastructure.morphology.keyword_extraction import extract_search_keywords
 from backend.infrastructure.persistence.evidence_reader import SqlAlchemyEvidenceReader
 from backend.infrastructure.persistence.sqlite_engine import create_sqlite_engine
+from backend.infrastructure.pmda_xml.transform import transform
 from backend.tests.storage_fixtures import (
     build_document_store,
     write_structured_document,
 )
 from backend.tests.test_alembic_migrations import _migrate_database
-from data_tools.pmda_xml.transform import transform
 from package_inserts import catalog_loader
 from package_inserts.catalog_loader import (
     get_package_insert_catalog,
@@ -488,9 +488,9 @@ def test_専用指示の項目名を生成し根拠原文を保持する(
     activate_catalog(catalog_data)
     medicine = AttachmentProductMatch(
         generic_name="成分",
-        brand_names=["製品"],
-        yj_codes=["1234567A0000"],
-        document_ids=["document-1"],
+        brand_names=("製品",),
+        yj_codes=("1234567A0000",),
+        document_ids=("document-1",),
     )
     source = _source(
         url="https://example.test/source", document_revision={"version": "第2版"}
@@ -598,9 +598,9 @@ def test_SQLiteと根拠一覧の項目順が一致する(
         medicines = (
             AttachmentProductMatch(
                 generic_name="テスト成分",
-                brand_names=["テスト薬"],
-                yj_codes=["1234567A0000"],
-                document_ids=["test_001"],
+                brand_names=("テスト薬",),
+                yj_codes=("1234567A0000",),
+                document_ids=("test_001",),
             ),
         )
         engine = create_sqlite_engine(

@@ -10,6 +10,9 @@ from sqlalchemy import inspect, text
 from sqlalchemy.engine import Connection
 
 from ..config.database_settings import DatabaseSettings
+from ..infrastructure.persistence.registration_schema import (
+    TABLES as REGISTRATION_TABLES,
+)
 from ..infrastructure.persistence.schema import metadata
 from ..infrastructure.persistence.sqlite_engine import create_sqlite_engine
 from .legacy_copy_stamp import (
@@ -47,12 +50,17 @@ def _validate_managed_database(connection: Connection) -> None:
 
     expected_objects = {("table", "alembic_version")} if table_names else set()
     if revisions:
-        expected_objects.update(
-            ("table", table.name) for table in metadata.tables.values()
-        )
+        registration_names = {table.name for table in REGISTRATION_TABLES}
+        selected_tables = [
+            table
+            for table in metadata.tables.values()
+            if table.name not in registration_names
+            or "0002_registration_generations" in revisions
+        ]
+        expected_objects.update(("table", table.name) for table in selected_tables)
         expected_objects.update(
             ("index", index.name)
-            for table in metadata.tables.values()
+            for table in selected_tables
             for index in table.indexes
             if index.name is not None
         )
