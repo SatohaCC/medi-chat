@@ -18,7 +18,10 @@ test("TC137 real browser three confirmations and normal single/pair without API 
 }) => {
   const isolated = mkdtempSync(join(tmpdir(), "medi-chat-confirmation-browser-"));
   const metricsFile = join(isolated, "sdk-metrics.json");
-  const python = join(root, "backend/.venv/Scripts/python.exe");
+  const python =
+    process.platform === "win32"
+      ? join(root, "backend/.venv/Scripts/python.exe")
+      : join(root, "backend/.venv/bin/python");
   const environment = {
     ...process.env,
     PYTHON_DOTENV_DISABLED: "1",

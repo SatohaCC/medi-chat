@@ -9,7 +9,11 @@ import {
   ensureOwnedRestartPortAvailable,
   ensurePortAvailable,
 } from "../scripts/owned-server.mjs";
-import { assertImportSemantic, logicalSnapshot } from "./helpers/sqlite-fixture";
+import {
+  assertImportSemantic,
+  logicalSnapshot,
+  pythonBinary,
+} from "./helpers/sqlite-fixture";
 
 const root = resolve("..");
 const evidence = resolve(
@@ -29,7 +33,7 @@ test("real browser upload, resend, process restart GET and active registration",
     if (process) await ensureOwnedRestartPortAvailable(3211);
     else await ensurePortAvailable(3211);
     process = spawn(
-      join(root, "backend/.venv/Scripts/python.exe"),
+      pythonBinary(root),
       [
         "-m",
         "backend.tests.attachment_import_e2e_server",

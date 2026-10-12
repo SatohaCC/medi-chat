@@ -1,15 +1,32 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
+function resolvePython() {
+  const venvPython =
+    process.platform === "win32"
+      ? resolve(root, "backend/.venv/Scripts/python.exe")
+      : resolve(root, "backend/.venv/bin/python");
+  if (existsSync(venvPython)) {
+    return { command: venvPython, prefixArgs: [] };
+  }
+  return {
+    command: "uv",
+    prefixArgs: ["run", "--project", resolve(root, "backend"), "python"],
+  };
+}
+
 test("SX-R13: immutable semantic oracle rejects all content/structure mutations", () => {
+  const { command, prefixArgs } = resolvePython();
   const output = execFileSync(
-    resolve(root, "backend/.venv/Scripts/python.exe"),
+    command,
     [
+      ...prefixArgs,
       resolve(root, "frontend/scripts/semantic-compare.py"),
       "controls",
       resolve(root, "frontend/e2e-real/fixtures/import-semantic-oracle.json"),

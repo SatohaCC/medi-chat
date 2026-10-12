@@ -47,7 +47,10 @@ test("TC117 real legacy migration O→N(A)→P(B), search cleanup replay restart
     MEDI_CHAT_DATABASE_URL: `sqlite:///${join(isolated, "index.sqlite3").replaceAll("\\", "/")}`,
     MEDI_CHAT_IMPORT_DIR: join(isolated, "imports"),
   };
-  const python = join(root, "backend/.venv/Scripts/python.exe");
+  const python =
+    process.platform === "win32"
+      ? join(root, "backend/.venv/Scripts/python.exe")
+      : join(root, "backend/.venv/bin/python");
   const command = (args: string[]) =>
     spawnSync(python, args, {
       cwd: root,

@@ -9,9 +9,15 @@ export interface LogicalSnapshot {
   tables: Record<string, { columns: string[]; rows: unknown[][] }>;
 }
 
+export function pythonBinary(root: string): string {
+  return process.platform === "win32"
+    ? join(root, "backend/.venv/Scripts/python.exe")
+    : join(root, "backend/.venv/bin/python");
+}
+
 function observe(root: string, mode: string, index: string, env: NodeJS.ProcessEnv) {
   const result = spawnSync(
-    join(root, "backend/.venv/Scripts/python.exe"),
+    pythonBinary(root),
     [join(root, "frontend/scripts/sqlite-fixture.py"), mode, index],
     { cwd: root, env, encoding: "utf8", timeout: 120_000, maxBuffer: 32 * 1024 * 1024 },
   );
@@ -35,7 +41,7 @@ export function logicalSnapshot(root: string, index: string): LogicalSnapshot {
 
 export function assertImportSemantic(root: string, index: string) {
   const result = spawnSync(
-    join(root, "backend/.venv/Scripts/python.exe"),
+    pythonBinary(root),
     [
       join(root, "frontend/scripts/semantic-compare.py"),
       "compare",
