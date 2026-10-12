@@ -5,12 +5,12 @@ export const styles = stylex.create({
   userText: { whiteSpace: "pre-wrap" },
   statusText: { marginTop: "6px", fontSize: "12px", color: "var(--muted)" },
   message: { display: "flex" },
-  user: { justifyContent: "flex-end" },
+  user: { justifyContent: "flex-end", scrollMarginTop: "12px" },
   withSources: {
     display: { default: "grid", "@media (max-width: 900px)": "flex" },
-    gridTemplateColumns: "minmax(0, 1fr) minmax(340px, 0.95fr)",
+    gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
     alignItems: "start",
-    gap: "12px",
+    gap: "16px",
     flexDirection: { default: null, "@media (max-width: 900px)": "column" },
   },
   bubble: {
@@ -37,7 +37,7 @@ export const styles = stylex.create({
   evidenceBubble: {
     maxWidth: "none",
     minWidth: "0",
-    width: { default: null, "@media (max-width: 900px)": "100%" },
+    width: "100%",
   },
   cursor: {
     display: "inline-block",

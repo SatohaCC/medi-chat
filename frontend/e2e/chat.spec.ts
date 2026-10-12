@@ -265,3 +265,34 @@ test("SX-26/27: section/all/zero selection, references and safe Markdown remain"
   chat.respond({ type: "text_done" });
   await expect(page.getByRole("complementary").last()).toContainText("合計：0件");
 });
+
+test("チャット送信時に、送信したユーザー質問が画面上部にスクロールする", async ({
+  page,
+}) => {
+  const chat = await openChat(page);
+  await chat.input.fill("最初の長い質問");
+  await chat.send.click();
+  chat.respond({ type: "sources", sources: [source] });
+  chat.respond({
+    type: "text_delta",
+    content: "行の内容\n\n".repeat(30),
+  });
+  chat.respond({ type: "text_done" });
+
+  await chat.input.fill("2回目の質問");
+  await chat.send.click();
+
+  const secondUser = page.locator('[data-message-role="user"]').nth(1);
+  const main = page.locator("main");
+  await expect(secondUser).toBeVisible();
+
+  await expect
+    .poll(async () => {
+      const mainBox = await main.boundingBox();
+      const userBox = await secondUser.boundingBox();
+      if (!mainBox || !userBox) return -1;
+      return Math.abs(userBox.y - mainBox.y);
+    })
+    .toBeLessThan(60);
+});
+

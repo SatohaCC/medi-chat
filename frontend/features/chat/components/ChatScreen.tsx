@@ -1,7 +1,7 @@
 "use client";
 import * as stylex from "@stylexjs/stylex";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { styles as layout } from "../../../shared/ui/PageLayout.styles";
 import type { MedicineEntry } from "../../medicine-selection";
 import { MedicineSelector, useMedicineCatalog } from "../../medicine-selection";
@@ -12,6 +12,7 @@ import { MessageList } from "./MessageList";
 
 export function ChatScreen() {
   const [selectedModel, setSelectedModel] = useState("openai:gpt-6-luna");
+  const messageListRef = useRef<HTMLElement | null>(null);
 
   const {
     selectedYjCodes,
@@ -33,6 +34,37 @@ export function ChatScreen() {
     handleSelectMedicineFromAutocomplete(medicine, input);
   };
 
+  const handleSendMessage = (e?: React.FormEvent) => {
+    if (!input.trim() || selectedYjCodes.length === 0 || isStreaming) {
+      sendMessage(e);
+      return;
+    }
+    sendMessage(e);
+    requestAnimationFrame(() => {
+      const container = messageListRef.current;
+      if (!container) return;
+      const userMessages = container.querySelectorAll<HTMLElement>(
+        '[data-message-role="user"]',
+      );
+      const latestUserMessage = userMessages[userMessages.length - 1];
+      if (latestUserMessage) {
+        const prefersReducedMotion =
+          typeof window !== "undefined" &&
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const containerRect = container.getBoundingClientRect();
+        const messageRect = latestUserMessage.getBoundingClientRect();
+        const targetScrollTop = Math.max(
+          0,
+          container.scrollTop + (messageRect.top - containerRect.top) - 20,
+        );
+        container.scrollTo({
+          top: targetScrollTop,
+          behavior: prefersReducedMotion ? "auto" : "smooth",
+        });
+      }
+    });
+  };
+
   return (
     <div {...stylex.props(layout.root)} data-screen="chat">
       <Link href="/imports">添付文書XMLを取り込む</Link>
@@ -40,6 +72,12 @@ export function ChatScreen() {
         selectedModel={selectedModel}
         onModelChange={setSelectedModel}
         status={status}
+      />
+
+      <MessageList
+        messages={messages}
+        isStreaming={isStreaming}
+        containerRef={messageListRef}
       />
 
       {missingSelectedYjCodes.length > 0 && (
@@ -56,12 +94,10 @@ export function ChatScreen() {
         onToggleYjCode={toggleYjCode}
       />
 
-      <MessageList messages={messages} isStreaming={isStreaming} />
-
       <ChatInputForm
         input={input}
         onChangeInput={setInput}
-        onSubmit={sendMessage}
+        onSubmit={handleSendMessage}
         onSelectMedicine={handleSelectMedicine}
         selectedYjCodes={selectedYjCodes}
         status={status}
