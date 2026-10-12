@@ -4,12 +4,11 @@ import asyncio
 import unittest
 from unittest.mock import patch
 
-from backend.application.chat.answer_preparation import (
-    collect_search_criteria,
-    prepare_reply,
-)
-from backend.application.chat.chat_models import ChatMessage
 from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
+from backend.application.retrieval.retrieve_evidence import (
+    collect_search_criteria,
+    retrieve_evidence,
+)
 from backend.domain.attachment.entities import AttachmentProductRecord
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.attachment.primitives import PmdaUrl
@@ -84,8 +83,8 @@ class EvidenceSearchTests(unittest.IsolatedAsyncioTestCase):
                 return ()
 
         reader = Reader()
-        reply = await prepare_reply(
-            [ChatMessage(role="user", content="副作用の頭痛について")],
+        reply = await retrieve_evidence(
+            "副作用の頭痛について",
             ["3339003F5020"],
             medicine_reader=Medicines(),
             evidence_reader=reader,

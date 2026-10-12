@@ -3,7 +3,9 @@
 import json
 
 import pytest
-from backend.application.chat.answer_preparation import _detect_fixed_keyword_criteria
+from backend.domain.retrieval.services import (
+    detect_fixed_keyword_criteria as _detect_fixed_keyword_criteria,
+)
 from backend.domain.retrieval.services import detect_intent_from_keywords
 from package_inserts.catalog_loader import CATALOG_PATH, load_package_insert_catalog
 

@@ -40,6 +40,14 @@ def _run_database_entrypoint(
     database_url: str | None,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    # These tests observe settings before any DB I/O. Recovery is independently
+    # exercised by the startup/crash suites, so keep the existing readiness spy.
+    if entrypoint in {"application", "cli"}:
+        monkeypatch.setattr(
+            application_entrypoint if entrypoint == "application" else index_entrypoint,
+            "recover_sqlite_journal",
+            lambda selected: None,
+        )
     if entrypoint == "application":
         app = application_entrypoint.create_app(
             structured_dir=structured_dir,
@@ -315,7 +323,7 @@ def test_conflicting_url_and_path_are_rejected_before_connect(
             database_url=database_url if level == "explicit" else None,
             monkeypatch=monkeypatch,
         )
-    except (ImportError, TypeError, NotImplementedError):
+    except ImportError, TypeError, NotImplementedError:
         raise
     except Exception as caught:
         error = caught
@@ -411,7 +419,7 @@ def test_supported_database_locations_are_normalized(
                 database_url=database_url,
                 monkeypatch=monkeypatch,
             )
-    except (ImportError, TypeError, NotImplementedError):
+    except ImportError, TypeError, NotImplementedError:
         raise
     except Exception as caught:
         error = caught
@@ -459,7 +467,7 @@ def test_structured_directory_resolution_is_shared(
 ) -> None:
     project_root = tmp_path / "isolated-project"
     project_root.mkdir()
-    first_candidate = project_root / "data_tools" / "structured"
+    first_candidate = project_root / "data" / "pmda" / "structured"
     second_candidate = project_root / "structured"
     explicit_source = tmp_path / "explicit-source"
     environment_source = tmp_path / "environment-source"

@@ -39,6 +39,12 @@ source_modules = ["backend.domain"]
 forbidden_modules = ["backend.application", "backend.infrastructure", "backend.presentation"]
 
 [[tool.importlinter.contracts]]
+name = "Retrieval does not depend on chat"
+type = "forbidden"
+source_modules = ["backend.application.retrieval"]
+forbidden_modules = ["backend.application.chat"]
+
+[[tool.importlinter.contracts]]
 name = "Domain contexts are independent"
 type = "independence"
 modules = ["backend.domain.*"]

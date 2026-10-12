@@ -15,7 +15,7 @@ from ...domain.shared.services import (
 )
 from ..evidence_mapping import build_evidence, is_scope_heading_only
 from ..json_payloads import parse_json_object
-from . import schema
+from . import registration_schema, schema
 from .read_workers import ReadWorkers, read_workers_for_engine
 
 _UNIT_FTS = table(
@@ -43,10 +43,20 @@ def _read_evidence(
     statement: Select[str, str | None],
     source: DetectionSource,
     catalog: PackageInsertCatalog,
+    requested_yj_codes: frozenset[str] = frozenset(),
 ) -> list[Evidence]:
     evidence: list[Evidence] = []
     for row in connection.execute(statement).mappings():
         unit = parse_json_object(row["payload_json"])
+        if (
+            unit.get("schema_version") == "medi-chat.pmda-sections.v3"
+            and requested_yj_codes
+        ):
+            codes = unit.get("product_yj_codes")
+            if not isinstance(codes, list) or not requested_yj_codes.intersection(
+                code for code in codes if isinstance(code, str)
+            ):
+                continue
         if is_scope_heading_only(unit, catalog=catalog):
             continue
         document = (
@@ -54,6 +64,16 @@ def _read_evidence(
             if row["document_payload_json"] is not None
             else {}
         )
+        if unit.get("schema_version") == "medi-chat.pmda-sections.v3":
+            payload = connection.execute(
+                select(
+                    registration_schema.registration_version_artifacts.c.document_payload_json
+                ).where(
+                    registration_schema.registration_version_artifacts.c.version_id
+                    == unit["version_id"]
+                )
+            ).scalar_one()
+            document = parse_json_object(payload)
         evidence.append(build_evidence(unit, document, source))
     return evidence
 
@@ -86,6 +106,9 @@ class SqlAlchemyEvidenceReader(EvidenceRepository):
             )
         )
         evidence: list[Evidence] = []
+        requested_yj_codes = frozenset(
+            code for medicine in medicines for code in medicine.yj_codes
+        )
         with self._engine.connect() as connection:
             if criteria.section_codes:
                 for start in range(0, len(document_ids), 400):
@@ -105,7 +128,11 @@ class SqlAlchemyEvidenceReader(EvidenceRepository):
                     )
                     evidence.extend(
                         _read_evidence(
-                            connection, statement, criteria.source, self._catalog
+                            connection,
+                            statement,
+                            criteria.source,
+                            self._catalog,
+                            requested_yj_codes,
                         )
                     )
             for keyword in criteria.keywords:
@@ -145,7 +172,11 @@ class SqlAlchemyEvidenceReader(EvidenceRepository):
                     )
                 evidence.extend(
                     _read_evidence(
-                        connection, statement, criteria.source, self._catalog
+                        connection,
+                        statement,
+                        criteria.source,
+                        self._catalog,
+                        requested_yj_codes,
                     )
                 )
         return tuple(evidence)

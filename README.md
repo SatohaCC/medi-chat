@@ -53,24 +53,19 @@ medi-chat/
 │   ├── package.json      # pnpm 連携スクリプト（dev, test, lint, format）
 │   └── .env.local        # APIキー環境変数（GEMINI_API_KEY, OPENAI_API_KEY）
 │
-├── data_tools/           # 3. 事前データ作成・構造化ツール系
-│   ├── structure_pmda_xml.py  # PMDA電子添文XMLパーサー・JSON構造化CLI
-│   ├── data/             # 原本XMLデータ（薬品ごとの解凍データ）
-│   ├── structured/       # 構造化出力（JSON & SQLite全文検索インデックス）
-│   ├── tests/            # パイプライン単体テスト
-│   ├── pyproject.toml    # データ作成ツールの Python 依存設定
-│   ├── pylock.toml       # pnpm が生成する Python ロックファイル
-│   ├── package.json      # pnpm 連携スクリプト（test, lint, build-data）
-│   └── README.md
+├── data/pmda/           # 原本・構造化成果物・保管版
+│   ├── originals/       # 原本XML・図
+│   ├── structured/      # 検索用JSON・既存SQLite
+│   └── imports/         # Web取り込み版（検索への自動反映なし）
 │
-├── package_inserts/      # backend/data_tools共通の添付文書カタログと検証・整形
+├── package_inserts/      # backend共通の添付文書カタログと検証・整形
 ├── docs/                 # 仕様書・設計ドキュメント
 └── README.md
 ```
 
 バックエンドの責務分担、依存関係、モジュールの移動先は [backend/README.md](backend/README.md) を参照してください。
 
-添付文書の項目・質問意図・キーワード・Jev分類・プロンプト用の定義・XML対応は、[共通カタログ](package_inserts/package_insert_catalog.json) で一元管理します。[編集方法](package_inserts/README.md) に参照規則と検証方法を記載しています。Pythonの実行環境には `backend` / `data_tools` とともに `package_inserts` を配置してください。
+添付文書の項目・質問意図・キーワード・Jev分類・プロンプト用の定義・XML対応は、[共通カタログ](package_inserts/package_insert_catalog.json) で一元管理します。[編集方法](package_inserts/README.md) に参照規則と検証方法を記載しています。Pythonの実行環境には `backend` とともに `package_inserts` を配置してください。
 
 ---
 
@@ -136,7 +131,7 @@ pnpm typecheck
 ```bash
 pnpm --filter frontend check      # Biome
 pnpm --filter backend check       # Ruff
-pnpm --filter data_tools check    # Ruff
+pnpm --filter backend check      # XML/辞書CLIも含むRuff
 pnpm typecheck:frontend           # TypeScript (tsc)
 pnpm typecheck:python             # Python (Pyright / Pylance同等エンジン)
 ```
@@ -158,10 +153,24 @@ pnpm test:data     # データ作成ツール（PMDA XMLパーサー）
 
 ---
 
-## 📊 事前データ作成（data_tools）
+## 📊 事前データ作成（backend CLI）
+
+単一/バッチXML変換、図の厳格検証、補完辞書生成とパス移行は[data/pmdaの作業案内](data/pmda/README.md)を参照してください。Python環境はbackendのuv.lockとPython 3.14へ統一し、pnpmのPython環境管理は無効化しています。
 
 PMDAの新規添付文書XMLをパースして検索インデックスを生成・更新する場合：
 
 ```bash
-pnpm --filter data_tools run build-data
+pnpm build:data
 ```
+
+## ブラウザからのXML保管
+
+`/imports`でPMDAのXMLを1つ選択して送信します。元バイトと生成物を保管し、文書情報・改訂・件数・図欠落などの警告を表示します。検索SQLiteや既存structuredには自動反映しません。
+
+保存先は既定で`data/pmda/imports`、`MEDI_CHAT_IMPORT_DIR`で変更できます。backendは従来どおり準備済み検索索引が必要です。XMLは10MiB、multipart受信全体は11MiB、生成4成果物はUTF-8合計32MiBまでです。
+
+`POST /api/attachment-imports`はmultipartの`file`1つを受け取り、新規201・同一原本の再送200とLocationを返します。LocationへのGETで保存結果を再読込できます。原本や保存先を取得する公開APIはありません。
+
+通常の`pnpm test:e2e`は、通常devと同じdotenv設定で解決した検索索引のread-only readinessと実backendのhealthを確認した後、モック画面と実接続の両suiteを実行します。未準備・staleの索引では非0で停止し、自動再構築はしません。backend起動確認は専用ポート3212でhealthだけを要求し、試験所有processだけを終了します。
+
+個別実行は`pnpm --filter frontend test:e2e:mock`と`pnpm --filter frontend test:e2e:real`です。実接続は専用ポート3110/3211と一時prepared SQLite/import rootを使い、APIをinterceptせず、外部LLM keysを空・dotenv無効にします。実旧manifest索引の整合copyから実CLIで回復するケースも含み、元DBは更新しません。Nextの試験出力は`.next-e2e-mock`/`.next-e2e-real`へ分離し、通常devの`.next`を共有しません。

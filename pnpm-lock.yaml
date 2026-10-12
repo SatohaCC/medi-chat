@@ -14,8 +14,6 @@ importers:
 
   backend: {}
 
-  data_tools: {}
-
   frontend:
     dependencies:
       lucide-react:

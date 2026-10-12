@@ -1,55 +1,18 @@
-import { useCallback, useEffect, useState } from "react";
-import { backendBaseUrl } from "../lib/api";
-import type {
-  CustomMedicine,
-  MedicineCatalogStatus,
-  MedicineOption,
-} from "../types/chat";
+import { useCallback, useState } from "react";
+import type { CustomMedicine } from "../types/chat";
+import { useActiveMedicines } from "./useActiveMedicines";
 
 export function useMedicineCatalog(defaultYjCode = "3339003F5020") {
   const [selectedYjCodes, setSelectedYjCodes] = useState<string[]>([defaultYjCode]);
-  const [medicineOptions, setMedicineOptions] = useState<MedicineOption[]>([]);
-  const [medicineCatalogStatus, setMedicineCatalogStatus] =
-    useState<MedicineCatalogStatus>("loading");
+  const active = useActiveMedicines();
+  const medicineOptions = active.groups;
+  const medicineCatalogStatus = active.status;
   const [customMedicines, setCustomMedicines] = useState<CustomMedicine[]>([]);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function loadMedicineCatalog() {
-      try {
-        const response = await fetch(`${backendBaseUrl()}/api/medicines`, {
-          signal: controller.signal,
-        });
-        if (!response.ok) {
-          throw new Error(`Medicine catalog failed: ${response.status}`);
-        }
-        const data = (await response.json()) as { items: MedicineOption[] };
-        if (controller.signal.aborted) return;
-
-        setMedicineOptions(data.items);
-        setMedicineCatalogStatus("ready");
-
-        const availableCodes = new Set(
-          data.items.flatMap((medicine) => medicine.yj_codes),
-        );
-        setSelectedYjCodes((previous) => {
-          const retained = previous.filter((code) => availableCodes.has(code));
-          if (retained.length > 0) return retained;
-          const firstCode = data.items.flatMap((medicine) => medicine.yj_codes)[0];
-          return firstCode ? [firstCode] : previous;
-        });
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") return;
-        if (!controller.signal.aborted) {
-          setMedicineCatalogStatus("error");
-        }
-      }
-    }
-
-    loadMedicineCatalog();
-    return () => controller.abort();
-  }, []);
+  const availableCodes = new Set(active.items.map((entry) => entry.y));
+  const missingSelectedYjCodes =
+    active.status === "ready"
+      ? selectedYjCodes.filter((code) => !availableCodes.has(code))
+      : [];
 
   const toggleYjCode = useCallback((code: string) => {
     setSelectedYjCodes((prev) =>
@@ -85,6 +48,7 @@ export function useMedicineCatalog(defaultYjCode = "3339003F5020") {
 
   return {
     selectedYjCodes,
+    missingSelectedYjCodes,
     setSelectedYjCodes,
     medicineOptions,
     medicineCatalogStatus,

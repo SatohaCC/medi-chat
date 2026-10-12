@@ -10,8 +10,8 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
-from backend.application.chat.answer_preparation import _search_evidence
 from backend.application.chat.llm_contracts import LLMProvider
+from backend.application.retrieval.retrieve_evidence import _search_evidence
 from backend.domain.attachment.value_objects import AttachmentProductMatch
 from backend.domain.retrieval.primitives import (
     DetectionSource,
@@ -68,8 +68,18 @@ def test_RESTとWebSocketで回答と根拠とLLM入力が一致する(tmp_path:
         )
     finally:
         engine.dispose()
+    from backend.tests.registration_runtime_fixtures import (
+        register_synthetic_prepared_index,
+    )
+
+    register_synthetic_prepared_index(structured, index_path)
     provider = RecordingProvider()
-    app = create_app(structured, index_path, lambda _: provider)
+    app = create_app(
+        structured,
+        index_path,
+        lambda _: provider,
+        import_directory=tmp_path / "imports",
+    )
     with (
         patch.dict(os.environ, {"TYPESAFE_API_KEY": "", "JEV_API_KEY": ""}),
         TestClient(app) as client,
@@ -244,9 +254,9 @@ def search_sources(
         medicines = (
             AttachmentProductMatch(
                 generic_name="テスト成分",
-                brand_names=["テスト薬"],
-                yj_codes=["1234567A0000"],
-                document_ids=document_ids,
+                brand_names=("テスト薬",),
+                yj_codes=("1234567A0000",),
+                document_ids=tuple(document_ids),
             ),
         )
         return asyncio.run(

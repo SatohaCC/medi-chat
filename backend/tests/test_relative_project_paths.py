@@ -22,7 +22,7 @@ def test_relative_database_settings_use_project_root(
     monkeypatch.setattr("backend.project_paths.PROJECT_ROOT", root)
     environment = (
         {
-            "MEDI_CHAT_STRUCTURED_DIR": "data_tools/structured",
+            "MEDI_CHAT_STRUCTURED_DIR": "data/pmda/structured",
             ("MEDI_CHAT_DATABASE_URL" if via_url else "MEDI_CHAT_INDEX_PATH"): (
                 "sqlite:///cache/search.sqlite3" if via_url else "cache/search.sqlite3"
             ),
@@ -33,7 +33,7 @@ def test_relative_database_settings_use_project_root(
     for cwd in (root, elsewhere):
         monkeypatch.chdir(cwd)
         settings = resolve_database_settings(
-            structured_dir=None if via_environment else Path("data_tools/structured"),
+            structured_dir=None if via_environment else Path("data/pmda/structured"),
             index_path=(
                 None if via_environment or via_url else Path("cache/search.sqlite3")
             ),
@@ -44,7 +44,7 @@ def test_relative_database_settings_use_project_root(
             ),
             environ=environment,
         )
-        assert settings.structured_dir == root / "data_tools/structured"
+        assert settings.structured_dir == root / "data/pmda/structured"
         assert settings.index_path == root / "cache/search.sqlite3"
         assert (
             make_url(settings.database_url).database

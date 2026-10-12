@@ -7,7 +7,7 @@ from contextlib import closing
 from pathlib import Path
 
 from ...application.indexing.index_errors import IndexSourceError
-from ..sources.file_index_source import FileIndexSourceReader
+from ..persistence.owned_sqlite import OwnedSqliteConnection
 
 REQUIRED_TABLES = frozenset(
     {
@@ -16,9 +16,16 @@ REQUIRED_TABLES = frozenset(
         "units",
         "index_meta",
         "unit_fts",
+        "registration_receipts",
+        "active_registrations",
+        "registration_generations",
+        "registration_state",
+        "generation_leases",
+        "registration_owned_files",
+        "registration_version_artifacts",
     }
 )
-EXPECTED_REVISION = "0001_v3_schema"
+EXPECTED_REVISION = "0002_registration_generations"
 
 
 def verify_schema_readiness(index_path: Path) -> None:
@@ -31,7 +38,7 @@ def verify_schema_readiness(index_path: Path) -> None:
 
     uri = f"{index_path.resolve().as_uri()}?mode=ro"
     try:
-        connection = sqlite3.connect(uri, uri=True)
+        connection = sqlite3.connect(uri, uri=True, factory=OwnedSqliteConnection)
     except (sqlite3.DatabaseError, OSError) as exc:
         raise RuntimeError(
             f"Database at {index_path} cannot be opened in read-only mode: {exc}. "
@@ -77,7 +84,7 @@ def verify_index_readiness(structured_dir: Path, index_path: Path) -> None:
     verify_schema_readiness(index_path)
 
     uri = f"{index_path.resolve().as_uri()}?mode=ro"
-    connection = sqlite3.connect(uri, uri=True)
+    connection = sqlite3.connect(uri, uri=True, factory=OwnedSqliteConnection)
     with closing(connection):
         doc_count = connection.execute("SELECT COUNT(*) FROM documents").fetchone()[0]
         if doc_count == 0:
@@ -103,17 +110,20 @@ def verify_index_readiness(structured_dir: Path, index_path: Path) -> None:
         )
 
     try:
-        reader = FileIndexSourceReader(structured_dir)
-        paths = reader._document_unit_paths()
-        current_fingerprint = reader._source_fingerprint(paths)
+        from ..sources.registration_source import read_registered_snapshot
+
+        registered = read_registered_snapshot(index_path)
+        if registered is None:
+            raise RuntimeError(
+                "initial_registration_required: after backup and explicit migration, "
+                "run python -m backend.infrastructure.cli.initialize_registrations"
+            )
+        if registered.fingerprint != stored_fingerprint:
+            raise IndexSourceError(
+                "Published generation fingerprint differs from index"
+            )
     except (IndexSourceError, OSError) as exc:
         raise RuntimeError(
             f"Structured data at {structured_dir} is invalid: {exc}. "
             "Please verify data and run 'python -m backend.infrastructure.cli.build_search_index'."
         ) from exc
-
-    if stored_fingerprint != current_fingerprint:
-        raise RuntimeError(
-            f"Database at {index_path} has stale fingerprint ({stored_fingerprint!r} != {current_fingerprint!r}). "
-            "Please run 'python -m backend.infrastructure.cli.build_search_index'."
-        )

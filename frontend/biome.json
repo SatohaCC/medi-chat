@@ -10,6 +10,8 @@
     "includes": [
       "app/**",
       "e2e/**",
+      "e2e-real/**",
+      "scripts/**",
       "components/**",
       "lib/**",
       "*.ts",

@@ -8,6 +8,7 @@ from copy import deepcopy
 import pytest
 from backend.application.chat import answer_preparation as preparation
 from backend.application.chat.chat_models import ChatMessage
+from backend.application.retrieval import retrieve_evidence as retrieval
 from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
 from backend.application.retrieval.jev_detector import JevDetectionResult
 from backend.domain.attachment.entities import AttachmentProductRecord
@@ -94,7 +95,7 @@ async def test_preparation_failure_and_cancel_reclaim_async_children_and_release
         children.append(task)
         return task
 
-    monkeypatch.setattr(preparation.asyncio, "create_task", track_task)
+    monkeypatch.setattr(retrieval.asyncio, "create_task", track_task)
     task = original_create_task(
         preparation.prepare_reply(
             [ChatMessage(role="user", content="質問")],
@@ -192,10 +193,10 @@ async def test_detector_completion_order_preserves_intent_and_first_content(
             keywords=(SearchKeyword("症状"),),
         )
 
-    monkeypatch.setattr(preparation, "detect_jev_criteria", jev)
-    monkeypatch.setattr(preparation, "_detect_fixed_keyword_criteria", fixed)
-    monkeypatch.setattr(preparation, "detect_morphology_criteria", morphology)
-    monkeypatch.setattr(preparation.asyncio, "as_completed", controlled_completion)
+    monkeypatch.setattr(retrieval, "detect_jev_criteria", jev)
+    monkeypatch.setattr(retrieval, "_detect_fixed_keyword_criteria", fixed)
+    monkeypatch.setattr(retrieval, "detect_morphology_criteria", morphology)
+    monkeypatch.setattr(retrieval.asyncio, "as_completed", controlled_completion)
     reader = OrderedEvidenceReader(collision)
     task = asyncio.create_task(
         preparation.prepare_reply(
@@ -251,8 +252,8 @@ async def test_partially_unresolved_products_preserve_resolved_medicine_and_skip
     async def jev(*args, **kwargs):
         return JevDetectionResult(raw_response={"error": "検出器エラー"})
 
-    monkeypatch.setattr(preparation, "detect_jev_criteria", jev)
-    monkeypatch.setattr(preparation, "detect_morphology_criteria", lambda *args: None)
+    monkeypatch.setattr(retrieval, "detect_jev_criteria", jev)
+    monkeypatch.setattr(retrieval, "detect_morphology_criteria", lambda *args: None)
     reader = OrderedEvidenceReader(False)
     codes = ["1234567A0000", "unknown"]
     before = deepcopy(codes)

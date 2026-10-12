@@ -19,7 +19,7 @@ from backend.tests.storage_fixtures import build_document_store
 from sqlalchemy.engine import URL
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-STRUCTURED_DIR = REPO_ROOT / "data_tools" / "structured"
+STRUCTURED_DIR = REPO_ROOT / "data" / "pmda" / "structured"
 
 
 class PackageInsertStoreTests(unittest.TestCase):
@@ -133,4 +133,31 @@ class PackageInsertStoreTests(unittest.TestCase):
             encoding="utf-8",
         )
         fingerprint = FileIndexSourceReader(structured).read_snapshot().fingerprint
-        self.assertTrue(fingerprint.startswith("manifest:"))
+        self.assertTrue(fingerprint.startswith("content-v1:"))
+        self.assertEqual(
+            fingerprint, FileIndexSourceReader(structured).read_snapshot().fingerprint
+        )
+        document_path = structured / sample.name / "document.json"
+        original_document = document_path.read_bytes()
+        document_path.write_bytes(original_document + b" ")
+        document_changed = FileIndexSourceReader(structured).read_snapshot().fingerprint
+        self.assertNotEqual(fingerprint, document_changed)
+        document_path.write_bytes(original_document)
+        self.assertEqual(
+            fingerprint, FileIndexSourceReader(structured).read_snapshot().fingerprint
+        )
+        units_path = structured / sample.name / "search_units.jsonl"
+        original_units = units_path.read_bytes()
+        rows = [
+            json.loads(line)
+            for line in original_units.decode("utf-8").splitlines()
+            if line
+        ]
+        rows[0]["text"] += "追加本文"
+        units_path.write_text(
+            "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows),
+            encoding="utf-8",
+        )
+        self.assertNotEqual(
+            fingerprint, FileIndexSourceReader(structured).read_snapshot().fingerprint
+        )

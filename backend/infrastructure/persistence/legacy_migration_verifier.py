@@ -109,15 +109,12 @@ def read_legacy_migration_snapshot(
                 )
             )
             rows: dict[str, tuple[tuple[object, ...], ...]] = {}
-            for table_name in (
-                *schema.metadata.tables,
-                "unit_fts",
-                "unit_fts_data",
-                "unit_fts_idx",
-                "unit_fts_content",
-                "unit_fts_docsize",
-                "unit_fts_config",
-            ):
+            # Compare every table physically present in the stamped copy. The
+            # metadata also knows later explicit migrations, absent in v3 copies.
+            table_names = sorted(
+                str(item[1]) for item in schema_objects if item[0] == "table"
+            )
+            for table_name in table_names:
                 table = schema.metadata.tables.get(table_name)
                 if table is None:
                     table = Table(table_name, MetaData(), autoload_with=connection)
@@ -140,9 +137,9 @@ def read_legacy_migration_snapshot(
                 matches = (
                     AttachmentProductMatch(
                         generic_name="",
-                        brand_names=[],
-                        yj_codes=[],
-                        document_ids=list(
+                        brand_names=(),
+                        yj_codes=(),
+                        document_ids=tuple(
                             dict.fromkeys(
                                 medicine.document_id.value for medicine in medicines
                             )
@@ -167,9 +164,31 @@ def verify_legacy_migration(
     index_path: Path, before: LegacyMigrationSnapshot, expected_revision: str
 ) -> str:
     after = read_legacy_migration_snapshot(index_path, criteria=before.criteria)
+    added_tables = {
+        "registration_receipts",
+        "registration_version_artifacts",
+        "active_registrations",
+        "registration_generations",
+        "registration_state",
+        "generation_leases",
+        "registration_owned_files",
+    }
+    new_tables = set(after.rows) - set(before.rows)
+    if new_tables and (
+        new_tables != added_tables or any(after.rows[name] for name in new_tables)
+    ):
+        raise ValueError(
+            "Legacy migration verification failed: unexpected registration tables or rows"
+        )
+    old_schema = tuple(
+        item for item in after.schema_objects if item[2] not in new_tables
+    )
+    old_rows = {
+        name: rows for name, rows in after.rows.items() if name not in new_tables
+    }
     if (
-        after.schema_objects != before.schema_objects
-        or after.rows != before.rows
+        old_schema != before.schema_objects
+        or old_rows != before.rows
         or after.searches != before.searches
     ):
         raise ValueError(

@@ -17,6 +17,7 @@ from ..application.chat.stream_closing import closing_stream
 from ..application.chat.stream_reply import stream_reply as app_stream_reply
 from ..application.retrieval.intent_contracts import IntentClassifier
 from ..application.retrieval.keyword_contracts import KeywordExtractor
+from ..application.retrieval.snapshot_contracts import RetrievalSnapshotProvider
 from ..config.generation_settings import GenerationDefaults, read_generation_defaults
 from ..domain.attachment.repositories import AttachmentProductRepository
 from ..domain.retrieval.repositories import EvidenceRepository
@@ -46,6 +47,7 @@ class AppChatService:
         catalog: PackageInsertCatalog,
         provider_factory: Callable[[str | None], LLMProvider],
         defaults: Callable[[], GenerationDefaults] = read_generation_defaults,
+        snapshot_provider: RetrievalSnapshotProvider | None = None,
     ) -> None:
         self.medicine_reader = medicine_reader
         self.evidence_reader = evidence_reader
@@ -54,6 +56,7 @@ class AppChatService:
         self.catalog = catalog
         self.provider_factory = provider_factory
         self.defaults = defaults
+        self.snapshot_provider = snapshot_provider
 
     @property
     def is_jev_available(self) -> bool:
@@ -73,6 +76,7 @@ class AppChatService:
             intent_classifier=self.intent_classifier,
             keyword_extractor=self.keyword_extractor,
             catalog=self.catalog,
+            snapshot_provider=self.snapshot_provider,
         )
         return chat_response_to_api(pure_reply)
 
@@ -119,5 +123,6 @@ class AppChatService:
             provider_factory=self.provider_factory,
             provider_name=provider_name or settings.provider,
             model_name=model_name or settings.model,
+            snapshot_provider=self.snapshot_provider,
         )
         return chat_response_to_api(pure_reply)

@@ -51,7 +51,7 @@ test("removes scripts, event handlers, source styles and unsafe links", () => {
 test("renders the real 11.2 section as one table with category and frequency labels", () => {
   const rows = readFileSync(
     new URL(
-      "../../../data_tools/structured/630004_3339003F5020_1_08/search_units.jsonl",
+      "../../../data/pmda/structured/630004_3339003F5020_1_08/search_units.jsonl",
       import.meta.url,
     ),
     "utf8",

@@ -1,8 +1,10 @@
 """検索コンテキストのValue Object。"""
 
-from dataclasses import dataclass
+import re
+from dataclasses import dataclass, field
 
-from ..attachment.identifiers import DocumentId
+from ..attachment.identifiers import DocumentId, DocumentVersionId
+from ..foundation.exceptions import DomainValidationError
 from ..foundation.value_objects import ImmutableMapping
 from ..json_types import JsonValue
 from ..medicine.identifiers import YjCode
@@ -18,7 +20,88 @@ from .primitives import (
     SearchSectionCode,
     SearchUnitProductCode,
     SearchUnitSectionCode,
+    SearchUnitText,
 )
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class SearchDocumentVersion:
+    document_id: DocumentId
+    version_id: DocumentVersionId
+
+    def __post_init__(self) -> None:
+        prefix = f"{self.document_id}:"
+        if (
+            not self.version_id.value.startswith(prefix)
+            or re.fullmatch(r"[0-9a-f]{64}", self.version_id.value[len(prefix) :])
+            is None
+        ):
+            raise DomainValidationError(
+                "search version must identify this document and its source SHA256"
+            )
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class VersionSearchIdentity(SearchDocumentVersion):
+    section_code: SearchUnitSectionCode
+
+    @property
+    def unit_id(self) -> SearchUnitId:
+        return SearchUnitId(f"{self.version_id}:{self.section_code}")
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class SearchContentContext:
+    product_codes: tuple[SearchUnitProductCode, ...] = ()
+    labels: tuple[SearchUnitText, ...] = ()
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class SearchContentReference:
+    label: SearchUnitText
+    target_id: SearchUnitText | None = None
+    metadata: EvidenceReference = field(default_factory=lambda: EvidenceReference())
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class SearchTableCell:
+    text: SearchUnitText
+    column: int
+    rowspan: int
+    colspan: int
+    references: tuple[SearchContentReference, ...] = ()
+    context: SearchContentContext = field(default_factory=SearchContentContext)
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class SearchTable:
+    columns: tuple[SearchUnitText, ...]
+    rows: tuple[tuple[SearchTableCell, ...], ...]
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class SearchParagraph:
+    text: SearchUnitText
+    context: SearchContentContext
+    references: tuple[SearchContentReference, ...] = ()
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class SearchTableBlock:
+    table: SearchTable
+    context: SearchContentContext
+    references: tuple[SearchContentReference, ...] = ()
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class SearchFigure:
+    reference: SearchUnitText
+    description: SearchUnitText
+    context: SearchContentContext
+    references: tuple[SearchContentReference, ...] = ()
+
+
+type SearchContentBlock = SearchParagraph | SearchTableBlock | SearchFigure
 
 
 @dataclass(frozen=True, slots=True)

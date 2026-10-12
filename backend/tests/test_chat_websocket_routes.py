@@ -18,7 +18,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.engine import URL
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-STRUCTURED_DIR = REPO_ROOT / "data_tools" / "structured"
+STRUCTURED_DIR = REPO_ROOT / "data" / "pmda" / "structured"
 
 
 class ChatWebSocketRouteTests(unittest.TestCase):
@@ -43,7 +43,14 @@ class ChatWebSocketRouteTests(unittest.TestCase):
             )
         finally:
             engine.dispose()
-        cls.app = create_app(STRUCTURED_DIR, index_path)
+        from backend.tests.registration_runtime_fixtures import (
+            register_existing_test_source,
+        )
+
+        prepared = register_existing_test_source(STRUCTURED_DIR, index_path)
+        cls.app = create_app(
+            prepared, index_path, import_directory=Path(cls.temp_dir.name) / "imports"
+        )
         cls.client_context = TestClient(cls.app)
         cls.client = cls.client_context.__enter__()
 
