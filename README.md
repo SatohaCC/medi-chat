@@ -56,7 +56,7 @@ medi-chat/
 ├── data/pmda/           # 原本・構造化成果物・保管版
 │   ├── originals/       # 原本XML・図
 │   ├── structured/      # 検索用JSON・既存SQLite
-│   └── imports/         # Web取り込み版（検索への自動反映なし）
+│   └── imports/         # Web取り込み版と登録世代の検索成果物
 │
 ├── package_inserts/      # backend共通の添付文書カタログと検証・整形
 ├── docs/                 # 仕様書・設計ドキュメント
@@ -163,11 +163,13 @@ PMDAの新規添付文書XMLをパースして検索インデックスを生成�
 pnpm build:data
 ```
 
-## ブラウザからのXML保管
+## ブラウザからのXML取り込み・検索登録
 
-`/imports`でPMDAのXMLを1つ選択して送信します。元バイトと生成物を保管し、文書情報・改訂・件数・図欠落などの警告を表示します。検索SQLiteや既存structuredには自動反映しません。
+`/imports`でPMDAのXMLを1つ選択して送信します。元バイトと生成物を保管し、登録成功時に検索SQLiteのactive世代と医薬品候補へ即時反映します。保管だけを行う操作ではありません。文書情報・改訂・件数・図欠落などの警告に加えて、登録・置換・削除待ちの状態を表示します。
 
-保存先は既定で`data/pmda/imports`、`MEDI_CHAT_IMPORT_DIR`で変更できます。backendは従来どおり準備済み検索索引が必要です。XMLは10MiB、multipart受信全体は11MiB、生成4成果物はUTF-8合計32MiBまでです。
+同じYJコードは初回の成功登録順で新版へ切り替えます。原XMLの改訂日が古くても後から登録した版が採用されます。旧文書の別YJがまだactiveなら旧版を保持し、active参照とreader leaseがなくなった旧版の所有XML・JSON・JSONL・図だけを削除します。同一原本の再送は以前の版を再有効化しません。
+
+保存先は既定で`data/pmda/imports`、`MEDI_CHAT_IMPORT_DIR`で変更できます。旧`structured`の原物を直接書き換える代わりに、登録版と世代成果物を保存します。起動前に検索DBのAlembic移行と初期登録が必要です。既存DBはbackend/writer停止・整合backup・コピー先での復元検査後に明示移行してください。手順は[backendの検索インデックス構築](backend/README.md#検索インデックスの構築)を参照してください。起動時に自動移行・初期登録はしません。XMLは10MiB、multipart受信全体は11MiB、生成4成果物はUTF-8合計32MiBまでです。
 
 `POST /api/attachment-imports`はmultipartの`file`1つを受け取り、新規201・同一原本の再送200とLocationを返します。LocationへのGETで保存結果を再読込できます。原本や保存先を取得する公開APIはありません。
 
