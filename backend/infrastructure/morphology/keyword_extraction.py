@@ -5,8 +5,10 @@ from __future__ import annotations
 from typing import Any
 
 from janome.tokenizer import Tokenizer  # type: ignore[import-untyped]
-from package_inserts.catalog_loader import get_package_insert_catalog
-from package_inserts.catalog_models import PackageInsertCatalog
+
+from ...domain.retrieval.value_objects import TextSearchPolicy
+from ..package_insert_definitions.loader import get_package_insert_definitions
+from .definition_settings import JanomeMorphologySettings
 
 _tokenizer: Tokenizer | None = None
 
@@ -20,7 +22,10 @@ def get_janome_tokenizer() -> Tokenizer:
 
 
 def extract_search_keywords(
-    text: str, *, catalog: PackageInsertCatalog | None = None
+    text: str,
+    *,
+    search_policy: TextSearchPolicy | None = None,
+    morphology_settings: JanomeMorphologySettings | None = None,
 ) -> list[str]:
     """形態素解析を用いてユーザーの質問文から検索用キーワードを抽出する
 
@@ -35,9 +40,19 @@ def extract_search_keywords(
     if not text or not text.strip():
         return []
 
-    if catalog is None:
-        catalog = get_package_insert_catalog()
-    search = catalog.text_search
+    if search_policy is None or morphology_settings is None:
+        definitions = get_package_insert_definitions()
+        search_policy = (
+            search_policy
+            if search_policy is not None
+            else definitions.text_search_policy
+        )
+        morphology_settings = (
+            morphology_settings
+            if morphology_settings is not None
+            else definitions.morphology_settings
+        )
+    search = search_policy
     tokenizer = get_janome_tokenizer()
     tokens: list[Any] = list(tokenizer.tokenize(text))
 
@@ -84,7 +99,8 @@ def extract_search_keywords(
                 ):
                     if (
                         next_tok.surface not in ("的", "等", "中")
-                        and next_tok.surface not in search.ignored_noun_suffixes
+                        and next_tok.surface
+                        not in morphology_settings.ignored_noun_suffixes
                     ):
                         compound += next_tok.surface
                         next_idx += 1

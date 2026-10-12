@@ -23,6 +23,9 @@ from backend.infrastructure.intent.jev_classifier import JevIntentClassifier
 from backend.infrastructure.morphology.janome_keyword_extractor import (
     JanomeKeywordExtractor,
 )
+from backend.infrastructure.package_insert_definitions.loader import (
+    get_package_insert_definitions,
+)
 from backend.infrastructure.persistence.evidence_reader import SqlAlchemyEvidenceReader
 from backend.infrastructure.persistence.index_writer import SqlAlchemyIndexWriter
 from backend.infrastructure.persistence.medicine_reader import SqlAlchemyMedicineReader
@@ -37,7 +40,6 @@ from backend.tests.storage_fixtures import (
 )
 from backend.tests.test_alembic_migrations import _migrate_database
 from fastapi.testclient import TestClient
-from package_inserts.catalog_loader import get_package_insert_catalog
 from sqlalchemy.engine import URL
 
 
@@ -142,13 +144,17 @@ async def test_対象薬が見つからない場合はLLMを作成しない(tmp_
                 "sqlite", database=(tmp_path / "index.sqlite3").as_posix()
             ).render_as_string(hide_password=False)
         )
-        catalog = get_package_insert_catalog()
+        catalog = get_package_insert_definitions()
         service = AppChatService(
             medicine_reader=SqlAlchemyMedicineReader(engine),
             evidence_reader=SqlAlchemyEvidenceReader(engine),
             intent_classifier=JevIntentClassifier(),
-            keyword_extractor=JanomeKeywordExtractor(catalog=catalog),
-            catalog=catalog,
+            keyword_extractor=JanomeKeywordExtractor(
+                search_policy=catalog.text_search_policy,
+                morphology_settings=catalog.morphology_settings,
+            ),
+            intent_policy=catalog.intent_policy,
+            answer_prompt_policy=catalog.answer_prompt_policy,
             provider_factory=factory,
         )
         messages = [ChatMessage(role="user", content="副作用について")]

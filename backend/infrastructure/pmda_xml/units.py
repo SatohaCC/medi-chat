@@ -7,9 +7,9 @@ import re
 import xml.etree.ElementTree as ET
 from typing import Any
 
-from package_inserts.catalog_loader import get_package_insert_catalog
-from package_inserts.text_formatting import format_scoped_text
-
+from ...domain.retrieval.services import format_scoped_text
+from ..package_insert_definitions.loader import get_package_insert_definitions
+from .definition_settings import PmdaXmlSettings
 from .sections import nearest_section
 from .xml_nodes import (
     direct_child,
@@ -20,17 +20,20 @@ from .xml_nodes import (
 
 
 def context_labels(
-    element: ET.Element, parents: dict[ET.Element, ET.Element]
+    element: ET.Element,
+    parents: dict[ET.Element, ET.Element],
+    *,
+    xml_settings: PmdaXmlSettings | None = None,
 ) -> list[str]:
     labels = []
     current = parents.get(element)
     while current is not None:
         if tag_name(current) == "Item":
             header = direct_child(current, "Header")
-            label = text_of(header)
+            label = text_of(header, xml_settings=xml_settings)
             if not label and any(tag_name(child).endswith("List") for child in current):
                 detail = direct_child(current, "Detail")
-                candidate = text_of(detail)
+                candidate = text_of(detail, xml_settings=xml_settings)
                 label = candidate if len(candidate) <= 80 else ""
             if label:
                 labels.append(label)
@@ -92,8 +95,11 @@ def _make_fragments(
     section_by_element: dict[ET.Element, dict[str, Any]],
     pmda_url: str,
     products: list[dict[str, Any]],
+    *,
+    xml_settings: PmdaXmlSettings | None = None,
 ) -> tuple[list[dict[str, Any]], set[ET.Element]]:
-    catalog = get_package_insert_catalog()
+    if xml_settings is None:
+        xml_settings = get_package_insert_definitions().xml_settings
     products_by_id = {p["xml_id"]: p for p in products if p.get("xml_id")}
     ids = {
         element.attrib["id"]: element
@@ -101,7 +107,7 @@ def _make_fragments(
         if "id" in element.attrib
     }
     labels = {
-        key: text_of(element)
+        key: text_of(element, xml_settings=xml_settings)
         for key, element in ids.items()
         if tag_name(element) in {"Category", "Frequency"}
     }
@@ -126,15 +132,19 @@ def _make_fragments(
             if tag_name(child) == "Lang"
         ]
         covered_langs.update(langs)
-        texts = [text_of(part) for part in parts]
+        texts = [text_of(part, xml_settings=xml_settings) for part in parts]
         texts = [value for value in texts if value]
         text = "\n".join(texts)
         attributes = element.attrib
         extra: dict[str, Any] = {}
         if kind == "interaction_row":
             extra["columns"] = {
-                column.id: "\n".join(text_lines(direct_child(element, column.xml_tag)))
-                for column in catalog.interaction_columns
+                column.id: "\n".join(
+                    text_lines(
+                        direct_child(element, column.xml_tag), xml_settings=xml_settings
+                    )
+                )
+                for column in xml_settings.interaction_columns
             }
             text = "\n".join(
                 f"{name}: {value}" for name, value in extra["columns"].items() if value
@@ -155,7 +165,10 @@ def _make_fragments(
         elif kind == "table_row":
             cells = [child for child in element if tag_name(child) == "SimpTblCell"]
             extra["cells"] = [
-                {"text": "\n".join(text_lines(cell)), "attributes": dict(cell.attrib)}
+                {
+                    "text": "\n".join(text_lines(cell, xml_settings=xml_settings)),
+                    "attributes": dict(cell.attrib),
+                }
                 for cell in cells
             ]
             table = parents.get(element)
@@ -175,7 +188,7 @@ def _make_fragments(
                 top_rows = rows[:2] if first_row_has_spans else rows[:1]
                 extra["table_top_rows"] = [
                     [
-                        "\n".join(text_lines(cell))
+                        "\n".join(text_lines(cell, xml_settings=xml_settings))
                         for cell in row
                         if tag_name(cell) == "SimpTblCell"
                     ]
@@ -191,9 +204,10 @@ def _make_fragments(
                 )
             )
             captions = [
-                text_of(child)
+                text_of(child, xml_settings=xml_settings)
                 for child in element.iter()
-                if tag_name(child) == "GraphicCaption" and text_of(child)
+                if tag_name(child) == "GraphicCaption"
+                and text_of(child, xml_settings=xml_settings)
             ]
             extra["figure_captions"] = captions
             text = "\n".join(
@@ -210,7 +224,7 @@ def _make_fragments(
         seen_refs = set()
         for part in parts:
             for child in part.iter():
-                if tag_name(child) not in catalog.xml.reference_tags:
+                if tag_name(child) not in xml_settings.reference_tags:
                     continue
                 target_id = child.attrib.get("ref")
                 key = (tag_name(child), target_id)
@@ -233,7 +247,7 @@ def _make_fragments(
                         "target_url": f"{pmda_url}#{target_id}" if target_id else None,
                     }
                 )
-        scope = context_labels(element, parents)
+        scope = context_labels(element, parents, xml_settings=xml_settings)
 
         scoped_products = _scoped_products(
             element, parts, parents, products, products_by_id, scope
@@ -262,8 +276,8 @@ def _make_fragments(
                 child for child in element.iter() if tag_name(child) == "Lang"
             )
             return
-        if name in catalog.xml.atomic_units:
-            emit(element, catalog.xml.atomic_units[name])
+        if name in xml_settings.atomic_units:
+            emit(element, xml_settings.atomic_units[name])
             return
         if name == "Item":
             direct_parts = [
@@ -274,7 +288,7 @@ def _make_fragments(
             if has_child_list and len(direct_parts) == 1:
                 part = direct_parts[0]
                 ptag = tag_name(part)
-                ptext = text_of(part)
+                ptext = text_of(part, xml_settings=xml_settings)
                 if ptag == "Header" or ptag == "Detail" and len(ptext) <= 80:
                     is_pure_label = True
 
@@ -299,13 +313,16 @@ def _make_fragments(
             visit(child)
 
     for section in root:
-        if tag_name(section) not in catalog.xml.header_tags:
+        if tag_name(section) not in xml_settings.header_tags:
             visit(section)
     return units, covered_langs
 
 
 def _table_row(
-    values: list[str], attributes: list[dict[str, Any]] | None = None
+    values: list[str],
+    attributes: list[dict[str, Any]] | None = None,
+    *,
+    xml_settings: PmdaXmlSettings | None = None,
 ) -> str:
     cells = []
     for index, value in enumerate(values):
@@ -322,10 +339,14 @@ def _table_row(
 
 
 def _render_section(
-    fragments: list[dict[str, Any]], products: list[dict[str, Any]]
+    fragments: list[dict[str, Any]],
+    products: list[dict[str, Any]],
+    *,
+    xml_settings: PmdaXmlSettings | None = None,
 ) -> str:
     """Keep product scopes, captions and table relationships in a single body."""
-    catalog = get_package_insert_catalog()
+    if xml_settings is None:
+        xml_settings = get_package_insert_definitions().xml_settings
     names = {
         product.get("yj_code"): product.get("brand_name", "") for product in products
     }
@@ -352,23 +373,26 @@ def _render_section(
         row = ""
         if kind == "interaction_row":
             headings = _table_row(
-                [column.title for column in catalog.interaction_columns]
+                [column.title for column in xml_settings.interaction_columns],
+                xml_settings=xml_settings,
             )
             row = _table_row(
                 [
                     fragment["columns"][column.id]
-                    for column in catalog.interaction_columns
-                ]
+                    for column in xml_settings.interaction_columns
+                ],
+                xml_settings=xml_settings,
             )
             table_key = kind
         elif kind == "adverse_reaction_cell":
-            headings = _table_row(["分類", "頻度", "副作用"])
+            headings = _table_row(["分類", "頻度", "副作用"], xml_settings=xml_settings)
             row = _table_row(
                 [
                     fragment["category"]["label"] or "",
                     fragment["frequency"]["label"] or "",
                     fragment["text"],
-                ]
+                ],
+                xml_settings=xml_settings,
             )
             table_key = kind
         elif kind == "table_row":
@@ -376,6 +400,7 @@ def _render_section(
             row = _table_row(
                 [cell["text"] for cell in fragment["cells"]],
                 [cell["attributes"] for cell in fragment["cells"]],
+                xml_settings=xml_settings,
             )
         else:
             blocks.append(fragment["text"])
@@ -396,6 +421,8 @@ def make_units(
     pmda_key: str,
     pmda_url: str,
     products: list[dict[str, Any]],
+    *,
+    xml_settings: PmdaXmlSettings | None = None,
 ) -> tuple[list[dict[str, Any]], set[ET.Element]]:
     """Emit one simple search record per numbered section with its own content."""
     fragments, covered = _make_fragments(
@@ -405,6 +432,7 @@ def make_units(
         section_by_element,
         pmda_url,
         products,
+        xml_settings=xml_settings,
     )
     grouped: dict[str, list[dict[str, Any]]] = {}
     for fragment in fragments:
@@ -434,7 +462,7 @@ def make_units(
                         code for part in parts for code in part["product_yj_codes"]
                     )
                 ),
-                "text": _render_section(parts, products),
+                "text": _render_section(parts, products, xml_settings=xml_settings),
                 "source": {"url": definitions[code]["url"]},
                 "references": references,
             }

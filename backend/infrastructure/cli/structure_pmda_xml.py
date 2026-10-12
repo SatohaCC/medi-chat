@@ -18,6 +18,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from ...project_paths import PROJECT_ROOT, resolve_project_path
+from ..package_insert_definitions.loader import get_package_insert_definitions
 from ..pmda_xml.transform import transform
 from ..pmda_xml.xml_nodes import relative_path
 
@@ -213,6 +214,7 @@ def _register(args: argparse.Namespace) -> int:
         )
         if not paths:
             raise ValueError("No original XML files selected")
+        xml_settings = get_package_insert_definitions().xml_settings
         publisher = SqliteRegistrationPublisher(
             settings.index_path,
             FileAttachmentImportStore(
@@ -220,6 +222,7 @@ def _register(args: argparse.Namespace) -> int:
                 if args.import_dir is not None
                 else resolve_import_directory()
             ),
+            xml_settings=xml_settings,
             allowed_roots=(
                 settings.structured_dir,
                 settings.structured_dir.parent / "originals",
@@ -245,7 +248,10 @@ def _register(args: argparse.Namespace) -> int:
                 if figure.is_file():
                     assets[filename] = figure.read_bytes()
             decoded = PmdaXmlDecoder(
-                assets=assets, strict_assets=True, source_filename=path.as_posix()
+                xml_settings=xml_settings,
+                assets=assets,
+                strict_assets=True,
+                source_filename=path.as_posix(),
             ).decode(source)
             result = publisher.publish(decoded, source)
             results.append(

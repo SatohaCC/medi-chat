@@ -8,8 +8,10 @@ import unittest
 from pathlib import Path
 from typing import Any
 
+from backend.infrastructure.package_insert_definitions.loader import (
+    get_package_insert_definitions,
+)
 from backend.infrastructure.pmda_xml.transform import transform
-from package_inserts.catalog_loader import get_package_insert_catalog
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data/pmda/originals"
 SOURCE = DATA_DIR / "イグザレルト錠２．５ｍｇ" / "630004_3339003F5020_1_08.xml"
@@ -100,8 +102,8 @@ class StructurePmdaXmlTests(unittest.TestCase):
         sections = {unit["section"]["code"]: unit for unit in self.units}
         self.assertEqual(sections["10.1"]["text"].count("<tr>"), 6)
         self.assertEqual(sections["10.2"]["text"].count("<tr>"), 9)
-        for column in get_package_insert_catalog().interaction_columns:
-            self.assertIn(column.title, sections["10.1"]["text"])
+        for column in get_package_insert_definitions().interaction_columns:
+            self.assertIn(column.title.value, sections["10.1"]["text"])
         self.assertEqual(sections["11.2"]["text"].count("<tr>"), 34)
         self.assertIn("頻度", sections["11.2"]["text"])
         self.assertIn("分類", sections["11.2"]["text"])
@@ -283,7 +285,10 @@ class StructurePmdaXmlTests(unittest.TestCase):
         self.assertEqual(validation["status"], "pass")
 
     def test_all_fixed_numbered_sections_have_a_preconfigured_mapping(self) -> None:
-        configured_codes = set(get_package_insert_catalog().sections)
+        configured_codes = {
+            section.code.value
+            for section in get_package_insert_definitions().taxonomy.sections
+        }
         expected_codes = {
             "1",
             "2",

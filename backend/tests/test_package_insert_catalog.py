@@ -25,6 +25,7 @@ from backend.domain.retrieval.primitives import (
 from backend.domain.retrieval.services import (
     detect_intent_from_keywords,
     evidence_section_sort_key,
+    format_scoped_text,
 )
 from backend.domain.retrieval.value_objects import (
     DocumentRevision,
@@ -38,6 +39,12 @@ from backend.domain.retrieval.value_objects import Evidence as ChatSource
 from backend.infrastructure.evidence_mapping import build_evidence as evidence_from_unit
 from backend.infrastructure.intent.jev_classifier import JevIntentClassifier
 from backend.infrastructure.morphology.keyword_extraction import extract_search_keywords
+from backend.infrastructure.package_insert_definitions import loader as catalog_loader
+from backend.infrastructure.package_insert_definitions.loader import (
+    PackageInsertDefinitions,
+    get_package_insert_definitions,
+    load_package_insert_definitions,
+)
 from backend.infrastructure.persistence.evidence_reader import SqlAlchemyEvidenceReader
 from backend.infrastructure.persistence.sqlite_engine import create_sqlite_engine
 from backend.infrastructure.pmda_xml.transform import transform
@@ -46,34 +53,27 @@ from backend.tests.storage_fixtures import (
     write_structured_document,
 )
 from backend.tests.test_alembic_migrations import _migrate_database
-from package_inserts import catalog_loader
-from package_inserts.catalog_loader import (
-    get_package_insert_catalog,
-    load_package_insert_catalog,
-)
-from package_inserts.catalog_models import PackageInsertCatalog
-from package_inserts.text_formatting import format_scoped_text
 from sqlalchemy.engine import URL
 
 
 @pytest.fixture
 def catalog_data() -> dict[str, Any]:
-    return json.loads(catalog_loader.CATALOG_PATH.read_text(encoding="utf-8"))
+    return json.loads(catalog_loader.DEFINITIONS_PATH.read_text(encoding="utf-8"))
 
 
 @pytest.fixture
 def activate_catalog(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Iterator[Callable[[dict[str, Any]], PackageInsertCatalog]]:
-    def activate(data: dict[str, Any]) -> PackageInsertCatalog:
+) -> Iterator[Callable[[dict[str, Any]], PackageInsertDefinitions]]:
+    def activate(data: dict[str, Any]) -> PackageInsertDefinitions:
         path = tmp_path / "catalog.json"
         path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-        monkeypatch.setattr(catalog_loader, "CATALOG_PATH", path)
-        get_package_insert_catalog.cache_clear()
-        return get_package_insert_catalog()
+        monkeypatch.setattr(catalog_loader, "DEFINITIONS_PATH", path)
+        get_package_insert_definitions.cache_clear()
+        return get_package_insert_definitions()
 
     yield activate
-    get_package_insert_catalog.cache_clear()
+    get_package_insert_definitions.cache_clear()
 
 
 def _source(**values: Any) -> ChatSource:
@@ -105,7 +105,14 @@ def _source(**values: Any) -> ChatSource:
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "consumer",
-    ["keyword_intent", "section_codes", "text_keywords", "answer_prompt", "jev"],
+    [
+        "keyword_intent",
+        "section_codes",
+        "text_keywords",
+        "janome_adapter",
+        "answer_prompt",
+        "jev",
+    ],
 )
 async def test_明示注入したカタログを再読込せず各利用先に反映する(
     tmp_path: Path,
@@ -126,9 +133,11 @@ async def test_明示注入したカタログを再読込せず各利用先に�
     catalog_data["answer_prompt"]["citation_examples"].append("27")
     path = tmp_path / "injected-catalog.json"
     path.write_text(json.dumps(catalog_data, ensure_ascii=False), encoding="utf-8")
-    catalog = load_package_insert_catalog(path)
+    catalog = load_package_insert_definitions(path)
 
-    def forbid_catalog_reload(*args: object, **kwargs: object) -> PackageInsertCatalog:
+    def forbid_catalog_reload(
+        *args: object, **kwargs: object
+    ) -> PackageInsertDefinitions:
         pytest.fail("明示注入後にバックエンドが共有カタログを再読込した")
 
     for module_name in (
@@ -136,31 +145,55 @@ async def test_明示注入したカタログを再読込せず各利用先に�
         "backend.infrastructure.morphology.keyword_extraction",
         "backend.application.chat.answer_prompt_builder",
         "backend.infrastructure.intent.jev_classifier",
-        "package_inserts.catalog_loader",
+        "backend.infrastructure.package_insert_definitions.loader",
     ):
         monkeypatch.setattr(
             import_module(module_name),
-            "get_package_insert_catalog",
+            "get_package_insert_definitions",
             forbid_catalog_reload,
             raising=False,
         )
     monkeypatch.setattr(
-        catalog_loader, "load_package_insert_catalog", forbid_catalog_reload
+        catalog_loader, "load_package_insert_definitions", forbid_catalog_reload
     )
 
     if consumer == "keyword_intent":
         assert (
-            detect_intent_from_keywords("追補について", catalog=catalog)
+            detect_intent_from_keywords(
+                "追補について", intent_policy=catalog.intent_policy
+            )
             == "supplementary"
         )
     elif consumer == "section_codes":
-        assert catalog.section_codes_for_intent("supplementary") == ("27",)
+        assert catalog.intent_policy.section_codes_for_intent("supplementary") == (
+            "27",
+        )
     elif consumer == "text_keywords":
-        assert extract_search_keywords("追補", catalog=catalog) == []
+        assert (
+            extract_search_keywords(
+                "追補",
+                search_policy=catalog.text_search_policy,
+                morphology_settings=catalog.morphology_settings,
+            )
+            == []
+        )
+    elif consumer == "janome_adapter":
+        from backend.infrastructure.morphology.janome_keyword_extractor import (
+            JanomeKeywordExtractor,
+        )
+
+        adapter = JanomeKeywordExtractor(
+            search_policy=catalog.text_search_policy,
+            morphology_settings=catalog.morphology_settings,
+        )
+        assert adapter.extract_keywords("追補") == ()
     elif consumer == "answer_prompt":
         source = _source(document_revision={"version": "第2版"})
         prompt = build_answer_system_prompt(
-            [source], [], "supplementary", catalog=catalog
+            [source],
+            [],
+            "supplementary",
+            answer_prompt_policy=catalog.answer_prompt_policy,
         )
         assert "注入した追加項目 (supplementary)" in prompt
         assert "27. 注入した追加項目" in prompt
@@ -170,7 +203,9 @@ async def test_明示注入したカタログを再読込せず各利用先に�
         assert "第2版" in prompt
     else:
         client = SimpleNamespace(system_one=AsyncMock(return_value={"answers": {}}))
-        classifier = JevIntentClassifier(api_key="", catalog=catalog)
+        classifier = JevIntentClassifier(
+            api_key="", classification_settings=catalog.jev_settings
+        )
         monkeypatch.setattr(classifier, "_client", client)
         monkeypatch.setattr(
             "backend.infrastructure.intent.jev_classifier.ts.Choice",
@@ -188,29 +223,39 @@ async def test_明示注入したカタログを再読込せず各利用先に�
 
 
 def test_読み込みを共有して利用先からの変更を防ぐ() -> None:
-    catalog = get_package_insert_catalog()
-    assert get_package_insert_catalog() is catalog
-    assert catalog.sections["16.7"].parent_code == "16"
-    assert catalog.section_codes_for_intent("interaction") == (
+    catalog = get_package_insert_definitions()
+    assert get_package_insert_definitions() is catalog
+    section_code = next(
+        section.code
+        for section in catalog.taxonomy.sections
+        if section.code.value == "16.7"
+    )
+    assert section_code.parent_code is not None
+    assert section_code.parent_code.value == "16"
+    assert catalog.intent_policy.section_codes_for_intent("interaction") == (
         "10",
         "10.1",
         "10.2",
         "16.7",
     )
     assert (
-        catalog.intent_display_name("precautions_related_to_dosage")
+        catalog.answer_prompt_policy.intent_display_name(
+            "precautions_related_to_dosage"
+        )
         == "用法及び用量に関連する注意"
     )
-    assert catalog.intent_display_name("unknown") == "unknown"
+    assert catalog.answer_prompt_policy.intent_display_name("unknown") == "unknown"
     with pytest.raises(TypeError):
-        catalog.sections["1"] = catalog.sections["2"]  # type: ignore[index]
-    criteria = catalog.build_classification_criteria()
+        catalog.taxonomy.sections[0] = catalog.taxonomy.sections[1]  # type: ignore[index]
+    criteria = catalog.jev_settings.build_classification_criteria()
     criteria["warnings"] = "変更"
-    assert catalog.build_classification_criteria()["warnings"].startswith("1. 警告：")
-    sections = list(catalog.section_codes_for_intent("interaction"))
+    assert catalog.jev_settings.build_classification_criteria()["warnings"].startswith(
+        "1. 警告："
+    )
+    sections = list(catalog.intent_policy.section_codes_for_intent("interaction"))
     assert sections is not None
     sections.clear()
-    assert list(catalog.section_codes_for_intent("interaction")) == [
+    assert list(catalog.intent_policy.section_codes_for_intent("interaction")) == [
         "10",
         "10.1",
         "10.2",
@@ -301,7 +346,7 @@ def test_設定不備を読み込み時に拒否する(
     path.write_text(json.dumps(catalog_data, ensure_ascii=False), encoding="utf-8")
 
     with pytest.raises(ValueError, match=error):
-        load_package_insert_catalog(path)
+        load_package_insert_definitions(path)
 
 
 @pytest.mark.parametrize(
@@ -321,25 +366,25 @@ def test_必須定義の削除を検出する(
     path = tmp_path / "missing.json"
     path.write_text(json.dumps(catalog_data), encoding="utf-8")
     with pytest.raises(ValueError, match=error):
-        load_package_insert_catalog(path)
+        load_package_insert_definitions(path)
 
 
 def test_JSON重複キーと破損とファイル欠落を通知する(tmp_path: Path) -> None:
     path = tmp_path / "catalog.json"
     with pytest.raises(FileNotFoundError):
-        load_package_insert_catalog(path)
+        load_package_insert_definitions(path)
     path.write_text('{"schema_version": 1, "schema_version": 1}', encoding="utf-8")
     with pytest.raises(ValueError, match="Duplicate JSON key: schema_version"):
-        load_package_insert_catalog(path)
+        load_package_insert_definitions(path)
     path.write_text('{"schema_version":', encoding="utf-8")
     with pytest.raises(ValueError):
-        load_package_insert_catalog(path)
+        load_package_insert_definitions(path)
 
 
 def test_新しい項目の定義だけで検索とプロンプトとXMLに反映する(
     tmp_path: Path,
     catalog_data: dict[str, Any],
-    activate_catalog: Callable[[dict[str, Any]], PackageInsertCatalog],
+    activate_catalog: Callable[[dict[str, Any]], PackageInsertDefinitions],
 ) -> None:
     catalog_data["sections"]["27"] = {
         "title": "追加の項目",
@@ -355,15 +400,18 @@ def test_新しい項目の定義だけで検索とプロンプトとXMLに反�
     catalog = activate_catalog(catalog_data)
 
     assert (
-        detect_intent_from_keywords("追補について", catalog=catalog) == "supplementary"
+        detect_intent_from_keywords("追補について", intent_policy=catalog.intent_policy)
+        == "supplementary"
     )
-    assert catalog.section_codes_for_intent("supplementary") == ("27",)
+    assert catalog.intent_policy.section_codes_for_intent("supplementary") == ("27",)
     assert extract_search_keywords("追補") == []
     assert (
-        catalog.build_classification_criteria()["supplementary"]
+        catalog.jev_settings.build_classification_criteria()["supplementary"]
         == "27. 追加の項目：追加項目を参照する質問"
     )
-    prompt = build_answer_system_prompt([], [], "supplementary", catalog=catalog)
+    prompt = build_answer_system_prompt(
+        [], [], "supplementary", answer_prompt_policy=catalog.answer_prompt_policy
+    )
     assert "追加の項目 (supplementary)" in prompt
     assert "27. 追加の項目" in prompt
 
@@ -387,7 +435,7 @@ def test_新しい項目の定義だけで検索とプロンプトとXMLに反�
 @pytest.mark.asyncio
 async def test_共通定義からJevの分類条件を渡す(
     catalog_data: dict[str, Any],
-    activate_catalog: Callable[[dict[str, Any]], PackageInsertCatalog],
+    activate_catalog: Callable[[dict[str, Any]], PackageInsertDefinitions],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     catalog_data["sections"]["1"]["title"] = "変更した警告名"
@@ -415,7 +463,7 @@ async def test_共通定義からJevの分類条件を渡す(
 def test_列定義の変更がXMLと回答用の表示に反映する(
     tmp_path: Path,
     catalog_data: dict[str, Any],
-    activate_catalog: Callable[[dict[str, Any]], PackageInsertCatalog],
+    activate_catalog: Callable[[dict[str, Any]], PackageInsertDefinitions],
 ) -> None:
     catalog_data["interaction_columns"].append(
         {"id": "extra_detail", "xml_tag": "ExtraDetail", "title": "追加情報"}
@@ -438,7 +486,7 @@ def test_列定義の変更がXMLと回答用の表示に反映する(
         [evidence_from_unit(unit, {}, "logic")],
         [],
         "interaction",
-        catalog=get_package_insert_catalog(),
+        answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
     )
     assert "追加情報" in prompt
     assert "追加本文" in prompt
@@ -447,7 +495,7 @@ def test_列定義の変更がXMLと回答用の表示に反映する(
 def test_既存列名の変更がXMLの原文を保って回答用表示に反映する(
     tmp_path: Path,
     catalog_data: dict[str, Any],
-    activate_catalog: Callable[[dict[str, Any]], PackageInsertCatalog],
+    activate_catalog: Callable[[dict[str, Any]], PackageInsertDefinitions],
 ) -> None:
     catalog_data["interaction_columns"][0]["title"] = "変更した薬剤列名"
     activate_catalog(catalog_data)
@@ -471,16 +519,48 @@ def test_既存列名の変更がXMLの原文を保って回答用表示に反�
         [evidence_from_unit(unit, {}, "logic")],
         [],
         "interaction",
-        catalog=get_package_insert_catalog(),
+        answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
     )
     assert "変更した薬剤列名" in prompt
     assert "相手薬の原文" in prompt
     assert "薬剤名: 相手薬の原文" not in prompt
 
 
+def test_tc14_列順の変更がXMLと回答の順に反映する(
+    tmp_path: Path,
+    catalog_data: dict[str, Any],
+    activate_catalog: Callable[[dict[str, Any]], PackageInsertDefinitions],
+) -> None:
+    catalog_data["interaction_columns"].reverse()
+    activate_catalog(catalog_data)
+    xml = tmp_path / "insert.xml"
+    xml.write_text(
+        '<PackIns drugType="Medicine"><PackageInsertNo>001</PackageInsertNo>'
+        "<CompanyIdentifier>000001</CompanyIdentifier><Interactions>"
+        "<ContraIndicatedCombinations><Drug><DrugName><Lang>原文薬剤</Lang></DrugName>"
+        "<ClinSymptomsAndMeasures><Lang>原文症状</Lang></ClinSymptomsAndMeasures>"
+        "<MechanismAndRiskFactors><Lang>原文機序</Lang></MechanismAndRiskFactors>"
+        "</Drug></ContraIndicatedCombinations></Interactions></PackIns>",
+        encoding="utf-8",
+    )
+    output = tmp_path / "structured"
+    transform(xml, output)
+    unit = json.loads(
+        (output / "search_units.jsonl").read_text(encoding="utf-8").splitlines()[0]
+    )
+    prompt = build_answer_system_prompt(
+        [evidence_from_unit(unit, {}, "logic")],
+        [],
+        "interaction",
+        answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
+    )
+    for text in (unit["text"], prompt):
+        assert text.index("原文機序") < text.index("原文症状") < text.index("原文薬剤")
+
+
 def test_専用指示の項目名を生成し根拠原文を保持する(
     catalog_data: dict[str, Any],
-    activate_catalog: Callable[[dict[str, Any]], PackageInsertCatalog],
+    activate_catalog: Callable[[dict[str, Any]], PackageInsertDefinitions],
 ) -> None:
     catalog_data["sections"]["10"]["title"] = "変更した相互作用名"
     catalog_data["sections"]["10.1"]["title"] = "変更した併用禁忌名"
@@ -501,7 +581,7 @@ def test_専用指示の項目名を生成し根拠原文を保持する(
         [medicine, medicine],
         "interaction",
         ["interaction", "pharmacokinetics"],
-        catalog=get_package_insert_catalog(),
+        answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
     )
 
     assert "7. 【複数薬剤の変更した相互作用名に関する指示】" in prompt
@@ -512,7 +592,10 @@ def test_専用指示の項目名を生成し根拠原文を保持する(
     assert "https://example.test/source" in prompt
     assert "第2版" in prompt
     single = build_answer_system_prompt(
-        [], [medicine], "interaction", catalog=get_package_insert_catalog()
+        [],
+        [medicine],
+        "interaction",
+        answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
     )
     assert "複数薬剤の" not in single
 
@@ -530,7 +613,9 @@ def test_専用指示の項目名を生成し根拠原文を保持する(
 )
 def test_固定キーワードの優先順位を維持する(message: str, intent: str) -> None:
     assert (
-        detect_intent_from_keywords(message, catalog=get_package_insert_catalog())
+        detect_intent_from_keywords(
+            message, intent_policy=get_package_insert_definitions().intent_policy
+        )
         == intent
     )
 

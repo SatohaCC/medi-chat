@@ -1,6 +1,7 @@
 """検索コンテキストのValue Object。"""
 
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 
 from ..attachment.identifiers import DocumentId, DocumentVersionId
@@ -22,6 +23,91 @@ from .primitives import (
     SearchUnitSectionCode,
     SearchUnitText,
 )
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class IntentKeyword:
+    text: str
+    exclude_from_text_search: bool
+
+    def __post_init__(self) -> None:
+        if not self.text.strip():
+            raise DomainValidationError("intent keyword must be nonempty")
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class SearchIntentDefinition:
+    id: IntentName
+    section_codes: tuple[SearchSectionCode, ...]
+    keywords: tuple[IntentKeyword, ...]
+    keyword_priority: int | None
+
+    def __post_init__(self) -> None:
+        if len(self.section_codes) != len(set(self.section_codes)):
+            raise DomainValidationError("duplicate search section")
+        if self.keywords and (
+            not self.section_codes
+            or self.keyword_priority is None
+            or self.keyword_priority < 1
+        ):
+            raise DomainValidationError("keyword intent requires sections and priority")
+        if not self.keywords and self.keyword_priority is not None:
+            raise DomainValidationError("keyword priority requires keywords")
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class IntentPolicy:
+    intents: tuple[SearchIntentDefinition, ...]
+    fallback_intent: IntentName
+    general_intent: IntentName
+
+    def __post_init__(self) -> None:
+        names = tuple(intent.id for intent in self.intents)
+        if len(names) != len(set(names)) or self.fallback_intent == self.general_intent:
+            raise DomainValidationError("intent definitions must be distinct")
+        for name in (self.fallback_intent, self.general_intent):
+            if name not in names or any(
+                intent.section_codes for intent in self.intents if intent.id == name
+            ):
+                raise DomainValidationError(
+                    "fallback/general intent must exist without sections"
+                )
+        priorities = tuple(
+            intent.keyword_priority for intent in self.intents if intent.keywords
+        )
+        keywords = tuple(
+            keyword.text for intent in self.intents for keyword in intent.keywords
+        )
+        if len(priorities) != len(set(priorities)) or len(keywords) != len(
+            set(keywords)
+        ):
+            raise DomainValidationError("duplicate keyword or priority")
+
+    @property
+    def keyword_intents(self) -> tuple[SearchIntentDefinition, ...]:
+        return tuple(
+            sorted(
+                (intent for intent in self.intents if intent.keywords),
+                key=lambda intent: intent.keyword_priority or 0,
+            )
+        )
+
+    def section_codes_for_intent(self, intent_id: str) -> tuple[str, ...]:
+        return next(
+            (
+                tuple(code.value for code in intent.section_codes)
+                for intent in self.intents
+                if intent.id.value == intent_id
+            ),
+            (),
+        )
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class TextSearchPolicy:
+    stop_words: frozenset[str]
+    symptom_keywords_by_adjective: Mapping[str, tuple[str, ...]]
+    scope_heading_texts: frozenset[str]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

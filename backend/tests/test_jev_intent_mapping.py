@@ -11,8 +11,10 @@ from backend.application.retrieval.jev_detector import detect_jev_criteria
 from backend.domain.retrieval.primitives import IntentName, Probability
 from backend.domain.retrieval.value_objects import IntentCandidate
 from backend.infrastructure.intent.jev_intent_mapping import map_jev_intent_result
+from backend.infrastructure.package_insert_definitions.loader import (
+    get_package_insert_definitions,
+)
 from backend.tests.test_answer_preparation import MedicineReader
-from package_inserts.catalog_loader import get_package_insert_catalog
 
 
 class Classifier:
@@ -57,7 +59,9 @@ async def test_unavailable_missing_and_error_information_is_preserved(
     before = deepcopy(payload)
     result = map_jev_intent_result(payload, is_available=available)
     detection = await detect_jev_criteria(
-        Classifier(result), IntentRequest("質問"), catalog=get_package_insert_catalog()
+        Classifier(result),
+        IntentRequest("質問"),
+        intent_policy=get_package_insert_definitions().intent_policy,
     )
     assert detection.raw_response == expected
     assert (
@@ -106,7 +110,9 @@ async def test_candidates_and_unknown_information_preserve_existing_selection(
     before = deepcopy(payload)
     result = map_jev_intent_result(payload)
     detection = await detect_jev_criteria(
-        Classifier(result), IntentRequest("質問"), catalog=get_package_insert_catalog()
+        Classifier(result),
+        IntentRequest("質問"),
+        intent_policy=get_package_insert_definitions().intent_policy,
     )
     assert detection.raw_response == {**before, "qualifying_intents": intents}
     assert (
@@ -139,7 +145,7 @@ class RecordingReader:
 
 @pytest.mark.asyncio
 async def test_opaque_public_json_does_not_control_business_selection_or_prompt():
-    catalog = get_package_insert_catalog()
+    catalog = get_package_insert_definitions()
     conversation = [ChatMessage(role="user", content="質問")]
     replies = []
     requests = []
@@ -161,7 +167,7 @@ async def test_opaque_public_json_does_not_control_business_selection_or_prompt(
             evidence_reader=reader,
             intent_classifier=Classifier(result),
             keyword_extractor=EmptyExtractor(),
-            catalog=catalog,
+            intent_policy=catalog.intent_policy,
         )
         assert reply.intent == "warnings"
         assert reply.jev_response == {**payload, "qualifying_intents": ["warnings"]}
@@ -171,5 +177,7 @@ async def test_opaque_public_json_does_not_control_business_selection_or_prompt(
     assert tuple(code.value for code in requests[0][0].section_codes) == ("1",)
     replies[1].jev_response = {"qualifying_intents": ["dosage", "interaction"]}
     assert build_answer_messages(
-        replies[0], conversation, catalog=catalog
-    ) == build_answer_messages(replies[1], conversation, catalog=catalog)
+        replies[0], conversation, answer_prompt_policy=catalog.answer_prompt_policy
+    ) == build_answer_messages(
+        replies[1], conversation, answer_prompt_policy=catalog.answer_prompt_policy
+    )

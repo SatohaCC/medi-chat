@@ -7,7 +7,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
-from package_inserts.text_formatting import section_code_sort_key
+from backend.domain.retrieval.services import section_code_sort_key
 
 
 def _compare_section_codes(str1: str, str2: str) -> int:

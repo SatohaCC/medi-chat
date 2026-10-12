@@ -41,7 +41,9 @@ from ...domain.attachment.value_objects import (
     AttachmentTableCell,
 )
 from ...domain.foundation.exceptions import DomainValidationError
+from ..package_insert_definitions.loader import get_package_insert_definitions
 from .artifacts import build_artifacts
+from .definition_settings import PmdaXmlSettings
 from .safe_parser import parse_source
 from .sections import make_section_index, reference_section_code
 from .units import _make_fragments, _scoped_products, context_labels
@@ -89,8 +91,11 @@ def _blocks(
         str, tuple[tuple[AttachmentContext, tuple[AttachmentReference, ...]], ...]
     ]
     | None = None,
+    *,
+    xml_settings: PmdaXmlSettings | None = None,
 ) -> tuple[AttachmentBlock, ...]:
-    from package_inserts.catalog_loader import get_package_insert_catalog
+    if xml_settings is None:
+        xml_settings = get_package_insert_definitions().xml_settings
 
     blocks: list[AttachmentBlock] = []
     table_key = None
@@ -104,16 +109,14 @@ def _blocks(
         if kind == "interaction_row":
             columns = tuple(
                 AttachmentText(column.title)
-                for column in get_package_insert_catalog().interaction_columns
+                for column in xml_settings.interaction_columns
             )
             cells = tuple(
                 AttachmentTableCell(
                     text=AttachmentText(fragment["columns"][column.id]),
                     column=AttachmentColumnIndex(index),
                 )
-                for index, column in enumerate(
-                    get_package_insert_catalog().interaction_columns
-                )
+                for index, column in enumerate(xml_settings.interaction_columns)
             )
             key = kind
         elif kind == "adverse_reaction_cell":
@@ -235,10 +238,16 @@ class PmdaXmlDecoder:
     def __init__(
         self,
         *,
+        xml_settings: PmdaXmlSettings | None = None,
         assets: dict[str, bytes] | None = None,
         strict_assets: bool = False,
         source_filename: str | None = None,
     ) -> None:
+        self._xml_settings = (
+            xml_settings
+            if xml_settings is not None
+            else get_package_insert_definitions().xml_settings
+        )
         self.assets = assets or {}
         self.strict_assets = strict_assets
         self.source_filename = source_filename
@@ -246,6 +255,7 @@ class PmdaXmlDecoder:
     def decode(
         self, source: bytes, *, original_filename: str = "source.xml"
     ) -> DecodedAttachment:
+        xml_settings = self._xml_settings
         root, events = parse_source(source)
         ids = [
             element.attrib["id"] for element in root.iter() if "id" in element.attrib
@@ -276,10 +286,15 @@ class PmdaXmlDecoder:
             source_sha256=digest,
             assets=self.assets,
             strict_assets=self.strict_assets,
+            xml_settings=xml_settings,
         )
         parents, paths = build_paths(root)
         _, by_element = make_section_index(
-            root, parents, paths, document["source"]["pmda_url"]
+            root,
+            parents,
+            paths,
+            document["source"]["pmda_url"],
+            xml_settings=xml_settings,
         )
         codes = [section["code"] for section in document["section_index"]]
         if len(codes) != len(set(codes)):
@@ -291,6 +306,7 @@ class PmdaXmlDecoder:
             by_element,
             document["source"]["pmda_url"],
             document["document"]["products"],
+            xml_settings=xml_settings,
         )
         reference_elements = {
             element.attrib["id"]: element
@@ -302,7 +318,7 @@ class PmdaXmlDecoder:
                 target = reference_elements.get(reference["target_xml_id"])
                 if target is not None:
                     reference["target_section_code"] = reference_section_code(
-                        target, parents, by_element
+                        target, parents, by_element, xml_settings=xml_settings
                     )
         grouped: dict[str, list[dict[str, Any]]] = {}
         for fragment in fragments:
@@ -320,7 +336,6 @@ class PmdaXmlDecoder:
             for element in root.iter()
             if "id" in element.attrib
         }
-        from package_inserts.catalog_loader import get_package_insert_catalog
 
         for table in root.iter():
             if tag_name(table) != "SimpTbl":
@@ -332,16 +347,13 @@ class PmdaXmlDecoder:
                 for cell in (
                     child for child in row if tag_name(child) == "SimpTblCell"
                 ):
-                    labels = context_labels(cell, parents)
+                    labels = context_labels(cell, parents, xml_settings=xml_settings)
                     products = _scoped_products(
                         cell, [cell], parents, meta["products"], products_by_id, labels
                     )
                     references = []
                     for child in cell.iter():
-                        if (
-                            tag_name(child)
-                            not in get_package_insert_catalog().xml.reference_tags
-                        ):
+                        if tag_name(child) not in xml_settings.reference_tags:
                             continue
                         target_id = child.attrib.get("ref")
                         target = ids_by_id.get(target_id) if target_id else None
@@ -355,7 +367,10 @@ class PmdaXmlDecoder:
                                     {
                                         "kind": tag_name(child),
                                         "target_section_code": reference_section_code(
-                                            target, parents, by_element
+                                            target,
+                                            parents,
+                                            by_element,
+                                            xml_settings=xml_settings,
                                         )
                                         if target is not None
                                         else None,
@@ -419,7 +434,9 @@ class PmdaXmlDecoder:
                         AttachmentSectionTitle(section["title"]),
                         AttachmentBody(
                             blocks=_blocks(
-                                grouped.get(section["code"], []), cell_details
+                                grouped.get(section["code"], []),
+                                cell_details,
+                                xml_settings=xml_settings,
                             ),
                             text=AttachmentText(rows_by_code[section["code"]]["text"])
                             if section["code"] in rows_by_code
@@ -431,7 +448,9 @@ class PmdaXmlDecoder:
                 reference_targets=tuple(
                     AttachmentReferenceTarget(
                         reference_id=AttachmentText(element.attrib["id"]),
-                        text=AttachmentText(text_of(element)),
+                        text=AttachmentText(
+                            text_of(element, xml_settings=xml_settings)
+                        ),
                         context=AttachmentContext(
                             product_codes=tuple(
                                 AttachmentProductCode(product["yj_code"])
@@ -441,13 +460,17 @@ class PmdaXmlDecoder:
                                     parents,
                                     meta["products"],
                                     products_by_id,
-                                    context_labels(element, parents),
+                                    context_labels(
+                                        element, parents, xml_settings=xml_settings
+                                    ),
                                 )
                                 if product.get("yj_code")
                             ),
                             labels=tuple(
                                 AttachmentText(label)
-                                for label in context_labels(element, parents)
+                                for label in context_labels(
+                                    element, parents, xml_settings=xml_settings
+                                )
                             ),
                         ),
                     )

@@ -12,8 +12,10 @@ from backend.domain.attachment.value_objects import AttachmentProductRevision
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.retrieval.primitives import IntentName, Probability
 from backend.domain.retrieval.value_objects import IntentCandidate
+from backend.infrastructure.package_insert_definitions.loader import (
+    get_package_insert_definitions,
+)
 from backend.tests.test_evidence_collection import make_evidence
-from package_inserts.catalog_loader import get_package_insert_catalog
 
 X = "3339003F5020"
 ITRA = "6290004M1029"
@@ -89,7 +91,7 @@ async def test_tc124_126_real_catalog_early_stop(message, codes, strategy):
         evidence_reader=reader,
         intent_classifier=Classifier(),
         keyword_extractor=Keywords(),
-        catalog=get_package_insert_catalog(),
+        intent_policy=get_package_insert_definitions().intent_policy,
     )
     assert result.retrieval_strategy == strategy
     assert result.needs_clarification and result.sources == [] and reader.calls == []
@@ -174,7 +176,7 @@ async def test_tc128_131_priority_alternatives_normal_selected_only(
         evidence_reader=reader,
         intent_classifier=Classifier(),
         keyword_extractor=Keywords(),
-        catalog=get_package_insert_catalog(),
+        intent_policy=get_package_insert_definitions().intent_policy,
     )
     assert result.retrieval_strategy == strategy
     assert [code for m in result.resolved_medicines for code in m.yj_codes] == expected

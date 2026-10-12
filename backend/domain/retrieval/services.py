@@ -1,11 +1,8 @@
 """検索コンテキストの状態を持たないDomain Service。"""
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from dataclasses import replace
 from typing import Protocol
-
-from package_inserts.catalog_models import PackageInsertCatalog
-from package_inserts.text_formatting import format_scoped_text, section_code_sort_key
 
 from ..medicine.identifiers import YjCode
 from ..shared.services import normalize_match_text
@@ -22,30 +19,32 @@ from .value_objects import (
     Evidence,
     EvidenceDocument,
     IntentCandidate,
+    IntentPolicy,
     IntentSelection,
     SearchCriteria,
     SearchUnitCriteria,
+    TextSearchPolicy,
 )
 
 
-def detect_intent_from_keywords(message: str, *, catalog: PackageInsertCatalog) -> str:
+def detect_intent_from_keywords(message: str, *, intent_policy: IntentPolicy) -> str:
     """最初の一致を採用し、一致がなければ通常検索の意図を返す。"""
     compact = normalize_match_text(message)
-    for definition in catalog.keyword_intents:
+    for definition in intent_policy.keyword_intents:
         if any(
             normalize_match_text(keyword.text) in compact
             for keyword in definition.keywords
         ):
-            return definition.id
-    return catalog.fallback_intent
+            return definition.id.value
+    return intent_policy.fallback_intent.value
 
 
 def detect_fixed_keyword_criteria(
-    message: str, catalog: PackageInsertCatalog
+    message: str, intent_policy: IntentPolicy
 ) -> SearchCriteria | None:
     """項目指定のない意図は固定項目検索の条件にしない。"""
-    intent = detect_intent_from_keywords(message, catalog=catalog)
-    codes = catalog.section_codes_for_intent(intent)
+    intent = detect_intent_from_keywords(message, intent_policy=intent_policy)
+    codes = intent_policy.section_codes_for_intent(intent)
     if not codes:
         return None
     return SearchCriteria(
@@ -62,12 +61,12 @@ def select_intents(
     candidates: tuple[IntentCandidate, ...],
     choice: str | None,
     *,
-    catalog: PackageInsertCatalog,
+    intent_policy: IntentPolicy,
     baseline_intent: str | None = None,
     threshold: Probability = _DEFAULT_INTENT_THRESHOLD,
 ) -> IntentSelection:
     if baseline_intent is None:
-        baseline_intent = catalog.fallback_intent
+        baseline_intent = intent_policy.fallback_intent.value
     qualifying = tuple(
         candidate.intent.value
         for candidate in sorted(
@@ -75,26 +74,26 @@ def select_intents(
                 candidate
                 for candidate in candidates
                 if candidate.probability.value >= threshold.value
-                and candidate.intent.value != catalog.general_intent
+                and candidate.intent.value != intent_policy.general_intent.value
             ),
             key=lambda item: item.probability.value,
             reverse=True,
         )
     )
-    if not qualifying and choice and choice != catalog.general_intent:
+    if not qualifying and choice and choice != intent_policy.general_intent.value:
         qualifying = (choice,)
     sections = tuple(
         dict.fromkeys(
             code
             for intent in qualifying
-            for code in catalog.section_codes_for_intent(intent)
+            for code in intent_policy.section_codes_for_intent(intent)
         )
     )
     primary = (
         qualifying[0]
         if qualifying
         else choice
-        if choice == catalog.general_intent
+        if choice == intent_policy.general_intent.value
         else baseline_intent
     )
     return IntentSelection(
@@ -165,10 +164,10 @@ def select_products[T: ProductIdentity](
 
 
 def is_scope_heading_only(
-    kind: str | None, text: str, *, catalog: PackageInsertCatalog
+    kind: str | None, text: str, *, text_search_policy: TextSearchPolicy
 ) -> bool:
     """本文が検索範囲見出しだけか判定する。"""
-    return kind == "item" and text.strip() in catalog.text_search.scope_heading_texts
+    return kind == "item" and text.strip() in text_search_policy.scope_heading_texts
 
 
 def evidence_section_sort_key(
@@ -206,3 +205,19 @@ def merge_evidence(
             key=evidence_section_sort_key,
         )
     )
+
+
+def section_code_sort_key(code: str) -> tuple[int | str, ...]:
+    return tuple(int(part) if part.isdigit() else part for part in code.split("."))
+
+
+def format_scoped_text(text: str, scope: Sequence[str]) -> str:
+    missing = [label for label in scope if label not in text]
+    if not missing:
+        return text
+    labels = [
+        label if label.startswith(("〈", "＜", "［", "[")) else f"〈{label}〉"
+        for label in missing
+    ]
+    prefix = " ".join(labels)
+    return f"{prefix}\n{text}" if "\n" in text or len(text) > 40 else f"{prefix} {text}"

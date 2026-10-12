@@ -19,8 +19,10 @@ from backend.domain.retrieval.value_objects import IntentCandidate
 from backend.infrastructure.morphology.janome_keyword_extractor import (
     JanomeKeywordExtractor,
 )
+from backend.infrastructure.package_insert_definitions.loader import (
+    get_package_insert_definitions,
+)
 from backend.infrastructure.persistence.evidence_reader import SqlAlchemyEvidenceReader
-from package_inserts.catalog_loader import get_package_insert_catalog
 
 
 class FakeJevIntentClassifier:
@@ -47,9 +49,12 @@ class FakeJevIntentClassifier:
 
 class EvidenceSearchTests(unittest.IsolatedAsyncioTestCase):
     async def test_three_detectors_are_collected_before_search(self):
-        catalog = get_package_insert_catalog()
+        catalog = get_package_insert_definitions()
         classifier = FakeJevIntentClassifier()
-        extractor = JanomeKeywordExtractor(catalog=catalog)
+        extractor = JanomeKeywordExtractor(
+            search_policy=catalog.text_search_policy,
+            morphology_settings=catalog.morphology_settings,
+        )
         completed = []
 
         class Keywords:
@@ -90,7 +95,7 @@ class EvidenceSearchTests(unittest.IsolatedAsyncioTestCase):
             evidence_reader=reader,
             intent_classifier=classifier,
             keyword_extractor=Keywords(),
-            catalog=catalog,
+            intent_policy=catalog.intent_policy,
         )
         self.assertEqual(
             {condition.source for condition in reader.conditions},
@@ -101,7 +106,7 @@ class EvidenceSearchTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(reply.jev_response["qualifying_intents"], ["warnings"])
 
     async def test_criteria_collection_does_not_search(self):
-        catalog = get_package_insert_catalog()
+        catalog = get_package_insert_definitions()
         with patch.object(
             SqlAlchemyEvidenceReader,
             "search",
@@ -109,10 +114,13 @@ class EvidenceSearchTests(unittest.IsolatedAsyncioTestCase):
         ) as search:
             conditions, _, _ = await collect_search_criteria(
                 FakeJevIntentClassifier(),
-                JanomeKeywordExtractor(catalog=catalog),
+                JanomeKeywordExtractor(
+                    search_policy=catalog.text_search_policy,
+                    morphology_settings=catalog.morphology_settings,
+                ),
                 "副作用の頭痛について",
                 [],
-                catalog=catalog,
+                intent_policy=catalog.intent_policy,
             )
         self.assertTrue(conditions)
         search.assert_not_called()

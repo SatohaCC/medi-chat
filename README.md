@@ -58,14 +58,13 @@ medi-chat/
 │   ├── structured/      # 検索用JSON・既存SQLite
 │   └── imports/         # Web取り込み版と登録世代の検索成果物
 │
-├── package_inserts/      # backend共通の添付文書カタログと検証・整形
 ├── docs/                 # 仕様書・設計ドキュメント
 └── README.md
 ```
 
 バックエンドの責務分担、依存関係、モジュールの移動先は [backend/README.md](backend/README.md) を参照してください。
 
-添付文書の項目・質問意図・キーワード・Jev分類・プロンプト用の定義・XML対応は、[共通カタログ](package_inserts/package_insert_catalog.json) で一元管理します。[編集方法](package_inserts/README.md) に参照規則と検証方法を記載しています。Pythonの実行環境には `backend` とともに `package_inserts` を配置してください。
+添付文書の項目・質問意図・キーワード・Jev分類・プロンプト用の定義・XML対応は、[Infrastructure定義ソース](backend/infrastructure/package_insert_definitions/package_insert_catalog.json) で一元管理します。[編集方法](backend/infrastructure/package_insert_definitions/README.md) に参照規則と検証方法を記載しています。用途別のモデルをbackend内のattachment/retrieval/Applicationへ投影し、技術設定はInfrastructureが所有します。Python実行にはbackendの配置を使用します。
 
 ---
 

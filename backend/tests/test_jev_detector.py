@@ -7,7 +7,9 @@ from backend.application.retrieval.jev_detector import detect_jev_criteria
 from backend.domain.json_types import JsonValue
 from backend.domain.retrieval.services import select_intents
 from backend.infrastructure.intent.jev_intent_mapping import map_jev_intent_result
-from package_inserts.catalog_loader import get_package_insert_catalog
+from backend.infrastructure.package_insert_definitions.loader import (
+    get_package_insert_definitions,
+)
 
 
 class FakeJevIntentClassifier:
@@ -33,7 +35,9 @@ class JevDetectorTests(unittest.IsolatedAsyncioTestCase):
 
         mapped = map_jev_intent_result(response)
         selection = select_intents(
-            mapped.candidates, mapped.choice, catalog=get_package_insert_catalog()
+            mapped.candidates,
+            mapped.choice,
+            intent_policy=get_package_insert_definitions().intent_policy,
         )
         primary, intents, sections = (
             selection.primary.value if selection.primary is not None else None,
@@ -59,7 +63,7 @@ class JevDetectorTests(unittest.IsolatedAsyncioTestCase):
         result = await detect_jev_criteria(
             FakeJevIntentClassifier(response),
             IntentRequest("警告は？"),
-            catalog=get_package_insert_catalog(),
+            intent_policy=get_package_insert_definitions().intent_policy,
         )
 
         self.assertEqual(len(result.search_criteria), 1)

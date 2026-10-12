@@ -33,7 +33,29 @@ from sqlalchemy.engine import Engine
 def test_real_legacy_copy_refuses_os_start_then_cli_recovers_same_copy(
     tmp_path, monkeypatch
 ):
-    old = PROJECT_ROOT / "data_tools/structured/.chat-search.sqlite3"
+    from argparse import Namespace
+
+    from alembic import command as alembic_command
+    from alembic.config import Config
+    from backend.infrastructure.persistence.legacy_content_validator import (
+        validate_legacy_content,
+    )
+    from backend.migrations.legacy_copy_stamp import (
+        STAMP_COPY_ATTRIBUTE,
+        LegacyCopyStamp,
+        validate_stamp_copy,
+    )
+    from backend.tests.startup_recovery_fixture import restore_manifest_v3_fixture
+
+    old = tmp_path / "historical-manifest.sqlite3"
+    restore_manifest_v3_fixture(old)
+    validate_legacy_content(old)
+    stamp_config = Config(str(PROJECT_ROOT / "backend/alembic.ini"))
+    stamp_config.cmd_opts = Namespace(x=[f"index_path={old.resolve()}"])
+    approval = LegacyCopyStamp(old.resolve())
+    validate_stamp_copy(approval, old)
+    stamp_config.attributes[STAMP_COPY_ATTRIBUTE] = approval
+    alembic_command.stamp(stamp_config, "0001_v3_schema")
     original = hashlib.sha256(old.read_bytes()).hexdigest()
     source, index = create_legacy_copy(tmp_path, old)
     copy_before = hashlib.sha256(index.read_bytes()).hexdigest()

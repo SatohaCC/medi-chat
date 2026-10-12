@@ -24,6 +24,8 @@ from .primitives import (
     AttachmentSha256,
     AttachmentText,
     AttachmentUrl,
+    DefinitionTitle,
+    InteractionColumnId,
     NumberedSectionCode,
     RegistrationSequence,
     RevisionSourceLabel,
@@ -33,6 +35,31 @@ from .primitives import (
 
 if TYPE_CHECKING:
     from .entities import AttachmentRegistration
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class SectionDefinition:
+    code: NumberedSectionCode
+    title: DefinitionTitle
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class SectionTaxonomy:
+    sections: tuple[SectionDefinition, ...]
+
+    def __post_init__(self) -> None:
+        codes = tuple(section.code for section in self.sections)
+        if len(codes) != len(set(codes)):
+            raise AttachmentDomainError("duplicate section definition")
+        for code in codes:
+            if code.parent_code is not None and code.parent_code not in codes:
+                raise AttachmentDomainError("unknown parent section definition")
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class InteractionColumnDefinition:
+    id: InteractionColumnId
+    title: DefinitionTitle
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

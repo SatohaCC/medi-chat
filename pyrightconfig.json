@@ -1,7 +1,6 @@
 {
   "include": [
-    "backend",
-    "package_inserts"
+    "backend"
   ],
   "exclude": [
     "**/node_modules",

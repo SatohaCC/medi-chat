@@ -1,6 +1,7 @@
 """Copy real legacy data without preparing or building a fresh index."""
 
 import argparse
+import gzip
 import hashlib
 import json
 import shutil
@@ -16,6 +17,29 @@ from backend.infrastructure.persistence.legacy_content_validator import (
     validate_legacy_content,
 )
 from backend.project_paths import PROJECT_ROOT
+
+
+def restore_manifest_v3_fixture(index: Path) -> None:
+    """Restore the actual historical manifest backup, never a fresh builder input."""
+    fixture = Path(__file__).parent / "fixtures/pre_registration_manifest_v3.sqlite3.gz"
+    raw = gzip.decompress(fixture.read_bytes())
+    assert len(raw) == 8_511_488
+    assert (
+        hashlib.sha256(raw).hexdigest()
+        == "b079a9696e99e95e3e0ee9e48e4ea9640df91fa09e3817c9ab192ecb6afe6681"
+    )
+    index.write_bytes(raw)
+    snapshot = logical_snapshot(index)
+    assert snapshot["integrity"] == "ok"
+    assert snapshot["fingerprint"].startswith("manifest:")
+    assert (
+        snapshot["logical_sha256"]
+        == "40399571c204e996f059e8ad683b0002df1a86eeccde3cb5890c8c7a11caf720"
+    )
+    assert {
+        name: snapshot["tables"][name] for name in ("documents", "units", "medicines")
+    } == {"documents": 7, "units": 1686, "medicines": 15}
+    assert "alembic_version" not in snapshot["tables"]
 
 
 def create_legacy_copy(root: Path, old_index: Path) -> tuple[Path, Path]:

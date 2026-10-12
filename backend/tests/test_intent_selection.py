@@ -4,7 +4,9 @@ import pytest
 from backend.domain.retrieval.primitives import IntentName, Probability
 from backend.domain.retrieval.services import select_intents
 from backend.domain.retrieval.value_objects import IntentCandidate
-from package_inserts.catalog_loader import get_package_insert_catalog
+from backend.infrastructure.package_insert_definitions.loader import (
+    get_package_insert_definitions,
+)
 
 
 @pytest.mark.parametrize(
@@ -14,7 +16,7 @@ def test_probability_threshold_boundary(probability, expected):
     result = select_intents(
         (IntentCandidate(IntentName("warnings"), Probability(probability)),),
         None,
-        catalog=get_package_insert_catalog(),
+        intent_policy=get_package_insert_definitions().intent_policy,
     )
     assert tuple(code.value for code in result.section_codes) == expected
     assert tuple(intent.value for intent in result.qualifying_intents) == (
@@ -29,7 +31,7 @@ def test_probability_order_and_section_deduplication():
             IntentCandidate(IntentName("dosage"), Probability(0.8)),
         ),
         None,
-        catalog=get_package_insert_catalog(),
+        intent_policy=get_package_insert_definitions().intent_policy,
     )
     assert (result.primary.value if result.primary is not None else None) == "dosage"
     assert tuple(intent.value for intent in result.qualifying_intents) == (
@@ -68,7 +70,9 @@ def test_probability_order_and_section_deduplication():
 def test_choice_fallback_only_when_no_qualifying_candidate(
     candidates, choice, primary, qualifying, sections
 ):
-    result = select_intents(candidates, choice, catalog=get_package_insert_catalog())
+    result = select_intents(
+        candidates, choice, intent_policy=get_package_insert_definitions().intent_policy
+    )
     assert (result.primary.value if result.primary is not None else None) == primary
     assert tuple(intent.value for intent in result.qualifying_intents) == qualifying
     assert tuple(code.value for code in result.section_codes) == sections
@@ -78,7 +82,7 @@ def test_custom_probability_threshold():
     result = select_intents(
         (IntentCandidate(IntentName("warnings"), Probability(0.4)),),
         None,
-        catalog=get_package_insert_catalog(),
+        intent_policy=get_package_insert_definitions().intent_policy,
         threshold=Probability(0.5),
     )
     assert result.qualifying_intents == ()
@@ -90,5 +94,8 @@ def test_invalid_threshold_is_rejected_by_probability(value):
 
     with pytest.raises(DomainValidationError):
         select_intents(
-            (), None, catalog=get_package_insert_catalog(), threshold=Probability(value)
+            (),
+            None,
+            intent_policy=get_package_insert_definitions().intent_policy,
+            threshold=Probability(value),
         )

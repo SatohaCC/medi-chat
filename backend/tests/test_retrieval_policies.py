@@ -7,7 +7,10 @@ from backend.domain.retrieval.services import (
     detect_fixed_keyword_criteria as _detect_fixed_keyword_criteria,
 )
 from backend.domain.retrieval.services import detect_intent_from_keywords
-from package_inserts.catalog_loader import CATALOG_PATH, load_package_insert_catalog
+from backend.infrastructure.package_insert_definitions.loader import (
+    DEFINITIONS_PATH,
+    load_package_insert_definitions,
+)
 
 
 @pytest.mark.parametrize("reversed_intents", [False, True])
@@ -21,14 +24,17 @@ from package_inserts.catalog_loader import CATALOG_PATH, load_package_insert_cat
     ],
 )
 def test_fixed_keyword_priority(message, intent, reversed_intents, tmp_path):
-    payload = json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
+    payload = json.loads(DEFINITIONS_PATH.read_text(encoding="utf-8"))
     if reversed_intents:
         payload["intents"] = dict(reversed(list(payload["intents"].items())))
     path = tmp_path / "catalog.json"
     path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
-    catalog = load_package_insert_catalog(path)
-    assert detect_intent_from_keywords(message, catalog=catalog) == intent
-    criteria = _detect_fixed_keyword_criteria(message, catalog)
+    catalog = load_package_insert_definitions(path)
+    assert (
+        detect_intent_from_keywords(message, intent_policy=catalog.intent_policy)
+        == intent
+    )
+    criteria = _detect_fixed_keyword_criteria(message, catalog.intent_policy)
     if intent == "document_search":
         assert criteria is None
         return
@@ -38,4 +44,4 @@ def test_fixed_keyword_priority(message, intent, reversed_intents, tmp_path):
     assert criteria.intent.value == intent
     assert tuple(
         code.value for code in criteria.section_codes
-    ) == catalog.section_codes_for_intent(intent)
+    ) == catalog.intent_policy.section_codes_for_intent(intent)

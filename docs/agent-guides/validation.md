@@ -10,12 +10,12 @@ pnpm-workspaceの`python.enabled=false`でpnpmの別Python環境管理を停止�
 | 対象 | 読み取り専用の検証 |
 |---|---|
 | backendテスト | `pnpm test:backend`、限定時は`pnpm --filter backend exec pytest tests/<対象>.py` |
-| backendと共通カタログlint | `pnpm --filter backend lint` |
-| backendと共通カタログformat確認 | `pnpm --filter backend exec ruff format --check . ../package_inserts` |
+| backendlint | `pnpm --filter backend lint` |
+| backendformat確認 | `pnpm --filter backend exec ruff format --check .` |
 | Python型検査（Pyright） | `pnpm typecheck:python` |
 
-`pnpm typecheck:python`はルートのpyrightconfigを使いbackend・package_insertsを対象にする。各Pythonパッケージの`typecheck`はmypyであり、別の検証として扱う。
-カタログだけの検証は`python -c "from package_inserts.catalog_loader import get_package_insert_catalog; get_package_insert_catalog()"`。実行環境を確認し、これだけで検索・プロンプト・XML経路が検証できたと扱わない。
+`pnpm typecheck:python`はルートのpyrightconfigを使いbackendを対象にする。各Pythonパッケージの`typecheck`はmypyであり、別の検証として扱う。
+カタログだけの検証は`python -c "from backend.infrastructure.package_insert_definitions.loader import get_package_insert_definitions; get_package_insert_definitions()"`。実行環境を確認し、これだけで検索・プロンプト・XML経路が検証できたと扱わない。
 
 ## frontend
 
