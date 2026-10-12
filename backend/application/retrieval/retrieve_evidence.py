@@ -76,9 +76,13 @@ async def retrieve_evidence(
             frozenset(YjCode.from_value(code) for code in product_yj_codes),
         )
 
+    search_batches: dict[SearchCriteria, tuple[Evidence, ...]] = {}
+
     async def publish_logic(criteria: list[SearchCriteria]) -> None:
         if on_logic_sources is not None and not needs_clarification and reason is None:
-            sources = await _search_evidence(evidence_reader, tuple(resolved), criteria)
+            sources = await _search_evidence(
+                evidence_reader, tuple(resolved), criteria, cache=search_batches
+            )
             await on_logic_sources(sources)
 
     criteria, jev_response, qualifying_intents = await collect_search_criteria(
@@ -124,7 +128,9 @@ async def retrieve_evidence(
             qualifying_intents=qualifying_intents,
             product_identity_reason=reason,
         )
-    sources = await _search_evidence(evidence_reader, tuple(resolved), criteria)
+    sources = await _search_evidence(
+        evidence_reader, tuple(resolved), criteria, cache=search_batches
+    )
     return RetrievalResult(
         intent=intent,
         retrieval_strategy="three_detectors",
@@ -139,10 +145,16 @@ async def _search_evidence(
     reader: EvidenceRepository,
     medicines: tuple[AttachmentProductMatch, ...],
     criteria: list[SearchCriteria],
+    *,
+    cache: dict[SearchCriteria, tuple[Evidence, ...]] | None = None,
 ) -> list[Evidence]:
+    if cache is None:
+        cache = {}
     batches = []
     for condition in criteria:
-        batches.append((await reader.search(condition, medicines), condition.source))
+        if condition not in cache:
+            cache[condition] = tuple(await reader.search(condition, medicines))
+        batches.append((cache[condition], condition.source))
     return list(merge_evidence(batches))
 
 

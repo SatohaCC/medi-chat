@@ -233,13 +233,16 @@ def test_websocket_sends_logic_before_jev_then_replaces_with_integrated_sources(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("collision", [False, True])
 async def test_fixed_evidence_does_not_wait_for_morphology_and_updates_are_cumulative(
     monkeypatch,
+    collision,
 ):
     morphology_release = threading.Event()
     morphology_started = threading.Event()
     jev_release = asyncio.Event()
     published = asyncio.Queue()
+    reader = OrderedEvidenceReader(collision)
 
     def morphology(*args):
         morphology_started.set()
@@ -272,7 +275,7 @@ async def test_fixed_evidence_does_not_wait_for_morphology_and_updates_are_cumul
             [ChatMessage(role="user", content="質問")],
             ["1234567A0000"],
             medicine_reader=MedicineReader(),
-            evidence_reader=OrderedEvidenceReader(False),
+            evidence_reader=reader,
             intent_classifier=UnusedIntentClassifier(),
             keyword_extractor=UnusedKeywordExtractor(),
             intent_policy=get_package_insert_definitions().intent_policy,
@@ -282,19 +285,52 @@ async def test_fixed_evidence_does_not_wait_for_morphology_and_updates_are_cumul
     try:
         assert await asyncio.to_thread(morphology_started.wait, 5)
         first = await asyncio.wait_for(published.get(), 5)
-        assert {source.unit_id.value for source in first} == {"logic"}
+        assert {source.unit_id.value for source in first} == (
+            {"shared"} if collision else {"logic"}
+        )
         assert not task.done()
         morphology_release.set()
         second = await asyncio.wait_for(published.get(), 5)
-        assert {source.unit_id.value for source in second} == {"logic", "keyword"}
+        assert {source.unit_id.value for source in second} == (
+            {"shared"} if collision else {"logic", "keyword"}
+        )
+        assert set().union(*(source.retrieved_by for source in second)) == {
+            "logic",
+            "keyword",
+        }
         assert not task.done()
         jev_release.set()
         final = await asyncio.wait_for(task, 5)
-        assert {source.unit_id.value for source in final.sources} == {
+        assert {source.unit_id.value for source in final.sources} == (
+            {"shared"} if collision else {"logic", "keyword", "jev"}
+        )
+        assert set().union(*(source.retrieved_by for source in final.sources)) == {
             "logic",
             "keyword",
             "jev",
         }
+        assert [condition.source for condition in reader.conditions] == [
+            "logic",
+            "keyword",
+            "jev",
+        ]
+        assert first[0].retrieved_by == frozenset(["logic"])
+        # 新しい要求では再検索し、前の要求の結果を使い回さない。
+        await prepare_reply(
+            [ChatMessage(role="user", content="質問")],
+            ["1234567A0000"],
+            medicine_reader=MedicineReader(),
+            evidence_reader=reader,
+            intent_classifier=UnusedIntentClassifier(),
+            keyword_extractor=UnusedKeywordExtractor(),
+            intent_policy=get_package_insert_definitions().intent_policy,
+            on_logic_sources=published.put,
+        )
+        assert len(reader.conditions) == 6
+        assert all(
+            sum(condition.source == source for condition in reader.conditions) == 2
+            for source in ("logic", "keyword", "jev")
+        )
     finally:
         morphology_release.set()
         jev_release.set()
