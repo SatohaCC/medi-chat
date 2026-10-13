@@ -13,6 +13,7 @@ export const styles = stylex.create({
     backgroundColor: "var(--bg)",
     flexShrink: 0,
     gap: "16px",
+    flexWrap: "wrap",
   },
   leftSection: {
     display: "flex",
