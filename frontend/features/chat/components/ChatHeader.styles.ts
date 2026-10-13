@@ -1,5 +1,6 @@
 import * as stylex from "@stylexjs/stylex";
 export const styles = stylex.create({
+  controls: { display: "flex", alignItems: "center", gap: "12px" },
   headingRow: { display: "flex", alignItems: "center", gap: "12px" },
   header: {
     display: "flex",

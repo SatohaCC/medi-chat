@@ -46,7 +46,15 @@ async function visualSnapshot(page: Page, testInfo: TestInfo, name: string) {
       : {};
     baseline[name] = regions;
     mkdirSync(dirname(geometryPath), { recursive: true });
-    writeFileSync(geometryPath, JSON.stringify(baseline, null, 2));
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        writeFileSync(geometryPath, JSON.stringify(baseline, null, 2));
+        break;
+      } catch (err) {
+        if (attempt === 4) throw err;
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 150);
+      }
+    }
   } else {
     const baseline = JSON.parse(readFileSync(geometryPath, "utf8"))[name];
     expect(baseline, `geometry baseline ${name}`).toBeTruthy();

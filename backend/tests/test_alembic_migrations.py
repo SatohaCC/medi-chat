@@ -452,7 +452,7 @@ def test_upgrade_rejects_unmanaged_or_unknown_database(
     error: Exception | SystemExit | None = None
     try:
         _migrate_database(index_path, source)
-    except ImportError, TypeError, NotImplementedError:
+    except (ImportError, TypeError, NotImplementedError):
         raise
     except (Exception, SystemExit) as caught:
         error = caught

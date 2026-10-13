@@ -9,18 +9,11 @@ interface MessageListProps {
   containerRef?: React.RefObject<HTMLElement | null>;
 }
 
-export function MessageList({
-  messages,
-  isStreaming,
-  containerRef,
-}: MessageListProps) {
+export function MessageList({ messages, isStreaming, containerRef }: MessageListProps) {
   return (
     <main
       ref={containerRef}
-      {...stylex.props(
-        styles.root,
-        messages.length > 0 && styles.withBottomPadding,
-      )}
+      {...stylex.props(styles.root, messages.length > 0 && styles.withBottomPadding)}
     >
       {messages.length === 0 && (
         <div {...stylex.props(styles.empty)}>

@@ -1,6 +1,6 @@
 "use client";
 import * as stylex from "@stylexjs/stylex";
-import Link from "next/link";
+import { AppHeader } from "../../../shared/ui/AppHeader";
 import { Button } from "../../../shared/ui/Button";
 import { styles as layout } from "../../../shared/ui/PageLayout.styles";
 import { useAttachmentImport } from "../hooks/useAttachmentImport";
@@ -11,13 +11,11 @@ export function ImportScreen() {
     useAttachmentImport();
 
   return (
-    <main data-screen="imports" {...stylex.props(layout.root, styles.main)}>
-      <div style={{ display: "flex", gap: "16px" }}>
-        <Link href="/">チャットへ戻る</Link>
-        <Link href="/search">キーワード検索</Link>
-      </div>
-      <h1>添付文書XMLの取り込み</h1>
-      <p>原本XMLを登録し、対象製品の検索と候補に反映します。</p>
+    <div data-screen="imports" {...stylex.props(layout.root)}>
+      <AppHeader />
+      <main {...stylex.props(styles.main)}>
+        <h1>添付文書XMLの取り込み</h1>
+        <p>原本XMLを登録し、対象製品の検索と候補に反映します。</p>
       <form {...stylex.props(styles.form)} onSubmit={submit}>
         <label htmlFor="attachment-xml">XMLファイル</label>
         <input
@@ -109,5 +107,6 @@ export function ImportScreen() {
         </section>
       )}
     </main>
-  );
+  </div>
+);
 }

@@ -50,7 +50,7 @@ class FileIndexSourceReader:
         if manifest_path.is_file():
             try:
                 manifest = parse_json_object(manifest_path.read_text(encoding="utf-8"))
-            except OSError, json.JSONDecodeError:
+            except (OSError, json.JSONDecodeError):
                 pass
             else:
                 count = manifest.get("document_count", 0)

@@ -323,7 +323,7 @@ def test_conflicting_url_and_path_are_rejected_before_connect(
             database_url=database_url if level == "explicit" else None,
             monkeypatch=monkeypatch,
         )
-    except ImportError, TypeError, NotImplementedError:
+    except (ImportError, TypeError, NotImplementedError):
         raise
     except Exception as caught:
         error = caught
@@ -419,7 +419,7 @@ def test_supported_database_locations_are_normalized(
                 database_url=database_url,
                 monkeypatch=monkeypatch,
             )
-    except ImportError, TypeError, NotImplementedError:
+    except (ImportError, TypeError, NotImplementedError):
         raise
     except Exception as caught:
         error = caught

@@ -32,7 +32,7 @@ class PackageInsertIndexBuilder:
                     raise PackageInsertStoreError(
                         f"No structured documents listed in manifest at: {self.structured_dir}"
                     )
-            except OSError, json.JSONDecodeError:
+            except (OSError, json.JSONDecodeError):
                 pass
         else:
             if not self.document_unit_paths:

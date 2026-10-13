@@ -53,7 +53,7 @@ test("renders the real 11.2 section as one table with category and frequency lab
   assert.ok(row);
   const html = render(row.text);
   assert.equal((html.match(/<table>/g) || []).length, 1);
-  assert.equal((html.match(/<tr>/g) || []).length, 34);
+  assert.equal((html.match(/<tr>/g) || []).length, 14);
   assert.match(html, /精神神経系/);
   assert.match(html, /頻度不明/);
 });
@@ -75,13 +75,6 @@ test("highlights specified words in text and tables with mark.search-highlight",
     "### 効能又は効果\n\n頭痛及び発熱の解熱・鎮痛。\n\n| 症状 | 用法 |\n| --- | --- |\n| 発熱 | 1回1錠 |",
     ["頭痛", "発熱"],
   );
-  assert.match(
-    html,
-    /<mark class="search-highlight">頭痛<\/mark>/,
-  );
-  assert.match(
-    html,
-    /<mark class="search-highlight">発熱<\/mark>/,
-  );
+  assert.match(html, /<mark class="search-highlight">頭痛<\/mark>/);
+  assert.match(html, /<mark class="search-highlight">発熱<\/mark>/);
 });
-

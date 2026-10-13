@@ -1,16 +1,16 @@
 "use client";
 
 import * as stylex from "@stylexjs/stylex";
-import Link from "next/link";
 import { type FormEvent, useState } from "react";
+import { AppHeader } from "../../../shared/ui/AppHeader";
 import { Button } from "../../../shared/ui/Button";
 import { styles as layout } from "../../../shared/ui/PageLayout.styles";
 import { ToggleButton } from "../../../shared/ui/ToggleButton";
 import {
-  type SourceItem,
+  extractSectionGroups,
   SourceEvidenceCard,
   SourceEvidenceSectionFilters,
-  extractSectionGroups,
+  type SourceItem,
 } from "../../chat";
 import { useActiveMedicines } from "../../medicine-selection/hooks/useActiveMedicines";
 import { searchPackageInserts } from "../api/searchApi";
@@ -69,23 +69,17 @@ export function KeywordSearchScreen() {
       : sources.filter((s) => (s.section?.code || "other") === selectedSection);
 
   return (
-    <main data-screen="keyword-search" {...stylex.props(layout.root, styles.main)}>
-      <div {...stylex.props(styles.headerRow)}>
-        <div>
-          <h1 {...stylex.props(styles.title)}>添付文書キーワード検索</h1>
-          <p {...stylex.props(styles.description)}>
-            登録済み添付文書からキーワードで直接根拠を検索・確認できます。
-          </p>
+    <div data-screen="keyword-search" {...stylex.props(layout.root)}>
+      <AppHeader />
+      <main {...stylex.props(styles.main)}>
+        <div {...stylex.props(styles.headerRow)}>
+          <div>
+            <h1 {...stylex.props(styles.title)}>添付文書キーワード検索</h1>
+            <p {...stylex.props(styles.description)}>
+              登録済み添付文書からキーワードで直接根拠を検索・確認できます。
+            </p>
+          </div>
         </div>
-        <nav {...stylex.props(styles.navLinks)}>
-          <Link href="/" {...stylex.props(styles.link)}>
-            チャットへ戻る
-          </Link>
-          <Link href="/imports" {...stylex.props(styles.link)}>
-            添付文書XMLを取り込む
-          </Link>
-        </nav>
-      </div>
 
       <form {...stylex.props(styles.searchForm)} onSubmit={handleSearch}>
         <input
@@ -190,5 +184,6 @@ export function KeywordSearchScreen() {
         </section>
       )}
     </main>
-  );
+  </div>
+);
 }
