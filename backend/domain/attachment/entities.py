@@ -1,5 +1,7 @@
 """添付文書自体のモデル。"""
 
+from __future__ import annotations
+
 from dataclasses import dataclass, replace
 
 from ..medicine.identifiers import YjCode

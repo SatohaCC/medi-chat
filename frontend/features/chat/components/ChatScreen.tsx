@@ -1,6 +1,5 @@
 "use client";
 import * as stylex from "@stylexjs/stylex";
-import Link from "next/link";
 import { useRef, useState } from "react";
 import { styles as layout } from "../../../shared/ui/PageLayout.styles";
 import type { MedicineEntry } from "../../medicine-selection";
@@ -67,10 +66,6 @@ export function ChatScreen() {
 
   return (
     <div {...stylex.props(layout.root)} data-screen="chat">
-      <div style={{ display: "flex", gap: "16px", padding: "8px 20px" }}>
-        <Link href="/search">キーワード検索</Link>
-        <Link href="/imports">添付文書XMLを取り込む</Link>
-      </div>
       <ChatHeader
         selectedModel={selectedModel}
         onModelChange={setSelectedModel}

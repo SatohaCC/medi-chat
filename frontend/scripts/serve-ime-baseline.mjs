@@ -49,9 +49,12 @@ for (const name of files) {
     throw new Error("Invalid historical source path");
   let content = original;
   if (name.endsWith("tsconfig.json")) {
-    const config=JSON.parse(original.toString("utf8"));
-    config.include.push(".next-ime-baseline/types/**/*.ts", ".next-ime-baseline/dev/types/**/*.ts");
-    content=Buffer.from(JSON.stringify(config,null,2)+"\n");
+    const config = JSON.parse(original.toString("utf8"));
+    config.include.push(
+      ".next-ime-baseline/types/**/*.ts",
+      ".next-ime-baseline/dev/types/**/*.ts",
+    );
+    content = Buffer.from(JSON.stringify(config, null, 2) + "\n");
   }
   if (name.endsWith("next.config.ts"))
     content = Buffer.from(

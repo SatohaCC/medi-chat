@@ -118,6 +118,6 @@ class RegistrationAttempt:
                     path.unlink()
                 if complete:
                     journal.unlink()
-            except OSError, ValueError, TypeError, KeyError:
+            except (OSError, ValueError, TypeError, KeyError):
                 # Unknown owner/path/content is preserved, never guessed or aged out.
                 continue

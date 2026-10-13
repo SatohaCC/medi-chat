@@ -62,7 +62,7 @@ def verify_no_recovery_work(index_path: Path) -> None:
                     raise RuntimeError(
                         "configured gate requires explicit recovery; unpublished attempt exists"
                     )
-            except OSError, ValueError, TypeError, KeyError:
+            except (OSError, ValueError, TypeError, KeyError):
                 raise RuntimeError(
                     "configured gate requires explicit recovery; ownership journal is unreadable"
                 ) from None

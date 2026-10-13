@@ -156,6 +156,6 @@ async def read_attachment(
         result = await service.read_result(document_id, source_sha256)
     except AttachmentImportError as exc:
         raise import_error(exc) from None
-    except DomainValidationError, ValueError:
+    except (DomainValidationError, ValueError):
         raise error(404, "not_found", "保存済みの取り込みが見つかりません。") from None
     return AttachmentImportResponse.from_result(result)

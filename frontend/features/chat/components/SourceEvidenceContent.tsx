@@ -1,10 +1,10 @@
 // biome-ignore-all lint/a11y/noNoninteractiveTabindex: The table scroll region needs keyboard focus.
 import * as stylex from "@stylexjs/stylex";
+import type { ComponentProps } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
-import type { ComponentProps } from "react";
 import { styles } from "./SourceEvidenceContent.styles";
 
 // Keep table relationships, but discard source styles and executable markup.

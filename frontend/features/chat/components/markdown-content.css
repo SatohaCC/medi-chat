@@ -90,11 +90,18 @@
     white-space: pre-wrap;
     line-height: 1.7;
   }
-  .source-evidence-content tr:nth-child(even) {
-    background: rgba(148, 163, 184, 0.05);
+  .source-evidence-content tbody th,
+  .source-evidence-content tbody td {
+    background: transparent;
+    color: inherit;
+    font-weight: normal;
   }
-  .source-evidence-content th,
-  .source-evidence-content tr:first-child td {
+  .source-evidence-content thead th,
+  .source-evidence-content thead td,
+  .source-evidence-content table:not(:has(thead)) > tr:first-child > th,
+  .source-evidence-content table:not(:has(thead)) > tr:first-child > td,
+  .source-evidence-content table:not(:has(thead)) > tbody > tr:first-child > th,
+  .source-evidence-content table:not(:has(thead)) > tbody > tr:first-child > td {
     background: #243044;
     color: #e2e8f0;
     font-weight: 600;

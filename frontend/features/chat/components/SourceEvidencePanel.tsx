@@ -8,11 +8,11 @@ import type { RetrievalStatus, SourceItem } from "../model/chat";
 import type { JevResponseData } from "../model/jev";
 import { JEV_INTENT_META } from "./JevResponseInspector";
 import { SourceEvidenceCard } from "./SourceEvidenceCard";
-import {
-  SourceEvidenceSectionFilters,
-  extractSectionGroups,
-} from "./SourceEvidenceSectionFilters";
 import { styles } from "./SourceEvidencePanel.styles";
+import {
+  extractSectionGroups,
+  SourceEvidenceSectionFilters,
+} from "./SourceEvidenceSectionFilters";
 
 interface SourceEvidencePanelProps {
   sources: SourceItem[];

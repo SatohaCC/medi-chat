@@ -1,0 +1,72 @@
+import * as stylex from "@stylexjs/stylex";
+
+export const styles = stylex.create({
+  header: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingBlock: "12px",
+    paddingInline: "20px",
+    borderBottomWidth: "1px",
+    borderBottomStyle: "solid",
+    borderBottomColor: "var(--border)",
+    backgroundColor: "var(--bg)",
+    flexShrink: 0,
+    gap: "16px",
+    flexWrap: "wrap",
+  },
+  leftSection: {
+    display: "flex",
+    alignItems: "center",
+    gap: "24px",
+    flexWrap: "wrap",
+  },
+  titleLink: {
+    textDecoration: "none",
+    color: "inherit",
+  },
+  title: {
+    fontSize: "18px",
+    fontWeight: 600,
+    margin: 0,
+    color: "var(--fg)",
+    whiteSpace: "nowrap",
+  },
+  nav: {
+    display: "flex",
+    alignItems: "center",
+    gap: "4px",
+  },
+  navLink: {
+    display: "inline-flex",
+    alignItems: "center",
+    paddingBlock: "6px",
+    paddingInline: "12px",
+    fontSize: "14px",
+    fontWeight: 500,
+    color: { default: "var(--muted)", ":hover": "var(--fg)" },
+    backgroundColor: {
+      default: "transparent",
+      ":hover": "rgba(255, 255, 255, 0.05)",
+    },
+    borderRadius: "6px",
+    textDecoration: "none",
+    transition: "all 0.15s ease",
+    whiteSpace: "nowrap",
+    outlineWidth: { default: null, ":focus-visible": "2px" },
+    outlineStyle: { default: null, ":focus-visible": "solid" },
+    outlineColor: { default: null, ":focus-visible": "#60a5fa" },
+    outlineOffset: { default: null, ":focus-visible": "2px" },
+  },
+  activeNavLink: {
+    color: "#60a5fa",
+    backgroundColor: "rgba(96, 165, 250, 0.12)",
+    fontWeight: 600,
+  },
+  rightSection: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    marginLeft: "auto",
+  },
+});

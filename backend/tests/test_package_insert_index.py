@@ -308,7 +308,7 @@ def test_構築に失敗しても既存索引が失われない(
     error: Exception | None = None
     try:
         writer.replace(FileIndexSourceReader(structured).read_snapshot())
-    except ImportError, NotImplementedError:
+    except (ImportError, NotImplementedError):
         raise
     except Exception as caught:
         # この入力に対する生のfile/JSON例外はエラー変換不足としてassertで判別する。
