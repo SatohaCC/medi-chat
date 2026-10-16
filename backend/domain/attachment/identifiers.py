@@ -13,8 +13,3 @@ class DocumentId(EntityStringId):
 @dataclass(frozen=True, slots=True)
 class DocumentVersionId(EntityStringId):
     """文書IDとは別の、文書と実原本SHAを組にした版ID。"""
-
-
-@dataclass(frozen=True, slots=True)
-class ArtifactFileId(EntityStringId):
-    """登録台帳が所有する具体的なファイルの識別子。パスではない。"""

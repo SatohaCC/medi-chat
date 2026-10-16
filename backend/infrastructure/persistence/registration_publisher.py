@@ -36,7 +36,6 @@ from ...domain.attachment.exceptions import (
     MissingRevisionError,
 )
 from ...domain.attachment.identifiers import (
-    ArtifactFileId,
     DocumentVersionId,
 )
 from ...domain.attachment.value_objects import (
@@ -638,13 +637,13 @@ class SqliteRegistrationPublisher:
             )
             # File ownership/leases are storage lifecycle rules, not a document aggregate.
             removable = frozenset(
-                ArtifactFileId(file["path"])
+                file["path"]
                 for identity, record in records.items()
                 if DocumentVersionId(identity) in eligible
                 for file in json.loads(record["files_json"])
             )
             retained = frozenset(
-                ArtifactFileId(file["path"])
+                file["path"]
                 for identity, record in records.items()
                 if DocumentVersionId(identity) not in eligible
                 and not record["artifacts_deleted"]
@@ -688,7 +687,7 @@ class SqliteRegistrationPublisher:
                     complete = False
                     reason = "unsafe_path"
                     continue
-                if ArtifactFileId(file["path"]) not in removable:
+                if file["path"] not in removable:
                     continue
                 try:
                     if path.exists():

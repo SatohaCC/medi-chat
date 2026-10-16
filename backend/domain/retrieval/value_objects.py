@@ -17,8 +17,10 @@ from .primitives import (
     EvidenceBrandName,
     EvidenceGenericName,
     EvidenceSourceUrl,
+    IntentKeywordText,
     IntentName,
     Probability,
+    QuestionProductName,
     SearchKeyword,
     SearchSectionCode,
     SearchUnitProductCode,
@@ -27,14 +29,34 @@ from .primitives import (
 )
 
 
+@dataclass(frozen=True, slots=True)
+class ProductQuestion:
+    """質問文から抽出した1剤または2剤の対象医薬品名スロット。"""
+
+    names: tuple[QuestionProductName, ...]
+
+    def __post_init__(self) -> None:
+        if (
+            not isinstance(self.names, tuple)
+            or len(self.names) not in (1, 2)
+            or any(
+                not isinstance(name, QuestionProductName) or not name.value.strip()
+                for name in self.names
+            )
+        ):
+            raise DomainValidationError(
+                "product question requires one or two nonempty typed names"
+            )
+
+
 @dataclass(frozen=True, slots=True, kw_only=True)
 class IntentKeyword:
-    text: str
+    text: IntentKeywordText
     exclude_from_text_search: bool
 
     def __post_init__(self) -> None:
-        if not self.text.strip():
-            raise DomainValidationError("intent keyword must be nonempty")
+        if not isinstance(self.text, IntentKeywordText):
+            raise DomainValidationError("intent keyword requires IntentKeywordText")
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -78,7 +100,7 @@ class IntentPolicy:
             intent.keyword_priority for intent in self.intents if intent.keywords
         )
         keywords = tuple(
-            keyword.text for intent in self.intents for keyword in intent.keywords
+            keyword.text.value for intent in self.intents for keyword in intent.keywords
         )
         if len(priorities) != len(set(priorities)) or len(keywords) != len(
             set(keywords)

@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from backend.application.medicine.product_models import ResolvedMedicine
 
 from ...domain.json_types import JsonValue
-from ...domain.retrieval.product_identity import ProductIdentityReason
+from ...domain.retrieval.primitives import ProductIdentityReason
 from ...domain.retrieval.value_objects import Evidence
 
 

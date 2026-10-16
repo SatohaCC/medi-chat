@@ -5,6 +5,8 @@ from dataclasses import dataclass
 
 from ...domain.attachment.identifiers import DocumentId
 from ...domain.medicine.identifiers import YjCode
+from ...domain.medicine.primitives import ProductGroupId
+from ...domain.medicine.services import best_alias_priorities
 from ...domain.retrieval.identifiers import SearchGenerationId
 from ...domain.shared.services import normalize_match_text
 
@@ -73,12 +75,12 @@ class MedicineSuggester:
                     matches.append(
                         (start, index, alias_index, product, alias, priority)
                     )
-        best: dict[str, int] = {}
+        best = best_alias_priorities(
+            (ProductGroupId(product.group_name), priority)
+            for _, _, _, product, _, priority in matches
+        )
         positions: dict[str, int] = {}
-        for start, _, _, product, _, priority in matches:
-            best[product.group_name] = max(
-                best.get(product.group_name, priority), priority
-            )
+        for start, _, _, product, _, _ in matches:
             positions[product.group_name] = min(
                 positions.get(product.group_name, start), start
             )
@@ -86,7 +88,7 @@ class MedicineSuggester:
         groups = self._group(
             (product, alias)
             for _, _, _, product, alias, priority in matches
-            if priority == best[product.group_name]
+            if priority == best[ProductGroupId(product.group_name)]
         )
         return tuple(groups[key] for key in sorted(groups, key=positions.__getitem__))
 

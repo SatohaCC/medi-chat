@@ -4,10 +4,18 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Depends, Query
 
+from ..application.medicine.product_contracts import RegisteredMedicineReader
 from ..application.retrieval.search_keywords import search_evidence_by_keywords
-from .evidence_models import ChatSource
+from ..domain.retrieval.repositories import EvidenceRepository
+from .chat_dto_mapper import evidence_to_api
+from .chat_service import AppChatService
+from .dependencies import (
+    get_chat_service,
+    get_evidence_reader,
+    get_medicine_reader,
+)
 from .search_models import KeywordSearchResponse
 
 router = APIRouter(tags=["search"])
@@ -19,7 +27,11 @@ router = APIRouter(tags=["search"])
     name="keyword_search",
 )
 async def search_package_inserts(
-    request: Request,
+    chat_service: Annotated[AppChatService | None, Depends(get_chat_service)],
+    medicine_reader: Annotated[
+        RegisteredMedicineReader | None, Depends(get_medicine_reader)
+    ],
+    evidence_reader: Annotated[EvidenceRepository | None, Depends(get_evidence_reader)],
     q: Annotated[
         str,
         Query(
@@ -36,12 +48,8 @@ async def search_package_inserts(
     ] = None,
 ) -> KeywordSearchResponse:
     """添付文書からキーワードに合致する根拠単位を検索する"""
-    chat_service = getattr(request.app.state, "chat_service", None)
     keyword_extractor = getattr(chat_service, "keyword_extractor", None)
     snapshot_provider = getattr(chat_service, "snapshot_provider", None)
-
-    medicine_reader = getattr(request.app.state, "medicine_reader", None)
-    evidence_reader = getattr(request.app.state, "evidence_reader", None)
 
     if medicine_reader is None or evidence_reader is None:
         return KeywordSearchResponse(query=q, items=[], total_count=0)
@@ -55,5 +63,5 @@ async def search_package_inserts(
         snapshot_provider=snapshot_provider,
     )
 
-    items = [ChatSource.model_validate(e.to_dict()) for e in results]
+    items = [evidence_to_api(e) for e in results]
     return KeywordSearchResponse(query=q, items=items, total_count=len(items))

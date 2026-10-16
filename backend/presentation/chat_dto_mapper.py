@@ -98,6 +98,10 @@ def _medicine_from_api(value: ApiMedicineMatch) -> ResolvedMedicine:
     )
 
 
+def evidence_to_api(value: Evidence) -> ApiChatSource:
+    return ApiChatSource.model_validate(value.to_dict())
+
+
 def _evidence_from_api(value: ApiChatSource) -> Evidence:
     return Evidence(
         unit_id=SearchUnitId(value.unit_id),

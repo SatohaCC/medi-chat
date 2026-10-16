@@ -1,16 +1,11 @@
+"""オートコンプリート用の医薬品カタログ投影ユースケース。"""
+
 import unicodedata
 
 from backend.application.medicine.product_models import RegisteredMedicine
+from backend.application.retrieval.snapshot_contracts import RetrievalSnapshotProvider
 
-# Map MHLW administration category code to human-readable label
-CATEGORY_MAP: dict[str, str] = {
-    "1": "内用",
-    "2": "内用",
-    "3": "歯科",
-    "4": "注射",
-    "6": "外用",
-    "8": "他",
-}
+from ...domain.retrieval.identifiers import SearchGenerationId
 
 
 def project_registered_product(product: RegisteredMedicine) -> dict[str, str]:
@@ -36,33 +31,18 @@ def katakana_to_hiragana(text: str) -> str:
     )
 
 
-def project_yj_row(row: list[str]) -> dict[str, str] | None:
-    if len(row) < 38:
-        return None
-    # Check validity: Col 30 is expiration date; 99999999 means active
-    end_date = row[30].strip()
-    if end_date != "99999999":
-        return None
-
-    name = row[4].strip()
-    if not name:
-        return None
-
-    yj_code = row[31].strip()
-
-    # Col 6 is half-width katakana reading
-    raw_reading = unicodedata.normalize("NFKC", row[6].strip())
-    hiragana_reading = katakana_to_hiragana(raw_reading).lower()
-
-    generic_name = row[37].replace("【般】", "").strip()
-    category_code = row[27].strip()
-    category = CATEGORY_MAP.get(category_code, "他")
-
-    return {
-        "n": name,
-        "k": raw_reading,
-        "h": hiragana_reading,
-        "y": yj_code,
-        "g": generic_name,
-        "c": category,
-    }
+async def read_autocomplete_catalog(
+    runtime: RetrievalSnapshotProvider,
+) -> tuple[SearchGenerationId, list[dict[str, str]]]:
+    """現在の公開世代スナップショットからオートコンプリート候補一覧を取得する。"""
+    async with runtime.acquire() as snapshot:
+        products = await snapshot.medicine_reader.read_medicines()
+        items = [
+            project_registered_product(product)
+            for product in sorted(
+                products,
+                key=lambda product: product.yj_code.value if product.yj_code else "",
+            )
+            if product.yj_code
+        ]
+        return snapshot.generation_id, items
