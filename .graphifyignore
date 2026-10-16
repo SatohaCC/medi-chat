@@ -1,0 +1,10 @@
+# Keep the architecture graph focused on production code.
+**/tests/
+**/__tests__/
+frontend/e2e/
+
+# Tests colocated with production modules.
+**/test_*.py
+**/*_test.py
+**/*.test.*
+**/*.spec.*
