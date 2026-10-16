@@ -119,6 +119,30 @@ def test_initial_batch_uses_dates_and_returns_results_in_input_order(
     assert [bool(r.active_yj_codes) for r in results] == (
         [True, False] if reverse else [False, True]
     )
+    assert [r.registration_sequence for r in results] == [1, 2]
+    assert rows(
+        publisher,
+        "SELECT source_sha256 FROM registration_receipts ORDER BY sequence",
+    ) == [(hashlib.sha256(value).hexdigest(),) for value in values]
+
+
+def test_batch_receipts_keep_input_order_with_obsolete_ambiguity_and_retries(publisher):
+    values = [
+        document("2025-01", "旧版A"),
+        document("2025-01", "旧版B"),
+        document("2026-01", "最新版"),
+    ]
+    inputs = tuple(
+        RegistrationInput(PmdaXmlDecoder().decode(value), value) for value in values
+    )
+    results = publisher.publish_inputs(inputs + (inputs[0],), initial=True)
+    assert [r.registration_sequence for r in results] == [1, 2, 3, 1]
+    assert [r.reused for r in results] == [False, False, False, True]
+    assert [bool(r.active_yj_codes) for r in results] == [False, False, True, False]
+    repeated = publisher.publish_inputs(inputs)
+    assert [r.registration_sequence for r in repeated] == [1, 2, 3]
+    assert all(r.reused for r in repeated)
+    assert rows(publisher, "SELECT COUNT(*) FROM registration_receipts") == [(3,)]
 
 
 def test_legacy_registration_order_is_not_silently_republished(publisher):

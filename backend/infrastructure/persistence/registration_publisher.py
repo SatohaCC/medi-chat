@@ -247,7 +247,7 @@ class SqliteRegistrationPublisher:
                     planned = assign_latest(
                         planned, registration_version(item.decoded.document)
                     )
-                for item in ordered:
+                for item in inputs:
                     version = registration_version(item.decoded.document)
                     if version.version_id.value in records:
                         continue
@@ -319,7 +319,16 @@ class SqliteRegistrationPublisher:
                             )
                     files = self._owned(owned_paths)
                     previous = after
-                    after = assign_latest(after, version)
+                    # Receipts follow input order; only the prevalidated batch
+                    # winners may change publication, even for obsolete ties.
+                    after = {
+                        **after,
+                        **{
+                            code: version
+                            for code in version.yj_codes
+                            if planned[code].version_id == version.version_id
+                        },
+                    }
                     replaced_codes = frozenset(
                         code
                         for code in version.yj_codes
