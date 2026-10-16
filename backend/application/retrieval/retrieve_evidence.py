@@ -9,15 +9,15 @@ from backend.application.medicine.product_contracts import RegisteredMedicineRea
 from backend.application.medicine.product_models import ResolvedMedicine
 
 from ...domain.medicine.identifiers import YjCode
-from ...domain.retrieval.product_identity import (
-    product_identity_reason,
-    recognize_product_questions,
-)
 from ...domain.retrieval.repositories import EvidenceRepository
 from ...domain.retrieval.services import (
     detect_fixed_keyword_criteria as _detect_fixed_keyword_criteria,
 )
-from ...domain.retrieval.services import merge_evidence
+from ...domain.retrieval.services import (
+    merge_evidence,
+    product_identity_reason,
+    recognize_product_questions,
+)
 from ...domain.retrieval.value_objects import Evidence, IntentPolicy, SearchCriteria
 from .intent_contracts import IntentClassifier, IntentRequest
 from .jev_detector import JevDetectionResult, detect_jev_criteria

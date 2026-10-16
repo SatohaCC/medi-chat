@@ -607,7 +607,14 @@ def test_domain_models_have_explicit_primitive_entity_value_object_ownership() -
         "EvidenceColumns": "backend.domain.retrieval.value_objects",
         "RegisteredMedicine": "backend.application.medicine.product_models",
         "Evidence": "backend.domain.retrieval.value_objects",
+        "ProductIdentityReason": "backend.domain.retrieval.primitives",
+        "QuestionProductName": "backend.domain.retrieval.primitives",
+        "IntentKeywordText": "backend.domain.retrieval.primitives",
+        "ProductQuestion": "backend.domain.retrieval.value_objects",
         "merge_evidence": "backend.domain.retrieval.services",
+        "recognize_product_questions": "backend.domain.retrieval.services",
+        "product_identity_reason": "backend.domain.retrieval.services",
+        "build_keyword_search_criteria": "backend.domain.retrieval.services",
         "RegisteredMedicineReader": "backend.application.medicine.product_contracts",
         "EvidenceRepository": "backend.domain.retrieval.repositories",
         "MedicineCatalog": "backend.application.medicine.product_catalog",
@@ -624,6 +631,7 @@ def test_domain_models_have_explicit_primitive_entity_value_object_ownership() -
         assert getattr(value, "__module__", module_name) == module_name, (
             f"{name} の正本が {module_name} に定義されていない"
         )
+    assert not (BACKEND_ROOT / "domain" / "retrieval" / "product_identity.py").exists()
 
 
 def test_domain_has_no_compatibility_facades() -> None:

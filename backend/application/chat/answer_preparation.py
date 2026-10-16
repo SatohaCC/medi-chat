@@ -4,7 +4,7 @@ from collections.abc import Sequence
 
 from backend.application.medicine.product_contracts import RegisteredMedicineReader
 
-from ...domain.retrieval.product_identity import ProductIdentityReason
+from ...domain.retrieval.primitives import ProductIdentityReason
 from ...domain.retrieval.repositories import EvidenceRepository
 from ...domain.retrieval.value_objects import Evidence, IntentPolicy
 from ..retrieval.intent_contracts import IntentClassifier

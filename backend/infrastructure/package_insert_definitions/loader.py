@@ -24,7 +24,11 @@ from ...domain.attachment.value_objects import (
     SectionDefinition,
     SectionTaxonomy,
 )
-from ...domain.retrieval.primitives import IntentName, SearchSectionCode
+from ...domain.retrieval.primitives import (
+    IntentKeywordText,
+    IntentName,
+    SearchSectionCode,
+)
 from ...domain.retrieval.value_objects import (
     IntentKeyword,
     IntentPolicy,
@@ -84,7 +88,7 @@ def load_package_insert_definitions(path: Path) -> PackageInsertDefinitions:
                 ),
                 keywords=tuple(
                     IntentKeyword(
-                        text=keyword.text,
+                        text=IntentKeywordText(keyword.text),
                         exclude_from_text_search=keyword.exclude_from_text_search,
                     )
                     for keyword in intent.keywords

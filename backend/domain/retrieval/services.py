@@ -1,5 +1,7 @@
 """検索コンテキストの状態を持たないDomain Service。"""
 
+import re
+import unicodedata
 from collections.abc import Iterable, Sequence
 from dataclasses import replace
 from typing import Protocol
@@ -13,6 +15,9 @@ from .primitives import (
     EvidenceContextLabel,
     IntentName,
     Probability,
+    ProductIdentityReason,
+    QuestionProductName,
+    SearchKeyword,
     SearchSectionCode,
 )
 from .value_objects import (
@@ -21,6 +26,7 @@ from .value_objects import (
     IntentCandidate,
     IntentPolicy,
     IntentSelection,
+    ProductQuestion,
     SearchCriteria,
     SearchUnitCriteria,
     TextSearchPolicy,
@@ -32,7 +38,7 @@ def detect_intent_from_keywords(message: str, *, intent_policy: IntentPolicy) ->
     compact = normalize_match_text(message)
     for definition in intent_policy.keyword_intents:
         if any(
-            normalize_match_text(keyword.text) in compact
+            normalize_match_text(keyword.text.value) in compact
             for keyword in definition.keywords
         ):
             return definition.id.value
@@ -52,6 +58,114 @@ def detect_fixed_keyword_criteria(
         intent=IntentName(intent),
         section_codes=tuple(SearchSectionCode(code) for code in codes),
     )
+
+
+def build_keyword_search_criteria(query: str) -> SearchCriteria | None:
+    """空白区切りの2文字以上の入力語からキーワード検索条件を組み立てる。"""
+    terms = tuple(
+        SearchKeyword(term)
+        for raw in re.split(r"[\s　]+", query)
+        if len(term := raw.strip()) >= 2
+    )
+    if not terms:
+        return None
+    return SearchCriteria(
+        source=DetectionSource.KEYWORD,
+        keywords=terms,
+    )
+
+
+def recognize_product_questions(
+    message: str, known_aliases: tuple[str, ...]
+) -> tuple[ProductQuestion, ...]:
+    normalized_chars = []
+    original_positions = []
+    for position, char in enumerate(message):
+        for normalized_char in unicodedata.normalize("NFKC", char).casefold():
+            normalized_chars.append(normalized_char)
+            original_positions.append(position)
+    normalized_message = "".join(normalized_chars)
+    protected = set()
+    for alias in known_aliases:
+        normalized_alias = unicodedata.normalize("NFKC", alias).casefold()
+        if not normalized_alias:
+            continue
+        start = normalized_message.find(normalized_alias)
+        while start >= 0:
+            protected.update(original_positions[start : start + len(normalized_alias)])
+            start = normalized_message.find(normalized_alias, start + 1)
+    clauses = []
+    current = []
+    quote_end = None
+    blocked = False
+    pairs = {"「": "」", "『": "』", "“": "”", '"': '"'}
+    for index, char in enumerate(message):
+        if quote_end:
+            if char == quote_end:
+                quote_end = None
+            continue
+        if char in pairs and index not in protected:
+            quote_end = pairs[char]
+            blocked = True
+            continue
+        if char in "。\n":
+            if not blocked:
+                clauses.append("".join(current))
+            current = []
+            blocked = False
+        else:
+            current.append(char)
+    if not blocked and quote_end is None:
+        clauses.append("".join(current))
+    questions = []
+    for clause in clauses:
+        text = clause.strip().rstrip("？?").strip()
+        if text.startswith(("背景：", "記録：", "過去：", "以前、", "例：")):
+            continue
+        pair = re.fullmatch(
+            r"([^と]+)と([^と]+)の(?:飲み合わせ|併用)(?:を教えてください|を教えて|は可能ですか|は)?",
+            text,
+        )
+        if pair and all(part.strip() for part in (pair[1], pair[2])):
+            questions.append(
+                ProductQuestion(
+                    (
+                        QuestionProductName(pair[1].strip()),
+                        QuestionProductName(pair[2].strip()),
+                    )
+                )
+            )
+            continue
+        match = re.fullmatch(
+            r"([^と]+?)の(?:効能効果|効能|効果|副作用|飲み合わせ|併用)(?:は何ですか|を教えてください|を教えて|は)?",
+            text,
+        )
+        if match is None:
+            match = re.fullmatch(r"([^と]+?)は何に効く", text)
+        if match and match[1].strip():
+            questions.append(ProductQuestion((QuestionProductName(match[1].strip()),)))
+    return tuple(questions)
+
+
+def product_identity_reason(
+    questions: tuple[tuple[frozenset[YjCode], ...], ...], selected: frozenset[YjCode]
+) -> ProductIdentityReason | None:
+    if any(
+        len(question) == 1 and question[0] and not question[0] & selected
+        for question in questions
+    ):
+        return ProductIdentityReason.CONFLICT
+    if any(
+        len(question) == 2 and any(not codes for codes in question)
+        for question in questions
+    ):
+        return ProductIdentityReason.UNRESOLVED
+    if any(
+        len(question) == 2 and any(not codes & selected for codes in question)
+        for question in questions
+    ):
+        return ProductIdentityReason.PAIR_REQUIRED
+    return None
 
 
 _DEFAULT_INTENT_THRESHOLD = Probability(0.20)

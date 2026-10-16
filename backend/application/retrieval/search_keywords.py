@@ -2,16 +2,18 @@
 
 from __future__ import annotations
 
-import re
 from collections.abc import Sequence
 
 from backend.application.medicine.product_catalog import MedicineCatalog
 from backend.application.medicine.product_contracts import RegisteredMedicineReader
 
-from ...domain.retrieval.primitives import DetectionSource, SearchKeyword
+from ...domain.retrieval.primitives import DetectionSource
 from ...domain.retrieval.repositories import EvidenceRepository
-from ...domain.retrieval.services import merge_evidence
-from ...domain.retrieval.value_objects import Evidence, SearchCriteria
+from ...domain.retrieval.services import (
+    build_keyword_search_criteria,
+    merge_evidence,
+)
+from ...domain.retrieval.value_objects import Evidence
 from .keyword_contracts import KeywordExtractor
 from .snapshot_contracts import RetrievalSnapshotProvider
 
@@ -51,17 +53,9 @@ async def search_evidence_by_keywords(
     if not targets:
         return ()
 
-    # スペース区切りの入力語を基本キーワードとする
-    raw_terms = [t.strip() for t in re.split(r"[\s　]+", query) if t.strip()]
-    valid_keywords = [term for term in raw_terms if len(term) >= 2]
-
-    if not valid_keywords:
+    criteria = build_keyword_search_criteria(query)
+    if criteria is None:
         return ()
-
-    criteria = SearchCriteria(
-        source=DetectionSource.KEYWORD,
-        keywords=tuple(SearchKeyword(term) for term in valid_keywords),
-    )
 
     raw_evidence = await evidence_reader.search(criteria, targets)
     return merge_evidence([(raw_evidence, DetectionSource.KEYWORD)])

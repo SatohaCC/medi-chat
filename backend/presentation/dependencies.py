@@ -6,7 +6,10 @@ from typing import Any
 
 from starlette.requests import HTTPConnection
 
+from ..application.medicine.product_contracts import RegisteredMedicineReader
 from ..application.medicine.suggestions import MedicineSuggester
+from ..application.retrieval.snapshot_contracts import RetrievalSnapshotProvider
+from ..domain.retrieval.repositories import EvidenceRepository
 from .chat_service import AppChatService as ChatService
 
 
@@ -21,6 +24,23 @@ async def get_medicine_suggester(connection: HTTPConnection) -> MedicineSuggeste
     if runtime is not None:
         return await runtime.catalogue()
     return getattr(connection.app.state, "medicine_suggester", None)  # type: ignore[no-any-return]
+
+
+def get_generation_runtime(connection: HTTPConnection) -> RetrievalSnapshotProvider:
+    """世代スナップショット取得プロバイダーを取得する依存関係関数"""
+    return connection.app.state.generation_runtime  # type: ignore[no-any-return]
+
+
+def get_medicine_reader(
+    connection: HTTPConnection,
+) -> RegisteredMedicineReader | None:
+    """医薬品Readerを取得する依存関係関数"""
+    return getattr(connection.app.state, "medicine_reader", None)
+
+
+def get_evidence_reader(connection: HTTPConnection) -> EvidenceRepository | None:
+    """根拠Readerを取得する依存関係関数"""
+    return getattr(connection.app.state, "evidence_reader", None)
 
 
 def get_document_store(connection: HTTPConnection) -> Any:

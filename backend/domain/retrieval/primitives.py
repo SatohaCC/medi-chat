@@ -17,9 +17,36 @@ class DetectionSource(ValidatedStrEnum):
     KEYWORD = "keyword"
 
 
+class ProductIdentityReason(ValidatedStrEnum):
+    """質問内の医薬品名と選択されたYJコードの不整合・不足理由。"""
+
+    CONFLICT = "product_identity_conflict"
+    UNRESOLVED = "unresolved_counterpart"
+    PAIR_REQUIRED = "pair_yj_codes_required"
+
+
+@dataclass(frozen=True, slots=True)
+class QuestionProductName(BaseString):
+    """文法が認識した名前スロット。候補解決はapplicationが所有する。"""
+
+    def _normalize(self, value: object) -> str:
+        if not isinstance(value, str):
+            raise DomainValidationError("question product name requires str")
+        return value.strip()
+
+
 @dataclass(frozen=True, slots=True)
 class IntentName(BaseString):
     """判定された質問意図の名前。"""
+
+
+@dataclass(frozen=True, slots=True)
+class IntentKeywordText(DomainPrimitive[str]):
+    """意図判定に使う固定キーワード文字列。空文字・空白のみは拒否する。"""
+
+    def validate(self) -> None:
+        if not isinstance(self.value, str) or not self.value.strip():
+            raise DomainValidationError("intent keyword must be nonempty")
 
 
 @dataclass(frozen=True, slots=True)

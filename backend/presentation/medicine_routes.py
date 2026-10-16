@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
-from ..application.medicine.autocomplete import project_registered_product
+from ..application.medicine.autocomplete import read_autocomplete_catalog
 from ..application.medicine.suggestions import MedicineSuggester
-from .dependencies import get_medicine_suggester
+from ..application.retrieval.snapshot_contracts import RetrievalSnapshotProvider
+from .dependencies import get_generation_runtime, get_medicine_suggester
 from .medicine_models import MedicineMatch
 
 
@@ -61,20 +62,11 @@ class AutocompleteResponse(BaseModel):
 
 
 @router.get("/api/medicines/autocomplete", response_model=AutocompleteResponse)
-async def autocomplete(request: Request) -> AutocompleteResponse:
-    runtime = request.app.state.generation_runtime
-    async with runtime.acquire() as snapshot:
-        products = await snapshot.medicine_reader.read_medicines()
-        return AutocompleteResponse(
-            generation_id=snapshot.generation_id.value,
-            items=[
-                CompactMedicineResponse(**project_registered_product(product))
-                for product in sorted(
-                    products,
-                    key=lambda product: (
-                        product.yj_code.value if product.yj_code else ""
-                    ),
-                )
-                if product.yj_code
-            ],
-        )
+async def autocomplete(
+    runtime: Annotated[RetrievalSnapshotProvider, Depends(get_generation_runtime)],
+) -> AutocompleteResponse:
+    generation_id, items = await read_autocomplete_catalog(runtime)
+    return AutocompleteResponse(
+        generation_id=generation_id.value,
+        items=[CompactMedicineResponse(**item) for item in items],
+    )

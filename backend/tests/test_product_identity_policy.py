@@ -2,8 +2,8 @@
 
 import pytest
 from backend.domain.medicine.identifiers import YjCode
-from backend.domain.retrieval.product_identity import (
-    ProductIdentityReason,
+from backend.domain.retrieval.primitives import ProductIdentityReason
+from backend.domain.retrieval.services import (
     product_identity_reason,
     recognize_product_questions,
 )
@@ -145,7 +145,7 @@ def test_tc129_specific_brand_is_not_an_alternative():
 @pytest.mark.parametrize("names", [(), ("",), ("A", "B", "C"), ["A"]])
 def test_tc127_question_value_is_always_valid(names):
     from backend.domain.foundation.exceptions import DomainValidationError
-    from backend.domain.retrieval.product_identity import ProductQuestion
+    from backend.domain.retrieval.value_objects import ProductQuestion
 
     with pytest.raises(DomainValidationError):
         ProductQuestion(names)
