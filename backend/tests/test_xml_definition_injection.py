@@ -15,6 +15,9 @@ from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicin
 from backend.domain.retrieval.primitives import DetectionSource, SearchSectionCode
 from backend.domain.retrieval.value_objects import SearchCriteria
 from backend.infrastructure.package_insert_definitions import loader
+from backend.infrastructure.persistence.attachment_import_store import (
+    FileAttachmentImportStore,
+)
 from backend.infrastructure.persistence.generation_runtime import GenerationRuntime
 from backend.infrastructure.persistence.read_workers import ReadWorkers
 from backend.infrastructure.persistence.registration_publisher import (
@@ -23,9 +26,6 @@ from backend.infrastructure.persistence.registration_publisher import (
 from backend.infrastructure.pmda_xml.artifact_mapping import PmdaArtifactEncoder
 from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
 from backend.infrastructure.pmda_xml.transform import transform
-from backend.infrastructure.sources.attachment_import_store import (
-    FileAttachmentImportStore,
-)
 from backend.tests.attachment_import_fixtures import xml_source
 from backend.tests.test_alembic_migrations import _migrate_database
 

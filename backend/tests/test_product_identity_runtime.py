@@ -274,7 +274,7 @@ async def test_tc135_identity_and_materialize_stay_old_across_os_publish(
             path = tmp_path / f"replacement-{name}.xml"
             path.write_bytes(value)
             paths.append(path)
-        script = "from pathlib import Path;import sys;from backend.infrastructure.persistence.registration_publisher import SqliteRegistrationPublisher;from backend.infrastructure.sources.attachment_import_store import FileAttachmentImportStore;from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder;p=SqliteRegistrationPublisher(Path(sys.argv[1]),FileAttachmentImportStore(Path(sys.argv[2])));[(p.publish(PmdaXmlDecoder().decode(v:=Path(f).read_bytes()),v)) for f in sys.argv[3:]]"
+        script = "from pathlib import Path;import sys;from backend.infrastructure.persistence.registration_publisher import SqliteRegistrationPublisher;from backend.infrastructure.persistence.attachment_import_store import FileAttachmentImportStore;from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder;p=SqliteRegistrationPublisher(Path(sys.argv[1]),FileAttachmentImportStore(Path(sys.argv[2])));[(p.publish(PmdaXmlDecoder().decode(v:=Path(f).read_bytes()),v)) for f in sys.argv[3:]]"
         result = await asyncio.to_thread(
             subprocess.run,
             [

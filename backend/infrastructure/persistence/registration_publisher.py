@@ -53,8 +53,8 @@ from ..pmda_xml.artifact_mapping import (
 from ..pmda_xml.decoder import PmdaXmlDecoder, SourceInformation
 from ..pmda_xml.definition_settings import PmdaXmlSettings
 from ..pmda_xml.registration_artifacts import encode_registered_units
-from ..sources.attachment_import_store import FileAttachmentImportStore
 from . import registration_schema as registration
+from .attachment_import_store import FileAttachmentImportStore
 from .index_writer import SqlAlchemyIndexWriter
 from .registration_attempt import RegistrationAttempt
 from .registration_lock import registration_lock
@@ -177,8 +177,7 @@ class SqliteRegistrationPublisher:
         initial: bool = False,
         check_cancel: Callable[[], None] = lambda: None,
     ) -> tuple[ImportResult, ...]:
-        from ..composition.index_verifier import verify_schema_readiness
-        from .sqlite_recovery import recover_sqlite_journal
+        from .sqlite_recovery import recover_sqlite_journal, verify_schema_readiness
 
         recover_sqlite_journal(self.index_path)
         verify_schema_readiness(self.index_path)
@@ -860,7 +859,7 @@ class SqliteRegistrationPublisher:
             self._dispose_engine(engine)
 
     def recover(self) -> None:
-        from ..sources.registration_source import read_registered_snapshot
+        from .registration_reader import read_registered_snapshot
         from .sqlite_recovery import recover_sqlite_journal
 
         engine = self._engine()

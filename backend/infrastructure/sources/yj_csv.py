@@ -4,7 +4,7 @@ import csv
 import unicodedata
 from pathlib import Path
 
-from ...application.medicine.autocomplete import katakana_to_hiragana
+from ...domain.shared.services import katakana_to_hiragana
 
 CATEGORY_MAP: dict[str, str] = {
     "1": "内用",

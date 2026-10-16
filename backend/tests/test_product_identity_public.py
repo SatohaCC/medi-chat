@@ -26,11 +26,11 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture(scope="module")
 def public_copy(tmp_path_factory):
+    from backend.infrastructure.persistence.attachment_import_store import (
+        FileAttachmentImportStore,
+    )
     from backend.infrastructure.persistence.registration_publisher import (
         SqliteRegistrationPublisher,
-    )
-    from backend.infrastructure.sources.attachment_import_store import (
-        FileAttachmentImportStore,
     )
     from backend.tests.test_alembic_migrations import _migrate_database
 

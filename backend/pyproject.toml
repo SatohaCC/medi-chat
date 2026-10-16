@@ -36,13 +36,21 @@ root_package = "backend"
 [[tool.importlinter.contracts]]
 name = "Domain does not depend on outer layers"
 type = "forbidden"
-source_modules = ["backend.domain"]
+source_modules = [
+    "backend.domain",
+    "backend.domain.**",
+]
 forbidden_modules = [
     "backend.application",
+    "backend.application.**",
     "backend.infrastructure",
+    "backend.infrastructure.**",
     "backend.presentation",
+    "backend.presentation.**",
     "backend.config",
+    "backend.config.**",
     "backend.migrations",
+    "backend.migrations.**",
     "backend.main",
 ]
 as_packages = false
@@ -50,12 +58,19 @@ as_packages = false
 [[tool.importlinter.contracts]]
 name = "Application does not depend on outer layers"
 type = "forbidden"
-source_modules = ["backend.application"]
+source_modules = [
+    "backend.application",
+    "backend.application.**",
+]
 forbidden_modules = [
     "backend.infrastructure",
+    "backend.infrastructure.**",
     "backend.presentation",
+    "backend.presentation.**",
     "backend.config",
+    "backend.config.**",
     "backend.migrations",
+    "backend.migrations.**",
     "backend.main",
 ]
 as_packages = false
@@ -63,10 +78,15 @@ as_packages = false
 [[tool.importlinter.contracts]]
 name = "Presentation does not depend on infrastructure"
 type = "forbidden"
-source_modules = ["backend.presentation"]
+source_modules = [
+    "backend.presentation",
+    "backend.presentation.**",
+]
 forbidden_modules = [
     "backend.infrastructure",
+    "backend.infrastructure.**",
     "backend.migrations",
+    "backend.migrations.**",
     "backend.main",
 ]
 as_packages = false
@@ -74,23 +94,39 @@ as_packages = false
 [[tool.importlinter.contracts]]
 name = "Infrastructure does not depend on presentation"
 type = "forbidden"
-source_modules = ["backend.infrastructure"]
+source_modules = [
+    "backend.infrastructure",
+    "backend.infrastructure.**",
+]
 forbidden_modules = [
     "backend.presentation",
+    "backend.presentation.**",
     "backend.main",
 ]
 as_packages = false
+ignore_imports = [
+    "backend.infrastructure.composition.configured_probe -> backend.main",
+]
+unmatched_ignore_imports_alerting = "none"
 
 [[tool.importlinter.contracts]]
 name = "Config does not depend on layers"
 type = "forbidden"
-source_modules = ["backend.config"]
+source_modules = [
+    "backend.config",
+    "backend.config.**",
+]
 forbidden_modules = [
     "backend.domain",
+    "backend.domain.**",
     "backend.application",
+    "backend.application.**",
     "backend.infrastructure",
+    "backend.infrastructure.**",
     "backend.presentation",
+    "backend.presentation.**",
     "backend.migrations",
+    "backend.migrations.**",
     "backend.main",
 ]
 as_packages = false
@@ -98,7 +134,10 @@ as_packages = false
 [[tool.importlinter.contracts]]
 name = "Presentation does not directly depend on domain entities or services"
 type = "forbidden"
-source_modules = ["backend.presentation"]
+source_modules = [
+    "backend.presentation",
+    "backend.presentation.**",
+]
 forbidden_modules = [
     "backend.domain.*.entities",
     "backend.domain.*.services",
@@ -107,10 +146,84 @@ as_packages = false
 allow_indirect_imports = true
 
 [[tool.importlinter.contracts]]
-name = "Retrieval does not depend on chat"
+name = "Presentation routes and dependencies do not depend on domain models or repositories"
 type = "forbidden"
-source_modules = ["backend.application.retrieval"]
+source_modules = [
+    "backend.presentation",
+    "backend.presentation.**",
+]
+forbidden_modules = [
+    "backend.domain",
+    "backend.domain.**",
+]
+as_packages = false
+allow_indirect_imports = true
+ignore_imports = [
+    "backend.presentation.attachment_import_routes -> backend.domain.foundation.exceptions",
+    "backend.presentation.chat_dto_mapper -> backend.domain.*.*",
+    "backend.presentation.chat_service -> backend.domain.*.*",
+    "backend.presentation.evidence_models -> backend.domain.*.*",
+]
+unmatched_ignore_imports_alerting = "none"
+
+[[tool.importlinter.contracts]]
+name = "Non-chat application contexts do not depend on chat"
+type = "forbidden"
+source_modules = ["backend.application.*"]
 forbidden_modules = ["backend.application.chat"]
+
+[[tool.importlinter.contracts]]
+name = "Medicine catalogue does not depend on retrieval use cases"
+type = "forbidden"
+source_modules = ["backend.application.medicine"]
+forbidden_modules = ["backend.application.*"]
+
+[[tool.importlinter.contracts]]
+name = "Application contexts follow directed pipeline boundaries"
+type = "independence"
+modules = ["backend.application.*"]
+ignore_imports = [
+    "backend.application.chat.** -> backend.application.retrieval.**",
+    "backend.application.chat.** -> backend.application.medicine.**",
+    "backend.application.retrieval.** -> backend.application.medicine.**",
+    "backend.application.attachment_import.** -> backend.application.indexing.**",
+    "backend.application.indexing.** -> backend.application.medicine.**",
+]
+unmatched_ignore_imports_alerting = "none"
+
+[[tool.importlinter.contracts]]
+name = "Persistence does not depend on input sources"
+type = "forbidden"
+source_modules = ["backend.infrastructure.persistence"]
+forbidden_modules = ["backend.infrastructure.sources"]
+
+[[tool.importlinter.contracts]]
+name = "Infrastructure adapters do not depend on composition or CLI"
+type = "forbidden"
+source_modules = ["backend.infrastructure.*"]
+forbidden_modules = [
+    "backend.infrastructure.composition",
+    "backend.infrastructure.cli",
+]
+ignore_imports = [
+    "backend.infrastructure.cli.** -> backend.infrastructure.composition.**",
+]
+unmatched_ignore_imports_alerting = "none"
+
+[[tool.importlinter.contracts]]
+name = "External technology adapters are independent"
+type = "independence"
+modules = [
+    "backend.infrastructure.llm",
+    "backend.infrastructure.intent",
+    "backend.infrastructure.morphology",
+    "backend.infrastructure.pmda_xml",
+]
+ignore_imports = [
+    "backend.infrastructure.** -> backend.infrastructure.package_insert_definitions.**",
+    "backend.infrastructure.package_insert_definitions.loader -> backend.infrastructure.*.definition_settings",
+]
+unmatched_ignore_imports_alerting = "none"
 
 [[tool.importlinter.contracts]]
 name = "Domain contexts are independent"

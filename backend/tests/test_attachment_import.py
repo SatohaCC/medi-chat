@@ -11,11 +11,11 @@ from backend.application.attachment_import.import_document import (
 )
 from backend.application.attachment_import.import_errors import ImportNotFound
 from backend.domain.attachment.identifiers import DocumentId
-from backend.infrastructure.pmda_xml.artifact_mapping import PmdaArtifactEncoder
-from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
-from backend.infrastructure.sources.attachment_import_store import (
+from backend.infrastructure.persistence.attachment_import_store import (
     FileAttachmentImportStore,
 )
+from backend.infrastructure.pmda_xml.artifact_mapping import PmdaArtifactEncoder
+from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
 from backend.tests.attachment_import_fixtures import encoded, xml_source
 from backend.tests.test_attachment_import_store import hashes
 

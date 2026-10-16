@@ -12,10 +12,10 @@ from backend.application.attachment_import.import_errors import (
     ImportNotFound,
     ImportStorageError,
 )
-from backend.infrastructure.pmda_xml.artifact_mapping import MAX_ARTIFACT_BYTES
-from backend.infrastructure.sources.attachment_import_store import (
+from backend.infrastructure.persistence.attachment_import_store import (
     FileAttachmentImportStore,
 )
+from backend.infrastructure.pmda_xml.artifact_mapping import MAX_ARTIFACT_BYTES
 from backend.tests.attachment_import_fixtures import encoded, xml_source
 
 

@@ -4,14 +4,14 @@ import json
 import shutil
 from pathlib import Path
 
+from backend.infrastructure.persistence.attachment_import_store import (
+    FileAttachmentImportStore,
+)
 from backend.infrastructure.persistence.registration_publisher import (
     RegistrationInput,
     SqliteRegistrationPublisher,
 )
 from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
-from backend.infrastructure.sources.attachment_import_store import (
-    FileAttachmentImportStore,
-)
 from backend.tests.attachment_import_fixtures import xml_source
 from backend.tests.test_registration_initialization import command
 

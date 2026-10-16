@@ -1,3 +1,5 @@
+"""公開済みSQLite世代と所有artifactの整合性を検証して読み取る。"""
+
 import hashlib
 import json
 import sqlite3
@@ -17,8 +19,8 @@ from ...domain.attachment.value_objects import AttachmentProductRevision
 from ...domain.medicine.identifiers import YjCode
 from ..index_payloads import build_index_unit
 from ..json_payloads import parse_json_object
-from ..persistence.owned_sqlite import OwnedSqliteConnection
-from ..persistence.revision_selection import validate_active_revisions
+from .owned_sqlite import OwnedSqliteConnection
+from .revision_selection import validate_active_revisions
 
 
 def _checked_file(file: dict[str, str]) -> bytes:

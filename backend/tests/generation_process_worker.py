@@ -5,13 +5,13 @@ import asyncio
 import os
 from pathlib import Path
 
+from backend.infrastructure.persistence.attachment_import_store import (
+    FileAttachmentImportStore,
+)
 from backend.infrastructure.persistence.generation_runtime import GenerationRuntime
 from backend.infrastructure.persistence.read_workers import ReadWorkers
 from backend.infrastructure.persistence.registration_publisher import (
     SqliteRegistrationPublisher,
-)
-from backend.infrastructure.sources.attachment_import_store import (
-    FileAttachmentImportStore,
 )
 
 

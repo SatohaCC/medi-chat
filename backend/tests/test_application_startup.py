@@ -14,8 +14,10 @@ import pytest
 from backend.config.database_settings import resolve_database_settings
 from backend.infrastructure.cli.configured_e2e_gate import run_gate
 from backend.infrastructure.persistence.index_writer import SqlAlchemyIndexWriter
+from backend.infrastructure.persistence.registration_reader import (
+    read_registered_snapshot,
+)
 from backend.infrastructure.sources.file_index_source import FileIndexSourceReader
-from backend.infrastructure.sources.registration_source import read_registered_snapshot
 from backend.main import create_app
 from backend.project_paths import PROJECT_ROOT
 from backend.tests.registration_runtime_fixtures import (

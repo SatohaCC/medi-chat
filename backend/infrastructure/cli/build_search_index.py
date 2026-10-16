@@ -11,13 +11,13 @@ from sqlalchemy.engine import URL
 from ...config.database_settings import resolve_database_settings
 from ...config.import_settings import resolve_import_directory
 from ..composition.index_verifier import verify_schema_readiness
+from ..persistence.attachment_import_store import FileAttachmentImportStore
 from ..persistence.index_writer import SqlAlchemyIndexWriter
 from ..persistence.registration_lock import registration_lock
 from ..persistence.registration_publisher import SqliteRegistrationPublisher
+from ..persistence.registration_reader import read_registered_snapshot
 from ..persistence.sqlite_engine import create_sqlite_engine
 from ..persistence.sqlite_recovery import recover_sqlite_journal
-from ..sources.attachment_import_store import FileAttachmentImportStore
-from ..sources.registration_source import read_registered_snapshot
 
 
 def main() -> int:

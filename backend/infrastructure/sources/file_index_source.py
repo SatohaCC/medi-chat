@@ -23,7 +23,7 @@ class FileIndexSourceReader:
 
     def read_snapshot(self) -> SourceSnapshot:
         if self._index_path is not None:
-            from .registration_source import read_registered_snapshot
+            from ..persistence.registration_reader import read_registered_snapshot
 
             snapshot = read_registered_snapshot(self._index_path)
             if snapshot is not None:

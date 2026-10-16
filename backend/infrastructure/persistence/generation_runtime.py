@@ -34,12 +34,12 @@ from ..package_insert_definitions.loader import get_package_insert_definitions
 from ..pmda_xml.decoder import PmdaXmlDecoder
 from ..pmda_xml.definition_settings import PmdaXmlSettings
 from ..pmda_xml.registration_artifacts import encode_registered_units
-from ..sources.registration_source import read_registered_snapshot
 from . import registration_schema as schema
 from .owned_sqlite import OwnedSqliteConnection
 from .process_identity import process_identity
 from .read_workers import ReadWorkers
 from .registration_publisher import SqliteRegistrationPublisher
+from .registration_reader import read_registered_snapshot
 
 
 @dataclass(frozen=True, slots=True)

@@ -9,8 +9,10 @@ import pytest
 from backend.application.indexing.index_errors import IndexSourceError
 from backend.infrastructure.composition.index_verifier import verify_index_readiness
 from backend.infrastructure.persistence.index_writer import SqlAlchemyIndexWriter
+from backend.infrastructure.persistence.registration_reader import (
+    read_registered_snapshot,
+)
 from backend.infrastructure.sources.file_index_source import FileIndexSourceReader
-from backend.infrastructure.sources.registration_source import read_registered_snapshot
 from backend.tests.registration_runtime_fixtures import (
     register_synthetic_prepared_index,
 )

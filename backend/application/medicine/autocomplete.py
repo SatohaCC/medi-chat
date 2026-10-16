@@ -3,9 +3,9 @@
 import unicodedata
 
 from backend.application.medicine.product_models import RegisteredMedicine
-from backend.application.retrieval.snapshot_contracts import RetrievalSnapshotProvider
 
 from ...domain.retrieval.identifiers import SearchGenerationId
+from .product_contracts import MedicineSnapshotProvider
 
 
 def project_registered_product(product: RegisteredMedicine) -> dict[str, str]:
@@ -24,15 +24,8 @@ def project_registered_product(product: RegisteredMedicine) -> dict[str, str]:
     }
 
 
-def katakana_to_hiragana(text: str) -> str:
-    """Convert Katakana characters to Hiragana."""
-    return "".join(
-        chr(ord(c) - 0x60) if 0x30A1 <= ord(c) <= 0x30F6 else c for c in text
-    )
-
-
 async def read_autocomplete_catalog(
-    runtime: RetrievalSnapshotProvider,
+    runtime: MedicineSnapshotProvider,
 ) -> tuple[SearchGenerationId, list[dict[str, str]]]:
     """現在の公開世代スナップショットからオートコンプリート候補一覧を取得する。"""
     async with runtime.acquire() as snapshot:

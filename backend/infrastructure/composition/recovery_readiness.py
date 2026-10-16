@@ -9,7 +9,7 @@ from ...config.import_settings import resolve_import_directory
 from ..persistence.owned_sqlite import OwnedSqliteConnection
 from ..persistence.read_workers import ReadWorkers
 from ..persistence.registration_lock import registration_lock
-from ..sources.registration_source import read_registered_snapshot
+from ..persistence.registration_reader import read_registered_snapshot
 
 
 def verify_no_recovery_work(index_path: Path) -> None:
@@ -62,7 +62,7 @@ def verify_no_recovery_work(index_path: Path) -> None:
                     raise RuntimeError(
                         "configured gate requires explicit recovery; unpublished attempt exists"
                     )
-            except (OSError, ValueError, TypeError, KeyError):
+            except OSError, ValueError, TypeError, KeyError:
                 raise RuntimeError(
                     "configured gate requires explicit recovery; ownership journal is unreadable"
                 ) from None

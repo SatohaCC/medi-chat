@@ -79,14 +79,14 @@ def test_tc119_failed_copy_restores_every_table_from_consistent_backup(
     tmp_path, failure_stage, monkeypatch
 ):
     from backend.application.attachment_import.import_errors import ImportStorageError
+    from backend.infrastructure.persistence.attachment_import_store import (
+        FileAttachmentImportStore,
+    )
     from backend.infrastructure.persistence.registration_publisher import (
         RegistrationInput,
         SqliteRegistrationPublisher,
     )
     from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
-    from backend.infrastructure.sources.attachment_import_store import (
-        FileAttachmentImportStore,
-    )
 
     index = tmp_path / "copy.sqlite3"
     original = ROOT / "data/pmda/structured/.chat-search.sqlite3"
@@ -280,11 +280,11 @@ def test_tc112_initial_conflict_is_rejected_before_files_or_database_change(tmp_
 
 
 def test_tc114_existing_build_cli_never_rescans_superseded_or_ignored_sources(tmp_path):
+    from backend.infrastructure.persistence.attachment_import_store import (
+        FileAttachmentImportStore,
+    )
     from backend.infrastructure.persistence.registration_publisher import (
         SqliteRegistrationPublisher,
-    )
-    from backend.infrastructure.sources.attachment_import_store import (
-        FileAttachmentImportStore,
     )
     from backend.tests.test_registration_publisher import publish
 
@@ -327,11 +327,11 @@ def test_tc114_existing_build_cli_never_rescans_superseded_or_ignored_sources(tm
 def test_tc114_registration_conversion_cli_receipt_precedes_old_artifact_regeneration(
     tmp_path,
 ):
+    from backend.infrastructure.persistence.attachment_import_store import (
+        FileAttachmentImportStore,
+    )
     from backend.infrastructure.persistence.registration_publisher import (
         SqliteRegistrationPublisher,
-    )
-    from backend.infrastructure.sources.attachment_import_store import (
-        FileAttachmentImportStore,
     )
     from backend.tests.test_registration_publisher import publish
 
@@ -377,11 +377,11 @@ def test_tc114_registration_conversion_cli_receipt_precedes_old_artifact_regener
 
 
 def test_tc114_pure_conversion_cannot_overwrite_managed_artifacts(tmp_path):
+    from backend.infrastructure.persistence.attachment_import_store import (
+        FileAttachmentImportStore,
+    )
     from backend.infrastructure.persistence.registration_publisher import (
         SqliteRegistrationPublisher,
-    )
-    from backend.infrastructure.sources.attachment_import_store import (
-        FileAttachmentImportStore,
     )
     from backend.tests.test_registration_publisher import first_document_id, publish
 

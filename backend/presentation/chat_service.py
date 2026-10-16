@@ -18,6 +18,7 @@ from ..application.chat.stream_closing import closing_stream
 from ..application.chat.stream_reply import stream_reply as app_stream_reply
 from ..application.retrieval.intent_contracts import IntentClassifier
 from ..application.retrieval.keyword_contracts import KeywordExtractor
+from ..application.retrieval.search_keywords import search_evidence_by_keywords
 from ..application.retrieval.snapshot_contracts import RetrievalSnapshotProvider
 from ..config.generation_settings import GenerationDefaults, read_generation_defaults
 from ..domain.retrieval.repositories import EvidenceRepository
@@ -26,6 +27,7 @@ from .chat_dto_mapper import (
     chat_message_from_api,
     chat_response_from_api,
     chat_response_to_api,
+    evidence_to_api,
 )
 from .chat_models import (
     ChatMessage as ApiChatMessage,
@@ -65,6 +67,21 @@ class AppChatService:
     @property
     def is_jev_available(self) -> bool:
         return getattr(self.intent_classifier, "is_available", True)
+
+    async def search_keywords(
+        self,
+        query: str,
+        product_yj_codes: Sequence[str] = (),
+    ) -> list[ChatSource]:
+        results = await search_evidence_by_keywords(
+            query,
+            product_yj_codes,
+            medicine_reader=self.medicine_reader,
+            evidence_reader=self.evidence_reader,
+            keyword_extractor=self.keyword_extractor,
+            snapshot_provider=self.snapshot_provider,
+        )
+        return [evidence_to_api(item) for item in results]
 
     async def prepare_reply(
         self,

@@ -9,8 +9,10 @@ from backend.application.attachment_import.import_errors import (
 )
 from backend.application.indexing.index_errors import IndexSourceError
 from backend.infrastructure.persistence.registration_publisher import RegistrationInput
+from backend.infrastructure.persistence.registration_reader import (
+    read_registered_snapshot,
+)
 from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
-from backend.infrastructure.sources.registration_source import read_registered_snapshot
 from backend.tests.test_registration_http import client as client
 from backend.tests.test_registration_http import post
 from backend.tests.test_registration_publisher import publish, rows, source

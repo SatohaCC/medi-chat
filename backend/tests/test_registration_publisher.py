@@ -14,15 +14,17 @@ from backend.application.attachment_import.import_errors import (
     ImportStorageError,
 )
 from backend.application.indexing.index_errors import IndexSourceError
+from backend.infrastructure.persistence.attachment_import_store import (
+    FileAttachmentImportStore,
+)
 from backend.infrastructure.persistence.registration_publisher import (
     RegistrationInput,
     SqliteRegistrationPublisher,
 )
-from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
-from backend.infrastructure.sources.attachment_import_store import (
-    FileAttachmentImportStore,
+from backend.infrastructure.persistence.registration_reader import (
+    read_registered_snapshot,
 )
-from backend.infrastructure.sources.registration_source import read_registered_snapshot
+from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
 from backend.tests.test_active_attachment_projection import mixed_source
 from backend.tests.test_alembic_migrations import _migrate_database
 

@@ -1,7 +1,7 @@
 import tempfile
 from pathlib import Path
 
-from backend.application.medicine.autocomplete import katakana_to_hiragana
+from backend.domain.shared.services import katakana_to_hiragana
 from backend.infrastructure.sources.yj_csv import parse_yj_csv
 
 
