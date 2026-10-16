@@ -37,7 +37,74 @@ root_package = "backend"
 name = "Domain does not depend on outer layers"
 type = "forbidden"
 source_modules = ["backend.domain"]
-forbidden_modules = ["backend.application", "backend.infrastructure", "backend.presentation"]
+forbidden_modules = [
+    "backend.application",
+    "backend.infrastructure",
+    "backend.presentation",
+    "backend.config",
+    "backend.migrations",
+    "backend.main",
+]
+as_packages = false
+
+[[tool.importlinter.contracts]]
+name = "Application does not depend on outer layers"
+type = "forbidden"
+source_modules = ["backend.application"]
+forbidden_modules = [
+    "backend.infrastructure",
+    "backend.presentation",
+    "backend.config",
+    "backend.migrations",
+    "backend.main",
+]
+as_packages = false
+
+[[tool.importlinter.contracts]]
+name = "Presentation does not depend on infrastructure"
+type = "forbidden"
+source_modules = ["backend.presentation"]
+forbidden_modules = [
+    "backend.infrastructure",
+    "backend.migrations",
+    "backend.main",
+]
+as_packages = false
+
+[[tool.importlinter.contracts]]
+name = "Infrastructure does not depend on presentation"
+type = "forbidden"
+source_modules = ["backend.infrastructure"]
+forbidden_modules = [
+    "backend.presentation",
+    "backend.main",
+]
+as_packages = false
+
+[[tool.importlinter.contracts]]
+name = "Config does not depend on layers"
+type = "forbidden"
+source_modules = ["backend.config"]
+forbidden_modules = [
+    "backend.domain",
+    "backend.application",
+    "backend.infrastructure",
+    "backend.presentation",
+    "backend.migrations",
+    "backend.main",
+]
+as_packages = false
+
+[[tool.importlinter.contracts]]
+name = "Presentation does not directly depend on domain entities or services"
+type = "forbidden"
+source_modules = ["backend.presentation"]
+forbidden_modules = [
+    "backend.domain.*.entities",
+    "backend.domain.*.services",
+]
+as_packages = false
+allow_indirect_imports = true
 
 [[tool.importlinter.contracts]]
 name = "Retrieval does not depend on chat"
@@ -90,24 +157,85 @@ ignore_imports = [
 ]
 unmatched_ignore_imports_alerting = "none"
 
+[[tool.importlinter.contracts]]
+name = "Domain primitives do not depend on value objects, entities, repositories, or services"
+type = "forbidden"
+source_modules = ["backend.domain.*.primitives", "backend.domain.*.exceptions"]
+forbidden_modules = [
+    "backend.domain.*.value_objects",
+    "backend.domain.*.entities",
+    "backend.domain.*.repositories",
+    "backend.domain.*.services",
+]
+as_packages = false
+
+[[tool.importlinter.contracts]]
+name = "Domain value objects do not depend on entities, repositories, or services"
+type = "forbidden"
+source_modules = ["backend.domain.*.value_objects"]
+forbidden_modules = [
+    "backend.domain.*.entities",
+    "backend.domain.*.repositories",
+    "backend.domain.*.services",
+]
+as_packages = false
+
+[[tool.importlinter.contracts]]
+name = "Domain entities do not depend on repositories or services"
+type = "forbidden"
+source_modules = ["backend.domain.*.entities"]
+forbidden_modules = [
+    "backend.domain.*.repositories",
+    "backend.domain.*.services",
+]
+as_packages = false
+ignore_imports = [
+    "backend.domain.*.entities -> backend.domain.shared.services",
+]
+unmatched_ignore_imports_alerting = "none"
+
+[[tool.importlinter.contracts]]
+name = "Domain repositories do not depend on services"
+type = "forbidden"
+source_modules = ["backend.domain.*.repositories"]
+forbidden_modules = [
+    "backend.domain.*.services",
+]
+as_packages = false
+ignore_imports = [
+    "backend.domain.*.entities -> backend.domain.shared.services",
+    "backend.domain.*.repositories -> backend.domain.shared.services",
+]
+unmatched_ignore_imports_alerting = "none"
+
 [tool.ruff]
 target-version = "py314"
 line-length = 88
 
 [tool.ruff.lint]
 select = [
-    "E",   # pycodestyle errors
-    "W",   # pycodestyle warnings
-    "F",   # pyflakes
-    "I",   # isort
-    "B",   # flake8-bugbear
-    "UP",  # pyupgrade
-    "C4",  # flake8-comprehensions
-    "SIM", # flake8-simplify
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "UP",     # pyupgrade
+    "C4",     # flake8-comprehensions
+    "SIM",    # flake8-simplify
+    "TID251", # flake8-tidy-imports banned-api
+    "RUF012", # mutable class default
+    "RUF100", # unused noqa
 ]
 ignore = [
     "E501", # Line length (handled by ruff format)
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["TID251"]
+"backend/tests/**" = ["TID251"]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api."dataclasses.asdict"]
+msg = "公開JSONや辞書への変換に dataclasses.asdict() は使用せず、明示的なマッパーまたは .value 変換を使用してください。"
 
 [tool.ruff.format]
 quote-style = "double"
