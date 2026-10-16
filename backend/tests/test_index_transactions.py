@@ -10,7 +10,8 @@ from pathlib import Path
 
 import pytest
 from backend.application.indexing.index_models import IndexBuildResult
-from backend.domain.attachment.value_objects import AttachmentProductMatch
+from backend.application.medicine.product_models import ResolvedMedicine
+from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.domain.retrieval.primitives import (
     DetectionSource,
     SearchKeyword,
@@ -36,10 +37,12 @@ class InjectedBuildFailure(RuntimeError):
 def _search_results(engine: Engine) -> tuple[tuple[Evidence, ...], ...]:
     reader = SqlAlchemyEvidenceReader(engine)
     medicines = (
-        AttachmentProductMatch(
-            generic_name="テスト成分",
-            brand_names=("テスト薬",),
-            yj_codes=("1234567A0000",),
+        ResolvedMedicine(
+            medicine=DomainMedicineMatch(
+                generic_name="テスト成分",
+                brand_names=("テスト薬",),
+                yj_codes=("1234567A0000",),
+            ),
             document_ids=("test_001",),
         ),
     )

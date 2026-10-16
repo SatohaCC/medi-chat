@@ -9,8 +9,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from backend.application.indexing.medicine_catalog import AttachmentProductCatalog
-from backend.domain.attachment.entities import AttachmentProductRecord
+from backend.application.medicine.product_catalog import MedicineCatalog
+from backend.application.medicine.product_models import RegisteredMedicine
 from backend.infrastructure.persistence.index_reader import SqlAlchemyIndexReader
 from backend.infrastructure.persistence.medicine_reader import SqlAlchemyMedicineReader
 from backend.infrastructure.persistence.sqlite_engine import create_sqlite_engine
@@ -101,10 +101,10 @@ class PackageInsertStoreTests(unittest.TestCase):
             medicines = asyncio.run(SqlAlchemyMedicineReader(engine).read_medicines())
             original = FileIndexSourceReader(STRUCTURED_DIR).read_snapshot().medicines
             self.assertTrue(
-                all(type(medicine) is AttachmentProductRecord for medicine in medicines)
+                all(type(medicine) is RegisteredMedicine for medicine in medicines)
             )
             self.assertEqual(sorted(medicines, key=repr), sorted(original, key=repr))
-            catalog = AttachmentProductCatalog(medicines)
+            catalog = MedicineCatalog(medicines)
             sample_yj = next(
                 medicine.yj_code.value for medicine in medicines if medicine.yj_code
             )

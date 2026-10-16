@@ -1,6 +1,6 @@
 import unicodedata
 
-from ...domain.attachment.entities import AttachmentProductRecord
+from backend.application.medicine.product_models import RegisteredMedicine
 
 # Map MHLW administration category code to human-readable label
 CATEGORY_MAP: dict[str, str] = {
@@ -13,7 +13,7 @@ CATEGORY_MAP: dict[str, str] = {
 }
 
 
-def project_registered_product(product: AttachmentProductRecord) -> dict[str, str]:
+def project_registered_product(product: RegisteredMedicine) -> dict[str, str]:
     """掲載製品だけのcompact投影。PMDAから不明な投与分類は既存の他。"""
     hiragana = unicodedata.normalize("NFKC", product.hiragana_name).lower()
     kana = "".join(

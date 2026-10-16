@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 from backend.application.chat.answer_question import answer_question
 from backend.application.chat.chat_models import ChatMessage
-from backend.application.indexing.medicine_catalog import AttachmentProductCatalog
+from backend.application.medicine.product_catalog import MedicineCatalog
 from backend.application.retrieval.intent_contracts import IntentResult
 from backend.application.retrieval.retrieve_evidence import retrieve_evidence
 from backend.domain.attachment.identifiers import DocumentId
@@ -429,9 +429,7 @@ async def test_tc121_complete_six_tables_and_original_reference_destinations(
     runtime = GenerationRuntime(registered_publisher, workers=workers)
     try:
         async with runtime.acquire() as snapshot:
-            catalog = AttachmentProductCatalog(
-                await snapshot.medicine_reader.read_medicines()
-            )
+            catalog = MedicineCatalog(await snapshot.medicine_reader.read_medicines())
             selected = tuple(
                 catalog.resolve_medicines("", [doc[2] for doc in DOCUMENTS])
             )

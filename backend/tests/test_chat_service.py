@@ -11,8 +11,9 @@ from unittest.mock import Mock, patch
 
 import pytest
 from backend.application.chat.llm_contracts import LLMProvider
+from backend.application.medicine.product_models import ResolvedMedicine
 from backend.application.retrieval.retrieve_evidence import _search_evidence
-from backend.domain.attachment.value_objects import AttachmentProductMatch
+from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.domain.retrieval.primitives import (
     DetectionSource,
     SearchKeyword,
@@ -258,10 +259,12 @@ def search_sources(
     )
     try:
         medicines = (
-            AttachmentProductMatch(
-                generic_name="テスト成分",
-                brand_names=("テスト薬",),
-                yj_codes=("1234567A0000",),
+            ResolvedMedicine(
+                medicine=DomainMedicineMatch(
+                    generic_name="テスト成分",
+                    brand_names=("テスト薬",),
+                    yj_codes=("1234567A0000",),
+                ),
                 document_ids=tuple(document_ids),
             ),
         )

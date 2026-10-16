@@ -2,7 +2,8 @@
 
 from dataclasses import dataclass
 
-from ...domain.attachment.entities import AttachmentProductRecord
+from backend.application.medicine.product_models import RegisteredMedicine
+
 from ...domain.json_types import JsonValue
 
 
@@ -26,7 +27,7 @@ class IndexUnit:
 @dataclass(frozen=True)
 class SourceSnapshot:
     documents: tuple[IndexDocument, ...]
-    medicines: tuple[AttachmentProductRecord, ...]
+    medicines: tuple[RegisteredMedicine, ...]
     units: tuple[IndexUnit, ...]
     fingerprint: str
 

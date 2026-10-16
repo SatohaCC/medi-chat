@@ -16,7 +16,7 @@ def test_tc097_private_journal_io_failure_has_artifact_phase_and_no_publication(
 
     monkeypatch.setattr(RegistrationAttempt, "__init__", fail)
     with pytest.raises(ImportStorageError) as caught:
-        publish(publisher, source("公開不可本文"))
+        publish(publisher, source("公開不可本文", revised_at="2026-11"))
     assert caught.value.phase == "artifact"
     assert snapshot(publisher) == before
 
@@ -30,7 +30,7 @@ def test_tc098_published_receipt_is_not_masked_by_journal_finalization_failure(
         raise OSError("controlled private journal finalization failure")
 
     monkeypatch.setattr(RegistrationAttempt, "finish", fail)
-    registered = publish(publisher, source("新公開本文"))
+    registered = publish(publisher, source("新公開本文", revised_at="2026-11"))
     assert registered.status == "registered"
     assert (
         publisher.read_result(

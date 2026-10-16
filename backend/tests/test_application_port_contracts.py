@@ -22,27 +22,32 @@ from backend.application.indexing.index_models import (
     IndexUnit,
     SourceSnapshot,
 )
-from backend.application.indexing.medicine_catalog import AttachmentProductCatalog
+from backend.application.medicine.product_catalog import MedicineCatalog
+from backend.application.medicine.product_contracts import RegisteredMedicineReader
+from backend.application.medicine.product_models import (
+    RegisteredMedicine,
+    ResolvedMedicine,
+)
 from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
 from backend.application.retrieval.jev_detector import (
     JevDetectionResult,
     detect_jev_criteria,
 )
 from backend.application.retrieval.morphology_detector import detect_morphology_criteria
-from backend.domain.attachment.entities import AttachmentProductRecord
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.attachment.primitives import PmdaUrl
-from backend.domain.attachment.repositories import AttachmentProductRepository
 from backend.domain.attachment.value_objects import (
-    AttachmentProductMatch,
     AttachmentProductRevision,
+    MedicineDocumentReference,
 )
 from backend.domain.foundation.primitives.primitives import (
     BaseFiniteFloat,
     BaseString,
 )
 from backend.domain.json_types import JsonValue
+from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.domain.retrieval.identifiers import SearchUnitId
 from backend.domain.retrieval.primitives import (
     DetectionSource,
@@ -151,12 +156,14 @@ async def test_intent_classifier_contract(
     request = IntentRequest(
         question="警告は？",
         medicines=(
-            AttachmentProductMatch(
-                generic_name="テスト成分",
-                brand_names=("テスト錠",),
-                yj_codes=("1234567A0000",),
+            ResolvedMedicine(
+                medicine=DomainMedicineMatch(
+                    generic_name="テスト成分",
+                    brand_names=("テスト錠",),
+                    yj_codes=("1234567A0000",),
+                    matched_aliases=("テスト錠",),
+                ),
                 document_ids=("document-1",),
-                matched_aliases=("テスト錠",),
             ),
         ),
     )
@@ -337,7 +344,9 @@ def _assert_index_values(value: object) -> None:
         SourceSnapshot,
         IndexDocument,
         IndexUnit,
-        AttachmentProductRecord,
+        RegisteredMedicine,
+        MedicineProduct,
+        MedicineDocumentReference,
         IndexBuildResult,
     )
     if isinstance(value, Mapping) and type(value) is not dict:
@@ -449,15 +458,19 @@ def test_index_ports_accept_equivalent_snapshots(
     expected = SourceSnapshot(
         documents=(IndexDocument("test_001", document),),
         medicines=(
-            AttachmentProductRecord(
-                document_id=DocumentId("test_001"),
-                yj_code=YjCode("1234567A0000"),
-                brand_name="テスト薬",
-                generic_name="テスト成分",
-                english_name="",
-                hiragana_name="",
-                pmda_url=PmdaUrl("https://example.test/package-insert"),
-                revision=AttachmentProductRevision({}),
+            RegisteredMedicine(
+                medicine=MedicineProduct(
+                    yj_code=YjCode("1234567A0000"),
+                    brand_name="テスト薬",
+                    generic_name="テスト成分",
+                    english_name="",
+                    hiragana_name="",
+                ),
+                reference=MedicineDocumentReference(
+                    document_id=DocumentId("test_001"),
+                    pmda_url=PmdaUrl("https://example.test/package-insert"),
+                    revision=AttachmentProductRevision({}),
+                ),
             ),
         ),
         units=tuple(
@@ -545,10 +558,12 @@ def answer_preparation_case() -> AnswerPreparationCase:
         intent="adverse_events",
         retrieval_strategy="three_detectors",
         resolved_medicines=[
-            AttachmentProductMatch(
-                generic_name="テスト成分",
-                brand_names=("テスト薬",),
-                yj_codes=("1234567A0000",),
+            ResolvedMedicine(
+                medicine=DomainMedicineMatch(
+                    generic_name="テスト成分",
+                    brand_names=("テスト薬",),
+                    yj_codes=("1234567A0000",),
+                ),
                 document_ids=("test_001",),
             )
         ],
@@ -596,18 +611,18 @@ def answer_preparation_case() -> AnswerPreparationCase:
 
 
 class RecordingMedicineReader:
-    def __init__(self, medicines: tuple[AttachmentProductRecord, ...]) -> None:
+    def __init__(self, medicines: tuple[RegisteredMedicine, ...]) -> None:
         self.medicines = deepcopy(medicines)
         self.calls = 0
 
-    async def read_medicines(self) -> tuple[AttachmentProductRecord, ...]:
+    async def read_medicines(self) -> tuple[RegisteredMedicine, ...]:
         self.calls += 1
         return deepcopy(self.medicines)
 
 
 class RecordingEvidenceReader:
     def __init__(
-        self, sources: list[Evidence], medicines: list[AttachmentProductMatch]
+        self, sources: list[Evidence], medicines: list[ResolvedMedicine]
     ) -> None:
         self.sources = deepcopy(sources)
         self.medicines = deepcopy(medicines)
@@ -665,8 +680,11 @@ def _assert_answer_values(value: object) -> None:
     pure_types = (
         ChatMessage,
         ChatResponse,
-        AttachmentProductRecord,
-        AttachmentProductMatch,
+        RegisteredMedicine,
+        MedicineProduct,
+        MedicineDocumentReference,
+        ResolvedMedicine,
+        DomainMedicineMatch,
         Evidence,
         IntentRequest,
     )
@@ -731,7 +749,7 @@ async def test_answer_preparation_accepts_real_and_fake_readers(
     fake_evidence = RecordingEvidenceReader(
         case.expected_reply.sources, case.expected_reply.resolved_medicines
     )
-    medicine_reader: AttachmentProductRepository = (
+    medicine_reader: RegisteredMedicineReader = (
         SqlAlchemyMedicineReader(engine) if medicine_kind == "real" else fake_medicine
     )
     evidence_reader: EvidenceRepository = (
@@ -805,16 +823,16 @@ async def test_multiple_document_ids_are_global_and_collisions_roll_back(
     assert writer.replace(snapshot) == IndexBuildResult(2, 6)
     medicines = await SqlAlchemyMedicineReader(engine).read_medicines()
     matches = tuple(
-        AttachmentProductMatch(
-            generic_name=group.generic_name,
-            brand_names=tuple(group.brand_names),
-            yj_codes=tuple(group.yj_codes),
+        ResolvedMedicine(
+            medicine=DomainMedicineMatch(
+                generic_name=group.generic_name,
+                brand_names=tuple(group.brand_names),
+                yj_codes=tuple(group.yj_codes),
+                matched_aliases=tuple(group.matched_aliases),
+            ),
             document_ids=tuple(group.document_ids),
-            matched_aliases=tuple(group.matched_aliases),
         )
-        for group in AttachmentProductCatalog(medicines).resolve_medicines(
-            "", ["1234567A0000"]
-        )
+        for group in MedicineCatalog(medicines).resolve_medicines("", ["1234567A0000"])
     )
     hits = await SqlAlchemyEvidenceReader(engine).search(
         SearchCriteria(
@@ -908,7 +926,7 @@ async def test_clarification_does_not_create_or_call_provider(
         return await real_search(criteria, medicines)
 
     monkeypatch.setattr(real_evidence, "search", record_real_search)
-    medicine_reader: AttachmentProductRepository = (
+    medicine_reader: RegisteredMedicineReader = (
         SqlAlchemyMedicineReader(engine) if medicine_kind == "real" else fake_medicine
     )
     evidence_reader: EvidenceRepository = (

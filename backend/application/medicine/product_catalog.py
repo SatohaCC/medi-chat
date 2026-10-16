@@ -2,132 +2,26 @@
 
 from __future__ import annotations
 
-import re
-import unicodedata
 from collections import deque
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 
-from ...domain.attachment.entities import AttachmentProductRecord
-from ...domain.attachment.exceptions import AttachmentDomainError
+from backend.application.medicine.product_models import (
+    RegisteredMedicine,
+    ResolvedMedicine,
+)
+from backend.domain.medicine.primitives import ProductGroupId
+from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
+
 from ...domain.attachment.identifiers import DocumentId
-from ...domain.attachment.primitives import ProductGroupId
-from ...domain.attachment.value_objects import AttachmentProductMatch
+from ...domain.medicine.exceptions import MedicineDomainError
 from ...domain.medicine.identifiers import YjCode
+from ...domain.medicine.services import (
+    best_alias_priorities,
+    collect_aliases,
+    get_weighted_aliases,
+)
 from ...domain.shared.services import normalize_match_text
-
-DOSAGE_FORM_SUFFIXES = (
-    "ドライシロップ",
-    "カプセル",
-    "OD錠",
-    "細粒",
-    "顆粒",
-    "シロップ",
-    "坐剤",
-    "貼付剤",
-    "吸入剤",
-    "錠",
-    "散",
-    "注",
-)
-
-# 抽出でのみ使う剤形を追加し、既存の対象と優先順を保持する。
-DOSAGE_FORM_PATTERN = (
-    "("
-    + "|".join(
-        re.escape(form)
-        for form in (
-            *DOSAGE_FORM_SUFFIXES,
-            "テープ",
-            "軟膏",
-            "クリーム",
-            "点眼液",
-            "点鼻液",
-            "ゼリー",
-            "配合錠",
-        )
-    )
-    + ")"
-)
-HIRAGANA_DOSAGE_FORM_PATTERN = r"(どらいしろっぷ|かぷせる|おーでぃーじょう|さいりゅう|かりゅう|しろっぷ|ざざい|じょう|さん|ちゅう|てーぷ|なんこう|くりーむ)$"
-ENGLISH_DOSAGE_FORM_PATTERN = (
-    r"\b(tablets?|capsules?|syrup|injections?|granules?|powder|drops?)\b"
-)
-
-
-def extract_base_brand_name(name: str) -> str:
-    """括弧内の注記、剤形、規格を除去して基本販売名を抽出する。"""
-    norm = unicodedata.normalize("NFKC", name)
-    cleaned = re.sub(r"[「\(（\[].*?[」\)）\]]", "", norm)
-    cleaned = re.sub(DOSAGE_FORM_PATTERN, "", cleaned)
-    cleaned = re.sub(
-        r"[\d\.]+\s*(mg|g|ml|μg|ug|%|万単位)?", "", cleaned, flags=re.IGNORECASE
-    )
-    return cleaned.strip()
-
-
-def extract_base_hiragana_name(name: str) -> str:
-    """末尾のひらがな剤形サフィックスや数値を除去する。"""
-    norm = unicodedata.normalize("NFKC", name)
-    cleaned = re.sub(HIRAGANA_DOSAGE_FORM_PATTERN, "", norm)
-    cleaned = re.sub(r"[\d\.]+", "", cleaned)
-    return cleaned.strip()
-
-
-def extract_base_english_name(name: str) -> str:
-    """英語表記の剤形や規格を除去する。"""
-    cleaned = re.sub(ENGLISH_DOSAGE_FORM_PATTERN, "", name, flags=re.IGNORECASE)
-    cleaned = re.sub(r"[\d\.]+\s*(mg|g|ml|ug)?", "", cleaned, flags=re.IGNORECASE)
-    return cleaned.strip()
-
-
-def get_weighted_aliases(medicine: AttachmentProductRecord) -> list[tuple[str, int]]:
-    """薬品名、規格なし基本名、ひらがな、英語などの別名と優先度を返す。"""
-    values: list[tuple[str, int]] = []
-    if medicine.yj_code is not None and medicine.yj_code.value:
-        values.append((medicine.yj_code.value, 100))
-    if medicine.brand_name:
-        values.append((medicine.brand_name, 90))
-        base_brand = extract_base_brand_name(medicine.brand_name)
-        if base_brand and base_brand != medicine.brand_name:
-            values.append((base_brand, 85))
-        for suffix in DOSAGE_FORM_SUFFIXES:
-            position = medicine.brand_name.find(suffix)
-            if position >= 3:
-                values.append((medicine.brand_name[:position], 55))
-                break
-    if medicine.english_name:
-        values.append((medicine.english_name, 80))
-        base_en = extract_base_english_name(medicine.english_name)
-        if base_en and base_en.lower() != medicine.english_name.lower():
-            values.append((base_en, 75))
-    if medicine.generic_name:
-        values.append((medicine.generic_name, 60))
-        base_gen = extract_base_brand_name(medicine.generic_name)
-        if base_gen and base_gen != medicine.generic_name:
-            values.append((base_gen, 58))
-    if medicine.hiragana_name:
-        values.append((medicine.hiragana_name, 50))
-        base_hira = extract_base_hiragana_name(medicine.hiragana_name)
-        if base_hira and base_hira != medicine.hiragana_name:
-            values.append((base_hira, 48))
-    deduplicated: dict[str, int] = {}
-    for alias, priority in values:
-        normalized = normalize_match_text(alias)
-        if len(normalized) >= 3:
-            deduplicated[normalized] = max(priority, deduplicated.get(normalized, 0))
-    return list(deduplicated.items())
-
-
-def collect_aliases(medicines: Sequence[AttachmentProductRecord]) -> list[str]:
-    """製品の照合別名を、最初に現れた順で重複なく返す。"""
-    return list(
-        dict.fromkeys(
-            alias
-            for medicine in medicines
-            for alias, _ in get_weighted_aliases(medicine)
-        )
-    )
 
 
 @dataclass(init=False)
@@ -136,14 +30,14 @@ class _ProductGroup:
 
     ingredient_id: ProductGroupId
     generic_name: str
-    _medicines: list[AttachmentProductRecord]
+    _medicines: list[RegisteredMedicine]
     _matched_aliases: list[str]
 
     def __init__(
         self,
         ingredient_id: ProductGroupId,
         generic_name: str,
-        medicines: Sequence[AttachmentProductRecord] | None = None,
+        medicines: Sequence[RegisteredMedicine] | None = None,
         matched_aliases: Sequence[str] | None = None,
     ) -> None:
         self.ingredient_id = ingredient_id
@@ -156,7 +50,7 @@ class _ProductGroup:
             self.add_matched_alias(alias)
 
     @property
-    def medicines(self) -> list[AttachmentProductRecord]:
+    def medicines(self) -> list[RegisteredMedicine]:
         """集約内部を変更できないコピーとして製品Entityを返す。"""
         return list(self._medicines)
 
@@ -165,10 +59,10 @@ class _ProductGroup:
         """集約内部を変更できないコピーとして照合別名を返す。"""
         return list(self._matched_aliases)
 
-    def add_medicine(self, medicine: AttachmentProductRecord) -> None:
+    def add_medicine(self, medicine: RegisteredMedicine) -> None:
         """同じ製品を重複させずに集約へ追加する。"""
         if medicine.ingredient_id != self.ingredient_id:
-            raise AttachmentDomainError("medicine must belong to the ingredient group")
+            raise MedicineDomainError("medicine must belong to the ingredient group")
         if all(
             (existing.document_id, existing.yj_code)
             != (medicine.document_id, medicine.yj_code)
@@ -210,7 +104,7 @@ class _ProductGroup:
 
 @dataclass(frozen=True)
 class _MedicineAlias:
-    medicine: AttachmentProductRecord
+    medicine: RegisteredMedicine
     alias: str
     priority: int
 
@@ -222,19 +116,19 @@ class _AliasTrieNode:
     outputs: list[_MedicineAlias] = field(default_factory=list)
 
 
-class AttachmentProductCatalog:
+class MedicineCatalog:
     """医薬品スナップショットを索引化し、名称・製品コードで照合するカタログ。"""
 
-    def __init__(self, medicines: Sequence[AttachmentProductRecord]) -> None:
+    def __init__(self, medicines: Sequence[RegisteredMedicine]) -> None:
         self._medicines = tuple(medicines)
         self._nodes = [_AliasTrieNode()]
-        self._medicines_by_yj: dict[YjCode, tuple[AttachmentProductRecord, ...]] = (
+        self._medicines_by_yj: dict[YjCode, tuple[RegisteredMedicine, ...]] = (
             self._index_medicines()
         )
         self._build_alias_index()
 
-    def _index_medicines(self) -> dict[YjCode, tuple[AttachmentProductRecord, ...]]:
-        indexed: dict[YjCode, list[AttachmentProductRecord]] = {}
+    def _index_medicines(self) -> dict[YjCode, tuple[RegisteredMedicine, ...]]:
+        indexed: dict[YjCode, list[RegisteredMedicine]] = {}
         for medicine in self._medicines:
             if medicine.yj_code is not None and medicine.yj_code.value:
                 indexed.setdefault(medicine.yj_code, []).append(medicine)
@@ -243,7 +137,7 @@ class AttachmentProductCatalog:
     def _build_alias_index(self) -> None:
         seen: set[tuple[str, DocumentId, YjCode | None]] = set()
         for medicine in self._medicines:
-            for alias, priority in get_weighted_aliases(medicine):
+            for alias, priority in get_weighted_aliases(medicine.medicine):
                 key = (alias, medicine.document_id, medicine.yj_code)
                 if key in seen:
                     continue
@@ -303,10 +197,9 @@ class AttachmentProductCatalog:
         if not normalized:
             return []
 
-        best_priority: dict[ProductGroupId, int] = {}
-        for _, target in matches:
-            key = target.medicine.ingredient_id
-            best_priority[key] = max(best_priority.get(key, 0), target.priority)
+        best_priority = best_alias_priorities(
+            (target.medicine.ingredient_id, target.priority) for _, target in matches
+        )
 
         grouped: dict[ProductGroupId, _ProductGroup] = {}
         for _, target in matches:
@@ -359,7 +252,7 @@ class AttachmentProductCatalog:
 
     @staticmethod
     def covers_requested_products(
-        groups: Sequence[AttachmentProductMatch], codes: Sequence[str]
+        groups: Sequence[ResolvedMedicine], codes: Sequence[str]
     ) -> bool:
         """解決結果が指定された製品コードをすべて含むか判定する。"""
         resolved_codes = {code for group in groups for code in group.yj_codes}
@@ -367,28 +260,28 @@ class AttachmentProductCatalog:
         return not requested_codes or requested_codes.issubset(resolved_codes)
 
     @staticmethod
-    def _match_result(group: _ProductGroup) -> AttachmentProductMatch:
-        return AttachmentProductMatch(
-            generic_name=group.generic_name,
-            brand_names=tuple(group.brand_names),
-            yj_codes=tuple(group.yj_codes),
+    def _match_result(group: _ProductGroup) -> ResolvedMedicine:
+        return ResolvedMedicine(
+            medicine=DomainMedicineMatch(
+                generic_name=group.generic_name,
+                brand_names=tuple(group.brand_names),
+                yj_codes=tuple(group.yj_codes),
+                matched_aliases=tuple(group.matched_aliases),
+            ),
             document_ids=tuple(group.document_ids),
-            matched_aliases=tuple(group.matched_aliases),
         )
 
-    def match_text(self, message: str) -> list[AttachmentProductMatch]:
+    def match_text(self, message: str) -> list[ResolvedMedicine]:
         """名称で照合し、内部状態から独立した不変の結果を返す。"""
         return [self._match_result(group) for group in self._match_text_groups(message)]
 
-    def match_yj_codes(
-        self, codes: Sequence[str | YjCode]
-    ) -> list[AttachmentProductMatch]:
+    def match_yj_codes(self, codes: Sequence[str | YjCode]) -> list[ResolvedMedicine]:
         """製品コードで照合し、不変の結果を返す。"""
         return [self._match_result(group) for group in self._match_yj_groups(codes)]
 
     def resolve_medicines(
         self, message: str, codes: Sequence[str]
-    ) -> list[AttachmentProductMatch]:
+    ) -> list[ResolvedMedicine]:
         """文中の名称と指定コードの優先順位で医薬品を解決する。"""
         return [
             self._match_result(group) for group in self._resolve_groups(message, codes)
@@ -398,7 +291,7 @@ class AttachmentProductCatalog:
         """指定製品の別名をキーワード抽出の除外語として返す。"""
         return collect_aliases(
             [
-                medicine
+                medicine.medicine
                 for group in self._match_yj_groups(codes)
                 for medicine in group.medicines
             ]
@@ -411,7 +304,10 @@ class AttachmentProductCatalog:
             medicine.yj_code
             for medicine in self._medicines
             if medicine.yj_code is not None
-            and any(alias == normalized for alias, _ in get_weighted_aliases(medicine))
+            and any(
+                alias == normalized
+                for alias, _ in get_weighted_aliases(medicine.medicine)
+            )
         )
 
     def original_product_names(self) -> tuple[str, ...]:

@@ -3,7 +3,8 @@
 from dataclasses import dataclass
 from typing import Protocol
 
-from ...domain.attachment.value_objects import AttachmentProductMatch
+from backend.application.medicine.product_models import ResolvedMedicine
+
 from ...domain.json_types import JsonValue
 from ...domain.retrieval.value_objects import IntentCandidate
 
@@ -13,7 +14,7 @@ class IntentRequest:
     """意図を判定する質問と薬剤文脈。"""
 
     question: str
-    medicines: tuple[AttachmentProductMatch, ...] = ()
+    medicines: tuple[ResolvedMedicine, ...] = ()
 
 
 @dataclass

@@ -5,12 +5,13 @@ from __future__ import annotations
 import re
 from collections.abc import Sequence
 
-from ...domain.attachment.repositories import AttachmentProductRepository
+from backend.application.medicine.product_catalog import MedicineCatalog
+from backend.application.medicine.product_contracts import RegisteredMedicineReader
+
 from ...domain.retrieval.primitives import DetectionSource, SearchKeyword
 from ...domain.retrieval.repositories import EvidenceRepository
 from ...domain.retrieval.services import merge_evidence
 from ...domain.retrieval.value_objects import Evidence, SearchCriteria
-from ..indexing.medicine_catalog import AttachmentProductCatalog
 from .keyword_contracts import KeywordExtractor
 from .snapshot_contracts import RetrievalSnapshotProvider
 
@@ -19,7 +20,7 @@ async def search_evidence_by_keywords(
     query: str,
     product_yj_codes: Sequence[str] = (),
     *,
-    medicine_reader: AttachmentProductRepository,
+    medicine_reader: RegisteredMedicineReader,
     evidence_reader: EvidenceRepository,
     keyword_extractor: KeywordExtractor | None = None,
     snapshot_provider: RetrievalSnapshotProvider | None = None,
@@ -39,7 +40,7 @@ async def search_evidence_by_keywords(
     if not medicines:
         return ()
 
-    catalog = AttachmentProductCatalog(medicines)
+    catalog = MedicineCatalog(medicines)
     requested_codes = [code.strip() for code in product_yj_codes if code.strip()]
     if requested_codes:
         targets = tuple(catalog.match_yj_codes(requested_codes))

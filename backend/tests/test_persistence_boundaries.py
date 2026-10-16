@@ -15,10 +15,14 @@ from backend.application.indexing.index_models import (
     IndexUnit,
     SourceSnapshot,
 )
-from backend.domain.attachment.entities import AttachmentProductRecord
+from backend.application.medicine.product_models import RegisteredMedicine
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.attachment.primitives import PmdaUrl
-from backend.domain.attachment.value_objects import AttachmentProductRevision
+from backend.domain.attachment.value_objects import (
+    AttachmentProductRevision,
+    MedicineDocumentReference,
+)
+from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.identifiers import YjCode
 from backend.infrastructure.persistence import schema
 from backend.infrastructure.persistence.index_writer import SqlAlchemyIndexWriter
@@ -35,16 +39,20 @@ from sqlalchemy.sql.selectable import Select
 
 @pytest.fixture
 def source_snapshot() -> SourceSnapshot:
-    medicine = AttachmentProductRecord(
-        document_id=DocumentId("test_001"),
-        yj_code=YjCode("1234567A0000"),
-        brand_name="テスト薬",
-        generic_name="テスト成分",
-        english_name="TestDrug",
-        hiragana_name="てすとやく",
-        pmda_url=PmdaUrl("https://example.test/package-insert"),
-        revision=AttachmentProductRevision(
-            {"date": "2026-10-03", "source": {"note": "原文"}}
+    medicine = RegisteredMedicine(
+        medicine=MedicineProduct(
+            yj_code=YjCode("1234567A0000"),
+            brand_name="テスト薬",
+            generic_name="テスト成分",
+            english_name="TestDrug",
+            hiragana_name="てすとやく",
+        ),
+        reference=MedicineDocumentReference(
+            document_id=DocumentId("test_001"),
+            pmda_url=PmdaUrl("https://example.test/package-insert"),
+            revision=AttachmentProductRevision(
+                {"date": "2026-10-03", "source": {"note": "原文"}}
+            ),
         ),
     )
     return SourceSnapshot(
@@ -319,7 +327,7 @@ def test_core_owns_data_access_and_alembic_owns_ddl(
                 assert medicines == source_snapshot.medicines
                 assert type(medicines) is tuple
                 assert all(
-                    type(medicine) is AttachmentProductRecord for medicine in medicines
+                    type(medicine) is RegisteredMedicine for medicine in medicines
                 )
             else:
                 result = SqlAlchemyIndexWriter(engine).replace(source_snapshot)

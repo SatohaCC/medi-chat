@@ -13,17 +13,6 @@ from ..foundation.primitives.primitives import (
 
 
 @dataclass(frozen=True, slots=True)
-class RegistrationSequence(DomainPrimitive[int]):
-    """原本版の初成功登録順。失敗や再送に割り当てない正整数。"""
-
-    def validate(self) -> None:
-        if type(self.value) is not int or self.value < 1:
-            raise DomainValidationError(
-                "registration sequence must be a positive integer"
-            )
-
-
-@dataclass(frozen=True, slots=True)
 class RevisionSourceLabel(BaseString):
     """改訂情報の出典ラベル。"""
 
@@ -132,11 +121,6 @@ class AttachmentProductCode(BaseString):
 @dataclass(frozen=True, slots=True)
 class AttachmentUrl(BaseHttpUrl):
     """添付文書の外部参照URL。"""
-
-
-@dataclass(frozen=True, slots=True)
-class ProductGroupId(BaseString):
-    """文書掲載製品を照合中にまとめるための派生識別値。"""
 
 
 @dataclass(frozen=True, slots=True)

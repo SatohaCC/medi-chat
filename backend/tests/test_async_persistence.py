@@ -11,11 +11,15 @@ from pathlib import Path
 import httpx
 import pytest
 from backend.application.indexing.index_models import IndexBuildResult
-from backend.domain.attachment.value_objects import AttachmentProductMatch
+from backend.application.medicine.product_models import (
+    RegisteredMedicine,
+    ResolvedMedicine,
+)
 from backend.domain.foundation.primitives.primitives import (
     BaseFiniteFloat,
     BaseString,
 )
+from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.domain.retrieval.primitives import (
     DetectionSource,
     SearchKeyword,
@@ -110,10 +114,12 @@ async def test_api_and_ws_respond_while_search_is_blocked(
                 section_codes=(SearchSectionCode("11.1"),),
             ),
             (
-                AttachmentProductMatch(
-                    generic_name="テスト成分",
-                    brand_names=("テスト薬",),
-                    yj_codes=("1234567A0000",),
+                ResolvedMedicine(
+                    medicine=DomainMedicineMatch(
+                        generic_name="テスト成分",
+                        brand_names=("テスト薬",),
+                        yj_codes=("1234567A0000",),
+                    ),
                     document_ids=("test_001",),
                 ),
             ),
@@ -171,7 +177,9 @@ def _build_index(source: Path, engine: Engine) -> None:
 
 def _assert_plain(value: object) -> None:
     if is_dataclass(value) and not isinstance(value, type):
-        assert type(value).__module__.startswith("backend.domain.")
+        assert type(value) is RegisteredMedicine or type(value).__module__.startswith(
+            "backend.domain."
+        )
         for field in fields(value):
             _assert_plain(getattr(value, field.name))
     elif isinstance(value, dict):

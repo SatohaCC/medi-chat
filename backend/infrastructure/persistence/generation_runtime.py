@@ -13,11 +13,13 @@ from pathlib import Path
 from sqlalchemy import delete, insert, select
 from sqlalchemy.engine import Connection
 
+from backend.application.medicine.product_models import RegisteredMedicine
+from backend.domain.medicine.services import get_weighted_aliases
+
 from ...application.indexing.attachment_projection import project_active_attachment
-from ...application.indexing.medicine_catalog import get_weighted_aliases
 from ...application.medicine.suggestions import MedicineSuggester, SuggestionProduct
 from ...application.retrieval.snapshot_contracts import RetrievalSnapshot
-from ...domain.attachment.entities import AttachmentDocument, AttachmentProductRecord
+from ...domain.attachment.entities import AttachmentDocument
 from ...domain.foundation.value_objects import ImmutableMapping
 from ...domain.json_types import JsonValue
 from ...domain.medicine.identifiers import YjCode
@@ -51,7 +53,7 @@ class _Document:
 @dataclass(frozen=True, slots=True)
 class _Generation:
     generation_id: SearchGenerationId
-    medicines: tuple[AttachmentProductRecord, ...]
+    medicines: tuple[RegisteredMedicine, ...]
     documents: tuple[_Document, ...]
     document_count: int
     unit_count: int
@@ -85,7 +87,7 @@ class _SnapshotReader:
             self._fts_cache.clear()
             self._rows_cache.clear()
 
-    async def read_medicines(self) -> tuple[AttachmentProductRecord, ...]:
+    async def read_medicines(self) -> tuple[RegisteredMedicine, ...]:
         if self._closed:
             raise RuntimeError("Generation snapshot has been released")
         return self.generation.medicines
@@ -419,7 +421,7 @@ class GenerationRuntime:
                         brand_name=product.brand_name,
                         yj_code=product.yj_code,
                         document_id=product.document_id,
-                        aliases=tuple(get_weighted_aliases(product)),
+                        aliases=tuple(get_weighted_aliases(product.medicine)),
                     )
                     for product in products
                 ),

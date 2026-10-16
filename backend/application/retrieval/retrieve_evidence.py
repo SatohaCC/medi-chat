@@ -4,8 +4,10 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from copy import deepcopy
 
-from ...domain.attachment.repositories import AttachmentProductRepository
-from ...domain.attachment.value_objects import AttachmentProductMatch
+from backend.application.medicine.product_catalog import MedicineCatalog
+from backend.application.medicine.product_contracts import RegisteredMedicineReader
+from backend.application.medicine.product_models import ResolvedMedicine
+
 from ...domain.medicine.identifiers import YjCode
 from ...domain.retrieval.product_identity import (
     product_identity_reason,
@@ -17,7 +19,6 @@ from ...domain.retrieval.services import (
 )
 from ...domain.retrieval.services import merge_evidence
 from ...domain.retrieval.value_objects import Evidence, IntentPolicy, SearchCriteria
-from ..indexing.medicine_catalog import AttachmentProductCatalog
 from .intent_contracts import IntentClassifier, IntentRequest
 from .jev_detector import JevDetectionResult, detect_jev_criteria
 from .keyword_contracts import KeywordExtractor
@@ -33,7 +34,7 @@ async def retrieve_evidence(
     message: str,
     product_yj_codes: list[str],
     *,
-    medicine_reader: AttachmentProductRepository,
+    medicine_reader: RegisteredMedicineReader,
     evidence_reader: EvidenceRepository,
     intent_classifier: IntentClassifier,
     keyword_extractor: KeywordExtractor,
@@ -53,7 +54,7 @@ async def retrieve_evidence(
                 intent_policy=intent_policy,
                 on_logic_sources=on_logic_sources,
             )
-    medicine_catalog = AttachmentProductCatalog(await medicine_reader.read_medicines())
+    medicine_catalog = MedicineCatalog(await medicine_reader.read_medicines())
     resolved = medicine_catalog.resolve_medicines(message, product_yj_codes)
     needs_clarification = (
         not resolved
@@ -143,7 +144,7 @@ async def retrieve_evidence(
 
 async def _search_evidence(
     reader: EvidenceRepository,
-    medicines: tuple[AttachmentProductMatch, ...],
+    medicines: tuple[ResolvedMedicine, ...],
     criteria: list[SearchCriteria],
     *,
     cache: dict[SearchCriteria, tuple[Evidence, ...]] | None = None,

@@ -7,13 +7,16 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
 
 from ..foundation.value_objects import ImmutableMapping
 from ..json_types import JsonValue
 from ..medicine.identifiers import YjCode
-from .exceptions import AttachmentDomainError, MissingOrInvalidYjError
-from .identifiers import ArtifactFileId, DocumentId, DocumentVersionId
+from .exceptions import (
+    AttachmentDomainError,
+    MissingOrInvalidYjError,
+    MissingRevisionError,
+)
+from .identifiers import DocumentId, DocumentVersionId
 from .primitives import (
     AttachmentBrandName,
     AttachmentCellSpan,
@@ -27,14 +30,11 @@ from .primitives import (
     DefinitionTitle,
     InteractionColumnId,
     NumberedSectionCode,
-    RegistrationSequence,
+    PmdaUrl,
     RevisionSourceLabel,
     RevisionVersion,
     RevisionYearMonth,
 )
-
-if TYPE_CHECKING:
-    from .entities import AttachmentRegistration
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -67,7 +67,7 @@ class RegistrationVersion:
     document_id: DocumentId
     source_sha256: AttachmentSha256
     yj_codes: frozenset[YjCode]
-    owned_file_ids: frozenset[ArtifactFileId] = frozenset()
+    revised_at: RevisionYearMonth
 
     def __post_init__(self) -> None:
         if not isinstance(self.document_id, DocumentId) or not isinstance(
@@ -86,51 +86,12 @@ class RegistrationVersion:
             )
         ):
             raise MissingOrInvalidYjError("missing_or_invalid_yj")
-        if not isinstance(self.owned_file_ids, frozenset) or any(
-            not isinstance(file_id, ArtifactFileId) for file_id in self.owned_file_ids
-        ):
-            raise AttachmentDomainError(
-                "owned file identities must be an immutable set"
-            )
+        if not isinstance(self.revised_at, RevisionYearMonth):
+            raise MissingRevisionError("registration requires a revision month")
 
     @property
     def version_id(self) -> DocumentVersionId:
         return DocumentVersionId(f"{self.document_id}:{self.source_sha256}")
-
-
-@dataclass(frozen=True, slots=True)
-class ActiveRegistration:
-    yj_code: YjCode
-    version_id: DocumentVersionId
-
-
-@dataclass(frozen=True, slots=True, kw_only=True)
-class RegistrationReceipt:
-    version: RegistrationVersion
-    sequence: RegistrationSequence
-    replaced_yj_codes: frozenset[YjCode]
-    artifacts_deleted: bool = False
-
-    def __post_init__(self) -> None:
-        if not isinstance(self.sequence, RegistrationSequence):
-            raise AttachmentDomainError("receipt sequence must be typed")
-        if (
-            not isinstance(self.replaced_yj_codes, frozenset)
-            or not self.replaced_yj_codes <= self.version.yj_codes
-        ):
-            raise AttachmentDomainError(
-                "replaced YJ codes must be an immutable subset of input products"
-            )
-
-
-@dataclass(frozen=True, slots=True, kw_only=True)
-class RegistrationProposal:
-    """非公開の置換案。採用されるまで元snapshotを変更しない。"""
-
-    before: AttachmentRegistration
-    after: AttachmentRegistration
-    receipt: RegistrationReceipt
-    reused: bool
 
 
 def _require_tuples(*values: object) -> None:
@@ -296,11 +257,9 @@ class AttachmentProductRevision(ImmutableMapping[JsonValue]):
 
 
 @dataclass(frozen=True, slots=True)
-class AttachmentProductMatch:
-    """照合・特定された医薬品情報。識別子を持つ製品Entityの投影値。"""
+class MedicineDocumentReference:
+    """医薬品情報の出典となる添付文書参照。"""
 
-    generic_name: str
-    brand_names: tuple[str, ...]
-    yj_codes: tuple[str, ...]
-    document_ids: tuple[str, ...]
-    matched_aliases: tuple[str, ...] = ()
+    document_id: DocumentId
+    pmda_url: PmdaUrl
+    revision: AttachmentProductRevision

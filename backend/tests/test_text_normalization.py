@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import unittest
 
-from backend.application.indexing.medicine_catalog import (
+from backend.domain.medicine.services import (
     extract_base_brand_name,
     extract_base_english_name,
     extract_base_hiragana_name,

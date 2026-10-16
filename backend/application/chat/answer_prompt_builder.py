@@ -2,7 +2,8 @@
 
 from collections.abc import Sequence
 
-from ...domain.attachment.value_objects import AttachmentProductMatch
+from backend.application.medicine.product_models import ResolvedMedicine
+
 from ...domain.retrieval.value_objects import Evidence
 from .answer_prompt_policy import AnswerPromptPolicy
 from .chat_models import ChatMessage, ChatResponse
@@ -10,7 +11,7 @@ from .chat_models import ChatMessage, ChatResponse
 
 def build_answer_system_prompt(
     sources: list[Evidence],
-    resolved_medicines: list[AttachmentProductMatch],
+    resolved_medicines: list[ResolvedMedicine],
     intent: str,
     qualifying_intents: list[str] | None = None,
     *,

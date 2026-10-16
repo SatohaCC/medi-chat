@@ -115,7 +115,7 @@ async def test_tc106_old_deleted_receipt_post_never_recreates_files_get_is_gone(
     client, publisher
 ):
     old = source("旧版")
-    new = source("新版")
+    new = source("新版", revised_at="2026-11")
     assert (await post(client, old)).status_code == 201
     assert (await post(client, new)).status_code == 201
     result = await post(client, old)
@@ -192,7 +192,7 @@ async def test_tc107_artifact_conflict_has_declared_list_and_preserves_old_publi
             )
 
     publisher.fault = conflict
-    response = await post(client, source("衝突新版"))
+    response = await post(client, source("衝突新版", revised_at="2026-11"))
     assert response.status_code == 409
     assert response.json()["detail"] == {
         "code": "source_hash_conflict",
@@ -223,7 +223,7 @@ async def test_tc107_build_failure_returns_stable_phase_and_old_snapshot(
             raise OSError("fixed build failure")
 
     publisher.fault = fail
-    response = await post(client, source("失敗する新版"))
+    response = await post(client, source("失敗する新版", revised_at="2026-11"))
     assert response.status_code == 500
     assert response.json()["detail"] == {
         "code": "registration_failed",
@@ -242,7 +242,7 @@ async def test_tc106_partial_b_and_cleanup_pending_public_metadata(
     old = source("旧共通", ("111111111111", "222222222222"))
     first = await post(client, old)
     assert first.status_code == 201
-    new_a = await post(client, source("新A"))
+    new_a = await post(client, source("新A", revised_at="2026-11"))
     assert new_a.status_code == 201
     old_url = f"/api/attachment-imports/000001_test/{hashlib.sha256(old).hexdigest()}"
     partial = (await client.get(old_url)).json()
@@ -258,7 +258,7 @@ async def test_tc106_partial_b_and_cleanup_pending_public_metadata(
         return unlink(path, *args, **kwargs)
 
     monkeypatch.setattr(Path, "unlink", fail)
-    new_b = source("新B", ("222222222222",))
+    new_b = source("新B", ("222222222222",), revised_at="2026-11")
     pending = await post(client, new_b)
     assert pending.status_code == 201
     payload = pending.json()

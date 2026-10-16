@@ -5,9 +5,10 @@ from __future__ import annotations
 import unittest
 
 from backend.application.chat.answer_prompt_builder import build_answer_system_prompt
+from backend.application.medicine.product_models import ResolvedMedicine
 from backend.domain.attachment.identifiers import DocumentId
-from backend.domain.attachment.value_objects import AttachmentProductMatch
 from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.domain.retrieval.identifiers import SearchUnitId
 from backend.domain.retrieval.value_objects import (
     DocumentRevision,
@@ -57,10 +58,12 @@ class AnswerPromptBuilderTests(unittest.TestCase):
             ),
             url="https://example.test/doc#section-10-1",
         )
-        medicine = AttachmentProductMatch(
-            generic_name="テスト成分",
-            brand_names=("テスト錠",),
-            yj_codes=("1234567A8901",),
+        medicine = ResolvedMedicine(
+            medicine=DomainMedicineMatch(
+                generic_name="テスト成分",
+                brand_names=("テスト錠",),
+                yj_codes=("1234567A8901",),
+            ),
             document_ids=("doc-1",),
         )
 
