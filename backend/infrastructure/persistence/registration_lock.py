@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from ...application.attachment_import.import_errors import ImportStorageError
-from ..sources.attachment_import_store import FileAttachmentImportStore
+from .attachment_import_store import FileAttachmentImportStore
 
 
 @contextmanager

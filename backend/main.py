@@ -35,6 +35,9 @@ from .infrastructure.morphology.keyword_extraction import get_janome_tokenizer
 from .infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,
 )
+from .infrastructure.persistence.attachment_import_store import (
+    FileAttachmentImportStore,
+)
 from .infrastructure.persistence.evidence_reader import SqlAlchemyEvidenceReader
 from .infrastructure.persistence.generation_runtime import GenerationRuntime
 from .infrastructure.persistence.index_reader import SqlAlchemyIndexReader
@@ -48,7 +51,6 @@ from .infrastructure.persistence.sqlite_engine import create_sqlite_engine
 from .infrastructure.persistence.sqlite_recovery import recover_sqlite_journal
 from .infrastructure.pmda_xml.artifact_mapping import PmdaArtifactEncoder
 from .infrastructure.pmda_xml.decoder import PmdaXmlDecoder
-from .infrastructure.sources.attachment_import_store import FileAttachmentImportStore
 from .presentation.chat_service import AppChatService
 
 # ローカル環境変数の読み込み

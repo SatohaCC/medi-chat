@@ -12,14 +12,14 @@ from backend.application.attachment_import.import_errors import (
     ImportLimitExceeded,
     ImportStorageError,
 )
+from backend.infrastructure.persistence.attachment_import_store import (
+    FileAttachmentImportStore,
+)
 from backend.infrastructure.pmda_xml.artifact_mapping import (
     MAX_ARTIFACT_BYTES,
     PmdaArtifactEncoder,
 )
 from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
-from backend.infrastructure.sources.attachment_import_store import (
-    FileAttachmentImportStore,
-)
 from backend.presentation.attachment_import_routes import router
 from backend.tests.attachment_import_fixtures import xml_source
 from fastapi import FastAPI

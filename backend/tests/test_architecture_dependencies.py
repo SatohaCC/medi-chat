@@ -111,7 +111,19 @@ ALLOWED_DOMAIN_INTERNAL_DEPENDENCIES: dict[str, set[str]] = {
 }
 
 
+ALLOWED_APPLICATION_CONTEXT_DEPENDENCIES: dict[str, set[str]] = {
+    "chat": {"retrieval", "medicine"},
+    "retrieval": {"medicine"},
+    "attachment_import": {"indexing"},
+    "indexing": {"medicine"},
+    "medicine": set(),
+}
+EXTERNAL_ADAPTER_PACKAGES = {"llm", "intent", "morphology", "pmda_xml"}
+
+
 def _allowed_module(module: str, *, caller: str) -> bool:
+    if module == "backend":
+        return False
     # 公開IDは内部モデルや共通カタログを経由して業務実装を公開しない。
     caller_parts = caller.split(".")
     if (
@@ -126,19 +138,147 @@ def _allowed_module(module: str, *, caller: str) -> bool:
         )
     module_parts = module.split(".")
     if (
-        len(caller_parts) == 4
-        and len(module_parts) >= 4
+        len(caller_parts) >= 3
         and caller_parts[:2] == ["backend", "domain"]
+        and caller_parts[2] not in {"fixture", "inner_fixture"}
+        and len(module_parts) >= 2
         and module_parts[:2] == ["backend", "domain"]
-        and caller_parts[2] == module_parts[2]
-        and caller_parts[2] != "foundation"
-        and caller_parts[3] in ALLOWED_DOMAIN_INTERNAL_DEPENDENCIES
     ):
-        target_module = module_parts[3]
-        if target_module != caller_parts[3]:
+        if len(module_parts) < 3:
+            return False
+        caller_ctx = caller_parts[2]
+        target_ctx = module_parts[2]
+        if caller_ctx == "foundation":
+            return target_ctx in {"foundation", "json_types"}
+        if caller_ctx == "shared":
+            return target_ctx in {"shared", "foundation", "json_types"}
+        if target_ctx == "json_types":
+            return True
+        if target_ctx == "foundation":
+            return len(module_parts) >= 4
+        if target_ctx == "shared":
+            if len(module_parts) < 4:
+                return False
+            if (
+                len(caller_parts) == 4
+                and caller_parts[3] in ALLOWED_DOMAIN_INTERNAL_DEPENDENCIES
+            ):
+                if module_parts[3] == "services":
+                    return caller_parts[3] in {"entities", "repositories", "services"}
+                return module_parts[3] in (
+                    ALLOWED_DOMAIN_INTERNAL_DEPENDENCIES[caller_parts[3]]
+                    | {caller_parts[3]}
+                )
+            return True
+        if target_ctx == caller_ctx:
+            if len(module_parts) < 4:
+                return False
+            if (
+                len(caller_parts) == 4
+                and caller_parts[3] in ALLOWED_DOMAIN_INTERNAL_DEPENDENCIES
+            ):
+                target_module = module_parts[3]
+                if target_module != caller_parts[3]:
+                    return (
+                        target_module
+                        in ALLOWED_DOMAIN_INTERNAL_DEPENDENCIES[caller_parts[3]]
+                    )
+            return True
+        if len(module_parts) < 4 or module_parts[3] != "identifiers":
+            return False
+        if (
+            len(caller_parts) == 4
+            and caller_parts[3] in ALLOWED_DOMAIN_INTERNAL_DEPENDENCIES
+        ):
             return (
-                target_module in ALLOWED_DOMAIN_INTERNAL_DEPENDENCIES[caller_parts[3]]
+                "identifiers" in ALLOWED_DOMAIN_INTERNAL_DEPENDENCIES[caller_parts[3]]
             )
+        return True
+    # Application層: コンテキスト間の有向パイプライン境界と *_models / *_contracts の依存制限。
+    if (
+        len(caller_parts) >= 3
+        and caller_parts[:2] == ["backend", "application"]
+        and caller_parts[2] != "fixture"
+        and len(module_parts) >= 2
+        and module_parts[:2] == ["backend", "application"]
+    ):
+        if len(module_parts) < 3:
+            return False
+        caller_ctx = caller_parts[2]
+        target_ctx = module_parts[2]
+        if caller_ctx != "chat" and target_ctx == "chat":
+            return False
+        if caller_ctx in ALLOWED_APPLICATION_CONTEXT_DEPENDENCIES:
+            if (
+                target_ctx != caller_ctx
+                and target_ctx
+                not in ALLOWED_APPLICATION_CONTEXT_DEPENDENCIES[caller_ctx]
+            ):
+                return False
+            if len(module_parts) < 4:
+                return False
+        if len(caller_parts) >= 4:
+            caller_mod = caller_parts[3]
+            if caller_mod.endswith("_models") and (
+                len(module_parts) < 4 or not module_parts[3].endswith("_models")
+            ):
+                return False
+            if caller_mod.endswith("_contracts") and (
+                len(module_parts) < 4
+                or not (
+                    module_parts[3].endswith("_models")
+                    or module_parts[3].endswith("_contracts")
+                )
+            ):
+                return False
+    # Presentation層: Domain の entities / services への直接依存は全面禁止。
+    # また chat_service / chat_dto_mapper / evidence_models 以外は foundation.exceptions のみ参照可能。
+    if (
+        len(caller_parts) >= 2
+        and caller_parts[:2] == ["backend", "presentation"]
+        and len(module_parts) >= 2
+        and module_parts[:2] == ["backend", "domain"]
+    ):
+        if len(module_parts) >= 4 and module_parts[3] in {"entities", "services"}:
+            return False
+        if caller in {
+            "backend.presentation.chat_service",
+            "backend.presentation.chat_dto_mapper",
+            "backend.presentation.evidence_models",
+        }:
+            return len(module_parts) >= 4 or (
+                len(module_parts) >= 3 and module_parts[2] == "json_types"
+            )
+        return module == "backend.domain.foundation.exceptions" or module.startswith(
+            "backend.domain.foundation.exceptions."
+        )
+    # Infrastructure層: composition / cli への逆依存、persistence -> sources、外部技術Adapter間の相互依存を禁止する。
+    if (
+        len(caller_parts) >= 3
+        and caller_parts[:2] == ["backend", "infrastructure"]
+        and caller_parts[2] != "fixture"
+        and len(module_parts) >= 2
+        and module_parts[:2] == ["backend", "infrastructure"]
+    ):
+        if len(module_parts) < 3:
+            return False
+        caller_pkg = caller_parts[2]
+        target_pkg = module_parts[2]
+        if caller_pkg not in {"composition", "cli"} and target_pkg in {
+            "composition",
+            "cli",
+        }:
+            return False
+        if caller_pkg == "composition" and target_pkg == "cli":
+            return False
+        if caller_pkg == "persistence" and target_pkg == "sources":
+            return False
+        if (
+            caller_pkg in EXTERNAL_ADAPTER_PACKAGES
+            and target_pkg in EXTERNAL_ADAPTER_PACKAGES
+            and caller_pkg != target_pkg
+        ):
+            return False
     caller_layer = next(
         (
             layer
@@ -147,6 +287,17 @@ def _allowed_module(module: str, *, caller: str) -> bool:
         ),
         None,
     )
+    if caller_layer == "presentation" and (
+        module == "backend.main"
+        or module.startswith("backend.main.")
+        or module == "backend.migrations"
+        or module.startswith("backend.migrations.")
+    ):
+        return False
+    if caller_layer == "infrastructure" and (
+        module == "backend.main" or module.startswith("backend.main.")
+    ):
+        return caller == "backend.infrastructure.composition.configured_probe"
     dependency_layer = next(
         (
             layer
@@ -204,10 +355,22 @@ def _qualified_name(node: ast.AST, aliases: dict[str, str]) -> str:
     if isinstance(node, ast.Name):
         return aliases.get(node.id, node.id)
     if isinstance(node, ast.Attribute):
-        return _qualified_name(node.value, aliases) + "." + node.attr
+        prefix = _qualified_name(node.value, aliases)
+        return f"{prefix}.{node.attr}" if prefix else ""
     if isinstance(node, ast.Call):
         return _qualified_name(node.func, aliases)
     return ""
+
+
+def _outermost_attributes(root: ast.AST) -> list[ast.Attribute]:
+    inner_values = {
+        node.value for node in ast.walk(root) if isinstance(node, ast.Attribute)
+    }
+    return [
+        node
+        for node in ast.walk(root)
+        if isinstance(node, ast.Attribute) and node not in inner_values
+    ]
 
 
 def find_inner_layer_violations(
@@ -239,13 +402,12 @@ def find_inner_layer_violations(
                 package = module_name.split(".")[: -node.level]
                 base = ".".join(package + ([base] if base else []))
             for imported in node.names:
-                dependency = base + "." + imported.name
+                dependency = base + "." + imported.name if base else imported.name
                 aliases[imported.asname or imported.name] = dependency
-                if not _allowed_module(
-                    base, caller=module_name
-                ) and not _allowed_module(dependency, caller=module_name):
+                if not _allowed_module(dependency, caller=module_name):
                     report(node, "import " + dependency)
 
+    annotation_attr_ids: set[int] = set()
     for node in ast.walk(tree):
         if isinstance(node, (ast.Name, ast.Attribute)):
             dependency = _qualified_name(node, aliases)
@@ -270,17 +432,34 @@ def find_inner_layer_violations(
         elif isinstance(node, ast.TypeAlias):
             annotations.append(node.value)
         for annotation in annotations:
+            for reference in _outermost_attributes(annotation):
+                annotation_attr_ids.add(id(reference))
+                dependency = _qualified_name(reference, aliases)
+                if (
+                    dependency == "backend" or dependency.startswith("backend.")
+                ) and not _allowed_module(dependency, caller=module_name):
+                    report(node, "annotation " + dependency)
             for value in ast.walk(annotation):
                 if isinstance(value, ast.Constant) and isinstance(value.value, str):
                     try:
                         expression = ast.parse(value.value, mode="eval")
                     except SyntaxError:
                         continue
-                    for reference in ast.walk(expression):
-                        if isinstance(reference, ast.Attribute):
-                            dependency = _qualified_name(reference, aliases)
-                            if not _allowed_module(dependency, caller=module_name):
-                                report(node, "annotation " + dependency)
+                    for reference in _outermost_attributes(expression):
+                        dependency = _qualified_name(reference, aliases)
+                        if dependency and not _allowed_module(
+                            dependency, caller=module_name
+                        ):
+                            report(node, "annotation " + dependency)
+
+    for reference in _outermost_attributes(tree):
+        if id(reference) in annotation_attr_ids:
+            continue
+        dependency = _qualified_name(reference, aliases)
+        if (
+            dependency == "backend" or dependency.startswith("backend.")
+        ) and not _allowed_module(dependency, caller=module_name):
+            report(reference, "import " + dependency)
 
     return sorted(set(violations))
 
@@ -506,14 +685,14 @@ def test_legacy_facades_are_not_required(tmp_path: Path) -> None:
     # v5 prepared index includes explicit initial registration, never startup DDL.
     import json
 
+    from backend.infrastructure.persistence.attachment_import_store import (
+        FileAttachmentImportStore,
+    )
     from backend.infrastructure.persistence.registration_publisher import (
         RegistrationInput,
         SqliteRegistrationPublisher,
     )
     from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
-    from backend.infrastructure.sources.attachment_import_store import (
-        FileAttachmentImportStore,
-    )
     from backend.tests.attachment_import_fixtures import xml_source
 
     raw = xml_source(
@@ -665,6 +844,7 @@ def test_domain_models_have_explicit_primitive_entity_value_object_ownership() -
         "recognize_product_questions": "backend.domain.retrieval.services",
         "product_identity_reason": "backend.domain.retrieval.services",
         "build_keyword_search_criteria": "backend.domain.retrieval.services",
+        "katakana_to_hiragana": "backend.domain.shared.services",
         "RegisteredMedicineReader": "backend.application.medicine.product_contracts",
         "EvidenceRepository": "backend.domain.retrieval.repositories",
         "MedicineCatalog": "backend.application.medicine.product_catalog",
@@ -823,6 +1003,174 @@ print("canonical modules and API smoke passed")
             1,
             "import backend.domain.retrieval.services.merge_evidence",
         ),
+        (
+            "backend.application.medicine.suggestions",
+            "from ..chat.answer_preparation import prepare_reply\n",
+            1,
+            "import backend.application.chat.answer_preparation.prepare_reply",
+        ),
+        (
+            "backend.application.retrieval.retrieval_models",
+            "from .retrieve_evidence import retrieve_evidence\n",
+            1,
+            "import backend.application.retrieval.retrieve_evidence.retrieve_evidence",
+        ),
+        (
+            "backend.application.retrieval.intent_contracts",
+            "from .jev_detector import detect_jev_criteria\n",
+            1,
+            "import backend.application.retrieval.jev_detector.detect_jev_criteria",
+        ),
+        (
+            "backend.presentation.search_routes",
+            "from ..domain.retrieval.repositories import EvidenceRepository\n",
+            1,
+            "import backend.domain.retrieval.repositories.EvidenceRepository",
+        ),
+        (
+            "backend.infrastructure.persistence.registration_publisher",
+            "from ..composition.index_verifier import verify_schema_readiness\n",
+            1,
+            "import backend.infrastructure.composition.index_verifier.verify_schema_readiness",
+        ),
+        (
+            "backend.domain.retrieval.primitives",
+            "from . import value_objects\n",
+            1,
+            "import backend.domain.retrieval.value_objects",
+        ),
+        (
+            "backend.application.medicine.suggestions",
+            "from backend.application.chat import answer_question\n",
+            1,
+            "import backend.application.chat.answer_question",
+        ),
+        (
+            "backend.application.retrieval.retrieval_models",
+            "from . import retrieve_evidence\n",
+            1,
+            "import backend.application.retrieval.retrieve_evidence",
+        ),
+        (
+            "backend.application.retrieval.intent_contracts",
+            "from . import jev_detector\n",
+            1,
+            "import backend.application.retrieval.jev_detector",
+        ),
+        (
+            "backend.presentation.search_routes",
+            "from ..domain.retrieval import repositories\n",
+            1,
+            "import backend.domain.retrieval.repositories",
+        ),
+        (
+            "backend.infrastructure.persistence.registration_publisher",
+            "from ..composition import index_verifier\n",
+            1,
+            "import backend.infrastructure.composition.index_verifier",
+        ),
+        (
+            "backend.presentation.request_logging",
+            "from ..domain.retrieval.value_objects import Evidence\n",
+            1,
+            "import backend.domain.retrieval.value_objects.Evidence",
+        ),
+        (
+            "backend.presentation.request_logging",
+            'def f(x: "backend.domain.retrieval.value_objects.Evidence") -> None:\n    pass\n',
+            1,
+            "annotation backend.domain.retrieval.value_objects.Evidence",
+        ),
+        (
+            "backend.presentation.chat_service",
+            'def f(x: "backend.domain.medicine.entities.Medicine") -> None:\n    pass\n',
+            1,
+            "annotation backend.domain.medicine.entities.Medicine",
+        ),
+        (
+            "backend.domain.retrieval.services",
+            "from ..medicine.entities import Medicine\n",
+            1,
+            "import backend.domain.medicine.entities.Medicine",
+        ),
+        (
+            "backend.domain.retrieval.services",
+            'def f(x: "backend.domain.medicine.entities.Medicine") -> None:\n    pass\n',
+            1,
+            "annotation backend.domain.medicine.entities.Medicine",
+        ),
+        (
+            "backend.domain.foundation.primitives.base",
+            "from ...retrieval.primitives import SearchKeyword\n",
+            1,
+            "import backend.domain.retrieval.primitives.SearchKeyword",
+        ),
+        (
+            "backend.domain.shared.services",
+            'def f(x: "backend.domain.retrieval.primitives.SearchKeyword") -> None:\n    pass\n',
+            1,
+            "annotation backend.domain.retrieval.primitives.SearchKeyword",
+        ),
+        (
+            "backend.domain.retrieval.primitives",
+            "from ..shared.services import normalize_match_text\n",
+            1,
+            "import backend.domain.shared.services.normalize_match_text",
+        ),
+        (
+            "backend.application.medicine.autocomplete",
+            "from ..retrieval.snapshot_contracts import RetrievalSnapshotProvider\n",
+            1,
+            "import backend.application.retrieval.snapshot_contracts.RetrievalSnapshotProvider",
+        ),
+        (
+            "backend.application.medicine.autocomplete",
+            'def f(x: "backend.application.retrieval.snapshot_contracts.RetrievalSnapshotProvider") -> None:\n    pass\n',
+            1,
+            "annotation backend.application.retrieval.snapshot_contracts.RetrievalSnapshotProvider",
+        ),
+        (
+            "backend.application.retrieval.retrieve_evidence",
+            "from ..indexing.attachment_projection import project_attachment\n",
+            1,
+            "import backend.application.indexing.attachment_projection.project_attachment",
+        ),
+        (
+            "backend.infrastructure.persistence.registration_publisher",
+            "from ..sources.file_index_source import FileIndexSourceReader\n",
+            1,
+            "import backend.infrastructure.sources.file_index_source.FileIndexSourceReader",
+        ),
+        (
+            "backend.infrastructure.persistence.registration_publisher",
+            'def f(x: "backend.infrastructure.sources.file_index_source.FileIndexSourceReader") -> None:\n    pass\n',
+            1,
+            "annotation backend.infrastructure.sources.file_index_source.FileIndexSourceReader",
+        ),
+        (
+            "backend.infrastructure.llm.provider_factory",
+            'def f(x: "backend.infrastructure.intent.jev_intent_detector.JevIntentDetector") -> None:\n    pass\n',
+            1,
+            "annotation backend.infrastructure.intent.jev_intent_detector.JevIntentDetector",
+        ),
+        (
+            "backend.presentation.search_routes",
+            "import backend\n",
+            1,
+            "import backend",
+        ),
+        (
+            "backend.domain.retrieval.primitives",
+            "import backend.domain.retrieval.exceptions\nx: backend.domain.retrieval.value_objects.SearchCriteria\n",
+            2,
+            "annotation backend.domain.retrieval.value_objects.SearchCriteria",
+        ),
+        (
+            "backend.domain.retrieval.primitives",
+            "import backend.domain.retrieval.exceptions\nx = backend.domain.retrieval.value_objects.SearchCriteria\n",
+            2,
+            "import backend.domain.retrieval.value_objects.SearchCriteria",
+        ),
     ],
 )
 def test_layer_specific_forbidden_dependencies_report_location(
@@ -832,6 +1180,204 @@ def test_layer_specific_forbidden_dependencies_report_location(
         source, module_name=module_name, filename="fixture.py"
     )
     assert f"fixture.py:{line}: {dependency}" in violations
+
+
+def test_import_linter_contracts_detect_submodule_violations() -> None:
+    """pyproject.toml の全 Import Linter 契約が配下モジュール間の違反を検出できることを検証する。"""
+    import copy
+
+    import grimp
+    from importlinter.application.use_cases import (
+        _register_contract_types,
+        read_user_options,
+    )
+    from importlinter.configuration import configure
+    from importlinter.domain.contract import registry
+
+    configure()
+    user_options = read_user_options(
+        config_filename=str(BACKEND_ROOT / "pyproject.toml")
+    )
+    _register_contract_types(user_options)
+    base_graph = grimp.build_graph("backend")
+    contracts = {
+        c["name"]: registry.get_contract_class(c["type"])(
+            name=c["name"],
+            session_options=user_options.session_options,
+            contract_options=c,
+        )
+        for c in user_options.contracts_options
+    }
+
+    synthetic_violations = (
+        (
+            "Domain does not depend on outer layers",
+            "backend.domain.retrieval.services",
+            "backend.application.chat.answer_question",
+        ),
+        (
+            "Application does not depend on outer layers",
+            "backend.application.retrieval.retrieve_evidence",
+            "backend.infrastructure.persistence.sqlite_evidence_repository",
+        ),
+        (
+            "Presentation does not depend on infrastructure",
+            "backend.presentation.search_routes",
+            "backend.infrastructure.persistence.sqlite_evidence_repository",
+        ),
+        (
+            "Infrastructure does not depend on presentation",
+            "backend.infrastructure.persistence.sqlite_evidence_repository",
+            "backend.presentation.search_routes",
+        ),
+        (
+            "Config does not depend on layers",
+            "backend.config.runtime_settings",
+            "backend.domain.retrieval.services",
+        ),
+        (
+            "Presentation does not directly depend on domain entities or services",
+            "backend.presentation.search_routes",
+            "backend.domain.retrieval.services",
+        ),
+        (
+            "Presentation routes and dependencies do not depend on domain models or repositories",
+            "backend.presentation.search_routes",
+            "backend.domain.retrieval.value_objects",
+        ),
+        (
+            "Presentation routes and dependencies do not depend on domain models or repositories",
+            "backend.presentation.chat_service",
+            "backend.domain.medicine",
+        ),
+        (
+            "Non-chat application contexts do not depend on chat",
+            "backend.application.retrieval.retrieve_evidence",
+            "backend.application.chat.answer_question",
+        ),
+        (
+            "Non-chat application contexts do not depend on chat",
+            "backend.application.attachment_import.import_document",
+            "backend.application.chat.answer_question",
+        ),
+        (
+            "Medicine catalogue does not depend on retrieval use cases",
+            "backend.application.medicine.autocomplete",
+            "backend.application.retrieval.snapshot_contracts",
+        ),
+        (
+            "Medicine catalogue does not depend on retrieval use cases",
+            "backend.application.medicine.autocomplete",
+            "backend.application.indexing.attachment_projection",
+        ),
+        (
+            "Application contexts follow directed pipeline boundaries",
+            "backend.application.retrieval.retrieve_evidence",
+            "backend.application.indexing.attachment_projection",
+        ),
+        (
+            "Application contexts follow directed pipeline boundaries",
+            "backend.application.attachment_import.import_document",
+            "backend.application.retrieval.retrieve_evidence",
+        ),
+        (
+            "Persistence does not depend on input sources",
+            "backend.infrastructure.persistence.registration_publisher",
+            "backend.infrastructure.sources.file_index_source",
+        ),
+        (
+            "Infrastructure adapters do not depend on composition or CLI",
+            "backend.infrastructure.persistence.registration_publisher",
+            "backend.infrastructure.composition.index_verifier",
+        ),
+        (
+            "External technology adapters are independent",
+            "backend.infrastructure.llm.provider_factory",
+            "backend.infrastructure.intent.jev_intent_detector",
+        ),
+        (
+            "Domain contexts are independent",
+            "backend.domain.retrieval.services",
+            "backend.domain.medicine.entities",
+        ),
+        (
+            "Foundation does not depend on business vocabulary",
+            "backend.domain.foundation.primitives.base",
+            "backend.domain.retrieval.primitives",
+        ),
+        (
+            "Shared does not depend on business contexts",
+            "backend.domain.shared.services",
+            "backend.domain.retrieval.primitives",
+        ),
+        (
+            "Public identifiers do not expose business implementation",
+            "backend.domain.retrieval.identifiers",
+            "backend.domain.retrieval.primitives",
+        ),
+        (
+            "Domain primitives do not depend on value objects, entities, repositories, or services",
+            "backend.domain.retrieval.primitives",
+            "backend.domain.retrieval.value_objects",
+        ),
+        (
+            "Domain value objects do not depend on entities, repositories, or services",
+            "backend.domain.retrieval.value_objects",
+            "backend.domain.retrieval.entities",
+        ),
+        (
+            "Domain entities do not depend on repositories or services",
+            "backend.domain.retrieval.entities",
+            "backend.domain.retrieval.services",
+        ),
+        (
+            "Domain repositories do not depend on services",
+            "backend.domain.retrieval.repositories",
+            "backend.domain.retrieval.services",
+        ),
+    )
+
+    assert {name for name, _, _ in synthetic_violations} == set(contracts)
+    for contract_name, importer, imported in synthetic_violations:
+        graph = copy.deepcopy(base_graph)
+        graph.add_import(importer=importer, imported=imported)
+        check = contracts[contract_name].check(graph, verbose=False)
+        assert not check.kept, (
+            f"{contract_name} が {importer} -> {imported} の違反を検出できていない"
+        )
+
+
+def test_tracked_production_packages_define_init_py() -> None:
+    """Import Linter が追跡する本番パッケージ（4層＋config）で __init__.py の欠落による検査漏れを防ぐ。"""
+    generated = {
+        "__pycache__",
+        ".pytest_cache",
+        ".mypy_cache",
+        ".ruff_cache",
+        ".venv",
+    }
+    tracked_roots = (*LAYER_NAMES, "config")
+    missing: list[str] = []
+
+    for root_name in tracked_roots:
+        root_dir = BACKEND_ROOT / root_name
+        for directory in sorted((root_dir, *root_dir.rglob("*"))):
+            if not directory.is_dir():
+                continue
+            if any(
+                part in generated for part in directory.relative_to(BACKEND_ROOT).parts
+            ):
+                continue
+            if (
+                any(directory.glob("*.py"))
+                and not (directory / "__init__.py").is_file()
+            ):
+                missing.append(directory.relative_to(BACKEND_ROOT).as_posix())
+
+    assert not missing, (
+        "Import Linter の追跡対象パッケージに __init__.py がありません:\n"
+        + "\n".join(missing)
+    )
 
 
 def test_domain_context_files_follow_canonical_flat_structure() -> None:

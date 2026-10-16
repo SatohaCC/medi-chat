@@ -80,6 +80,16 @@ ROOT = Path(__file__).resolve().parents[2]
             False,
         ),
         ({"infrastructure/model.py": "from ..domain.new_one import model"}, False),
+        ({"application/medicine/model.py": "from ..retrieval import model"}, True),
+        ({"application/retrieval/model.py": "from ..medicine import model"}, False),
+        (
+            {"infrastructure/persistence/model.py": "from ..sources import model"},
+            True,
+        ),
+        (
+            {"infrastructure/sources/model.py": "from ..persistence import model"},
+            False,
+        ),
     ],
 )
 def test_import_linter_enforces_configured_contracts(tmp_path, sources, broken):
@@ -101,7 +111,16 @@ def test_import_linter_enforces_configured_contracts(tmp_path, sources, broken):
         "application",
         "application/chat",
         "application/retrieval",
+        "application/medicine",
         "infrastructure",
+        "infrastructure/persistence",
+        "infrastructure/sources",
+        "infrastructure/llm",
+        "infrastructure/intent",
+        "infrastructure/morphology",
+        "infrastructure/pmda_xml",
+        "config",
+        "migrations",
         "presentation",
     ]:
         directory = package / name
@@ -109,6 +128,7 @@ def test_import_linter_enforces_configured_contracts(tmp_path, sources, broken):
         (directory / "__init__.py").write_text("", encoding="utf-8")
         (directory / "model.py").write_text("", encoding="utf-8")
     (package / "domain/json_types.py").write_text("", encoding="utf-8")
+    (package / "main.py").write_text("", encoding="utf-8")
     foundation_primitives = package / "domain/foundation/primitives"
     foundation_primitives.mkdir()
     (foundation_primitives / "__init__.py").write_text("", encoding="utf-8")

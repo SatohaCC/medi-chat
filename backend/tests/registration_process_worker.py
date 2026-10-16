@@ -10,13 +10,13 @@ import sys
 import time
 from pathlib import Path
 
+from backend.infrastructure.persistence.attachment_import_store import (
+    FileAttachmentImportStore,
+)
 from backend.infrastructure.persistence.registration_publisher import (
     SqliteRegistrationPublisher,
 )
 from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
-from backend.infrastructure.sources.attachment_import_store import (
-    FileAttachmentImportStore,
-)
 
 
 def main():

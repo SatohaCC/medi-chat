@@ -1,3 +1,5 @@
+"""登録原本と生成物を不変ファイルとして永続保存するadapter。"""
+
 import hashlib
 import json
 import os
@@ -77,7 +79,7 @@ class FileAttachmentImportStore:
             ):
                 raise ValueError("saved identity differs")
             return result
-        except (OSError, ValueError, TypeError, KeyError):
+        except OSError, ValueError, TypeError, KeyError:
             raise ImportConflict(
                 "storage_conflict", "Stored import is inconsistent"
             ) from None

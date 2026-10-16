@@ -182,10 +182,10 @@ def _register(args: argparse.Namespace) -> int:
     from ...config.database_settings import resolve_database_settings
     from ...config.import_settings import resolve_import_directory
     from ..composition.index_verifier import verify_schema_readiness
+    from ..persistence.attachment_import_store import FileAttachmentImportStore
     from ..persistence.registration_publisher import SqliteRegistrationPublisher
     from ..pmda_xml.decoder import PmdaXmlDecoder
     from ..pmda_xml.safe_parser import parse_source
-    from ..sources.attachment_import_store import FileAttachmentImportStore
 
     if args.output_dir is not None:
         print(

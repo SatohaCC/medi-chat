@@ -9,13 +9,13 @@ from pathlib import Path
 from ...application.attachment_import.import_errors import AttachmentImportError
 from ..composition.index_verifier import verify_schema_readiness
 from ..package_insert_definitions.loader import get_package_insert_definitions
+from ..persistence.attachment_import_store import FileAttachmentImportStore
 from ..persistence.registration_publisher import (
     RegistrationInput,
     SqliteRegistrationPublisher,
 )
 from ..pmda_xml.decoder import PmdaXmlDecoder
 from ..pmda_xml.safe_parser import parse_source
-from ..sources.attachment_import_store import FileAttachmentImportStore
 
 
 def main() -> int:
