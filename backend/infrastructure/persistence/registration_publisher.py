@@ -31,17 +31,15 @@ from ...application.indexing.attachment_projection import (
     project_attachment,
 )
 from ...application.indexing.index_models import SourceSnapshot
-from ...domain.attachment.entities import AttachmentRegistration
-from ...domain.attachment.exceptions import MissingOrInvalidYjError
+from ...domain.attachment.exceptions import (
+    MissingOrInvalidYjError,
+    MissingRevisionError,
+)
 from ...domain.attachment.identifiers import (
     ArtifactFileId,
-    DocumentId,
     DocumentVersionId,
 )
-from ...domain.attachment.primitives import AttachmentSha256, RegistrationSequence
 from ...domain.attachment.value_objects import (
-    ActiveRegistration,
-    RegistrationReceipt,
     RegistrationVersion,
 )
 from ...domain.medicine.identifiers import YjCode
@@ -61,6 +59,7 @@ from . import registration_schema as registration
 from .index_writer import SqlAlchemyIndexWriter
 from .registration_attempt import RegistrationAttempt
 from .registration_lock import registration_lock
+from .revision_selection import assign_latest, validate_active_revisions
 from .sqlite_engine import create_sqlite_engine
 
 
@@ -78,38 +77,18 @@ def _dump(value: object) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True)
 
 
-def _load_registry(connection: Connection) -> AttachmentRegistration:
-    receipts = []
-    for row in connection.execute(
-        select(registration.registration_receipts).order_by(
-            registration.registration_receipts.c.sequence
-        )
-    ).mappings():
-        receipts.append(
-            RegistrationReceipt(
-                version=RegistrationVersion(
-                    document_id=DocumentId(row["document_id"]),
-                    source_sha256=AttachmentSha256(row["source_sha256"]),
-                    yj_codes=frozenset(
-                        YjCode(code) for code in json.loads(row["yj_codes_json"])
-                    ),
-                    owned_file_ids=frozenset(
-                        ArtifactFileId(file["path"])
-                        for file in json.loads(row["files_json"])
-                    ),
-                ),
-                sequence=RegistrationSequence(row["sequence"]),
-                replaced_yj_codes=frozenset(
-                    YjCode(code) for code in json.loads(row["replaced_json"])
-                ),
-                artifacts_deleted=bool(row["artifacts_deleted"]),
-            )
-        )
-    active = frozenset(
-        ActiveRegistration(YjCode(row.yj_code), DocumentVersionId(row.version_id))
+def _load_active(connection: Connection) -> dict[YjCode, RegistrationVersion]:
+    records = {
+        row["version_id"]: dict(row)
+        for row in connection.execute(
+            select(registration.registration_receipts)
+        ).mappings()
+    }
+    assigned = {
+        row.yj_code: row.version_id
         for row in connection.execute(select(registration.active_registrations))
-    )
-    return AttachmentRegistration(receipts=tuple(receipts), active=active)
+    }
+    return validate_active_revisions(records, assigned)
 
 
 class SqliteRegistrationPublisher:
@@ -213,28 +192,12 @@ class SqliteRegistrationPublisher:
                 "Every listed product must have a valid YJ code",
                 phase="validation",
             ) from None
-        if initial:
-            targets: dict[str, list[str]] = {}
-            for item in inputs:
-                version = registration_version(item.decoded.document)
-                for code in version.yj_codes:
-                    targets.setdefault(code.value, []).append(version.version_id.value)
-            conflicts = {
-                code: sorted(set(versions))
-                for code, versions in targets.items()
-                if len(set(versions)) > 1
-            }
-            if conflicts:
-                error = ImportConflict(
-                    "conflicting_existing_registration",
-                    "Existing documents contain conflicting YJ registrations",
-                    phase="publication",
-                )
-                error.conflicts = tuple(
-                    (code, tuple(versions))
-                    for code, versions in sorted(conflicts.items())
-                )
-                raise error
+        except MissingRevisionError as exc:
+            raise InvalidAttachment(
+                "missing_revision",
+                "A revision month is required to select the latest document",
+                phase="validation",
+            ) from exc
         engine = self._engine()
         phase = "artifact"
         attempt: RegistrationAttempt | None = None
@@ -243,7 +206,7 @@ class SqliteRegistrationPublisher:
             with self._lock(check_cancel):
                 attempt = RegistrationAttempt(self.store.root)
                 with engine.connect() as connection:
-                    before = _load_registry(connection)
+                    before = _load_active(connection)
                     records = {
                         row["version_id"]: dict(row)
                         for row in connection.execute(
@@ -263,11 +226,30 @@ class SqliteRegistrationPublisher:
                 after = before
                 newly = []
                 requested = []
+                seen = set(records)
+                for item in inputs:
+                    identity = registration_version(
+                        item.decoded.document
+                    ).version_id.value
+                    requested.append((identity, identity in seen))
+                    seen.add(identity)
+                ordered = sorted(
+                    inputs,
+                    key=lambda item: (
+                        registration_version(item.decoded.document).revised_at.value
+                    ),
+                    reverse=True,
+                )
+                # Reject a batch conflict before writing any artifact. Newest first
+                # also avoids treating ambiguity among obsolete versions as latest.
+                planned = dict(before)
+                for item in ordered:
+                    planned = assign_latest(
+                        planned, registration_version(item.decoded.document)
+                    )
                 for item in inputs:
                     version = registration_version(item.decoded.document)
-                    proposal = after.propose(version)
-                    requested.append((version.version_id.value, proposal.reused))
-                    if proposal.reused:
+                    if version.version_id.value in records:
                         continue
                     check_cancel()
                     info = item.decoded.source_info
@@ -336,34 +318,39 @@ class SqliteRegistrationPublisher:
                                 phase="artifact",
                             )
                     files = self._owned(owned_paths)
-                    version = replace(
-                        version,
-                        owned_file_ids=frozenset(
-                            ArtifactFileId(file["path"]) for file in files
-                        ),
+                    previous = after
+                    # Receipts follow input order; only the prevalidated batch
+                    # winners may change publication, even for obsolete ties.
+                    after = {
+                        **after,
+                        **{
+                            code: version
+                            for code in version.yj_codes
+                            if planned[code].version_id == version.version_id
+                        },
+                    }
+                    replaced_codes = frozenset(
+                        code
+                        for code in version.yj_codes
+                        if code in previous
+                        and after[code].version_id != previous[code].version_id
                     )
-                    proposal = after.propose(version)
-                    after = after.commit(proposal)
                     cleanup_targets = sorted(
-                        {
-                            item.version_id.value
-                            for item in proposal.before.active
-                            if item.yj_code in proposal.receipt.replaced_yj_codes
-                        }
+                        {previous[code].version_id.value for code in replaced_codes}
                     )
                     record = {
                         "version_id": version.version_id.value,
                         "document_id": version.document_id.value,
                         "source_sha256": version.source_sha256.value,
-                        "sequence": proposal.receipt.sequence.value,
+                        "sequence": max(
+                            (row["sequence"] for row in records.values()), default=0
+                        )
+                        + 1,
                         "yj_codes_json": _dump(
                             sorted(code.value for code in version.yj_codes)
                         ),
                         "replaced_json": _dump(
-                            sorted(
-                                code.value
-                                for code in proposal.receipt.replaced_yj_codes
-                            )
+                            sorted(code.value for code in replaced_codes)
                         ),
                         "result_json": _dump(result_dict(bundle.result)),
                         "document_payload_json": _dump(
@@ -379,18 +366,23 @@ class SqliteRegistrationPublisher:
                     newly.append(record)
                     self.fault("artifacts")
                 if newly:
-                    phase = "projection"
-                    generation_id = uuid.uuid4().hex
-                    snapshot, generation_files = self._build(
-                        after, records, generation_id, check_cancel, attempt
-                    )
-                    self.fault("index")
-                    if len(
-                        {medicine.yj_code for medicine in snapshot.medicines}
-                    ) != len(snapshot.medicines):
-                        raise ValueError("candidate YJ must be unique")
-                    self.fault("candidates")
-                    check_cancel()
+                    changed = after != before
+                    snapshot: SourceSnapshot | None = None
+                    generation_id: str | None = None
+                    generation_files: list[dict[str, str]] = []
+                    if changed:
+                        phase = "projection"
+                        generation_id = uuid.uuid4().hex
+                        snapshot, generation_files = self._build(
+                            after, records, generation_id, check_cancel, attempt
+                        )
+                        self.fault("index")
+                        if len(
+                            {medicine.yj_code for medicine in snapshot.medicines}
+                        ) != len(snapshot.medicines):
+                            raise ValueError("candidate YJ must be unique")
+                        self.fault("candidates")
+                        check_cancel()
                     phase = "publication"
                     with engine.begin() as connection:
                         self.fault("transaction")
@@ -417,35 +409,39 @@ class SqliteRegistrationPublisher:
                                         "sha256": file["sha256"],
                                     },
                                 )
-                        connection.execute(delete(registration.active_registrations))
-                        connection.execute(
-                            insert(registration.active_registrations),
-                            [
+                        if changed:
+                            assert snapshot is not None and generation_id is not None
+                            connection.execute(
+                                delete(registration.active_registrations)
+                            )
+                            connection.execute(
+                                insert(registration.active_registrations),
+                                [
+                                    {
+                                        "yj_code": code.value,
+                                        "version_id": version.version_id.value,
+                                    }
+                                    for code, version in after.items()
+                                ],
+                            )
+                            serialized = self._snapshot_value(snapshot, after)
+                            connection.execute(
+                                insert(registration.registration_generations),
                                 {
-                                    "yj_code": active.yj_code.value,
-                                    "version_id": active.version_id.value,
-                                }
-                                for active in after.active
-                            ],
-                        )
-                        serialized = self._snapshot_value(snapshot, after)
-                        connection.execute(
-                            insert(registration.registration_generations),
-                            {
-                                "generation_id": generation_id,
-                                "snapshot_json": _dump(serialized),
-                                "fingerprint": snapshot.fingerprint,
-                                "files_json": _dump(generation_files),
-                            },
-                        )
-                        SqlAlchemyIndexWriter(engine).replace_in_transaction(
-                            connection, snapshot
-                        )
-                        connection.execute(delete(registration.registration_state))
-                        connection.execute(
-                            insert(registration.registration_state),
-                            {"singleton": 1, "generation_id": generation_id},
-                        )
+                                    "generation_id": generation_id,
+                                    "snapshot_json": _dump(serialized),
+                                    "fingerprint": snapshot.fingerprint,
+                                    "files_json": _dump(generation_files),
+                                },
+                            )
+                            SqlAlchemyIndexWriter(engine).replace_in_transaction(
+                                connection, snapshot
+                            )
+                            connection.execute(delete(registration.registration_state))
+                            connection.execute(
+                                insert(registration.registration_state),
+                                {"singleton": 1, "generation_id": generation_id},
+                            )
                         self.fault("commit")
                         check_cancel()
                     published = True
@@ -478,15 +474,15 @@ class SqliteRegistrationPublisher:
 
     def _build(
         self,
-        registry: AttachmentRegistration,
+        active_versions: dict[YjCode, RegistrationVersion],
         records: dict[str, dict[str, Any]],
         generation_id: str,
         check_cancel: Callable[[], None],
         attempt: RegistrationAttempt,
     ) -> tuple[SourceSnapshot, list[dict[str, str]]]:
         active: dict[str, set[YjCode]] = {}
-        for item in registry.active:
-            active.setdefault(item.version_id.value, set()).add(item.yj_code)
+        for code, version in active_versions.items():
+            active.setdefault(version.version_id.value, set()).add(code)
         documents = {}
         medicines = []
         units = []
@@ -562,10 +558,12 @@ class SqliteRegistrationPublisher:
 
     @staticmethod
     def _snapshot_value(
-        snapshot: SourceSnapshot, registry: AttachmentRegistration
+        snapshot: SourceSnapshot, active_versions: dict[YjCode, RegistrationVersion]
     ) -> dict[str, Any]:
         return {
-            "version_ids": sorted({item.version_id.value for item in registry.active}),
+            "version_ids": sorted(
+                {version.version_id.value for version in active_versions.values()}
+            ),
             "documents": [
                 {"document_id": doc.document_id, "payload": doc.payload}
                 for doc in snapshot.documents
@@ -605,7 +603,7 @@ class SqliteRegistrationPublisher:
                         )
                     )
         with engine.connect() as connection:
-            registry = _load_registry(connection)
+            active_versions = _load_active(connection)
             lease_generations = set(
                 connection.execute(
                     select(registration.generation_leases.c.generation_id)
@@ -623,14 +621,36 @@ class SqliteRegistrationPublisher:
                     DocumentVersionId(version)
                     for version in json.loads(snapshot)["version_ids"]
                 )
-            eligible = registry.deletable_versions(frozenset(protected))
-            removable = registry.deletable_files(frozenset(protected))
             records = {
                 row["version_id"]: dict(row)
                 for row in connection.execute(
                     select(registration.registration_receipts)
                 ).mappings()
             }
+            protected_versions = {
+                version.version_id for version in active_versions.values()
+            } | protected
+            eligible = frozenset(
+                DocumentVersionId(identity)
+                for identity, record in records.items()
+                if not record["artifacts_deleted"]
+                and DocumentVersionId(identity) not in protected_versions
+            )
+            # File ownership/leases are storage lifecycle rules, not a document aggregate.
+            removable = frozenset(
+                ArtifactFileId(file["path"])
+                for identity, record in records.items()
+                if DocumentVersionId(identity) in eligible
+                for file in json.loads(record["files_json"])
+            )
+            retained = frozenset(
+                ArtifactFileId(file["path"])
+                for identity, record in records.items()
+                if DocumentVersionId(identity) not in eligible
+                and not record["artifacts_deleted"]
+                for file in json.loads(record["files_json"])
+            )
+            removable -= retained
             owned = {
                 (row.version_id, row.file_id): (row.root, row.sha256)
                 for row in connection.execute(
@@ -638,7 +658,7 @@ class SqliteRegistrationPublisher:
                 )
             }
         inactive_protected = protected.difference(
-            item.version_id for item in registry.active
+            version.version_id for version in active_versions.values()
         )
         if inactive_protected:
             with engine.begin() as connection:
@@ -848,6 +868,8 @@ class SqliteRegistrationPublisher:
         try:
             with self._lock(lambda: None):
                 recover_sqlite_journal(self.index_path, locked=True)
+                with engine.connect() as connection:
+                    _load_active(connection)
                 if read_registered_snapshot(self.index_path) is None:
                     raise RuntimeError("initial_registration_required")
                 self._cleanup(engine)

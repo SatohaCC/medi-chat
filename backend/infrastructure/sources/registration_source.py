@@ -4,9 +4,13 @@ import sqlite3
 from contextlib import closing
 from pathlib import Path
 
+from backend.application.medicine.product_models import RegisteredMedicine
+from backend.domain.attachment.value_objects import MedicineDocumentReference
+from backend.domain.medicine.entities import MedicineProduct
+
+from ...application.attachment_import.import_errors import ImportConflict
 from ...application.indexing.index_errors import IndexSourceError
 from ...application.indexing.index_models import IndexDocument, SourceSnapshot
-from ...domain.attachment.entities import AttachmentProductRecord
 from ...domain.attachment.identifiers import DocumentId
 from ...domain.attachment.primitives import PmdaUrl
 from ...domain.attachment.value_objects import AttachmentProductRevision
@@ -14,6 +18,7 @@ from ...domain.medicine.identifiers import YjCode
 from ..index_payloads import build_index_unit
 from ..json_payloads import parse_json_object
 from ..persistence.owned_sqlite import OwnedSqliteConnection
+from ..persistence.revision_selection import validate_active_revisions
 
 
 def _checked_file(file: dict[str, str]) -> bytes:
@@ -58,6 +63,20 @@ def read_registered_snapshot(index_path: Path) -> SourceSnapshot | None:
             ).fetchone()
             if not state:
                 return None
+            receipts = {
+                row["version_id"]: dict(row)
+                for row in connection.execute("SELECT * FROM registration_receipts")
+            }
+            assigned = {
+                row[0]: row[1]
+                for row in connection.execute(
+                    "SELECT yj_code,version_id FROM active_registrations"
+                )
+            }
+            try:
+                validate_active_revisions(receipts, assigned)
+            except ImportConflict as exc:
+                raise IndexSourceError(exc.code) from exc
             generation = connection.execute(
                 "SELECT * FROM registration_generations WHERE generation_id=?",
                 (state[0],),
@@ -103,15 +122,19 @@ def read_registered_snapshot(index_path: Path) -> SourceSnapshot | None:
                 raise IndexSourceError("Published artifact fingerprint differs")
             value = json.loads(generation["snapshot_json"])
             medicines = tuple(
-                AttachmentProductRecord(
-                    document_id=DocumentId(item["document_id"]),
-                    yj_code=YjCode(item["yj_code"]) if item["yj_code"] else None,
-                    brand_name=item["brand_name"],
-                    generic_name=item["generic_name"],
-                    english_name=item["english_name"],
-                    hiragana_name=item["hiragana_name"],
-                    pmda_url=PmdaUrl(item["pmda_url"]),
-                    revision=AttachmentProductRevision(item["revision"]),
+                RegisteredMedicine(
+                    medicine=MedicineProduct(
+                        yj_code=YjCode(item["yj_code"]) if item["yj_code"] else None,
+                        brand_name=item["brand_name"],
+                        generic_name=item["generic_name"],
+                        english_name=item["english_name"],
+                        hiragana_name=item["hiragana_name"],
+                    ),
+                    reference=MedicineDocumentReference(
+                        document_id=DocumentId(item["document_id"]),
+                        pmda_url=PmdaUrl(item["pmda_url"]),
+                        revision=AttachmentProductRevision(item["revision"]),
+                    ),
                 )
                 for item in value["medicines"]
             )

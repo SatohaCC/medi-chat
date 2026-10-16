@@ -27,7 +27,7 @@ from backend.tests.test_active_attachment_projection import mixed_source
 from backend.tests.test_alembic_migrations import _migrate_database
 
 
-def source(body, codes=("111111111111",), *, doc="test"):
+def source(body, codes=("111111111111",), *, doc="test", revised_at="2026-10"):
     from backend.tests.attachment_import_fixtures import xml_source
 
     value = xml_source(
@@ -42,7 +42,7 @@ def source(body, codes=("111111111111",), *, doc="test"):
             b"</ApprovalEtc>",
             f'<DetailBrandName id="B"><ApprovalBrandName><Lang>B薬</Lang></ApprovalBrandName><BrandCode><YJCode>{codes[1]}</YJCode></BrandCode></DetailBrandName></ApprovalEtc>'.encode(),
         )
-    return value
+    return value.replace(b"2026-10", revised_at.encode())
 
 
 @pytest.fixture
@@ -72,7 +72,7 @@ def test_tc091_deleted_receipt_retains_no_document_body(publisher):
     old = source("原文をreceiptに残さない")
     publish(publisher, old)
     old_id = f"000001_test:{hashlib.sha256(old).hexdigest()}"
-    publish(publisher, source("更新した原文"))
+    publish(publisher, source("更新した原文", revised_at="2026-11"))
     with sqlite3.connect(publisher.index_path) as connection:
         row = connection.execute(
             "SELECT * FROM registration_receipts WHERE version_id=?", (old_id,)
@@ -134,7 +134,7 @@ def test_tc085_086_093_real_publish_partial_b_keeps_distinct_sha_and_projection(
 ):
     o = mixed_source()
     first = publish(publisher, o)
-    n = source("新版A", doc="test")
+    n = source("新版A", doc="test", revised_at="2026-11")
     result = publish(publisher, n)
     assert first.status == result.status == "registered"
     assert result.search_index_updated is True
@@ -185,7 +185,7 @@ def test_tc097_prepublication_failure_preserves_all_tables_and_old_files(
             raise OSError("fixed fault")
 
     publisher.fault = fail
-    n = source("新版失敗", ("111111111111", "222222222222"))
+    n = source("新版失敗", ("111111111111", "222222222222"), revised_at="2026-11")
     with pytest.raises(ImportStorageError):
         publish(publisher, n)
     assert snapshot(publisher) == before
@@ -212,7 +212,7 @@ def test_tc098_cancel_before_and_after_publication(publisher, phase):
             raise ImportCancelled()
 
     publisher.fault = fault
-    new = source("取消時の新版本文")
+    new = source("取消時の新版本文", revised_at="2026-11")
     if phase == "commit":
         with pytest.raises(ImportCancelled):
             publisher.publish(
@@ -274,9 +274,9 @@ def test_tc104_cleanup_preserves_shared_figure_and_unowned_files(publisher):
         ),
         initial=True,
     )
-    publish(publisher, source("Aのみ更新"))
+    publish(publisher, source("Aのみ更新", revised_at="2026-11"))
     assert old_path.exists() and exclusive.exists()
-    publish(publisher, source("Bも更新", ("222222222222",)))
+    publish(publisher, source("Bも更新", ("222222222222",), revised_at="2026-11"))
     assert not old_path.exists() and not exclusive.exists()
     assert shared.read_bytes() == b"<svg>shared</svg>"
     assert other_path.read_bytes() == other
@@ -290,7 +290,7 @@ def test_tc090_102_cleanup_failure_retry_does_not_republish_or_restore_receipt(
     first = publish(publisher, o)
     before = publisher.store.read(first_document_id(first), first.source_sha256)
     assert before.status == "stored" and not before.search_index_updated
-    n = source("新版本文")
+    n = source("新版本文", revised_at="2026-11")
     original = Path.unlink
 
     def fail(path, *args, **kwargs):
@@ -332,7 +332,7 @@ def test_tc116_active_fingerprint_reloads_actual_inputs_and_ignores_inactive_cle
     publisher,
 ):
     old = source("旧版")
-    new = source("新版")
+    new = source("新版", revised_at="2026-11")
     publish(publisher, old)
     published = publish(publisher, new)
     first = read_registered_snapshot(publisher.index_path)
@@ -394,7 +394,7 @@ def test_tc103_cleanup_refuses_untrusted_manifest_entries_and_preserves_sentinel
             "UPDATE registration_receipts SET files_json=? WHERE sequence=1",
             (json.dumps(files),),
         )
-    new = publish(publisher, source("新版"))
+    new = publish(publisher, source("新版", revised_at="2026-11"))
     assert new.status == "registered_cleanup_pending"
     assert new.cleanup_pending == (
         (f"000001_test:{hashlib.sha256(old).hexdigest()}", "unowned_file"),
@@ -406,13 +406,17 @@ def test_tc103_cleanup_refuses_untrusted_manifest_entries_and_preserves_sentinel
 
 @pytest.mark.parametrize("separate_yj", [False, True])
 @pytest.mark.parametrize("entrypoints", ["publisher", "cli_api"])
-def test_tc100_101_real_process_publish_uses_commit_order_and_keeps_other_yj(
+def test_tc100_101_real_process_publish_uses_revision_dates_and_keeps_other_yj(
     publisher, tmp_path, separate_yj, entrypoints
 ):
     old = source("旧A+B", ("111111111111", "222222222222"))
     publish(publisher, old)
-    n = source("先parse後commit", ("111111111111",))
-    p = source("後parse先commit", ("222222222222" if separate_yj else "111111111111",))
+    n = source("先parse後commit", ("111111111111",), revised_at="2026-12")
+    p = source(
+        "後parse先commit",
+        ("222222222222" if separate_yj else "111111111111",),
+        revised_at="2026-11",
+    )
     env = os.environ.copy()
     env["PYTHON_DOTENV_DISABLED"] = "1"
     for key in (

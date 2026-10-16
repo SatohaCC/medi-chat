@@ -9,7 +9,8 @@ from contextlib import closing
 from pathlib import Path
 
 import pytest
-from backend.domain.attachment.value_objects import AttachmentProductMatch
+from backend.application.medicine.product_models import ResolvedMedicine
+from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.domain.retrieval.primitives import DetectionSource, SearchKeyword
 from backend.domain.retrieval.value_objects import Evidence, SearchCriteria
 from backend.infrastructure.persistence.evidence_reader import SqlAlchemyEvidenceReader
@@ -146,10 +147,12 @@ def test_two_character_search_matches_legacy_instr(
     legacy_ids = tuple(unit["unit_id"] for unit in legacy_units)
     assert legacy_ids == expected_ids
     medicines = (
-        AttachmentProductMatch(
-            generic_name="テスト成分",
-            brand_names=("テスト薬",),
-            yj_codes=("1234567A0000",),
+        ResolvedMedicine(
+            medicine=DomainMedicineMatch(
+                generic_name="テスト成分",
+                brand_names=("テスト薬",),
+                yj_codes=("1234567A0000",),
+            ),
             document_ids=("test_001",),
         ),
     )
@@ -259,10 +262,12 @@ def test_trigram_search_and_tie_break_match_baseline(
             json.dumps({"keyword": keyword, "legacy_ranks": ranks}, ensure_ascii=False)
         )
     medicines = (
-        AttachmentProductMatch(
-            generic_name="テスト成分",
-            brand_names=("テスト薬",),
-            yj_codes=("1234567A0000",),
+        ResolvedMedicine(
+            medicine=DomainMedicineMatch(
+                generic_name="テスト成分",
+                brand_names=("テスト薬",),
+                yj_codes=("1234567A0000",),
+            ),
             document_ids=("test_001",),
         ),
     )

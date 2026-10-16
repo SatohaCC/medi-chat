@@ -8,7 +8,9 @@ from pathlib import Path
 from alembic.runtime.migration import MigrationContext
 from sqlalchemy import MetaData, Table, select, text
 
-from ...domain.attachment.value_objects import AttachmentProductMatch
+from backend.application.medicine.product_models import ResolvedMedicine
+from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
+
 from ...domain.retrieval.primitives import (
     DetectionSource,
     SearchKeyword,
@@ -135,10 +137,10 @@ def read_legacy_migration_snapshot(
                     engine, workers=workers
                 ).read_medicines()
                 matches = (
-                    AttachmentProductMatch(
-                        generic_name="",
-                        brand_names=(),
-                        yj_codes=(),
+                    ResolvedMedicine(
+                        medicine=DomainMedicineMatch(
+                            generic_name="", brand_names=(), yj_codes=()
+                        ),
                         document_ids=tuple(
                             dict.fromkeys(
                                 medicine.document_id.value for medicine in medicines

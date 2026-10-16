@@ -1,7 +1,10 @@
 """純粋な構造化JSONから索引値と検索用文字列を組み立てる。"""
 
+from backend.application.medicine.product_models import RegisteredMedicine
+from backend.domain.attachment.value_objects import MedicineDocumentReference
+from backend.domain.medicine.entities import MedicineProduct
+
 from ..application.indexing.index_models import IndexDocument, IndexUnit
-from ..domain.attachment.entities import AttachmentProductRecord
 from ..domain.attachment.identifiers import DocumentId
 from ..domain.attachment.primitives import PmdaUrl
 from ..domain.attachment.value_objects import AttachmentProductRevision
@@ -56,7 +59,7 @@ def build_index_unit(payload: dict[str, JsonValue], document_id: str) -> IndexUn
 
 def build_index_document(
     payload: dict[str, JsonValue],
-) -> tuple[IndexDocument, list[AttachmentProductRecord]]:
+) -> tuple[IndexDocument, list[RegisteredMedicine]]:
     metadata = _object(payload.get("document") or {})
     source = _object(payload.get("source") or {})
     company = metadata.get("company_identifier")
@@ -64,23 +67,29 @@ def build_index_document(
     if not company or not insert_no:
         raise ValueError("Missing package insert number in document JSON")
     document_id = f"{company}_{insert_no}"
-    medicines: list[AttachmentProductRecord] = []
+    medicines: list[RegisteredMedicine] = []
     revisions = _objects(metadata.get("revisions") or [])
     revision = revisions[-1] if revisions else {}
     for product in _objects(metadata.get("products") or []):
         yj_code = product.get("yj_code")
         medicines.append(
-            AttachmentProductRecord(
-                document_id=DocumentId(document_id),
-                yj_code=YjCode(_string(yj_code)) if yj_code is not None else None,
-                brand_name=_string(product.get("brand_name") or ""),
-                generic_name=_string(metadata.get("generic_name") or ""),
-                english_name=_string(product.get("english_name") or ""),
-                hiragana_name=_string(product.get("hiragana_name") or ""),
-                pmda_url=PmdaUrl(
-                    _string(source.get("pmda_url") or metadata.get("pmda_url") or "")
+            RegisteredMedicine(
+                medicine=MedicineProduct(
+                    yj_code=YjCode(_string(yj_code)) if yj_code is not None else None,
+                    brand_name=_string(product.get("brand_name") or ""),
+                    generic_name=_string(metadata.get("generic_name") or ""),
+                    english_name=_string(product.get("english_name") or ""),
+                    hiragana_name=_string(product.get("hiragana_name") or ""),
                 ),
-                revision=AttachmentProductRevision(revision),
+                reference=MedicineDocumentReference(
+                    document_id=DocumentId(document_id),
+                    pmda_url=PmdaUrl(
+                        _string(
+                            source.get("pmda_url") or metadata.get("pmda_url") or ""
+                        )
+                    ),
+                    revision=AttachmentProductRevision(revision),
+                ),
             )
         )
     return IndexDocument(document_id, payload), medicines

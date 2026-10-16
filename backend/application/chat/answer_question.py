@@ -2,7 +2,8 @@
 
 from collections.abc import Callable, Sequence
 
-from ...domain.attachment.repositories import AttachmentProductRepository
+from backend.application.medicine.product_contracts import RegisteredMedicineReader
+
 from ...domain.retrieval.repositories import EvidenceRepository
 from ...domain.retrieval.value_objects import IntentPolicy
 from ..retrieval.intent_contracts import IntentClassifier
@@ -20,7 +21,7 @@ async def answer_question(
     conversation: Sequence[ChatMessage],
     product_yj_codes: list[str],
     *,
-    medicine_reader: AttachmentProductRepository,
+    medicine_reader: RegisteredMedicineReader,
     evidence_reader: EvidenceRepository,
     intent_classifier: IntentClassifier,
     keyword_extractor: KeywordExtractor,

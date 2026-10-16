@@ -5,17 +5,23 @@ from contextlib import suppress
 from copy import deepcopy
 
 import pytest
-from backend.application.indexing.medicine_catalog import _ProductGroup
-from backend.domain.attachment.entities import AttachmentProductRecord
+from backend.application.medicine.product_catalog import _ProductGroup
+from backend.application.medicine.product_models import (
+    RegisteredMedicine,
+    ResolvedMedicine,
+)
 from backend.domain.attachment.identifiers import DocumentId
-from backend.domain.attachment.primitives import PmdaUrl, ProductGroupId
+from backend.domain.attachment.primitives import PmdaUrl
 from backend.domain.attachment.value_objects import (
-    AttachmentProductMatch,
     AttachmentProductRevision,
+    MedicineDocumentReference,
 )
 from backend.domain.foundation.exceptions import DomainValidationError
 from backend.domain.json_types import JsonValue
+from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.primitives import ProductGroupId
+from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.domain.retrieval.primitives import DetectionSource, Probability
 from backend.tests.test_evidence_collection import make_evidence
 
@@ -38,10 +44,12 @@ def test_domain_primitives_validate_and_remain_immutable():
 
 def test_medicine_match_is_a_deeply_immutable_value_object():
     brand_names = ["商品"]
-    match = AttachmentProductMatch(
-        generic_name="成分",
-        brand_names=tuple(brand_names),
-        yj_codes=("1234567A0000",),
+    match = ResolvedMedicine(
+        medicine=DomainMedicineMatch(
+            generic_name="成分",
+            brand_names=tuple(brand_names),
+            yj_codes=("1234567A0000",),
+        ),
         document_ids=("document",),
     )
     brand_names.append("後から追加")
@@ -52,15 +60,19 @@ def test_medicine_match_is_a_deeply_immutable_value_object():
 
 
 def test_medicine_group_keeps_aggregate_state_private():
-    medicine = AttachmentProductRecord(
-        document_id=DocumentId("document"),
-        yj_code=YjCode("1234567A0000"),
-        brand_name="商品",
-        generic_name="成分",
-        english_name="",
-        hiragana_name="",
-        pmda_url=PmdaUrl("https://example.test"),
-        revision=AttachmentProductRevision({}),
+    medicine = RegisteredMedicine(
+        medicine=MedicineProduct(
+            yj_code=YjCode("1234567A0000"),
+            brand_name="商品",
+            generic_name="成分",
+            english_name="",
+            hiragana_name="",
+        ),
+        reference=MedicineDocumentReference(
+            document_id=DocumentId("document"),
+            pmda_url=PmdaUrl("https://example.test"),
+            revision=AttachmentProductRevision({}),
+        ),
     )
     group = _ProductGroup(
         ingredient_id=ProductGroupId("成分"),
@@ -84,15 +96,19 @@ def test_medicine_revision_is_independent_of_input_and_public_output():
     }
     expected = deepcopy(payload)
     medicines = [
-        AttachmentProductRecord(
-            document_id=DocumentId("自由なID"),
-            yj_code=None,
-            brand_name="",
-            generic_name="",
-            english_name="",
-            hiragana_name="",
-            pmda_url=PmdaUrl("https://example.test"),
-            revision=AttachmentProductRevision(payload),
+        RegisteredMedicine(
+            medicine=MedicineProduct(
+                yj_code=None,
+                brand_name="",
+                generic_name="",
+                english_name="",
+                hiragana_name="",
+            ),
+            reference=MedicineDocumentReference(
+                document_id=DocumentId("自由なID"),
+                pmda_url=PmdaUrl("https://example.test"),
+                revision=AttachmentProductRevision(payload),
+            ),
         )
         for _ in range(2)
     ]
@@ -149,7 +165,7 @@ def test_evidence_nested_values_are_independent_of_input_and_output(field, paylo
             actual.clear()
         else:
             actual.clear()
-    except (TypeError, AttributeError):
+    except TypeError, AttributeError:
         pass
     next_output = getattr(first, field)
     assert (

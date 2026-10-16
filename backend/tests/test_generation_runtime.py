@@ -10,7 +10,8 @@ import threading
 import time
 
 import pytest
-from backend.domain.attachment.value_objects import AttachmentProductMatch
+from backend.application.medicine.product_models import ResolvedMedicine
+from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.domain.retrieval.primitives import DetectionSource, SearchSectionCode
 from backend.domain.retrieval.value_objects import SearchCriteria
 from backend.infrastructure.persistence.evidence_reader import SqlAlchemyEvidenceReader
@@ -25,11 +26,14 @@ from backend.tests.test_registration_publisher import publisher as publisher
 def test_tc094_doc_id_only_does_not_leak_old_b_into_requested_new_a(publisher):
     old = source("旧B原文", ("111111111111", "222222222222"))
     publish(publisher, old)
-    new = source("新A原文")
+    new = source("新A原文", revised_at="2026-11")
     publish(publisher, new)
     engine = create_readonly_engine(publisher.index_path)
     try:
-        target = AttachmentProductMatch("", (), ("111111111111",), ("000001_test",))
+        target = ResolvedMedicine(
+            medicine=DomainMedicineMatch("", (), ("111111111111",), ()),
+            document_ids=("000001_test",),
+        )
         rows = SqlAlchemyEvidenceReader(engine)._search(
             SearchCriteria(
                 source=DetectionSource.LOGIC, section_codes=(SearchSectionCode("1"),)
@@ -59,8 +63,10 @@ async def test_tc095_096_104_live_lease_pins_old_products_and_body_until_exit(
     try:
         async with runtime.acquire() as snap:
             assert snap.generation_id.value == first.generation_id
-            publish(publisher, source("新A原文"))
-            final = publish(publisher, source("新B原文", ("222222222222",)))
+            publish(publisher, source("新A原文", revised_at="2026-11"))
+            final = publish(
+                publisher, source("新B原文", ("222222222222",), revised_at="2026-11")
+            )
             assert old_path.read_bytes() == old
             assert final.status == "registered_cleanup_pending"
             assert final.cleanup_pending == (
@@ -71,7 +77,10 @@ async def test_tc095_096_104_live_lease_pins_old_products_and_body_until_exit(
                 "111111111111",
                 "222222222222",
             }
-            target = AttachmentProductMatch("", (), ("111111111111",), ("000001_test",))
+            target = ResolvedMedicine(
+                medicine=DomainMedicineMatch("", (), ("111111111111",), ()),
+                document_ids=("000001_test",),
+            )
             rows = await snap.evidence_reader.search(
                 SearchCriteria(
                     source=DetectionSource.LOGIC,
@@ -158,7 +167,7 @@ def test_tc099_115_real_live_owner_survives_recovery_dead_owner_reaped(
             assert child.poll() is None
             assert time.monotonic() < deadline
             time.sleep(0.01)
-        latest = publish(publisher, source("新しいactive本文"))
+        latest = publish(publisher, source("新しいactive本文", revised_at="2026-11"))
         assert latest.status == "registered_cleanup_pending"
         with monkeypatch.context() as clock:
             clock.setattr(time, "time", lambda: 50_000_000_000.0)
@@ -183,7 +192,10 @@ def test_tc099_115_real_live_owner_survives_recovery_dead_owner_reaped(
                 "SELECT count(*) FROM registration_generations"
             ).fetchone() == (1,)
         result = publisher.read_result(
-            "000001_test", hashlib.sha256(source("新しいactive本文")).hexdigest()
+            "000001_test",
+            hashlib.sha256(
+                source("新しいactive本文", revised_at="2026-11")
+            ).hexdigest(),
         )
         assert (
             result.status == "registered"
@@ -220,9 +232,14 @@ async def test_tc095_all_detectors_and_search_pin_one_generation_then_release(
                 assert connection.execute(
                     "SELECT count(*) FROM generation_leases"
                 ).fetchone() == (1,)
-            await workers.run(lambda: publish(publisher, source("新A警告本文")))
             await workers.run(
-                lambda: publish(publisher, source("新B警告本文", ("222222222222",)))
+                lambda: publish(publisher, source("新A警告本文", revised_at="2026-11"))
+            )
+            await workers.run(
+                lambda: publish(
+                    publisher,
+                    source("新B警告本文", ("222222222222",), revised_at="2026-11"),
+                )
             )
             return IntentResult(is_available=False)
 
@@ -295,7 +312,9 @@ async def test_tc096_chat_materializes_before_stream_and_retains_inline_old_snap
                 assert connection.execute(
                     "SELECT count(*) FROM generation_leases"
                 ).fetchone() == (0,)
-            await workers.run(lambda: publish(publisher, source("次の版本文")))
+            await workers.run(
+                lambda: publish(publisher, source("次の版本文", revised_at="2026-11"))
+            )
             assert any("過去inline原文" in message["content"] for message in messages)
             yield "固定回答"
 
@@ -381,11 +400,21 @@ async def test_tc094_requested_product_filters_mixed_table_without_removing_comm
             )
             a = await snapshot.evidence_reader.search(
                 criteria,
-                (AttachmentProductMatch("", (), ("111111111111",), ("000001_test",)),),
+                (
+                    ResolvedMedicine(
+                        medicine=DomainMedicineMatch("", (), ("111111111111",), ()),
+                        document_ids=("000001_test",),
+                    ),
+                ),
             )
             b = await snapshot.evidence_reader.search(
                 criteria,
-                (AttachmentProductMatch("", (), ("222222222222",), ("000001_test",)),),
+                (
+                    ResolvedMedicine(
+                        medicine=DomainMedicineMatch("", (), ("222222222222",), ()),
+                        document_ids=("000001_test",),
+                    ),
+                ),
             )
             assert len(a) == len(b) == 1
             assert "A値" in a[0].excerpt and "B値" not in a[0].excerpt
@@ -405,7 +434,7 @@ async def test_tc096_released_snapshot_cannot_be_reused_and_old_cache_discarded(
     try:
         async with runtime.acquire() as snapshot:
             old_generation = snapshot.generation_id
-            publish(publisher, source("新cached本文"))
+            publish(publisher, source("新cached本文", revised_at="2026-11"))
         with pytest.raises(RuntimeError, match="released"):
             await snapshot.medicine_reader.read_medicines()
         assert runtime.cached_generation_id != old_generation
@@ -454,7 +483,9 @@ def test_tc108_main_group_autocomplete_health_share_current_generation(
                 {"n": "B薬", "k": "", "h": "", "y": "222222222222", "g": "", "c": "他"},
             ],
         }
-        new = source("新候補本文").replace("製品A".encode(), "新版A".encode())
+        new = source("新候補本文", revised_at="2026-11").replace(
+            "製品A".encode(), "新版A".encode()
+        )
         final = publish(publisher, new)
         group = client.get("/api/medicines").json()
         assert group["generation_id"] == final.generation_id
@@ -492,7 +523,7 @@ def test_tc097_113_recovery_removes_only_failed_registration_owned_artifacts(pub
     publisher.store.commit(bundle, legacy)
     legacy_target = publisher.store._target(bundle.document_id, bundle.source_sha256)
     preserved = {path: path.read_bytes() for path in legacy_target.iterdir()}
-    failed = source("未公開の登録attempt")
+    failed = source("未公開の登録attempt", revised_at="2026-11")
 
     def fault(phase):
         if phase == "artifacts":
@@ -532,7 +563,7 @@ def test_tc102_114_existing_build_cli_retries_cleanup_without_new_generation(
 
     with monkeypatch.context() as patch:
         patch.setattr(Path, "unlink", fail_one)
-        final = publish(publisher, source("現在本文"))
+        final = publish(publisher, source("現在本文", revised_at="2026-11"))
         assert final.status == "registered_cleanup_pending"
     monkeypatch.setenv("MEDI_CHAT_IMPORT_DIR", str(publisher.store.root))
     monkeypatch.setattr(
@@ -601,7 +632,7 @@ def test_tc103_new_active_manifest_injection_cannot_transfer_old_ownership(publi
             "UPDATE registration_receipts SET files_json=? WHERE version_id=?",
             (json.dumps(files), f"{original.document_id}:{original.source_sha256}"),
         )
-    final = publish(publisher, source("A更新"))
+    final = publish(publisher, source("A更新", revised_at="2026-11"))
     assert final.status == "registered_cleanup_pending"
     assert final.cleanup_pending == (
         (f"{original.document_id}:{original.source_sha256}", "unowned_file"),
@@ -620,13 +651,19 @@ async def test_tc093_094_105_revision_and_old_inline_snapshot_are_version_qualif
     criteria = SearchCriteria(
         source=DetectionSource.LOGIC, section_codes=(SearchSectionCode("1"),)
     )
-    a = AttachmentProductMatch("", (), ("111111111111",), ("000001_test",))
-    b = AttachmentProductMatch("", (), ("222222222222",), ("000001_test",))
+    a = ResolvedMedicine(
+        medicine=DomainMedicineMatch("", (), ("111111111111",), ()),
+        document_ids=("000001_test",),
+    )
+    b = ResolvedMedicine(
+        medicine=DomainMedicineMatch("", (), ("222222222222",), ()),
+        document_ids=("000001_test",),
+    )
     try:
         async with runtime.acquire() as previous:
             (inline,) = await previous.evidence_reader.search(criteria, (b,))
             old_snapshot = inline.to_dict()
-            new = source("新A本文").replace(b"2026-10", b"2025-01")
+            new = source("新A本文").replace(b"2026-10", b"2026-11")
             final = publish(publisher, new)
             async with runtime.acquire() as current:
                 (new_a,) = await current.evidence_reader.search(criteria, (a,))
@@ -635,7 +672,7 @@ async def test_tc093_094_105_revision_and_old_inline_snapshot_are_version_qualif
                     new_a.unit_id.value
                     == f"000001_test:{hashlib.sha256(new).hexdigest()}:1"
                 )
-                assert "2025-01" in repr(new_a.document_revision.to_dict())
+                assert "2026-11" in repr(new_a.document_revision.to_dict())
                 assert (
                     old_b.unit_id.value
                     == f"000001_test:{hashlib.sha256(old).hexdigest()}:1"
@@ -646,7 +683,7 @@ async def test_tc093_094_105_revision_and_old_inline_snapshot_are_version_qualif
             assert publisher.read_result(
                 first.document_id, first.source_sha256
             ).active_yj_codes == ("222222222222",)
-        publish(publisher, source("新B本文", ("222222222222",)))
+        publish(publisher, source("新B本文", ("222222222222",), revised_at="2026-11"))
         assert inline.to_dict() == old_snapshot
         with sqlite3.connect(publisher.index_path) as connection:
             assert connection.execute(

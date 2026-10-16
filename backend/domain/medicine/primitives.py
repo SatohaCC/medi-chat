@@ -35,3 +35,8 @@ class MedicineName(BaseString):
 @dataclass(frozen=True, slots=True)
 class GenericPrescriptionName(MedicineName):
     """一般名処方の標準的記載。成分名とは区別する。"""
+
+
+@dataclass(frozen=True, slots=True)
+class ProductGroupId(BaseString):
+    """名称照合で使う派生グループ識別値。成分同一性を保証しない。"""

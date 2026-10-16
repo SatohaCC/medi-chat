@@ -8,13 +8,17 @@ from copy import deepcopy
 import pytest
 from backend.application.chat import answer_preparation as preparation
 from backend.application.chat.chat_models import ChatMessage
+from backend.application.medicine.product_models import RegisteredMedicine
 from backend.application.retrieval import retrieve_evidence as retrieval
 from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
 from backend.application.retrieval.jev_detector import JevDetectionResult
-from backend.domain.attachment.entities import AttachmentProductRecord
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.attachment.primitives import PmdaUrl
-from backend.domain.attachment.value_objects import AttachmentProductRevision
+from backend.domain.attachment.value_objects import (
+    AttachmentProductRevision,
+    MedicineDocumentReference,
+)
+from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.retrieval.primitives import (
     DetectionSource,
@@ -31,15 +35,19 @@ from backend.tests.test_evidence_collection import make_evidence
 class MedicineReader:
     async def read_medicines(self):
         return (
-            AttachmentProductRecord(
-                document_id=DocumentId("document"),
-                yj_code=YjCode("1234567A0000"),
-                brand_name="商品",
-                generic_name="成分",
-                english_name="",
-                hiragana_name="",
-                pmda_url=PmdaUrl("https://example.test"),
-                revision=AttachmentProductRevision({}),
+            RegisteredMedicine(
+                medicine=MedicineProduct(
+                    yj_code=YjCode("1234567A0000"),
+                    brand_name="商品",
+                    generic_name="成分",
+                    english_name="",
+                    hiragana_name="",
+                ),
+                reference=MedicineDocumentReference(
+                    document_id=DocumentId("document"),
+                    pmda_url=PmdaUrl("https://example.test"),
+                    revision=AttachmentProductRevision({}),
+                ),
             ),
         )
 

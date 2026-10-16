@@ -4,6 +4,7 @@ from dataclasses import replace
 from types import MappingProxyType
 
 import pytest
+from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 
 
 def test_tc15_reader_and_mapping_use_injected_heading_policy(
@@ -12,7 +13,7 @@ def test_tc15_reader_and_mapping_use_injected_heading_policy(
     import asyncio
     import json
 
-    from backend.domain.attachment.value_objects import AttachmentProductMatch
+    from backend.application.medicine.product_models import ResolvedMedicine
     from backend.domain.retrieval.primitives import DetectionSource, SearchSectionCode
     from backend.domain.retrieval.value_objects import SearchCriteria
     from backend.infrastructure import evidence_mapping
@@ -66,7 +67,12 @@ def test_tc15_reader_and_mapping_use_injected_heading_policy(
                     source=DetectionSource.LOGIC,
                     section_codes=(SearchSectionCode("11.1"),),
                 ),
-                (AttachmentProductMatch("", (), ("1234567A0000",), ("test_001",)),),
+                (
+                    ResolvedMedicine(
+                        medicine=DomainMedicineMatch("", (), ("1234567A0000",), ()),
+                        document_ids=("test_001",),
+                    ),
+                ),
             )
         )
         assert [row.unit_id.value for row in rows] == ["test_001:001"]

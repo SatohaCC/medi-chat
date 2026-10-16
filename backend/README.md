@@ -20,12 +20,12 @@
 | 配置 | 責務 |
 | --- | --- |
 | `domain/attachment` | 添付文書 bounded context。`primitives.py`、`value_objects.py`、`entities.py`、`repositories.py`、`services.py`、`exceptions.py` に責務別の正本を置く |
-| `domain/medicine` | 医薬品 bounded context。医薬品のPrimitive、Value Object、Entity/Aggregate、Repositoryを置く |
+| `domain/medicine` | 医薬品の名称・識別子・コード対応表、別名生成・照合優先度、照合結果を所有する |
 | `domain/retrieval` | 検索 bounded context。検索Primitive、検索条件、意図選択、根拠・取得経路の統合、根拠取得ポート、検索ポリシーを置く |
 | `domain/foundation` | 業務非依存のPrimitive、Value Object、Entity/Aggregate Rootの基底、宣言型ガード、例外基底 |
 | `domain/shared` | 複数コンテキストで共有する汎用正規化処理を置く。YJコードはmedicineが所有する |
 | `application/chat` | 会話から質問を取り出し、retrievalの結果を使って回答を準備・生成する。プロンプトと所有stream終了を担当する |
-| `application/medicine` | フォームの医薬品候補提示。入力スナップショットから候補を選び、根拠検索には依存しない |
+| `application/medicine` | 医薬品照合カタログ、文書参照との投影、フォームの医薬品候補提示。候補提示は根拠検索に依存しない |
 | `application/retrieval` | 質問とYJコードから医薬品を解決し、検索条件を生成して根拠を取得・統合する。WebSocketでは固定キーワード・形態素解析の各検出完了時にローカル根拠を累積配信し、Jev完了後に全検出条件の統合根拠で更新する。固定キーワードの配信は形態素解析を待たない。製品確認が必要な場合は先行配信しない。RESTと回答生成は全検出完了後の根拠を使う |
 | `application/indexing` | 索引構築のユースケース・入出力契約 |
 | `presentation` | Pydantic公開DTO、JSON変換、`AppChatService`、REST/WS、FastAPI依存関数 |
@@ -120,7 +120,7 @@ flowchart LR
 flowchart TD
   Routes[REST / WS] --> Service[presentation.AppChatService / mapper]
   Service --> Prepare[application.prepare_reply]
-  Prepare --> Medicine[AttachmentProductRepository / AttachmentProductCatalog]
+  Prepare --> Medicine[RegisteredMedicineReader / MedicineCatalog]
   Prepare --> Detect[意図port / 検索語port / 固定ポリシー]
   Detect --> Select[型付き意図選択]
   Prepare --> Read[EvidenceRepository]
@@ -270,20 +270,29 @@ uv run --project backend pytest backend/tests
 pnpm dev:backend
 ```
 
-### 添付文書Primitiveの責務
+### 医薬品と添付文書の責務
 
 `medicine/entities.py` の `Medicine` は医薬品コード対応表の一製品を表し、YJコードを必須IDとします。
 レセ電・一般名コード、名称2種類、一般名処方の標準的記載、適用・廃止日を保持します。
 添付文書ID・URL・改訂情報や、文書から導出した成分IDを持ちません。
 `MedicineCodeTableReader` はExcelの10列を読み、日付の `99999999` と任意欄の空値を `None` に変換します。
 名称は原文を保持し、一般名処方の標準的記載を成分名として扱いません。
-既存チャットの索引は引き続き添付文書掲載情報を使います。`AttachmentProductRecord` と
-`AttachmentProductMatch` はattachmentが所有し、照合・別名生成は
-`application/indexing/medicine_catalog.py` の `AttachmentProductCatalog` で調整します。
+既存チャットの索引は引き続き添付文書掲載情報を使います。
+`domain/medicine/entities.py` の `MedicineProduct` が医薬品名称・YJコードを保持し、
+`domain/medicine/services.py` が別名生成・優先度選択を所有します。
+照合用の `ProductGroupId` はmedicineが所有し、薬理学的な成分同一性を保証しません。
+`MedicineMatch` は文書参照を含まない照合結果です。
+attachmentは文書の原文表記・製品参照・構造・出典・改訂・登録を所有します。
+`MedicineDocumentReference` が文書ID・URL・改訂を保持し、Applicationの
+`RegisteredMedicine` が医薬品と文書参照を結びます。
+`application/medicine/product_catalog.py` の `MedicineCatalog` がTrieとYJ索引を持ち、
+medicineの規則を呼び出します。指定YJの優先と文書付き `ResolvedMedicine` の組立は
+Applicationの責務です。YJ・一般名がない旧入力の文書IDによる区別もこの層に留めます。
+DBとJSONの保存形式は維持し、Readerで明示的に両モデルへ変換します。
 フォームの候補提示は `application/medicine/suggestions.py` の `MedicineSuggester` が担当します。
 現在の候補データは添付文書掲載製品です。起動時に公開ID・名称・別名だけを
 候補提示用の入力スナップショットへ変換し、添付文書モデルや根拠検索サービスを直接保持しません。
-`AttachmentProductCatalog` は回答準備の製品解決に限定し、フォームのサジェスト操作は持ちません。
+`MedicineCatalog` は回答準備の製品解決に限定し、フォームのサジェスト操作は持ちません。
 医薬品マスターを候補データへ接続する処理は、今回追加していません。
 
 モデル属性と公開JSONの文書識別子は `document_id`、複数形は `document_ids` に統一します。
@@ -320,7 +329,7 @@ Value Objectとして保持します。検索ポートは文書IDを公開する
 
 lifespanが取り込みworkerを所有し、decoder/encoder/保存IOをevent loop外で実行して終了を待ちます。既定保存先は`data/pmda/imports`、環境変数は`MEDI_CHAT_IMPORT_DIR`です。Alembic移行と初期登録済みの検索DBが起動前提です。既存DBはwriter停止・整合backup・コピー復元検査後、上記「検索インデックスの構築」の明示手順で移行してください。起動時に自動DDL・初期登録はしません。
 
-Web取り込みは保存だけでなく、`SqliteRegistrationPublisher`でactive製品・検索本文・候補・fingerprintを同一SQLite transactionで公開します。旧structured/manifestは直接上書きせず、import rootに版と世代成果物を保存します。同YJは改訂日ではなく初回成功登録順の新版へ切り替え、旧文書の未置換YJは保持します。active参照とreader leaseがない旧版の所有ファイルだけを削除し、削除待ちは再試行します。同原本の再送はreceiptを再利用し、旧版を復活させません。登録に利用できるYJがないXMLは422で拒否します。原本/保存絶対パスの公開APIは追加していません。
+Web取り込みは保存だけでなく、`SqliteRegistrationPublisher`でactive製品・検索本文・候補・fingerprintを同一SQLite transactionで公開します。旧structured/manifestは直接上書きせず、import rootに版と世代成果物を保存します。YJごとに原本の改訂年月（YYYY-MM）が最も新しい添付文書を採用し、旧文書の未置換YJは保持します。古い原本を後から登録しても公開先・検索世代を戻しません。同じ改訂年月の別原本が同じYJに対応する場合は409（same_revision_conflict）、改訂年月がない場合は422（missing_revision）で拒否します。初期登録CLIも同じ規則を使います。active参照とreader leaseがない旧版の所有ファイルだけを削除し、削除待ちは再試行します。同原本の再送は保存済みreceiptを再利用し、旧版を復活させません。登録順は公開結果の受付番号としてのみ保持します。登録に利用できるYJがないXMLは422で拒否します。原本/保存絶対パスの公開APIは追加していません。
 
 ### 通常E2Eと索引の明示回復
 
@@ -341,3 +350,23 @@ JanomeのTokenizerはlifespanでワーカースレッド上に初期化してか
 通常mainは登録・世代取得用のSQLAlchemy Engineをlifespanで所有し、接続プールを要求間で共有します。取り込みと読取workerの終了を待ってからプールを破棄します。CLI・直接構築でEngineを注入しない場合は従来どおり操作ごとに生成・破棄します。世代データは起動時にリースを書かず先読みし、要求ごとの世代ID比較で更新を検出します。先読みの失敗は起動失敗として扱います。
 
 質問内の検索投影と一時FTS索引は検索対象の文書ID・YJコード集合ごとに再利用し、スナップショット終了時に閉じます。並行検索と終了処理を直列化し、検索完了までリースを保持します。別の質問への索引共有は行いません。PostgreSQL移行時にも接続プールの所有を維持できますが、現時点のDB設定・公開ロック・原本検証・FTS検索はSQLite用です。PostgreSQL用adapterと日本語検索の互換検証は別途必要です。
+
+
+### 改訂年月による公開先の選択
+
+`AttachmentRegistration`、`RegistrationProposal`、`RegistrationReceipt` と登録台帳Repositoryは廃止しました。
+`domain/attachment/services.py` の `latest_attachment()` は原本の改訂年月だけを比較します。
+`registration_version()` は原本の改訂一覧から最も新しい年月を取得します。
+同年月の別原本は版番号・ファイル名・登録順で決めず、明示的な競合とします。
+ドメイン規則は医薬品情報を所有せず、文書版と改訂年月を扱います。
+
+再送識別、公開受付番号、所有ファイル、旧版・検索世代のlease保護とcleanupはInfrastructureが担当します。
+古い原本の登録は保存結果を返しますが、検索対象の変更がなければ検索索引や世代は更新しません。
+DBの保存形式と既存APIの項目は維持します。
+
+既存DBの公開先が改訂年月の最大値と一致しない、または最新年月の原本が曖昧な場合、
+起動・読取検証と登録は `revision_policy_migration_required` で停止し、自動で参照先を書き換えません。
+運用writer停止・backupと復元検査の上、原本を確認し、準備済みの別DBへ既存の
+`initialize_registrations` CLIで明示的に初期登録して検証してください。
+最も新しい原本がすでに削除されている場合は、原本の再取得が必要です。
+同年月競合は原本の誤り・対象YJを確認して解消する必要があります。

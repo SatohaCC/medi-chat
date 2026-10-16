@@ -10,7 +10,8 @@ from pathlib import Path
 import pytest
 from backend.application.indexing.index_errors import IndexSourceError
 from backend.application.indexing.index_models import IndexBuildResult, SourceSnapshot
-from backend.domain.attachment.value_objects import AttachmentProductMatch
+from backend.application.medicine.product_models import ResolvedMedicine
+from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.domain.retrieval.primitives import (
     DetectionSource,
     SearchKeyword,
@@ -111,10 +112,12 @@ def test_構築済み索引は元データなしで検索できる(
     assert indexed_medicines[0].yj_code is not None
     assert indexed_medicines[0].yj_code.value == "1234567A0000"
     medicines = (
-        AttachmentProductMatch(
-            generic_name="テスト成分",
-            brand_names=("テスト薬",),
-            yj_codes=("1234567A0000",),
+        ResolvedMedicine(
+            medicine=DomainMedicineMatch(
+                generic_name="テスト成分",
+                brand_names=("テスト薬",),
+                yj_codes=("1234567A0000",),
+            ),
             document_ids=("test_001",),
         ),
     )
@@ -211,10 +214,12 @@ def test_ソースが変わったときだけ索引を再構築する(
                 keywords=(SearchKeyword("新しく追加"),),
             ),
             (
-                AttachmentProductMatch(
-                    generic_name="テスト成分",
-                    brand_names=("テスト薬",),
-                    yj_codes=("1234567A0000",),
+                ResolvedMedicine(
+                    medicine=DomainMedicineMatch(
+                        generic_name="テスト成分",
+                        brand_names=("テスト薬",),
+                        yj_codes=("1234567A0000",),
+                    ),
                     document_ids=("test_001",),
                 ),
             ),
@@ -261,10 +266,12 @@ def test_構築に失敗しても既存索引が失われない(
     assert expected.revision is not None and len(expected.revision) == 1
     expected_fingerprint = _fingerprint(engine)
     medicines = (
-        AttachmentProductMatch(
-            generic_name="テスト成分",
-            brand_names=("テスト薬",),
-            yj_codes=("1234567A0000",),
+        ResolvedMedicine(
+            medicine=DomainMedicineMatch(
+                generic_name="テスト成分",
+                brand_names=("テスト薬",),
+                yj_codes=("1234567A0000",),
+            ),
             document_ids=("test_001",),
         ),
     )
@@ -308,7 +315,7 @@ def test_構築に失敗しても既存索引が失われない(
     error: Exception | None = None
     try:
         writer.replace(FileIndexSourceReader(structured).read_snapshot())
-    except (ImportError, NotImplementedError):
+    except ImportError, NotImplementedError:
         raise
     except Exception as caught:
         # この入力に対する生のfile/JSON例外はエラー変換不足としてassertで判別する。

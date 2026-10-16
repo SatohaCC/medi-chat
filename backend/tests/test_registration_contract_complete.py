@@ -32,6 +32,7 @@ def expected(
     deleted=(),
     pending=(),
     artifacts_deleted=False,
+    revised_at="2026-10",
 ):
     return {
         "document_id": "000001_test",
@@ -46,7 +47,7 @@ def expected(
             for i, code in enumerate(codes)
         ],
         "revisions": [
-            {"source_label": "今回", "year_month": "2026-10", "version": "1"}
+            {"source_label": "今回", "year_month": revised_at, "version": "1"}
         ],
         "warnings": [],
         "search_index_updated": bool(codes if active is None else active),
@@ -71,7 +72,7 @@ async def test_tc106_all_registration_dtos_have_fixed_complete_fields(
     old_id = f"000001_test:{hashlib.sha256(old).hexdigest()}"
     url = f"/api/attachment-imports/000001_test/{hashlib.sha256(old).hexdigest()}"
     response = await post(client, old)
-    assert response.status_code == 201
+    assert response.status_code == 201, response.text
     assert response.json() == expected(old, current_generation(publisher), 1, (a, b))
     stored = (
         publisher.store._target(
@@ -85,11 +86,16 @@ async def test_tc106_all_registration_dtos_have_fixed_complete_fields(
     assert repeat.json() == expected(
         old, current_generation(publisher), 1, (a, b), reused=True
     )
-    new_a = source("N A更新")
+    new_a = source("N A更新", revised_at="2026-11")
     response = await post(client, new_a)
-    assert response.status_code == 201
+    assert response.status_code == 201, response.text
     assert response.json() == expected(
-        new_a, current_generation(publisher), 2, (a,), replaced=(a,)
+        new_a,
+        current_generation(publisher),
+        2,
+        (a,),
+        replaced=(a,),
+        revised_at="2026-11",
     )
     assert (await client.get(url)).json() == expected(
         old, current_generation(publisher), 1, (a, b), active=(b,)
@@ -109,9 +115,9 @@ async def test_tc106_all_registration_dtos_have_fixed_complete_fields(
 
     with monkeypatch.context() as patch:
         patch.setattr(Path, "unlink", fail)
-        new_b = source("P B更新", (b,))
+        new_b = source("P B更新", (b,), revised_at="2026-11")
         response = await post(client, new_b)
-        assert response.status_code == 201
+        assert response.status_code == 201, response.text
         assert response.json() == expected(
             new_b,
             current_generation(publisher),
@@ -120,6 +126,7 @@ async def test_tc106_all_registration_dtos_have_fixed_complete_fields(
             replaced=(b,),
             pending=((old_id, "io_error"),),
             status="registered_cleanup_pending",
+            revised_at="2026-11",
         )
         assert (await client.get(url)).json() == expected(
             old,
@@ -140,6 +147,7 @@ async def test_tc106_all_registration_dtos_have_fixed_complete_fields(
         reused=True,
         replaced=(b,),
         deleted=(old_id,),
+        revised_at="2026-11",
     )
     old_repeat = await post(client, old)
     assert old_repeat.status_code == 200

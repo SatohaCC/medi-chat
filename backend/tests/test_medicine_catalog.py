@@ -8,18 +8,18 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
-from backend.application.indexing.medicine_catalog import (
-    AttachmentProductCatalog,
-    _ProductGroup,
-    collect_aliases,
-    get_weighted_aliases,
-)
-from backend.domain.attachment.entities import AttachmentProductRecord
-from backend.domain.attachment.exceptions import AttachmentDomainError
+from backend.application.medicine.product_catalog import MedicineCatalog, _ProductGroup
+from backend.application.medicine.product_models import RegisteredMedicine
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.attachment.primitives import PmdaUrl
-from backend.domain.attachment.value_objects import AttachmentProductRevision
+from backend.domain.attachment.value_objects import (
+    AttachmentProductRevision,
+    MedicineDocumentReference,
+)
+from backend.domain.medicine.entities import MedicineProduct
+from backend.domain.medicine.exceptions import MedicineDomainError
 from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.services import collect_aliases, get_weighted_aliases
 from backend.infrastructure.persistence import schema
 from backend.infrastructure.persistence.medicine_reader import SqlAlchemyMedicineReader
 from backend.infrastructure.persistence.sqlite_engine import create_sqlite_engine
@@ -29,8 +29,8 @@ from sqlalchemy.engine import URL
 
 
 def _read_indexed_medicines(
-    tmp_path: Path, expected: tuple[AttachmentProductRecord, ...]
-) -> tuple[AttachmentProductRecord, ...]:
+    tmp_path: Path, expected: tuple[RegisteredMedicine, ...]
+) -> tuple[RegisteredMedicine, ...]:
     source = tmp_path / "structured"
     source.mkdir()
     index_path = tmp_path / "medicines.sqlite3"
@@ -63,24 +63,28 @@ def _read_indexed_medicines(
         actual = asyncio.run(SqlAlchemyMedicineReader(engine).read_medicines())
         assert actual == expected
         assert type(actual) is tuple
-        assert all(type(medicine) is AttachmentProductRecord for medicine in actual)
+        assert all(type(medicine) is RegisteredMedicine for medicine in actual)
         return actual
     finally:
         engine.dispose()
 
 
 @pytest.fixture
-def indexed_medicines(tmp_path: Path) -> tuple[AttachmentProductRecord, ...]:
+def indexed_medicines(tmp_path: Path) -> tuple[RegisteredMedicine, ...]:
     expected = tuple(
-        AttachmentProductRecord(
-            document_id=DocumentId(f"doc{index}"),
-            yj_code=YjCode(f"1234567A000{index}"),
-            brand_name=name,
-            generic_name=name + "成分",
-            english_name="",
-            hiragana_name="",
-            pmda_url=PmdaUrl("https://example.test"),
-            revision=AttachmentProductRevision({}),
+        RegisteredMedicine(
+            medicine=MedicineProduct(
+                yj_code=YjCode(f"1234567A000{index}"),
+                brand_name=name,
+                generic_name=name + "成分",
+                english_name="",
+                hiragana_name="",
+            ),
+            reference=MedicineDocumentReference(
+                document_id=DocumentId(f"doc{index}"),
+                pmda_url=PmdaUrl("https://example.test"),
+                revision=AttachmentProductRevision({}),
+            ),
         )
         for index, name in enumerate(["アルファ", "ベータ"])
     )
@@ -109,12 +113,17 @@ def test_group_deduplicates_initial_and_added_products_and_aliases(indexed_medic
 def test_alias_service_preserves_names_and_priority_for_dosage_forms(
     indexed_medicines, form
 ):
-    medicine = replace(indexed_medicines[0], brand_name=f"アルファ{form}10mg")
-    aliases = dict(get_weighted_aliases(medicine))
+    medicine = replace(
+        indexed_medicines[0],
+        medicine=replace(
+            indexed_medicines[0].medicine, brand_name=f"アルファ{form}10mg"
+        ),
+    )
+    aliases = dict(get_weighted_aliases(medicine.medicine))
     assert aliases["アルファ"] == 85
     assert aliases[f"アルファ{form}10mg"] == 90
     assert aliases["1234567a0000"] == 100
-    assert collect_aliases([medicine, medicine]) == list(aliases)
+    assert collect_aliases([medicine.medicine, medicine.medicine]) == list(aliases)
     assert medicine.brand_name == f"アルファ{form}10mg"
 
 
@@ -124,7 +133,7 @@ def test_group_rejects_other_ingredient_without_changing_products(
 ):
     first, other = indexed_medicines
     if on_construction:
-        with pytest.raises(AttachmentDomainError, match="ingredient group"):
+        with pytest.raises(MedicineDomainError, match="ingredient group"):
             _ProductGroup(
                 ingredient_id=first.ingredient_id,
                 generic_name=first.generic_name,
@@ -136,7 +145,7 @@ def test_group_rejects_other_ingredient_without_changing_products(
             generic_name=first.generic_name,
             medicines=[first],
         )
-        with pytest.raises(AttachmentDomainError, match="ingredient group"):
+        with pytest.raises(MedicineDomainError, match="ingredient group"):
             group.add_medicine(other)
         assert group.medicines == [first]
 
@@ -164,33 +173,37 @@ def test_文中薬剤名と指定コードの優先順位を維持する(
     codes: list[str],
     expected_codes: list[str],
     covered: bool,
-    indexed_medicines: tuple[AttachmentProductRecord, ...],
+    indexed_medicines: tuple[RegisteredMedicine, ...],
 ) -> None:
-    catalog = AttachmentProductCatalog(indexed_medicines)
+    catalog = MedicineCatalog(indexed_medicines)
     groups = catalog.resolve_medicines(message, codes)
     assert [code for group in groups for code in group.yj_codes] == expected_codes
     assert catalog.covers_requested_products(groups, codes) is covered
 
 
 def test_Core読取の一般名aliasと薬剤全情報を保持する(tmp_path: Path) -> None:
-    expected = AttachmentProductRecord(
-        document_id=DocumentId("alias-doc"),
-        yj_code=YjCode("1234567A0002"),
-        brand_name="商品ガンマ",
-        generic_name="固有成分名",
-        english_name="DistinctCompound",
-        hiragana_name="しょうひんがんま",
-        pmda_url=PmdaUrl("https://example.test/original?key=1"),
-        revision=AttachmentProductRevision(
-            {
-                "date": "2026-09-30",
-                "source": {"label": "原文"},
-                "history": [1, None],
-            }
+    expected = RegisteredMedicine(
+        medicine=MedicineProduct(
+            yj_code=YjCode("1234567A0002"),
+            brand_name="商品ガンマ",
+            generic_name="固有成分名",
+            english_name="DistinctCompound",
+            hiragana_name="しょうひんがんま",
+        ),
+        reference=MedicineDocumentReference(
+            document_id=DocumentId("alias-doc"),
+            pmda_url=PmdaUrl("https://example.test/original?key=1"),
+            revision=AttachmentProductRevision(
+                {
+                    "date": "2026-09-30",
+                    "source": {"label": "原文"},
+                    "history": [1, None],
+                }
+            ),
         ),
     )
     medicines = _read_indexed_medicines(tmp_path, (expected,))
-    catalog = AttachmentProductCatalog(medicines)
+    catalog = MedicineCatalog(medicines)
     groups = catalog.resolve_medicines("固有成分名の副作用", [])
     assert len(groups) == 1
     assert groups[0].yj_codes == ("1234567A0002",)

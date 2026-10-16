@@ -2,9 +2,11 @@
 
 from copy import deepcopy
 
+from backend.application.medicine.product_models import ResolvedMedicine
+from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
+
 from ..application.chat.chat_models import ChatMessage, ChatResponse
 from ..domain.attachment.identifiers import DocumentId
-from ..domain.attachment.value_objects import AttachmentProductMatch
 from ..domain.medicine.identifiers import YjCode
 from ..domain.retrieval.identifiers import SearchUnitId
 from ..domain.retrieval.primitives import DetectionSource
@@ -74,7 +76,7 @@ def _qualifying_intents_from_api(value: ApiChatResponse) -> tuple[str, ...]:
     )
 
 
-def medicine_match_to_api(value: AttachmentProductMatch) -> ApiMedicineMatch:
+def medicine_match_to_api(value: ResolvedMedicine) -> ApiMedicineMatch:
     return ApiMedicineMatch(
         generic_name=value.generic_name,
         brand_names=list(value.brand_names),
@@ -84,13 +86,15 @@ def medicine_match_to_api(value: AttachmentProductMatch) -> ApiMedicineMatch:
     )
 
 
-def _medicine_from_api(value: ApiMedicineMatch) -> AttachmentProductMatch:
-    return AttachmentProductMatch(
-        generic_name=value.generic_name,
-        brand_names=tuple(value.brand_names),
-        yj_codes=tuple(value.yj_codes),
+def _medicine_from_api(value: ApiMedicineMatch) -> ResolvedMedicine:
+    return ResolvedMedicine(
+        medicine=DomainMedicineMatch(
+            generic_name=value.generic_name,
+            brand_names=tuple(value.brand_names),
+            yj_codes=tuple(value.yj_codes),
+            matched_aliases=tuple(value.matched_aliases),
+        ),
         document_ids=tuple(value.document_ids),
-        matched_aliases=tuple(value.matched_aliases),
     )
 
 

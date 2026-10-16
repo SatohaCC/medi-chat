@@ -7,12 +7,13 @@ from dataclasses import fields
 
 import pytest
 from backend.application.chat.chat_models import ChatMessage, ChatResponse
-from backend.domain.attachment.value_objects import AttachmentProductMatch
+from backend.application.medicine.product_models import ResolvedMedicine
 from backend.domain.foundation.primitives.primitives import (
     BaseFiniteFloat,
     BaseString,
 )
 from backend.domain.json_types import JsonValue
+from backend.domain.medicine.value_objects import MedicineMatch
 from backend.domain.retrieval.primitives import DetectionSource
 from backend.domain.retrieval.value_objects import Evidence
 from backend.presentation.chat_dto_mapper import (
@@ -32,12 +33,13 @@ def _assert_pure_value(value: object) -> None:
     if isinstance(value, Mapping) and type(value) is not dict:
         _assert_pure_value(dict(value))
     elif isinstance(
-        value, (ChatMessage, ChatResponse, AttachmentProductMatch, Evidence)
+        value, (ChatMessage, ChatResponse, ResolvedMedicine, MedicineMatch, Evidence)
     ):
         assert type(value) in (
             ChatMessage,
             ChatResponse,
-            AttachmentProductMatch,
+            ResolvedMedicine,
+            MedicineMatch,
             Evidence,
         )
         for field in fields(value):
@@ -196,7 +198,7 @@ def test_dto_round_trip_preserves_public_information(
     response = chat_response_from_api(api_response)
 
     assert type(response) is ChatResponse
-    assert type(response.resolved_medicines[0]) is AttachmentProductMatch
+    assert type(response.resolved_medicines[0]) is ResolvedMedicine
     if scenario == "resolved":
         assert len(response.sources) == 2
         assert all(type(source) is Evidence for source in response.sources)

@@ -10,12 +10,12 @@ from backend.domain.attachment.primitives import (
     AttachmentProductCode,
     AttachmentUrl,
     PmdaUrl,
-    ProductGroupId,
     SectionCode,
 )
 from backend.domain.foundation.exceptions import DomainValidationError
 from backend.domain.foundation.primitives.base import DomainPrimitive
 from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.primitives import ProductGroupId
 from backend.domain.retrieval.identifiers import SearchUnitId
 from backend.domain.retrieval.primitives import (
     DetectionSource,

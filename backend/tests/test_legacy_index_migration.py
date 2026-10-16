@@ -18,14 +18,19 @@ import sqlalchemy
 from alembic import command
 from alembic.config import Config
 from alembic.script import ScriptDirectory
-from backend.domain.attachment.entities import AttachmentProductRecord
+from backend.application.medicine.product_models import (
+    RegisteredMedicine,
+    ResolvedMedicine,
+)
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.attachment.primitives import PmdaUrl
 from backend.domain.attachment.value_objects import (
-    AttachmentProductMatch,
     AttachmentProductRevision,
+    MedicineDocumentReference,
 )
+from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.domain.retrieval.primitives import (
     DetectionSource,
     SearchKeyword,
@@ -720,22 +725,28 @@ def test_valid_v3_copy_preserves_search_and_source(
                 "unit_count": 3,
             }
             assert asyncio.run(SqlAlchemyMedicineReader(engine).read_medicines()) == (
-                AttachmentProductRecord(
-                    document_id=DocumentId("test_001"),
-                    yj_code=YjCode("1234567A0000"),
-                    brand_name="テスト薬",
-                    generic_name="テスト成分",
-                    english_name="",
-                    hiragana_name="",
-                    pmda_url=PmdaUrl("https://example.test/package-insert"),
-                    revision=AttachmentProductRevision({}),
+                RegisteredMedicine(
+                    medicine=MedicineProduct(
+                        yj_code=YjCode("1234567A0000"),
+                        brand_name="テスト薬",
+                        generic_name="テスト成分",
+                        english_name="",
+                        hiragana_name="",
+                    ),
+                    reference=MedicineDocumentReference(
+                        document_id=DocumentId("test_001"),
+                        pmda_url=PmdaUrl("https://example.test/package-insert"),
+                        revision=AttachmentProductRevision({}),
+                    ),
                 ),
             )
             medicines = (
-                AttachmentProductMatch(
-                    generic_name="テスト成分",
-                    brand_names=("テスト薬",),
-                    yj_codes=("1234567A0000",),
+                ResolvedMedicine(
+                    medicine=DomainMedicineMatch(
+                        generic_name="テスト成分",
+                        brand_names=("テスト薬",),
+                        yj_codes=("1234567A0000",),
+                    ),
                     document_ids=("test_001",),
                 ),
             )

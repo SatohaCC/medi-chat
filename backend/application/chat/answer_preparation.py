@@ -2,7 +2,8 @@
 
 from collections.abc import Sequence
 
-from ...domain.attachment.repositories import AttachmentProductRepository
+from backend.application.medicine.product_contracts import RegisteredMedicineReader
+
 from ...domain.retrieval.product_identity import ProductIdentityReason
 from ...domain.retrieval.repositories import EvidenceRepository
 from ...domain.retrieval.value_objects import Evidence, IntentPolicy
@@ -32,7 +33,7 @@ async def prepare_reply(
     conversation: Sequence[ChatMessage],
     product_yj_codes: list[str],
     *,
-    medicine_reader: AttachmentProductRepository,
+    medicine_reader: RegisteredMedicineReader,
     evidence_reader: EvidenceRepository,
     intent_classifier: IntentClassifier,
     keyword_extractor: KeywordExtractor,

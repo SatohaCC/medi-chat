@@ -3,7 +3,8 @@
 import asyncio
 from pathlib import Path
 
-from backend.domain.attachment.value_objects import AttachmentProductMatch
+from backend.application.medicine.product_models import ResolvedMedicine
+from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.domain.retrieval.primitives import (
     DetectionSource,
     SearchKeyword,
@@ -37,7 +38,12 @@ def test_generated_section_is_one_sqlite_hit_with_table_and_original_revision(tm
         snapshot = FileIndexSourceReader(structured).read_snapshot()
         result = SqlAlchemyIndexWriter(engine).replace(snapshot)
         assert result.unit_count == validation["search_unit_count"] == 40
-        medicines = (AttachmentProductMatch("", (), ("3339003F5020",), (source.stem,)),)
+        medicines = (
+            ResolvedMedicine(
+                medicine=DomainMedicineMatch("", (), ("3339003F5020",), ()),
+                document_ids=(source.stem,),
+            ),
+        )
 
         async def read():
             workers = ReadWorkers()

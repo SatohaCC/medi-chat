@@ -266,7 +266,7 @@ def test_tc112_initial_conflict_is_rejected_before_files_or_database_change(tmp_
         tmp_path / "imports",
     )
     assert completed.returncode != 0
-    assert "conflicting_existing_registration" in completed.stderr
+    assert "same_revision_conflict" in completed.stderr
     assert (
         "111111111111" in completed.stderr
         and "000001_O:" in completed.stderr
@@ -296,7 +296,7 @@ def test_tc114_existing_build_cli_never_rescans_superseded_or_ignored_sources(tm
         index, FileAttachmentImportStore(tmp_path / "imports")
     )
     publish(publisher, source("旧版"))
-    current = publish(publisher, source("新版"))
+    current = publish(publisher, source("新版", revised_at="2026-11"))
     ignored = structured / "ignored"
     ignored.mkdir()
     (ignored / "document.json").write_bytes(b"not a valid input")
@@ -343,7 +343,7 @@ def test_tc114_registration_conversion_cli_receipt_precedes_old_artifact_regener
     publisher = SqliteRegistrationPublisher(index, store)
     old = source("旧版")
     publish(publisher, old)
-    current = publish(publisher, source("新版"))
+    current = publish(publisher, source("新版", revised_at="2026-11"))
     ignored = tmp_path / "ignored-old.xml"
     ignored.write_bytes(old)
     target = store._target(

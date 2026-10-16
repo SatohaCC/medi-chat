@@ -7,7 +7,8 @@ from pathlib import Path
 
 from backend.application.chat.answer_prompt_builder import build_answer_messages
 from backend.application.chat.chat_models import ChatMessage, ChatResponse
-from backend.domain.attachment.value_objects import AttachmentProductMatch
+from backend.application.medicine.product_models import ResolvedMedicine
+from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.domain.retrieval.services import format_scoped_text
 from backend.infrastructure.morphology.keyword_extraction import extract_search_keywords
 from backend.infrastructure.package_insert_definitions.loader import (
@@ -41,10 +42,12 @@ def observe() -> dict[str, object]:
             }
         ],
     )
-    medicine = AttachmentProductMatch(
-        generic_name="原文成分",
-        brand_names=("原文薬剤",),
-        yj_codes=("1234567A0000",),
+    medicine = ResolvedMedicine(
+        medicine=DomainMedicineMatch(
+            generic_name="原文成分",
+            brand_names=("原文薬剤",),
+            yj_codes=("1234567A0000",),
+        ),
         document_ids=("document-1",),
     )
     conversation = [

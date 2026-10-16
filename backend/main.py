@@ -13,8 +13,9 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from backend.domain.medicine.services import get_weighted_aliases
+
 from .application.attachment_import.import_document import AttachmentImportService
-from .application.indexing.medicine_catalog import get_weighted_aliases
 from .application.medicine.suggestions import MedicineSuggester, SuggestionProduct
 from .config.database_settings import resolve_database_settings
 from .config.generation_settings import read_generation_defaults
@@ -107,7 +108,7 @@ def create_app(
                     brand_name=product.brand_name,
                     yj_code=product.yj_code,
                     document_id=product.document_id,
-                    aliases=tuple(get_weighted_aliases(product)),
+                    aliases=tuple(get_weighted_aliases(product.medicine)),
                 )
                 for product in medicines
             )

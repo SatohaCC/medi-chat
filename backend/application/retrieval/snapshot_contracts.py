@@ -4,7 +4,8 @@ from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass
 from typing import Protocol
 
-from ...domain.attachment.repositories import AttachmentProductRepository
+from backend.application.medicine.product_contracts import RegisteredMedicineReader
+
 from ...domain.retrieval.identifiers import SearchGenerationId
 from ...domain.retrieval.repositories import EvidenceRepository
 
@@ -12,7 +13,7 @@ from ...domain.retrieval.repositories import EvidenceRepository
 @dataclass(frozen=True, slots=True)
 class RetrievalSnapshot:
     generation_id: SearchGenerationId
-    medicine_reader: AttachmentProductRepository
+    medicine_reader: RegisteredMedicineReader
     evidence_reader: EvidenceRepository
     document_count: int = 0
     unit_count: int = 0

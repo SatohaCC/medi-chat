@@ -13,10 +13,11 @@ from unittest.mock import AsyncMock
 
 import pytest
 from backend.application.chat.answer_prompt_builder import build_answer_system_prompt
+from backend.application.medicine.product_models import ResolvedMedicine
 from backend.application.retrieval.intent_contracts import IntentRequest
 from backend.domain.attachment.identifiers import DocumentId
-from backend.domain.attachment.value_objects import AttachmentProductMatch
 from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.domain.retrieval.identifiers import SearchUnitId
 from backend.domain.retrieval.primitives import (
     DetectionSource,
@@ -566,10 +567,10 @@ def test_専用指示の項目名を生成し根拠原文を保持する(
     catalog_data["sections"]["10.1"]["title"] = "変更した併用禁忌名"
     catalog_data["sections"]["16"]["title"] = "変更した動態名"
     activate_catalog(catalog_data)
-    medicine = AttachmentProductMatch(
-        generic_name="成分",
-        brand_names=("製品",),
-        yj_codes=("1234567A0000",),
+    medicine = ResolvedMedicine(
+        medicine=DomainMedicineMatch(
+            generic_name="成分", brand_names=("製品",), yj_codes=("1234567A0000",)
+        ),
         document_ids=("document-1",),
     )
     source = _source(
@@ -681,10 +682,12 @@ def test_SQLiteと根拠一覧の項目順が一致する(
         _migrate_database(index_path, source)
         build_document_store(source, index_path)
         medicines = (
-            AttachmentProductMatch(
-                generic_name="テスト成分",
-                brand_names=("テスト薬",),
-                yj_codes=("1234567A0000",),
+            ResolvedMedicine(
+                medicine=DomainMedicineMatch(
+                    generic_name="テスト成分",
+                    brand_names=("テスト薬",),
+                    yj_codes=("1234567A0000",),
+                ),
                 document_ids=("test_001",),
             ),
         )

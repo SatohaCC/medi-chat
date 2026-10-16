@@ -35,7 +35,9 @@ def test_tc099_two_actual_main_processes_refresh_candidates_and_restart_get(publ
         assert p1.pid != p2.pid
         assert one.get("/api/medicines").json()["generation_id"] == first.generation_id
         assert two.get("/api/medicines").json()["generation_id"] == first.generation_id
-        replacement = source("新版本文").replace("製品A".encode(), "新版製品".encode())
+        replacement = source("新版本文", revised_at="2026-11").replace(
+            "製品A".encode(), "新版製品".encode()
+        )
         response = one.post(
             "/api/attachment-imports",
             files={"file": ("replacement.xml", replacement, "application/xml")},
@@ -154,7 +156,7 @@ def test_tc097_113_os_death_reclaims_only_unpublished_owned_attempt(
     from backend.domain.attachment.identifiers import DocumentId
 
     initial = publish(publisher, source("旧公開本文"))
-    value = source("停止対象本文")
+    value = source("停止対象本文", revised_at="2026-11")
     xml = tmp_path / "new.xml"
     xml.write_bytes(value)
     ready = tmp_path / "stopped.ready"
@@ -279,8 +281,8 @@ def test_tc116_actual_shared_active_figure_mutation_refuses_main(publisher):
             )
         )
     publisher.publish_inputs(tuple(inputs), initial=True)
-    publish(publisher, source("A新版"))
-    publish(publisher, source("B新版", ("222222222222",)))
+    publish(publisher, source("A新版", revised_at="2026-11"))
+    publish(publisher, source("B新版", ("222222222222",), revised_at="2026-11"))
     assert shared.read_bytes() == b"<svg>shared active figure</svg>"
     shared.write_bytes(b"<svg>changed active figure</svg>")
     structured = publisher.store.root.parent / "structured"

@@ -4,15 +4,19 @@ import asyncio
 import unittest
 from unittest.mock import patch
 
+from backend.application.medicine.product_models import RegisteredMedicine
 from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
 from backend.application.retrieval.retrieve_evidence import (
     collect_search_criteria,
     retrieve_evidence,
 )
-from backend.domain.attachment.entities import AttachmentProductRecord
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.attachment.primitives import PmdaUrl
-from backend.domain.attachment.value_objects import AttachmentProductRevision
+from backend.domain.attachment.value_objects import (
+    AttachmentProductRevision,
+    MedicineDocumentReference,
+)
+from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.retrieval.primitives import IntentName, Probability
 from backend.domain.retrieval.value_objects import IntentCandidate
@@ -66,15 +70,19 @@ class EvidenceSearchTests(unittest.IsolatedAsyncioTestCase):
         class Medicines:
             async def read_medicines(self):
                 return (
-                    AttachmentProductRecord(
-                        document_id=DocumentId("test_001"),
-                        yj_code=YjCode("3339003F5020"),
-                        brand_name="テスト薬",
-                        generic_name="テスト成分",
-                        english_name="",
-                        hiragana_name="",
-                        pmda_url=PmdaUrl("https://example.test"),
-                        revision=AttachmentProductRevision({}),
+                    RegisteredMedicine(
+                        medicine=MedicineProduct(
+                            yj_code=YjCode("3339003F5020"),
+                            brand_name="テスト薬",
+                            generic_name="テスト成分",
+                            english_name="",
+                            hiragana_name="",
+                        ),
+                        reference=MedicineDocumentReference(
+                            document_id=DocumentId("test_001"),
+                            pmda_url=PmdaUrl("https://example.test"),
+                            revision=AttachmentProductRevision({}),
+                        ),
                     ),
                 )
 

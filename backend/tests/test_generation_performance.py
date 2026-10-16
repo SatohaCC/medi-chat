@@ -7,7 +7,8 @@ import threading
 import time
 
 import pytest
-from backend.domain.attachment.value_objects import AttachmentProductMatch
+from backend.application.medicine.product_models import ResolvedMedicine
+from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.domain.retrieval.primitives import (
     DetectionSource,
     SearchKeyword,
@@ -29,7 +30,12 @@ from sqlalchemy import event
 
 
 def target(code="111111111111"):
-    return (AttachmentProductMatch("", (), (code,), ("000001_test",)),)
+    return (
+        ResolvedMedicine(
+            medicine=DomainMedicineMatch("", (), (code,), ()),
+            document_ids=("000001_test",),
+        ),
+    )
 
 
 @pytest.mark.asyncio
@@ -58,7 +64,9 @@ async def test_warmup_is_readonly_and_refreshes_after_publication(
             in {"INSERT", "UPDATE", "DELETE", "CREATE", "DROP", "ALTER", "REPLACE"}
             for sql in statements
         )
-        updated = await workers.run(lambda: publish(publisher, source("新世代本文")))
+        updated = await workers.run(
+            lambda: publish(publisher, source("新世代本文", revised_at="2026-11"))
+        )
         await runtime.warmup()
         cached = runtime.cached_generation_id
         assert cached is not None and cached.value == updated.generation_id
@@ -145,7 +153,9 @@ async def test_injected_pool_survives_reads_publication_and_recovery(publisher):
         for _ in range(2):
             async with runtime.acquire() as snapshot:
                 assert await snapshot.medicine_reader.read_medicines()
-        updated = await workers.run(lambda: publish(shared, source("更新本文")))
+        updated = await workers.run(
+            lambda: publish(shared, source("更新本文", revised_at="2026-11"))
+        )
         await workers.run(
             lambda: shared.read_result(updated.document_id, updated.source_sha256)
         )

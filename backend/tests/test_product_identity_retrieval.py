@@ -3,12 +3,16 @@
 from dataclasses import asdict
 
 import pytest
+from backend.application.medicine.product_models import RegisteredMedicine
 from backend.application.retrieval.intent_contracts import IntentResult
 from backend.application.retrieval.retrieve_evidence import retrieve_evidence
-from backend.domain.attachment.entities import AttachmentProductRecord
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.attachment.primitives import PmdaUrl
-from backend.domain.attachment.value_objects import AttachmentProductRevision
+from backend.domain.attachment.value_objects import (
+    AttachmentProductRevision,
+    MedicineDocumentReference,
+)
+from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.retrieval.primitives import IntentName, Probability
 from backend.domain.retrieval.value_objects import IntentCandidate
@@ -22,15 +26,19 @@ ITRA = "6290004M1029"
 J = "6290004M1070"
 A = "3961008F1022"
 RECORDS = tuple(
-    AttachmentProductRecord(
-        document_id=DocumentId(doc),
-        yj_code=YjCode(code),
-        brand_name=brand,
-        generic_name=generic,
-        english_name="",
-        hiragana_name="",
-        pmda_url=PmdaUrl("https://example.test"),
-        revision=AttachmentProductRevision({}),
+    RegisteredMedicine(
+        medicine=MedicineProduct(
+            yj_code=YjCode(code),
+            brand_name=brand,
+            generic_name=generic,
+            english_name="",
+            hiragana_name="",
+        ),
+        reference=MedicineDocumentReference(
+            document_id=DocumentId(doc),
+            pmda_url=PmdaUrl("https://example.test"),
+            revision=AttachmentProductRevision({}),
+        ),
     )
     for doc, code, brand, generic in [
         ("x", X, "イグザレルト錠2.5mg", "リバーロキサバン"),
@@ -100,7 +108,10 @@ async def test_tc124_126_real_catalog_early_stop(message, codes, strategy, progr
     )
     assert result.retrieval_strategy == strategy
     assert result.needs_clarification and result.sources == [] and reader.calls == []
-    assert [asdict(m) for m in result.resolved_medicines] == [
+    assert [
+        {**asdict(m.medicine), "document_ids": m.document_ids}
+        for m in result.resolved_medicines
+    ] == [
         {
             "generic_name": "リバーロキサバン",
             "brand_names": ("イグザレルト錠2.5mg",),

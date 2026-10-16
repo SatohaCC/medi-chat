@@ -13,10 +13,10 @@ from backend.application.chat.answer_preparation import prepare_reply
 from backend.application.chat.answer_question import answer_question
 from backend.application.chat.chat_models import ChatMessage
 from backend.application.chat.stream_reply import stream_reply
+from backend.application.medicine.product_models import RegisteredMedicine
 from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
 from backend.application.retrieval.retrieve_evidence import retrieve_evidence
 from backend.application.retrieval.snapshot_contracts import RetrievalSnapshot
-from backend.domain.attachment.entities import AttachmentProductRecord
 from backend.domain.retrieval.value_objects import IntentPolicy
 from backend.infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,
@@ -32,8 +32,10 @@ A = "222222222222"
 ITRA = "333333333333"
 
 
-def named(body, name, code, doc):
-    return source(body, (code,), doc=doc).replace("製品A".encode(), name.encode())
+def named(body, name, code, doc, *, revised_at="2026-10"):
+    return source(body, (code,), doc=doc, revised_at=revised_at).replace(
+        "製品A".encode(), name.encode()
+    )
 
 
 def leases(publisher):
@@ -44,7 +46,7 @@ def leases(publisher):
 
 
 class ForbiddenSearch:
-    async def read_medicines(self) -> tuple[AttachmentProductRecord, ...]:
+    async def read_medicines(self) -> tuple[RegisteredMedicine, ...]:
         raise AssertionError("snapshot must supply its real medicine reader")
 
     def __init__(self):
@@ -220,17 +222,17 @@ async def test_tc135_identity_and_materialize_stay_old_across_os_publish(
     entered = asyncio.Event()
     release = asyncio.Event()
 
-    from backend.application.indexing.medicine_catalog import AttachmentProductCatalog
+    from backend.application.medicine.product_catalog import MedicineCatalog
 
     resolved_before_barrier = []
-    original_resolve = AttachmentProductCatalog.resolve_medicines
+    original_resolve = MedicineCatalog.resolve_medicines
 
     def observed_resolve(self, message, codes):
         result = original_resolve(self, message, codes)
         resolved_before_barrier.append(result)
         return result
 
-    monkeypatch.setattr(AttachmentProductCatalog, "resolve_medicines", observed_resolve)
+    monkeypatch.setattr(MedicineCatalog, "resolve_medicines", observed_resolve)
 
     class PausedClassifier(Classifier):
         async def classify(self, request):
@@ -266,8 +268,8 @@ async def test_tc135_identity_and_materialize_stay_old_across_os_publish(
         assert resolved_before_barrier[0][0].brand_names == ("イグザレルト",)
         paths = []
         for name, value in [
-            ("x", named("新原文X", "新製品X", X, "x")),
-            ("a", named("新原文A", "別製品Z", A, "a")),
+            ("x", named("新原文X", "新製品X", X, "x", revised_at="2026-11")),
+            ("a", named("新原文A", "別製品Z", A, "a", revised_at="2026-11")),
         ]:
             path = tmp_path / f"replacement-{name}.xml"
             path.write_bytes(value)

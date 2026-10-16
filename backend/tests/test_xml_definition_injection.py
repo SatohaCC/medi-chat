@@ -9,8 +9,9 @@ from importlib import import_module
 import httpx
 import pytest
 from backend.application.indexing.attachment_projection import project_attachment
+from backend.application.medicine.product_models import ResolvedMedicine
 from backend.domain.attachment.identifiers import DocumentId
-from backend.domain.attachment.value_objects import AttachmentProductMatch
+from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.domain.retrieval.primitives import DetectionSource, SearchSectionCode
 from backend.domain.retrieval.value_objects import SearchCriteria
 from backend.infrastructure.package_insert_definitions import loader
@@ -48,7 +49,7 @@ async def test_tc19_all_entries_keep_injected_definition_without_reload(
     definitions = loader.load_package_insert_definitions(path)
     source = xml_source(
         "<SupplementarySection><Detail><Lang>追補の原文本文</Lang></Detail></SupplementarySection><Interactions><ContraIndicatedCombinations><Drug><DrugName><Lang>相手薬の原文</Lang></DrugName></Drug></ContraIndicatedCombinations></Interactions>"
-    )
+    ).replace(b"2026-10", b"2026-11")
     decoder = PmdaXmlDecoder(xml_settings=definitions.xml_settings)
     encoder = PmdaArtifactEncoder()
     structured = tmp_path / "structured"
@@ -138,8 +139,9 @@ async def test_tc19_all_entries_keep_injected_definition_without_reload(
                         ),
                     ),
                     (
-                        AttachmentProductMatch(
-                            "", (), ("111111111111",), ("000001_test",)
+                        ResolvedMedicine(
+                            medicine=DomainMedicineMatch("", (), ("111111111111",), ()),
+                            document_ids=("000001_test",),
                         ),
                     ),
                 )
@@ -178,8 +180,11 @@ async def test_tc19_all_entries_keep_injected_definition_without_reload(
                             ),
                         ),
                         (
-                            AttachmentProductMatch(
-                                "", (), ("111111111111",), ("000001_test",)
+                            ResolvedMedicine(
+                                medicine=DomainMedicineMatch(
+                                    "", (), ("111111111111",), ()
+                                ),
+                                document_ids=("000001_test",),
                             ),
                         ),
                     )
@@ -272,7 +277,7 @@ async def test_tc21_injected_heading_policy_reaches_old_lease_and_new_request(
     )
     new = xml_source(
         "<Warnings><Detail><Lang>特別見出し</Lang></Detail></Warnings><ContraIndications><Detail><Lang>新保持原文</Lang></Detail></ContraIndications>"
-    )
+    ).replace(b"2026-10", b"2026-11")
     first = publisher.publish(decoder.decode(old), old)
     workers = ReadWorkers()
     runtime = GenerationRuntime(
@@ -314,7 +319,12 @@ async def test_tc21_injected_heading_policy_reaches_old_lease_and_new_request(
         source=DetectionSource.LOGIC,
         section_codes=(SearchSectionCode("1"), SearchSectionCode("2")),
     )
-    target = (AttachmentProductMatch("", (), ("111111111111",), ("000001_test",)),)
+    target = (
+        ResolvedMedicine(
+            medicine=DomainMedicineMatch("", (), ("111111111111",), ()),
+            document_ids=("000001_test",),
+        ),
+    )
     try:
         async with runtime.acquire() as old_snapshot:
             latest = publisher.publish(decoder.decode(new), new)

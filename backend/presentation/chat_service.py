@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
 
+from backend.application.medicine.product_contracts import RegisteredMedicineReader
+
 from ..application.chat.answer_preparation import (
     prepare_reply as app_prepare_reply,
 )
@@ -18,7 +20,6 @@ from ..application.retrieval.intent_contracts import IntentClassifier
 from ..application.retrieval.keyword_contracts import KeywordExtractor
 from ..application.retrieval.snapshot_contracts import RetrievalSnapshotProvider
 from ..config.generation_settings import GenerationDefaults, read_generation_defaults
-from ..domain.attachment.repositories import AttachmentProductRepository
 from ..domain.retrieval.repositories import EvidenceRepository
 from ..domain.retrieval.value_objects import Evidence, IntentPolicy
 from .chat_dto_mapper import (
@@ -41,7 +42,7 @@ class AppChatService:
     def __init__(
         self,
         *,
-        medicine_reader: AttachmentProductRepository,
+        medicine_reader: RegisteredMedicineReader,
         evidence_reader: EvidenceRepository,
         intent_classifier: IntentClassifier,
         keyword_extractor: KeywordExtractor,

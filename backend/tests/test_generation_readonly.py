@@ -52,7 +52,7 @@ def test_tc118_configured_gate_rejects_cleanup_before_starting_main(
             raise ImportCancelled()
 
     publisher.fault = fault
-    value = source("新公開本文")
+    value = source("新公開本文", revised_at="2026-11")
     result = publisher.publish(
         PmdaXmlDecoder().decode(value), value, check_cancel=check
     )
@@ -135,7 +135,7 @@ def test_tc118_startup_race_refuses_recovery_without_changing_originals(
                 raise ImportCancelled()
 
         publisher.fault = fault
-        value = source("競合後公開本文")
+        value = source("競合後公開本文", revised_at="2026-11")
         result = publisher.publish(
             PmdaXmlDecoder().decode(value), value, check_cancel=check
         )
@@ -184,7 +184,7 @@ def test_tc102_startup_retries_io_pending_without_changing_receipt(
 
     with monkeypatch.context() as patch:
         patch.setattr(Path, "unlink", fail_one)
-        final = publish(publisher, source("startup現在本文"))
+        final = publish(publisher, source("startup現在本文", revised_at="2026-11"))
         assert final.status == "registered_cleanup_pending"
     assert old_path.is_file()
     structured = publisher.store.root.parent / "structured"

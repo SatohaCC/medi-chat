@@ -2,7 +2,8 @@
 
 from dataclasses import dataclass, field
 
-from ...domain.attachment.value_objects import AttachmentProductMatch
+from backend.application.medicine.product_models import ResolvedMedicine
+
 from ...domain.json_types import JsonValue
 from ...domain.retrieval.product_identity import ProductIdentityReason
 from ...domain.retrieval.value_objects import Evidence
@@ -14,7 +15,7 @@ class RetrievalResult:
 
     intent: str
     retrieval_strategy: str
-    resolved_medicines: list[AttachmentProductMatch] = field(default_factory=list)
+    resolved_medicines: list[ResolvedMedicine] = field(default_factory=list)
     sources: list[Evidence] = field(default_factory=list)
     needs_clarification: bool = False
     notices: list[str] = field(default_factory=list)

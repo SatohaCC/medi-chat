@@ -4,13 +4,14 @@ import hashlib
 import json
 from pathlib import Path
 
+from backend.application.medicine.product_models import RegisteredMedicine
+
 from ...application.indexing.index_errors import IndexSourceError
 from ...application.indexing.index_models import (
     IndexDocument,
     IndexUnit,
     SourceSnapshot,
 )
-from ...domain.attachment.entities import AttachmentProductRecord
 from ..index_payloads import build_index_document, build_index_unit
 from ..json_payloads import parse_json_object
 
@@ -30,7 +31,7 @@ class FileIndexSourceReader:
         paths = self._document_unit_paths()
         fingerprint = self._source_fingerprint(paths)
         documents: list[IndexDocument] = []
-        medicines: list[AttachmentProductRecord] = []
+        medicines: list[RegisteredMedicine] = []
         units: list[IndexUnit] = []
         for document_path, units_path in paths:
             document, document_medicines = self._read_document(document_path)
@@ -50,7 +51,7 @@ class FileIndexSourceReader:
         if manifest_path.is_file():
             try:
                 manifest = parse_json_object(manifest_path.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError):
+            except OSError, json.JSONDecodeError:
                 pass
             else:
                 count = manifest.get("document_count", 0)
@@ -77,7 +78,7 @@ class FileIndexSourceReader:
     @staticmethod
     def _read_document(
         document_path: Path,
-    ) -> tuple[IndexDocument, list[AttachmentProductRecord]]:
+    ) -> tuple[IndexDocument, list[RegisteredMedicine]]:
         try:
             payload = parse_json_object(document_path.read_text(encoding="utf-8"))
             return build_index_document(payload)
