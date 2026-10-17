@@ -363,3 +363,102 @@ def test_startup_initializes_janome_off_event_loop_before_accepting_requests(
     with TestClient(app) as client:
         assert initialized == [True]
         assert client.get("/health").status_code == 200
+
+
+@pytest.mark.parametrize("jev_available", [False, True])
+@pytest.mark.parametrize("last_detector", ["logic", "keyword", "jev"])
+def test_all_detectors_start_together_and_generation_waits_for_last(
+    monkeypatch, jev_available, last_detector
+):
+    from backend.application.retrieval.intent_contracts import IntentResult
+    from backend.domain.retrieval.primitives import IntentName
+
+    started = {name: threading.Event() for name in ("logic", "keyword", "jev")}
+    release = {name: threading.Event() for name in started}
+
+    def local(name):
+        started[name].set()
+        assert release[name].wait(5), f"{name} was not released"
+        return SearchCriteria(
+            source=DetectionSource(name), intent=IntentName("interaction")
+        )
+
+    class Classifier:
+        is_available = jev_available
+
+        async def classify(self, request):
+            started["jev"].set()
+            assert await asyncio.to_thread(release["jev"].wait, 5), (
+                "Jev was not released"
+            )
+            return IntentResult(is_available=jev_available)
+
+    monkeypatch.setattr(
+        retrieval, "_detect_fixed_keyword_criteria", lambda *args: local("logic")
+    )
+    monkeypatch.setattr(
+        retrieval, "detect_morphology_criteria", lambda *args: local("keyword")
+    )
+    provider = RecordingProvider()
+    definitions = get_package_insert_definitions()
+    service = AppChatService(
+        medicine_reader=MedicineReader(),
+        evidence_reader=OrderedEvidenceReader(False),
+        intent_classifier=Classifier(),
+        keyword_extractor=UnusedKeywordExtractor(),
+        intent_policy=definitions.intent_policy,
+        answer_prompt_policy=definitions.answer_prompt_policy,
+        provider_factory=lambda _: provider,
+    )
+    app = FastAPI()
+    app.include_router(router)
+    app.dependency_overrides[get_chat_service] = lambda: service
+    try:
+        with TestClient(app) as client, client.websocket_connect("/api/ws") as socket:
+            socket.send_json(
+                {
+                    "type": "message",
+                    "product_yj_codes": ["1234567A0000"],
+                    "messages": [{"role": "user", "content": "質問"}],
+                }
+            )
+            status = socket.receive_json()
+            assert status == {
+                "type": "retrieval_status",
+                "stage": "jev_searching" if jev_available else "unavailable",
+            }
+            for event in started.values():
+                assert event.wait(5), (
+                    "All three detectors must start before any is released"
+                )
+            for name, event in release.items():
+                if name != last_detector:
+                    event.set()
+            early = socket.receive_json()
+            assert early["type"] == "sources", early
+            assert early["sources"]
+            assert provider.calls == [], (
+                "Generation started before all detectors finished"
+            )
+            release[last_detector].set()
+            events = [early]
+            while True:
+                event = socket.receive_json()
+                events.append(event)
+                assert event["type"] != "error", event
+                if event["type"] == "text_done":
+                    break
+            source_events = [event for event in events if event["type"] == "sources"]
+            assert {
+                origin
+                for source in source_events[-1]["sources"]
+                for origin in source["retrieved_by"]
+            } == {"logic", "keyword"}
+            assert len(provider.calls) == 1
+            types = [event["type"] for event in events]
+            assert max(
+                i for i, kind in enumerate(types) if kind == "sources"
+            ) < types.index("text_delta")
+    finally:
+        for event in release.values():
+            event.set()
