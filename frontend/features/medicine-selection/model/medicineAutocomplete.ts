@@ -257,6 +257,9 @@ export function searchMedicines(
 
   for (let i = 0; i < entries.length; i++) {
     const entry = entries[i];
+    if (!entry.y?.trim()) {
+      continue;
+    }
     let score = 0;
 
     const nameLower = normalizeQuery(entry.n);

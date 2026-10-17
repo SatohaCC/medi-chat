@@ -37,6 +37,7 @@ CONFIRMATIONS = {
 CASES = [
     ("アマリールの効能は？", [X], "product_identity_conflict"),
     ("イグザレルトとイトラコナゾールの飲み合わせ", [X], "pair_yj_codes_required"),
+    ("イグザレルトと未知薬の併用は可能ですか", [X], "unresolved_counterpart"),
     (
         "アマリールの効能。イグザレルトと未知薬の併用",
         ["999999999999"],
@@ -51,7 +52,7 @@ CASES = [
     (
         "イグザレルトとイトラコナゾールの併用。イグザレルトと未知薬の併用",
         [X],
-        "pair_yj_codes_required",
+        "unresolved_counterpart",
     ),
 ]
 

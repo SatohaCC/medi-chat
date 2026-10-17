@@ -46,3 +46,31 @@ test("romajiToHiragana converts de, ji, and fe accurately", () => {
   assert.equal(romajiToHiragana("jioru"), "じおる");
   assert.equal(romajiToHiragana("asetoaminofen"), "あせとあみのふぇん");
 });
+
+test("searchMedicines filters out entries without valid YJ code", () => {
+  const mixedEntries = [
+    ...sampleEntries,
+    {
+      n: "薬剤料減点（合算薬剤料上限超）",
+      k: "ヤクザイリヨウゲンテン",
+      h: "やくざいりようげんてん",
+      y: "",
+      g: "",
+      c: "歯科",
+    },
+    {
+      n: "包括点数の治験減点分",
+      k: "",
+      h: "",
+      y: "   ",
+      g: "",
+      c: "歯科",
+    },
+  ];
+
+  const results = searchMedicines("薬剤料", mixedEntries);
+  assert.equal(results.length, 0);
+
+  const results2 = searchMedicines("包括点数", mixedEntries);
+  assert.equal(results2.length, 0);
+});

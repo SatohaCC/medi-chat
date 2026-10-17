@@ -36,7 +36,10 @@ export function useMedicineAutocomplete({
         if (!res.ok) return;
         const data = (await res.json()) as MedicineEntry[];
         if (!cancelled && Array.isArray(data)) {
-          setDictionaryEntries(data);
+          const validEntries = data.filter(
+            (item) => typeof item.y === "string" && item.y.trim().length > 0,
+          );
+          setDictionaryEntries(validEntries);
         }
       } catch {
         // Ignore dictionary fetch errors and fall back to activeItems
@@ -80,7 +83,7 @@ export function useMedicineAutocomplete({
     }
 
     for (const item of dictionaryEntries) {
-      if (!activeYjs.has(item.y)) {
+      if (item.y && !activeYjs.has(item.y)) {
         merged.push(item);
       }
     }

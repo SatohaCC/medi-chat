@@ -156,7 +156,12 @@ def product_identity_reason(
     ):
         return ProductIdentityReason.CONFLICT
     if any(
-        len(question) == 2 and any(codes and not codes & selected for codes in question)
+        len(question) == 2 and any(not codes for codes in question)
+        for question in questions
+    ):
+        return ProductIdentityReason.UNRESOLVED
+    if any(
+        len(question) == 2 and any(not codes & selected for codes in question)
         for question in questions
     ):
         return ProductIdentityReason.PAIR_REQUIRED

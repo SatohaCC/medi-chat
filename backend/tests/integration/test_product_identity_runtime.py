@@ -106,6 +106,7 @@ class Dependencies(TypedDict):
     [
         ("アマリールの効能", [X], "product_identity_conflict"),
         ("イグザレルトとイトラコナゾールの飲み合わせ", [X], "pair_yj_codes_required"),
+        ("イグザレルトと未知薬の併用", [X], "unresolved_counterpart"),
         ("アマリールの効能", [X, "999999999999"], "product_identity_conflict"),
         ("アマリールの効能", ["999999999999"], "product_code_lookup"),
     ],
