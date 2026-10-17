@@ -3,7 +3,7 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
 
-from ...domain.json_types import JsonValue
+from ...domain.foundation.json_types import JsonValue
 from ...domain.retrieval.primitives import DetectionSource
 from ...domain.retrieval.services import select_intents
 from ...domain.retrieval.value_objects import IntentPolicy, SearchCriteria

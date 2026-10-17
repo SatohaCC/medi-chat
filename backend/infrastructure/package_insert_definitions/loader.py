@@ -35,9 +35,9 @@ from ...domain.retrieval.value_objects import (
     SearchIntentDefinition,
     TextSearchPolicy,
 )
-from ..intent.definition_settings import JevClassificationSettings
-from ..morphology.definition_settings import JanomeMorphologySettings
-from ..pmda_xml.definition_settings import (
+from .definition_settings import (
+    JanomeMorphologySettings,
+    JevClassificationSettings,
     PmdaXmlSettings,
     XmlColumnBinding,
     XmlSectionBinding,

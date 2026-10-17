@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 
-from ..attachment.identifiers import DocumentId, DocumentVersionId
+from ..attachment.identifiers import DocumentId
 from ..foundation.exceptions import DomainValidationError
+from ..foundation.json_types import JsonValue
 from ..foundation.value_objects import ImmutableMapping
-from ..json_types import JsonValue
 from ..medicine.identifiers import YjCode
 from .identifiers import SearchUnitId
 from .primitives import (
@@ -132,32 +131,6 @@ class TextSearchPolicy:
     stop_words: frozenset[str]
     symptom_keywords_by_adjective: Mapping[str, tuple[str, ...]]
     scope_heading_texts: frozenset[str]
-
-
-@dataclass(frozen=True, slots=True, kw_only=True)
-class SearchDocumentVersion:
-    document_id: DocumentId
-    version_id: DocumentVersionId
-
-    def __post_init__(self) -> None:
-        prefix = f"{self.document_id}:"
-        if (
-            not self.version_id.value.startswith(prefix)
-            or re.fullmatch(r"[0-9a-f]{64}", self.version_id.value[len(prefix) :])
-            is None
-        ):
-            raise DomainValidationError(
-                "search version must identify this document and its source SHA256"
-            )
-
-
-@dataclass(frozen=True, slots=True, kw_only=True)
-class VersionSearchIdentity(SearchDocumentVersion):
-    section_code: SearchUnitSectionCode
-
-    @property
-    def unit_id(self) -> SearchUnitId:
-        return SearchUnitId(f"{self.version_id}:{self.section_code}")
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

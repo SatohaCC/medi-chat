@@ -13,6 +13,10 @@ from sqlalchemy import delete, insert, select, update
 from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.exc import SQLAlchemyError
 
+from ...application.attachment_import.import_contracts import (
+    AttachmentArtifactEncoder,
+    AttachmentDecoder,
+)
 from ...application.attachment_import.import_errors import (
     ImportCancelled,
     ImportConflict,
@@ -35,24 +39,25 @@ from ...domain.attachment.exceptions import (
     MissingOrInvalidYjError,
     MissingRevisionError,
 )
-from ...domain.attachment.identifiers import (
+from ...domain.attachment.primitives import (
     DocumentVersionId,
 )
 from ...domain.attachment.value_objects import (
     RegistrationVersion,
 )
 from ...domain.medicine.identifiers import YjCode
-from ..index_payloads import build_index_document, build_index_unit
-from ..json_payloads import parse_json_object
-from ..package_insert_definitions.loader import get_package_insert_definitions
-from ..pmda_xml.artifact_mapping import (
-    PmdaArtifactEncoder,
+from ..index_payloads import (
+    build_index_document,
+    build_index_unit,
+    encode_registered_units,
     result_dict,
     result_from_dict,
 )
+from ..json_payloads import parse_json_object
+from ..package_insert_definitions.definition_settings import PmdaXmlSettings
+from ..package_insert_definitions.loader import get_package_insert_definitions
+from ..pmda_xml.artifact_mapping import PmdaArtifactEncoder
 from ..pmda_xml.decoder import PmdaXmlDecoder, SourceInformation
-from ..pmda_xml.definition_settings import PmdaXmlSettings
-from ..pmda_xml.registration_artifacts import encode_registered_units
 from . import registration_schema as registration
 from .attachment_import_store import FileAttachmentImportStore
 from .index_writer import SqlAlchemyIndexWriter
@@ -99,14 +104,22 @@ class SqliteRegistrationPublisher:
         fault: Callable[[str], None] = lambda phase: None,
         allowed_roots: tuple[Path, ...] = (),
         xml_settings: PmdaXmlSettings | None = None,
+        decoder: AttachmentDecoder | None = None,
+        encoder: AttachmentArtifactEncoder | None = None,
         engine: Engine | None = None,
     ) -> None:
         self.index_path = index_path.resolve()
         self._shared_engine = engine
+        self._decoder = decoder
+        self._encoder = encoder
         self._xml_settings = (
             xml_settings
             if xml_settings is not None
-            else get_package_insert_definitions().xml_settings
+            else (
+                get_package_insert_definitions().xml_settings
+                if decoder is None
+                else None
+            )
         )
         self.store = store
         self.fault = fault
@@ -256,7 +269,12 @@ class SqliteRegistrationPublisher:
                             "invalid_source_information",
                             "Source information is invalid",
                         )
-                    bundle = PmdaArtifactEncoder().encode(
+                    encoder = (
+                        self._encoder
+                        if self._encoder is not None
+                        else PmdaArtifactEncoder()
+                    )
+                    bundle = encoder.encode(
                         item.decoded.document,
                         project_attachment(item.decoded.document),
                         info,
@@ -495,6 +513,11 @@ class SqliteRegistrationPublisher:
         generation_dir = self.store.root / "generations" / generation_id
         generation_dir.mkdir(parents=True)
         paths = []
+        decoder = (
+            self._decoder
+            if self._decoder is not None
+            else PmdaXmlDecoder(xml_settings=self._xml_settings)
+        )
         for version_id, codes in sorted(active.items()):
             check_cancel()
             record = records[version_id]
@@ -505,7 +528,7 @@ class SqliteRegistrationPublisher:
                     "Published source is inconsistent",
                     phase="projection",
                 )
-            decoded = PmdaXmlDecoder(xml_settings=self._xml_settings).decode(source)
+            decoded = decoder.decode(source, original_filename="source.xml")
             if not isinstance(decoded.source_info, SourceInformation):
                 raise ValueError("invalid source information")
             projection = project_active_attachment(decoded.document, frozenset(codes))

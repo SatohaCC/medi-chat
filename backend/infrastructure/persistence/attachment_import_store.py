@@ -22,7 +22,7 @@ from ...application.attachment_import.import_errors import (
 )
 from ...application.attachment_import.import_models import ArtifactBundle, ImportResult
 from ...domain.attachment.identifiers import DocumentId
-from ..pmda_xml.artifact_mapping import MAX_ARTIFACT_BYTES, result_from_dict
+from ..index_payloads import MAX_ARTIFACT_BYTES, result_from_dict
 
 
 class FileAttachmentImportStore:

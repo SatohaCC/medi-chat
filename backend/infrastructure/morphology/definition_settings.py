@@ -1,8 +1,5 @@
 """Janomeの品詞処理に固有の設定。"""
 
-from dataclasses import dataclass
+from ..package_insert_definitions.definition_settings import JanomeMorphologySettings
 
-
-@dataclass(frozen=True, slots=True, kw_only=True)
-class JanomeMorphologySettings:
-    ignored_noun_suffixes: frozenset[str]
+__all__ = ["JanomeMorphologySettings"]

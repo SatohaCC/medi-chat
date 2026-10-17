@@ -7,7 +7,7 @@ import os
 import typesafe_sdk as ts
 
 from ...application.retrieval.intent_contracts import IntentRequest, IntentResult
-from ...domain.json_types import JsonValue
+from ...domain.foundation.json_types import JsonValue
 from ..package_insert_definitions.loader import get_package_insert_definitions
 from .definition_settings import JevClassificationSettings
 from .jev_intent_mapping import map_jev_intent_result

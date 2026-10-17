@@ -23,7 +23,7 @@ from backend.domain.attachment.value_objects import (
     AttachmentTableCell,
 )
 from backend.domain.foundation.exceptions import DomainValidationError
-from backend.domain.json_types import JsonValue
+from backend.domain.foundation.json_types import JsonValue
 from backend.tests.test_attachment_domain import _document
 
 

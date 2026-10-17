@@ -9,10 +9,11 @@
 - 回答指示の `{section:10.1}` はApplicationで正式名称へ展開します。answer_guidance.minimum_medicinesは専用指示の薬剤数下限です。
 - 相互作用列のID・名称・順はattachmentの定義です。XMLタグはPmdaXmlSettings、回答列はApplicationのAnswerPromptPolicyへ投影します。XMLの汎用タグは祖先文脈で解決します。
 - 除外語・症状言い換え・見出し判定はretrievalのTextSearchPolicy、ignored_noun_suffixesはJanomeMorphologySettingsが所有します。
+- 技術アダプター向けの設定dataclass（`JevClassificationSettings`、`JanomeMorphologySettings`、`PmdaXmlSettings` 等）は [definition_settings.py](definition_settings.py) が所有します。これにより `package_insert_definitions` は他のインフラアダプター（`intent` / `morphology` / `pmda_xml`）に依存せず、各アダプター側が `definition_settings.py` を参照する単方向依存をImport Linterで強制しています。
 
 loaderはJSON IOとスキーマ・参照の検証を行い、不変な用途別モデルを組み立てます。get_package_insert_definitionsはプロセス内で共有し、JSON変更後は再起動が必要です。任意pathのload_package_insert_definitionsは独立して検証します。既定pathはこのファイル配置を基準に解決し、cwdに依存しません。
 
-読込結果の束はmain/CLIなどのInfrastructure組立地点だけで展開し、サービスへはintent/text/answer/XML/Jev/Janomeの必要な用途だけを渡します。schema_models/schema_validationはこのIO境界の内部入力表現で、利用側から参照しません。encoderはdecoderが確定した原本・検索投影・source情報を使い、定義を再読込しません。
+読込結果の束は `infrastructure/composition/app_lifespan.py` / `main.py` / CLI などのInfrastructure組立地点だけで展開し、サービスへはintent/text/answer/XML/Jev/Janomeの必要な用途だけを渡します。schema_models/schema_validationはこのIO境界の内部入力表現で、利用側から参照しません。encoderはdecoderが確定した原本・検索投影・source情報を使い、定義を再読込しません。
 
 検証はリポジトリrootから行います。
 

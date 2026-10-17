@@ -8,6 +8,7 @@ from dataclasses import replace
 from typing import TypeVar
 
 from ...domain.attachment.identifiers import DocumentId
+from ...domain.foundation.exceptions import DomainValidationError
 from ..indexing.attachment_projection import project_attachment
 from .import_contracts import (
     AttachmentArtifactEncoder,
@@ -106,8 +107,16 @@ class AttachmentImportService:
                 lambda: publisher.read_result(document_id, source_sha256),
                 threading.Event(),
             )
+
+        def read_from_store() -> ImportResult:
+            try:
+                doc_id = DocumentId(document_id)
+            except DomainValidationError as exc:
+                raise ValueError(str(exc)) from None
+            return self.store.read(doc_id, source_sha256)
+
         return await self._run(
-            lambda: self.store.read(DocumentId(document_id), source_sha256),
+            read_from_store,
             threading.Event(),
         )
 

@@ -68,7 +68,7 @@ ROOT = Path(__file__).resolve().parents[2]
         ),
         (
             {
-                "domain/new_one/model.py": "from ..shared import model\nfrom ..foundation import model\nfrom .. import json_types"
+                "domain/new_one/model.py": "from ..shared import model\nfrom ..foundation import model\nfrom ..foundation import json_types"
             },
             False,
         ),
@@ -88,6 +88,34 @@ ROOT = Path(__file__).resolve().parents[2]
         ),
         (
             {"infrastructure/sources/model.py": "from ..persistence import model"},
+            False,
+        ),
+        (
+            {
+                "infrastructure/package_insert_definitions/model.py": "from ..pmda_xml import model"
+            },
+            True,
+        ),
+        (
+            {
+                "infrastructure/pmda_xml/model.py": "from ..package_insert_definitions import model"
+            },
+            False,
+        ),
+        (
+            {"infrastructure/index_payloads.py": "from .pmda_xml import model"},
+            True,
+        ),
+        (
+            {
+                "presentation/chat_models.py": "from . import chat_dto_mapper",
+            },
+            True,
+        ),
+        (
+            {
+                "presentation/chat_routes.py": "from . import dependencies\nfrom . import chat_service\nfrom . import chat_models",
+            },
             False,
         ),
     ],
@@ -119,6 +147,7 @@ def test_import_linter_enforces_configured_contracts(tmp_path, sources, broken):
         "infrastructure/intent",
         "infrastructure/morphology",
         "infrastructure/pmda_xml",
+        "infrastructure/package_insert_definitions",
         "config",
         "migrations",
         "presentation",
@@ -127,8 +156,24 @@ def test_import_linter_enforces_configured_contracts(tmp_path, sources, broken):
         directory.mkdir(parents=True, exist_ok=True)
         (directory / "__init__.py").write_text("", encoding="utf-8")
         (directory / "model.py").write_text("", encoding="utf-8")
-    (package / "domain/json_types.py").write_text("", encoding="utf-8")
+    (package / "domain/foundation/json_types.py").write_text("", encoding="utf-8")
     (package / "main.py").write_text("", encoding="utf-8")
+    for stub in (
+        "infrastructure/evidence_mapping.py",
+        "infrastructure/index_payloads.py",
+        "infrastructure/json_payloads.py",
+        "presentation/chat_models.py",
+        "presentation/chat_dto_mapper.py",
+        "presentation/chat_service.py",
+        "presentation/dependencies.py",
+        "presentation/attachment_import_routes.py",
+        "presentation/chat_routes.py",
+        "presentation/chat_websocket_routes.py",
+        "presentation/health_routes.py",
+        "presentation/medicine_routes.py",
+        "presentation/search_routes.py",
+    ):
+        (package / stub).write_text("", encoding="utf-8")
     foundation_primitives = package / "domain/foundation/primitives"
     foundation_primitives.mkdir()
     (foundation_primitives / "__init__.py").write_text("", encoding="utf-8")

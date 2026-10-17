@@ -5,7 +5,7 @@ from typing import Literal
 
 from backend.application.medicine.product_models import ResolvedMedicine
 
-from ...domain.json_types import JsonValue
+from ...domain.foundation.json_types import JsonValue
 from ...domain.retrieval.value_objects import Evidence
 
 

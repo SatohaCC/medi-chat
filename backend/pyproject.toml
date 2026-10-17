@@ -132,21 +132,7 @@ forbidden_modules = [
 as_packages = false
 
 [[tool.importlinter.contracts]]
-name = "Presentation does not directly depend on domain entities or services"
-type = "forbidden"
-source_modules = [
-    "backend.presentation",
-    "backend.presentation.**",
-]
-forbidden_modules = [
-    "backend.domain.*.entities",
-    "backend.domain.*.services",
-]
-as_packages = false
-allow_indirect_imports = true
-
-[[tool.importlinter.contracts]]
-name = "Presentation routes and dependencies do not depend on domain models or repositories"
+name = "Presentation does not depend on domain"
 type = "forbidden"
 source_modules = [
     "backend.presentation",
@@ -158,11 +144,37 @@ forbidden_modules = [
 ]
 as_packages = false
 allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "Presentation modules follow internal dependency hierarchy"
+type = "forbidden"
+source_modules = [
+    "backend.presentation.*",
+]
+forbidden_modules = [
+    "backend.presentation.attachment_import_routes",
+    "backend.presentation.chat_routes",
+    "backend.presentation.chat_websocket_routes",
+    "backend.presentation.health_routes",
+    "backend.presentation.medicine_routes",
+    "backend.presentation.search_routes",
+    "backend.presentation.dependencies",
+    "backend.presentation.chat_service",
+    "backend.presentation.chat_dto_mapper",
+]
+as_packages = false
 ignore_imports = [
-    "backend.presentation.attachment_import_routes -> backend.domain.foundation.exceptions",
-    "backend.presentation.chat_dto_mapper -> backend.domain.*.*",
-    "backend.presentation.chat_service -> backend.domain.*.*",
-    "backend.presentation.evidence_models -> backend.domain.*.*",
+    "backend.presentation.attachment_import_routes -> backend.presentation.dependencies",
+    "backend.presentation.chat_routes -> backend.presentation.dependencies",
+    "backend.presentation.chat_routes -> backend.presentation.chat_service",
+    "backend.presentation.chat_websocket_routes -> backend.presentation.dependencies",
+    "backend.presentation.chat_websocket_routes -> backend.presentation.chat_service",
+    "backend.presentation.health_routes -> backend.presentation.dependencies",
+    "backend.presentation.medicine_routes -> backend.presentation.dependencies",
+    "backend.presentation.search_routes -> backend.presentation.dependencies",
+    "backend.presentation.search_routes -> backend.presentation.chat_service",
+    "backend.presentation.dependencies -> backend.presentation.chat_service",
+    "backend.presentation.chat_service -> backend.presentation.chat_dto_mapper",
 ]
 unmatched_ignore_imports_alerting = "none"
 
@@ -198,6 +210,23 @@ source_modules = ["backend.infrastructure.persistence"]
 forbidden_modules = ["backend.infrastructure.sources"]
 
 [[tool.importlinter.contracts]]
+name = "Persistence does not depend on non-XML technology adapters and isolates XML fallback"
+type = "forbidden"
+source_modules = ["backend.infrastructure.persistence"]
+forbidden_modules = [
+    "backend.infrastructure.llm",
+    "backend.infrastructure.intent",
+    "backend.infrastructure.morphology",
+    "backend.infrastructure.pmda_xml",
+]
+ignore_imports = [
+    "backend.infrastructure.persistence.generation_runtime -> backend.infrastructure.pmda_xml.decoder",
+    "backend.infrastructure.persistence.registration_publisher -> backend.infrastructure.pmda_xml.artifact_mapping",
+    "backend.infrastructure.persistence.registration_publisher -> backend.infrastructure.pmda_xml.decoder",
+]
+unmatched_ignore_imports_alerting = "none"
+
+[[tool.importlinter.contracts]]
 name = "Infrastructure adapters do not depend on composition or CLI"
 type = "forbidden"
 source_modules = ["backend.infrastructure.*"]
@@ -211,6 +240,24 @@ ignore_imports = [
 unmatched_ignore_imports_alerting = "none"
 
 [[tool.importlinter.contracts]]
+name = "Package insert definitions do not depend on other infrastructure adapters"
+type = "forbidden"
+source_modules = ["backend.infrastructure.package_insert_definitions"]
+forbidden_modules = ["backend.infrastructure.*"]
+
+[[tool.importlinter.contracts]]
+name = "Infrastructure payload mappers do not depend on adapter packages"
+type = "forbidden"
+source_modules = [
+    "backend.infrastructure.evidence_mapping",
+    "backend.infrastructure.index_payloads",
+    "backend.infrastructure.json_payloads",
+]
+forbidden_modules = [
+    "backend.infrastructure.*",
+]
+
+[[tool.importlinter.contracts]]
 name = "External technology adapters are independent"
 type = "independence"
 modules = [
@@ -219,11 +266,6 @@ modules = [
     "backend.infrastructure.morphology",
     "backend.infrastructure.pmda_xml",
 ]
-ignore_imports = [
-    "backend.infrastructure.** -> backend.infrastructure.package_insert_definitions.**",
-    "backend.infrastructure.package_insert_definitions.loader -> backend.infrastructure.*.definition_settings",
-]
-unmatched_ignore_imports_alerting = "none"
 
 [[tool.importlinter.contracts]]
 name = "Domain contexts are independent"
@@ -234,7 +276,6 @@ ignore_imports = [
     "backend.domain.** -> backend.domain.foundation.**",
     "backend.domain.** -> backend.domain.shared",
     "backend.domain.** -> backend.domain.shared.**",
-    "backend.domain.** -> backend.domain.json_types",
     "backend.domain.** -> backend.domain.*.identifiers",
 ]
 unmatched_ignore_imports_alerting = "none"
@@ -244,8 +285,6 @@ name = "Foundation does not depend on business vocabulary"
 type = "forbidden"
 source_modules = ["backend.domain.foundation"]
 forbidden_modules = ["backend.domain.*"]
-ignore_imports = ["backend.domain.foundation.** -> backend.domain.json_types"]
-unmatched_ignore_imports_alerting = "none"
 
 [[tool.importlinter.contracts]]
 name = "Shared does not depend on business contexts"
@@ -255,7 +294,6 @@ forbidden_modules = ["backend.domain.*"]
 ignore_imports = [
     "backend.domain.shared.** -> backend.domain.foundation",
     "backend.domain.shared.** -> backend.domain.foundation.**",
-    "backend.domain.shared.** -> backend.domain.json_types",
 ]
 unmatched_ignore_imports_alerting = "none"
 

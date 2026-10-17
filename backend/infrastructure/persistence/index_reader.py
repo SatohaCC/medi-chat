@@ -3,7 +3,7 @@
 from sqlalchemy import func, select
 from sqlalchemy.engine import Engine
 
-from ...domain.json_types import JsonValue
+from ...domain.foundation.json_types import JsonValue
 from ..json_payloads import parse_json_object
 from . import schema
 from .read_workers import ReadWorkers, read_workers_for_engine

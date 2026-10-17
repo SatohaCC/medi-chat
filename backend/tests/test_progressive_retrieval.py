@@ -10,8 +10,10 @@ from backend.application.chat.answer_preparation import prepare_reply
 from backend.application.chat.chat_models import ChatMessage
 from backend.application.retrieval import retrieve_evidence as retrieval
 from backend.application.retrieval.jev_detector import JevDetectionResult
-from backend.application.retrieval.snapshot_contracts import RetrievalSnapshot
-from backend.domain.retrieval.identifiers import SearchGenerationId
+from backend.application.retrieval.snapshot_contracts import (
+    RetrievalSnapshot,
+    SearchGenerationId,
+)
 from backend.domain.retrieval.primitives import (
     DetectionSource,
     IntentName,

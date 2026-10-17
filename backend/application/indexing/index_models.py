@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from backend.application.medicine.product_models import RegisteredMedicine
 
-from ...domain.json_types import JsonValue
+from ...domain.foundation.json_types import JsonValue
 
 
 @dataclass(frozen=True)

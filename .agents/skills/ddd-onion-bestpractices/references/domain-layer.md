@@ -31,28 +31,30 @@ description: ドメイン駆動設計のドメイン層を設計・実装・レ�
 
 ```text
 domain/
-├── primitives.py       # Domain Primitive、Enum
+├── identifiers.py      # 他コンテキストへ公開する唯一のEntity ID（1コンテキスト＝1公開ID）
+├── exceptions.py       # Domain Exception
+├── primitives.py       # コンテキスト内部のDomain Primitive、Enum
 ├── value_objects.py    # Value Object
 ├── entities.py         # Entity、Aggregate Root
 ├── repositories.py     # Repository Interface
-├── services.py         # Domain Service
-└── exceptions.py       # Domain Exception
+└── services.py         # Domain Service
 ```
 
-複数の境界づけられたコンテキストがある場合だけ、コンテキストを先に分け、その内側を同じフラット構成にする。
+複数の境界づけられたコンテキストがある場合だけ、コンテキストを先に分け、その内側を同じフラット構成にする。コンテキスト内部の依存方向は以下の単方向階層（上流 $\leftarrow$ 下流）を Import Linter と AST テストで機械的に強制する：
+`identifiers` / `exceptions` $\leftarrow$ `primitives` $\leftarrow$ `value_objects` $\leftarrow$ `entities` $\leftarrow$ `repositories` $\leftarrow$ `services`
 
 ```text
 domain/
-├── shared/
-│   ├── primitives.py
-│   └── value_objects.py
+├── foundation/         # 業務非依存のPrimitive・VO・例外基底
+├── shared/             # 合意した共有語彙・汎用正規化処理
 └── medicine/
+    ├── identifiers.py
+    ├── exceptions.py
     ├── primitives.py
     ├── value_objects.py
     ├── entities.py
     ├── repositories.py
-    ├── services.py
-    └── exceptions.py
+    └── services.py
 ```
 
 1ファイルが実際に大きくなった場合は、まず境界づけられたコンテキストや集約単位を見直し、それでも必要なときだけ責務内で分割する。配置場所ではなく責務と依存方向を優先する。共有語彙は Shared Kernel 等の明示的な境界に置き、特定コンテキストのモデルを無関係なコンテキストから直接再利用しない。

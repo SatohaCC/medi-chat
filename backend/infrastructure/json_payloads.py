@@ -2,7 +2,7 @@
 
 import json
 
-from ..domain.json_types import JsonValue
+from ..domain.foundation.json_types import JsonValue
 
 
 def parse_json_object(value: str) -> dict[str, JsonValue]:

@@ -8,10 +8,16 @@ from ...domain.attachment.value_objects import (
     AttachmentProductRevision,
     MedicineDocumentReference,
 )
+from ...domain.foundation.primitives.identifiers import EntityStringId
 from ...domain.medicine.entities import MedicineProduct
 from ...domain.medicine.identifiers import YjCode
 from ...domain.medicine.primitives import ProductGroupId
 from ...domain.medicine.value_objects import MedicineMatch
+
+
+@dataclass(frozen=True, slots=True)
+class SearchGenerationId(EntityStringId):
+    """根拠と掲載製品を一貫して読む公開世代のID。"""
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,3 +83,13 @@ class ResolvedMedicine:
     @property
     def matched_aliases(self) -> tuple[str, ...]:
         return self.medicine.matched_aliases
+
+
+__all__ = [
+    "DocumentId",
+    "MedicineMatch",
+    "RegisteredMedicine",
+    "ResolvedMedicine",
+    "SearchGenerationId",
+    "YjCode",
+]
