@@ -159,7 +159,7 @@ async def test_対象薬が見つからない場合はLLMを作成しない(tmp_
             provider_factory=factory,
         )
         messages = [ChatMessage(role="user", content="副作用について")]
-        reply = await service.answer_question(messages, ["0000000A0000"])
+        reply = await service.prepare_reply(messages, ["0000000A0000"])
         chunks = [chunk async for chunk in service.stream_answer(reply, messages)]
     assert reply.needs_clarification
     assert "YJコード" in reply.answer

@@ -5,6 +5,7 @@ from __future__ import annotations
 import ast
 import importlib
 import sys
+from contextlib import suppress
 from pathlib import Path
 
 import pytest
@@ -416,6 +417,39 @@ def _outermost_attributes(root: ast.AST) -> list[ast.Attribute]:
     ]
 
 
+OUTPUT_RESPONSE_DTOS = {
+    "backend.presentation.chat_models.ChatResponse",
+    "backend.presentation.evidence_models.ChatSource",
+    "backend.presentation.medicine_models.MedicineMatch",
+}
+
+
+def _annotation_names(
+    node: ast.AST | None, aliases: dict[str, str], *, input_type: bool = False
+) -> set[str]:
+    if node is None:
+        return set()
+    if (
+        input_type
+        and isinstance(node, ast.Subscript)
+        and _qualified_name(node.value, aliases).rsplit(".", 1)[-1] == "Callable"
+    ):
+        return set()  # Callback payloads are outgoing notifications, not input DTOs.
+    names = set()
+    if isinstance(node, (ast.Name, ast.Attribute)):
+        names.add(_qualified_name(node, aliases))
+    elif isinstance(node, ast.Constant) and isinstance(node.value, str):
+        with suppress(SyntaxError):
+            names.update(
+                _annotation_names(
+                    ast.parse(node.value, mode="eval"), aliases, input_type=input_type
+                )
+            )
+    for child in ast.iter_child_nodes(node):
+        names.update(_annotation_names(child, aliases, input_type=input_type))
+    return names
+
+
 def find_inner_layer_violations(
     source: str, *, module_name: str, filename: str
 ) -> list[str]:
@@ -449,6 +483,36 @@ def find_inner_layer_violations(
                 aliases[imported.asname or imported.name] = dependency
                 if not _allowed_module(dependency, caller=module_name):
                     report(node, "import " + dependency)
+
+    if module_name.startswith("backend.presentation."):
+        for function in ast.walk(tree):
+            if not isinstance(function, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            arguments = [
+                *function.args.posonlyargs,
+                *function.args.args,
+                *function.args.kwonlyargs,
+            ]
+            if function.args.vararg is not None:
+                arguments.append(function.args.vararg)
+            if function.args.kwarg is not None:
+                arguments.append(function.args.kwarg)
+            inputs = set().union(
+                *(
+                    _annotation_names(arg.annotation, aliases, input_type=True)
+                    for arg in arguments
+                )
+            )
+            if not inputs.intersection(OUTPUT_RESPONSE_DTOS):
+                continue
+            targets = _annotation_names(function.returns, aliases)
+            targets.update(
+                _qualified_name(call.func, aliases)
+                for call in ast.walk(function)
+                if isinstance(call, ast.Call)
+            )
+            if any(target.startswith("backend.application.") for target in targets):
+                report(function, "response DTO must not be rehydrated into Application")
 
     annotation_attr_ids: set[int] = set()
     for node in ast.walk(tree):
@@ -1663,3 +1727,72 @@ def test_domain_dataclasses_are_frozen_and_use_immutable_collections() -> None:
                                 )
 
     assert not violations, "ドメインモデルの不変性違反:\n" + "\n".join(violations)
+
+
+def test_response_dto_boundaries_in_presentation() -> None:
+    violations = []
+    for path in sorted((BACKEND_ROOT / "presentation").rglob("*.py")):
+        relative = path.relative_to(BACKEND_ROOT.parent)
+        violations.extend(
+            find_inner_layer_violations(
+                path.read_text(encoding="utf-8"),
+                module_name=".".join(relative.with_suffix("").parts),
+                filename=relative.as_posix(),
+            )
+        )
+    assert not violations, "\n".join(violations)
+
+
+@pytest.mark.parametrize(
+    "source, forbidden",
+    [
+        (
+            "from .chat_models import ChatResponse as Public\n"
+            "from ..application.chat.chat_models import ChatResponse as Result\n"
+            "def convert(value: Public) -> Result: ...\n",
+            True,
+        ),
+        (
+            "from . import evidence_models as api\n"
+            "from ..application.retrieval import retrieval_models as app\n"
+            "def convert(*, values: 'list[api.ChatSource]') -> 'list[app.Evidence]': ...\n",
+            True,
+        ),
+        (
+            "from .medicine_models import MedicineMatch as Public\n"
+            "from ..application.medicine.product_models import ResolvedMedicine\n"
+            "def convert(value: Public): return ResolvedMedicine()\n",
+            True,
+        ),
+        (
+            "from .chat_models import ChatMessage as Public\n"
+            "from ..application.chat.chat_models import ChatMessage as Input\n"
+            "def convert(value: Public) -> Input: ...\n",
+            False,
+        ),
+        (
+            "from .chat_models import ChatResponse as Public\n"
+            "from ..application.chat.chat_models import ChatResponse as Result\n"
+            "def convert(value: Result) -> Public: ...\n",
+            False,
+        ),
+        (
+            "from .evidence_models import ChatSource\n"
+            "def publish(sources: list[ChatSource]) -> None: ...\n",
+            False,
+        ),
+        (
+            "from collections.abc import Callable, Awaitable\n"
+            "from .evidence_models import ChatSource\n"
+            "from ..application.chat.chat_models import ChatResponse\n"
+            "def prepare(notify: Callable[[list[ChatSource]], Awaitable[None]]) -> ChatResponse: ...\n",
+            False,
+        ),
+    ],
+)
+def test_response_dto_rule_detects_reverse_conversions(source, forbidden) -> None:
+    violations = find_inner_layer_violations(
+        source, module_name="backend.presentation.fixture", filename="fixture.py"
+    )
+    detected = any("response DTO" in violation for violation in violations)
+    assert detected is forbidden
