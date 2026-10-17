@@ -2,10 +2,8 @@
 
 import unicodedata
 
-from backend.application.medicine.product_models import RegisteredMedicine
-
-from ...domain.retrieval.identifiers import SearchGenerationId
 from .product_contracts import MedicineSnapshotProvider
+from .product_models import RegisteredMedicine, SearchGenerationId
 
 
 def project_registered_product(product: RegisteredMedicine) -> dict[str, str]:

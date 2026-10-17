@@ -24,17 +24,17 @@
 | `domain/retrieval` | 検索 bounded context。検索Primitive、検索条件、意図選択、根拠・取得経路の統合、根拠取得ポート、検索ポリシーを置く |
 | `domain/foundation` | 業務非依存のPrimitive、Value Object、Entity/Aggregate Rootの基底、宣言型ガード、例外基底 |
 | `domain/shared` | 複数コンテキストで共有する汎用正規化処理を置く。YJコードはmedicineが所有する |
-| `application/chat` | 会話から質問を取り出し、retrievalの結果を使って回答を準備・生成する。プロンプトと所有stream終了を担当する |
-| `application/medicine` | 医薬品照合カタログ、文書参照との投影、フォームの医薬品候補提示。候補提示は根拠検索に依存しない |
+| `application/chat` | `ChatApplicationService` を中心に、会話から質問を取り出し、retrievalの結果を使って回答を準備・生成する。プロンプトと所有stream終了を担当する |
+| `application/medicine` | 医薬品照合カタログ、文書参照との投影、フォームの医薬品候補提示（`MedicineSuggester.from_registered_medicines` による別名重み付け投影を含む）。候補提示は根拠検索に依存しない |
 | `application/retrieval` | 質問とYJコードから医薬品を解決し、検索条件を生成して根拠を取得・統合する。WebSocketでは固定キーワード・形態素解析の各検出完了時にローカル根拠を累積配信し、Jev完了後に全検出条件の統合根拠で更新する。固定キーワードの配信は形態素解析を待たない。製品確認が必要な場合は先行配信しない。RESTと回答生成は全検出完了後の根拠を使う |
 | `application/indexing` | 索引構築のユースケース・入出力契約 |
-| `presentation` | Pydantic公開DTO、JSON変換、`AppChatService`、REST/WS、FastAPI依存関数 |
-| `infrastructure` | SDK JSON解釈、JSON読取、Janome、SQLAlchemy Reader/Writer、Alembic runner、旧v3検証・移行 |
+| `presentation` | Pydantic公開DTO、JSON変換、`AppChatService`（DTO変換アダプター）、REST/WSルーター、`dependencies.py`（全FastAPI `Depends` 関数の集約）。`domain` および `infrastructure` には一切依存しない |
+| `infrastructure` | SDK JSON解釈、JSON読取、Janome、SQLAlchemy Reader/Writer、Alembic runner、旧v3検証・移行、共通payload変換（`index_payloads.py`、`evidence_mapping.py`） |
 | `infrastructure/llm` | OpenAI/Gemini SDKと代替応答の実装 |
-| `infrastructure/composition` / `main.py` | 具象の生成・接続、準備済みDBの検証、SDK/worker/engineの所有終了 |
+| `infrastructure/composition` / `main.py` | `app_lifespan.py`（`create_app_lifespan`）で具象の生成・接続・準備済みDB検証・SDK/worker/engineの所有終了を集約し、`main.py`（`create_app`）はCORS・ルーター登録とlifespan委譲のみを担当する |
 | `config` | 接続設定と生成provider/modelの環境default供給 |
 | `infrastructure/cli` | `build_search_index`、`migrate_legacy_index`の公開module入口 |
-| `infrastructure/package_insert_definitions` | 単一JSONのIO/検証と用途別組立。正式名称はattachment、検索規則・整形はretrieval、回答指示はApplicationが所有する |
+| `infrastructure/package_insert_definitions` | 単一JSONのIO/検証と用途別組立、および各アダプター向け設定型（`definition_settings.py`）の所有。正式名称はattachment、検索規則・整形はretrieval、回答指示はApplicationが所有する |
 
 公開DTOの`ChatMessage`/`ChatResponse`/`ChatSource`/`MedicineMatch`は`presentation`に置き、REST JSON・WSイベント・OpenAPIの名前を維持します。applicationの同名モデルはフレームワーク非依存の入出力です。`IntentResult.candidates`が意図判定の業務契約で、`raw_response`は公開原本として保持します。applicationはSDKの`answers`/`choice`/`probabilities`を読まず、presentation mapperが公開JSONとの往復を担当します。
 
@@ -42,17 +42,34 @@
 
 医薬品候補の取得は `application/medicine/product_contracts.py` の `MedicineSnapshotProvider` を使い、同じ公開世代のIDと医薬品Readerだけを要求します。根拠検索側の `RetrievalSnapshotProvider` は根拠Readerも提供します。Infrastructureの世代runtimeは両契約を満たし、どちらも `acquire()` の終了まで同じ世代とleaseを保持します。
 
-`infrastructure/sources` は入力ファイルの読取を担当します。登録原本の不変保存は `persistence/attachment_import_store.py`、公開済みDBと所有artifactの整合性検証・読取は `persistence/registration_reader.py` が担当し、persistenceからsourcesへは依存しません。
+`infrastructure/sources` は入力ファイルの読取を担当します。登録原本の不変保存は `persistence/attachment_import_store.py`、公開済みDBと所有artifactの整合性検証・読取は `persistence/registration_reader.py` が担当し、persistenceからsourcesへは依存しません。また、JSON/検索単位payloadのシリアライズ（`index_payloads.py`）は `pmda_xml` から分離し、`GenerationRuntime` や `SqliteRegistrationPublisher` には `PmdaXmlDecoder` / `PmdaArtifactEncoder` をコンストラクタDIで注入します。
 
-## ドメイン基盤の利用
+## リンターによるアーキテクチャ制約とドメイン基盤の利用
 
-ドメインのimport制限は `pyproject.toml` のImport Linter契約に定義します。
-`pnpm --filter backend lint` はRuffとImport Linterを実行します。依存だけの検査は `pnpm --filter backend lint:imports` です。
-他コンテキストからの直接importは、所有元の `identifiers.py` に定義する公開ID Primitiveに限ります。添付文書の `DocumentId` は `domain/attachment/identifiers.py`、検索単位の `SearchUnitId` は `domain/retrieval/identifiers.py`、医薬品の `YjCode` は `domain/medicine/identifiers.py` が正本です。それ以外の情報はApplicationで利用側の型へ変換します。
+アーキテクチャ境界とレイヤー内モジュール階層は、`backend/pyproject.toml` の **Import Linter（全24契約）**、**Ruff（`TID251` 等の禁止API検査）**、および `backend/tests/test_architecture_dependencies.py` の **AST静的境界テスト** によって機械的に強制しています。
+`pnpm --filter backend lint` はRuffとImport Linterを一括実行します（依存契約のみの検査は `pnpm --filter backend lint:imports`）。
+
+### リンター駆動で実装を効率化する設計方針
+
+1. **例外リスト（`ignore_imports`）に頼らない厳格・シンプルな境界**:
+   - 「Presentation層からDomain層への一部のみ許可」のような例外運用は、Import Linterが間接推移依存（`Presentation -> Domain -> Domain内部`）まで遮断する性質上、例外リストの肥大化や判断の迷いを招きます。
+   - そのため、**`Presentation does not depend on domain`（例外ゼロ）** のようにレイヤー間の禁止ルールを厳格・単純化し、ドメイン例外の変換や境界型の受け渡しはすべて `Application` 層で完結させています。
+2. **レイヤー間の単方向依存（Onion Rings）**:
+   - `Domain` は最内層として外部レイヤーに一切依存しません。
+   - `Application` は `Domain` のみに依存します。
+   - `Presentation` は `Application` と `Config` のみに依存します（`Domain`・`Infrastructure` への依存は完全禁止）。
+   - `Infrastructure` は `Application`・`Domain`・`Config` に依存し、`Presentation` には依存しません（Composition Rootの配線のみ）。
+3. **レイヤー内部のモジュール階層・独立性の強制**:
+   - **Domain内部**: コンテキスト間（`attachment` / `medicine` / `retrieval`）は独立し、他コンテキストからは公開ID（`identifiers.py`）のみ参照可能です。さらにコンテキスト内部でも `identifiers -> exceptions -> primitives -> value_objects -> entities -> repositories -> services` の単方向階層を強制しています。
+   - **Application内部**: `chat -> retrieval -> medicine` および `attachment_import -> indexing -> medicine` の有向パイプライン境界を強制し、逆方向参照や循環を防止します。
+   - **Presentation内部**: `routes -> dependencies -> services (AppChatService) -> mappers -> DTO models` の5段階の階層を強制し、ルーターが `request.app.state` を直接読むことや、DTOモデルが上位サービスを参照することを防ぎます。
+   - **Infrastructure内部**: 外部技術アダプター（`llm` / `intent` / `morphology` / `pmda_xml`）間の相互独立、`persistence -> sources` 禁止、`package_insert_definitions` から他アダプターへの依存禁止、`index_payloads` / `evidence_mapping` からアダプターパッケージへの依存禁止を契約化しています。
+
+他コンテキストからの直接importは、所有元の `identifiers.py` に定義する公開ID Primitive（**1コンテキスト＝1公開ID**）に限ります。添付文書の `DocumentId` は `domain/attachment/identifiers.py`、検索単位の `SearchUnitId` は `domain/retrieval/identifiers.py`、医薬品の `YjCode` は `domain/medicine/identifiers.py` が正本です。それ以外の情報はApplicationで利用側の型へ変換します。
 各コンテキストの `identifiers.py` のプロジェクト内import先は `domain/foundation/primitives/identifiers.py` だけです。標準ライブラリは利用でき、IDは `EntityUUID` または `EntityStringId` を継承します。文字列ID基底はNFKC正規化・前後の余白除去・空値拒否を行います。
 sharedは各業務コンテキストへ、foundationは業務コンテキスト・sharedへ依存できません。
 domain全体からapplication・infrastructure・presentationへの依存も禁止します。静的な直接・間接依存を検査し、動的importは対象外です。
-`backend.domain.*` を独立性契約の対象とするため、新規コンテキストにも自動適用されます。公開IDとfoundation・shared・json_typesへの依存を許可し、共通基盤から業務コンテキストへの逆依存は禁止します。`identifiers.py` から内部モデルへの依存も禁止し、公開IDモジュールを迂回経路にしません。
+`backend.domain.*` を独立性契約の対象とするため、新規コンテキストにも自動適用されます。公開IDとfoundation・sharedへの依存を許可し、共通基盤から業務コンテキストへの逆依存は禁止します。`identifiers.py` から内部モデルへの依存も禁止し、公開IDモジュールを迂回経路にしません。
 
 `domain/foundation` は他のコンテキストに依存しません。単一値を包む新しい型は
 `foundation.primitives.base.DomainPrimitive[T]` を継承し、`validate()` で制約を定義します。
@@ -60,20 +77,20 @@ domain全体からapplication・infrastructure・presentationへの依存も禁�
 `foundation.primitives.primitives` の `BaseString` / `BaseFiniteFloat` です。
 比較は同じ具象Primitive同士で行い、文字列の検索・ソート・数値計算には `.value` を使います。
 API・JSON・SQLite・プロンプトの境界でも `.value` へ変換します。
-基本型との暗黙の比較や `asdict()` による公開JSON生成は行いません。
+基本型との暗黙の比較や `asdict()` による公開JSON生成は行いません（Ruff `TID251` で `dataclasses.asdict` を禁止）。
 `from_value()` は基本型から復元し、同じ具象型の不変Primitiveはそのまま受け取るため、
 独自コンストラクタを持つモデルの `dataclasses.replace()` にも利用できます。
 業務語彙（DocumentId、YjCode等）はsharedまたは対象コンテキストに置きます。
 
 Entity / Value Object は型付け済みの値をコンストラクタへ渡して直接生成します。
-引数の変換だけを行う `create()` は置かず、入力を取り込む利用側でPrimitive・VO・
+引数の変換だけを行う `create()` は置かず（ASTテストで禁止）、入力を取り込む利用側でPrimitive・VO・
 不変コレクションを組み立てます。単一値の制約はPrimitive、複数の値の関係や
 集約内の整合性はモデルの生成時に検証します。
 
 複合値は `@dataclass(frozen=True)` の不変オブジェクトとして定義します。
 検索のSearchCriteria、IntentCandidate、IntentSelectionに加え、MedicineMatch、
 添付文書の全Value Objectが不変な値として保持されます。
-汎用JSON型の正本は `domain.json_types.JsonValue` です。
+汎用JSON型の正本は `domain.foundation.json_types.JsonValue` です。
 文字列基底 `BaseString` はNFKC正規化と前後の余白除去を行い、空文字を禁止します（DDDの原則に則り、プリミティブ文字列はそもそも空文字を許容せず不正な状態のインスタンスを作らせません。省略可能な概念は `Primitive | None` のように型として表現します）。
 添付文書Primitiveは直接継承して固有の例外型・形式制約だけを追加します。
 添付文書の文字列Primitiveと検索確率も共通生成処理から `validate()` を呼び、
@@ -97,7 +114,7 @@ backendの実行環境はPython 3.14以上が必要です。
 
 ## 依存関係と実行時の呼出し
 
-`application/chat` は `application/retrieval.retrieve_evidence` を呼び、
+`application/chat` は `ChatApplicationService` を通じて `application/retrieval.retrieve_evidence` を呼び、
 チャットやLLMに依存しない `RetrievalResult` を受け取ります。
 retrievalは会話メッセージ・回答生成・LLM Providerを参照しません。
 この依存方向はImport Linterで間接依存も含めて検査します。
@@ -108,61 +125,65 @@ LLMによる回答生成の契約はchat、SDKの実装はInfrastructureが所�
 ```mermaid
 flowchart LR
   Presentation[presentation] --> App[application]
-  Presentation --> Domain[domain]
-  App --> Domain
+  App --> Domain[domain]
   Infra[infrastructure / llm] --> App
   Infra --> Domain
-  Main[main / composition root] --> Presentation
+  Main[main / infrastructure.composition] --> Presentation
   Main --> Infra
 ```
 
-`domain`から`application`、presentation、infrastructure、SDK、JSON loaderへの依存は禁止します。`application`はdomainと標準ライブラリだけを参照します。添付文書の正式名称はattachmentのSectionTaxonomyが所有し、Applicationのdefinition_projectionで用途側へ写します。検索規則/整形はretrieval、回答指示はApplication、JSON/XML/Jev/Janome設定はInfrastructureに置きます。永続化の具象IOは各 bounded context の `repositories.py` に定義したInterface越しに注入します。型確認用import・相対importも依存検査の対象です。
+`domain`から`application`、`presentation`、`infrastructure`、SDK、JSON loaderへの依存は禁止します。`application`は`domain`と標準ライブラリだけを参照します。`presentation`は`application`と`config`だけを参照し、`domain`・`infrastructure`への依存は全面禁止します。添付文書の正式名称はattachmentのSectionTaxonomyが所有し、Applicationのdefinition_projectionで用途側へ写します。検索規則/整形はretrieval、回答指示はApplication、JSON/XML/Jev/Janome設定はInfrastructure（`package_insert_definitions/definition_settings.py`）に置きます。永続化の具象IOは各 bounded context の `repositories.py` に定義したInterface越しに注入します。型確認用import・相対importも依存検査の対象です。
 
 次は実行時の呼出しです。Reader/SDKは注入されたportの実装です。
 
 ```mermaid
 flowchart TD
-  Routes[REST / WS] --> Service[presentation.AppChatService / mapper]
-  Service --> Prepare[application.prepare_reply]
+  Routes[REST / WS] --> Adapter[presentation.AppChatService / mapper]
+  Adapter --> AppService[application.chat.ChatApplicationService]
+  AppService --> Prepare[application.chat.prepare_reply]
   Prepare --> Medicine[RegisteredMedicineReader / MedicineCatalog]
   Prepare --> Detect[意図port / 検索語port / 固定ポリシー]
   Detect --> Select[型付き意図選択]
   Prepare --> Read[EvidenceRepository]
   Read --> Merge[merge_evidence / 不変の根拠結果]
-  Service --> Reply[answer_question / stream_reply]
+  AppService --> Reply[answer_question / stream_reply]
   Reply --> Prompt[共通プロンプト]
   Prompt --> Provider[LLMProvider port]
 ```
 
-確認応答ではprovider factoryを呼びません。環境defaultはconfigから供給し、呼出しで明示したprovider/modelを優先します。API・application・providerは所有するstreamを閉じます。mainは所有Jev SDK、worker、engineを終了し、実行中のto_threadは強制停止せず完了を待ちます。
+確認応答ではprovider factoryを呼びません。環境defaultはconfigから供給し、呼出しで明示したprovider/modelを優先します。API・application・providerは所有するstreamを閉じます。lifespan（`infrastructure/composition/app_lifespan.py`）は所有Jev SDK、worker、engineを終了し、実行中のto_threadは強制停止せず完了を待ちます。
 
 ## ディレクトリ構成
 
 ```text
 backend/
 ├── main.py / project_paths.py / alembic.ini
-├── presentation/        # routes、dependencies、chat_service、mapper、公開DTO
+├── presentation/        # routes、dependencies、chat_service(DTO adapter)、mapper、公開DTO
 ├── application/
-│   ├── chat/            # prepare_reply、回答生成、prompt、stream終了
-│   ├── medicine/        # フォームの候補提示
-│   ├── retrieval/       # intent/keyword契約、条件生成
+│   ├── chat/            # ChatApplicationService、prepare_reply、回答生成、prompt、stream終了
+│   ├── medicine/        # 製品解決カタログ、フォームの候補提示(MedicineSuggester)
+│   ├── retrieval/       # intent/keyword契約、条件生成、根拠取得ユースケース
+│   ├── attachment_import/ # 添付文書取り込み・結果読取ユースケース
 │   └── indexing/        # 索引構築契約とユースケース
 ├── domain/
 │   ├── attachment/      # 添付文書 bounded context（責務別の直下モジュール）
-│   ├── medicine/        # YJ医薬品マスター
+│   ├── medicine/        # YJ医薬品マスター・別名優先度規則
 │   ├── retrieval/       # 検索対象・条件・結果・根拠統合
-│   ├── foundation/      # Primitive・不変Mapping・例外の共通基底
-│   ├── shared/          # 合意した共有語彙・純粋な文字列照合
-│   └── json_types.py    # 汎用JSON型
+│   ├── foundation/      # Primitive・不変Mapping・例外・JsonValueの共通基底
+│   └── shared/          # 合意した共有語彙・純粋な文字列照合
 ├── infrastructure/
 │   ├── intent/          # TypeSafe adapterと境界mapping
 │   ├── morphology/      # Janome adapterとkeyword_extraction
-│   ├── persistence/     # Core schema、Reader/Writer、workers、旧v3移行
-│   ├── sources/         # FileIndexSourceReader
+│   ├── package_insert_definitions/ # 単一JSONカタログloaderと各adapter用definition_settings
+│   ├── persistence/     # Core schema、Reader/Writer、GenerationRuntime、Publisher、workers
+│   ├── pmda_xml/        # PMDA XML decoder / artifact encoder
+│   ├── sources/         # FileIndexSourceReader、MedicineCodeTableReader
 │   ├── llm/             # SDK provider / fallback
-│   ├── composition/     # index verifier、persistence lifespan
-│   ├── cli/             # build_search_index、migrate_legacy_index
-│   └── evidence_mapping.py
+│   ├── composition/     # app_lifespan(DI配線)、index verifier、persistence lifespan
+│   ├── cli/             # build_search_index、migrate_legacy_index、initialize_registrations
+│   ├── evidence_mapping.py
+│   ├── index_payloads.py # XML非依存のJSON/検索単位payload変換
+│   └── json_payloads.py
 ├── config/              # database_settings、generation_settings
 ├── migrations/          # env.pyとversions
 └── tests/               # legacy_v3は未管理旧形式DBの生成専用Fixture

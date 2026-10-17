@@ -16,22 +16,17 @@ from ..application.attachment_import.import_errors import (
     InvalidAttachment,
     UnsupportedAttachment,
 )
-from ..domain.foundation.exceptions import DomainValidationError
 from .attachment_import_models import (
     AttachmentImportResponse,
     ImportConflictResponse,
     ImportErrorResponse,
 )
+from .dependencies import get_import_service
 
 BODY_LIMIT = 11 * 1024 * 1024
 FILE_LIMIT = 10 * 1024 * 1024
 
 router = APIRouter(prefix="/api/attachment-imports", tags=["attachment-imports"])
-
-
-def get_import_service(request: Request) -> AttachmentImportService:
-    return request.app.state.attachment_import_service
-
 
 ImportService = Annotated[AttachmentImportService, Depends(get_import_service)]
 
@@ -156,6 +151,6 @@ async def read_attachment(
         result = await service.read_result(document_id, source_sha256)
     except AttachmentImportError as exc:
         raise import_error(exc) from None
-    except (DomainValidationError, ValueError):
+    except ValueError:
         raise error(404, "not_found", "保存済みの取り込みが見つかりません。") from None
     return AttachmentImportResponse.from_result(result)

@@ -4,7 +4,7 @@ from copy import deepcopy
 from dataclasses import replace
 
 import pytest
-from backend.domain.json_types import JsonValue
+from backend.domain.foundation.json_types import JsonValue
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.retrieval.primitives import (
     EvidenceBrandName,

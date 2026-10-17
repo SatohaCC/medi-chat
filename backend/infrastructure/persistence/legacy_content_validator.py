@@ -10,7 +10,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.exc import DatabaseError
 
 from ...application.indexing.index_models import IndexUnit
-from ...domain.json_types import JsonValue
+from ...domain.foundation.json_types import JsonValue
 from ..index_payloads import build_index_document, build_index_unit
 from ..json_payloads import parse_json_object
 from . import schema

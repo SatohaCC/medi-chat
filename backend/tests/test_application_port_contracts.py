@@ -40,11 +40,11 @@ from backend.domain.attachment.value_objects import (
     AttachmentProductRevision,
     MedicineDocumentReference,
 )
+from backend.domain.foundation.json_types import JsonValue
 from backend.domain.foundation.primitives.primitives import (
     BaseFiniteFloat,
     BaseString,
 )
-from backend.domain.json_types import JsonValue
 from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch

@@ -17,7 +17,7 @@ from backend.domain.attachment.value_objects import (
     MedicineDocumentReference,
 )
 from backend.domain.foundation.exceptions import DomainValidationError
-from backend.domain.json_types import JsonValue
+from backend.domain.foundation.json_types import JsonValue
 from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import ProductGroupId

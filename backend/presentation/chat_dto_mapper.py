@@ -2,20 +2,24 @@
 
 from copy import deepcopy
 
-from backend.application.medicine.product_models import ResolvedMedicine
-from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
+from backend.application.medicine.product_models import (
+    MedicineMatch as DomainMedicineMatch,
+)
+from backend.application.medicine.product_models import (
+    ResolvedMedicine,
+    YjCode,
+)
 
 from ..application.chat.chat_models import ChatMessage, ChatResponse
-from ..domain.attachment.identifiers import DocumentId
-from ..domain.medicine.identifiers import YjCode
-from ..domain.retrieval.identifiers import SearchUnitId
-from ..domain.retrieval.primitives import DetectionSource
-from ..domain.retrieval.value_objects import (
+from ..application.retrieval.retrieval_models import (
+    DetectionSource,
+    DocumentId,
     DocumentRevision,
     Evidence,
     EvidenceColumns,
     EvidenceReference,
     EvidenceSection,
+    SearchUnitId,
 )
 from .chat_models import ChatMessage as ApiChatMessage
 from .chat_models import ChatResponse as ApiChatResponse

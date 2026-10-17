@@ -8,8 +8,3 @@ from ..foundation.primitives.identifiers import EntityStringId
 @dataclass(frozen=True, slots=True)
 class DocumentId(EntityStringId):
     """添付文書を識別するID。"""
-
-
-@dataclass(frozen=True, slots=True)
-class DocumentVersionId(EntityStringId):
-    """文書IDとは別の、文書と実原本SHAを組にした版ID。"""

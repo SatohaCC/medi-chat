@@ -1,14 +1,16 @@
 """フォーム入力から医薬品候補を提示する。根拠検索とは独立して扱う。"""
 
+from __future__ import annotations
+
 from collections.abc import Iterable
 from dataclasses import dataclass
 
 from ...domain.attachment.identifiers import DocumentId
 from ...domain.medicine.identifiers import YjCode
 from ...domain.medicine.primitives import ProductGroupId
-from ...domain.medicine.services import best_alias_priorities
-from ...domain.retrieval.identifiers import SearchGenerationId
+from ...domain.medicine.services import best_alias_priorities, get_weighted_aliases
 from ...domain.shared.services import normalize_match_text
+from .product_models import RegisteredMedicine, SearchGenerationId
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -45,6 +47,28 @@ class MedicineSuggester:
     ) -> None:
         self._products = products
         self.generation_id = generation_id
+
+    @classmethod
+    def from_registered_medicines(
+        cls,
+        products: Iterable[RegisteredMedicine],
+        *,
+        generation_id: SearchGenerationId | None = None,
+    ) -> MedicineSuggester:
+        return cls(
+            tuple(
+                SuggestionProduct(
+                    group_name=product.ingredient_id.value,
+                    generic_name=product.generic_name,
+                    brand_name=product.brand_name,
+                    yj_code=product.yj_code,
+                    document_id=product.document_id,
+                    aliases=tuple(get_weighted_aliases(product.medicine)),
+                )
+                for product in products
+            ),
+            generation_id=generation_id,
+        )
 
     def suggest(self, query: str | None = None) -> tuple[MedicineSuggestion, ...]:
         normalized = normalize_match_text(query or "")

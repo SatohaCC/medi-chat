@@ -9,8 +9,8 @@ from backend.application.medicine.autocomplete import read_autocomplete_catalog
 from backend.application.medicine.product_contracts import (
     MedicineSnapshot,
     RegisteredMedicineReader,
+    SearchGenerationId,
 )
-from backend.domain.retrieval.identifiers import SearchGenerationId
 
 
 @pytest.mark.asyncio

@@ -66,6 +66,11 @@ class AttachmentSha256(BaseString):
 
 
 @dataclass(frozen=True, slots=True)
+class DocumentVersionId(BaseString):
+    """文書IDと原本SHA-256を組にした登録版識別値。"""
+
+
+@dataclass(frozen=True, slots=True)
 class AttachmentBrandName(BaseString):
     """添付文書に記載された販売名。"""
 

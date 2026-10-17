@@ -14,26 +14,27 @@ from sqlalchemy import delete, insert, select
 from sqlalchemy.engine import Connection
 
 from backend.application.medicine.product_models import RegisteredMedicine
-from backend.domain.medicine.services import get_weighted_aliases
 
+from ...application.attachment_import.import_contracts import AttachmentDecoder
 from ...application.indexing.attachment_projection import project_active_attachment
-from ...application.medicine.suggestions import MedicineSuggester, SuggestionProduct
-from ...application.retrieval.snapshot_contracts import RetrievalSnapshot
+from ...application.medicine.suggestions import MedicineSuggester
+from ...application.retrieval.snapshot_contracts import (
+    RetrievalSnapshot,
+    SearchGenerationId,
+)
 from ...domain.attachment.entities import AttachmentDocument
+from ...domain.foundation.json_types import JsonValue
 from ...domain.foundation.value_objects import ImmutableMapping
-from ...domain.json_types import JsonValue
 from ...domain.medicine.identifiers import YjCode
-from ...domain.retrieval.identifiers import SearchGenerationId
 from ...domain.retrieval.repositories import EvidenceSearchTarget
 from ...domain.retrieval.value_objects import Evidence, SearchCriteria, TextSearchPolicy
 from ...domain.shared.services import normalize_match_text, normalize_search_text
 from ..evidence_mapping import build_evidence, is_scope_heading_only
-from ..index_payloads import build_index_unit
+from ..index_payloads import build_index_unit, encode_registered_units
 from ..json_payloads import parse_json_object
+from ..package_insert_definitions.definition_settings import PmdaXmlSettings
 from ..package_insert_definitions.loader import get_package_insert_definitions
 from ..pmda_xml.decoder import PmdaXmlDecoder
-from ..pmda_xml.definition_settings import PmdaXmlSettings
-from ..pmda_xml.registration_artifacts import encode_registered_units
 from . import registration_schema as schema
 from .owned_sqlite import OwnedSqliteConnection
 from .process_identity import process_identity
@@ -226,11 +227,17 @@ class GenerationRuntime:
         workers: ReadWorkers,
         text_search_policy: TextSearchPolicy | None = None,
         xml_settings: PmdaXmlSettings | None = None,
+        decoder: AttachmentDecoder | None = None,
     ):
+        self._decoder = decoder
         self._xml_settings = (
             xml_settings
             if xml_settings is not None
-            else get_package_insert_definitions().xml_settings
+            else (
+                get_package_insert_definitions().xml_settings
+                if decoder is None
+                else None
+            )
         )
         self._text_search_policy = (
             text_search_policy
@@ -263,6 +270,11 @@ class GenerationRuntime:
             ):
                 active.setdefault(version, set()).add(YjCode(code))
             documents = []
+            decoder = (
+                self._decoder
+                if self._decoder is not None
+                else PmdaXmlDecoder(xml_settings=self._xml_settings)
+            )
             for version, codes in sorted(active.items()):
                 receipt = (
                     connection.execute(
@@ -280,8 +292,9 @@ class GenerationRuntime:
                         schema.registration_version_artifacts.c.version_id == version
                     )
                 ).scalar_one()
-                decoded = PmdaXmlDecoder(xml_settings=self._xml_settings).decode(
-                    Path(receipt["source_path"]).read_bytes()
+                decoded = decoder.decode(
+                    Path(receipt["source_path"]).read_bytes(),
+                    original_filename="source.xml",
                 )
                 raw_meta = parse_json_object(metadata)
                 documents.append(
@@ -413,18 +426,8 @@ class GenerationRuntime:
     async def catalogue(self) -> MedicineSuggester:
         async with self.acquire() as snapshot:
             products = await snapshot.medicine_reader.read_medicines()
-            return MedicineSuggester(
-                tuple(
-                    SuggestionProduct(
-                        group_name=product.ingredient_id.value,
-                        generic_name=product.generic_name,
-                        brand_name=product.brand_name,
-                        yj_code=product.yj_code,
-                        document_id=product.document_id,
-                        aliases=tuple(get_weighted_aliases(product.medicine)),
-                    )
-                    for product in products
-                ),
+            return MedicineSuggester.from_registered_medicines(
+                products,
                 generation_id=snapshot.generation_id,
             )
 

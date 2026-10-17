@@ -4,10 +4,11 @@ from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass
 from typing import Protocol
 
-from backend.application.medicine.product_contracts import RegisteredMedicineReader
-
-from ...domain.retrieval.identifiers import SearchGenerationId
 from ...domain.retrieval.repositories import EvidenceRepository
+from ..medicine.product_contracts import (
+    RegisteredMedicineReader,
+    SearchGenerationId,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -21,3 +22,11 @@ class RetrievalSnapshot:
 
 class RetrievalSnapshotProvider(Protocol):
     def acquire(self) -> AbstractAsyncContextManager[RetrievalSnapshot]: ...
+
+
+__all__ = [
+    "EvidenceRepository",
+    "RetrievalSnapshot",
+    "RetrievalSnapshotProvider",
+    "SearchGenerationId",
+]

@@ -39,16 +39,16 @@ medi-chat/
 │   └── package.json      # Next.js 依存設定
 │
 ├── backend/              # 2. バックエンド（FastAPI + WebSocket + SQLAlchemy Core + Alembic）
-│   ├── main.py           # FastAPI アプリ生成・Lifespan・依存の組み立て
+│   ├── main.py           # FastAPI アプリ生成・ルーター登録（Lifespan配線は infrastructure/composition へ委譲）
 │   ├── alembic.ini       # Alembic マイグレーション設定
-│   ├── presentation/     # 公開DTO・mapper・REST/WS・依存関係（Depends）
-│   ├── application/      # ユースケース・チャットストリーム制御
+│   ├── presentation/     # 公開DTO・mapper・AppChatService・REST/WS・dependencies.py（Depends集約）
+│   ├── application/      # ChatApplicationService・ユースケース・チャットストリーム制御
 │   ├── config/           # 接続設定・生成default供給
-│   ├── domain/           # 一つの医薬品情報意思決定支援ドメイン（医薬品同定・根拠検索）
-│   ├── infrastructure/   # SQLAlchemy Core・Janome・TypeSafe・LLM・CLI・composition
+│   ├── domain/           # 一つの医薬品情報意思決定支援ドメイン（医薬品同定・根拠検索・添付文書）
+│   ├── infrastructure/   # SQLAlchemy Core・Janome・TypeSafe・LLM・XML・CLI・composition(app_lifespan)
 │   ├── migrations/       # Alembic リビジョン定義
-│   ├── tests/            # API・WebSocket・永続化・マイグレーションの自動テスト
-│   ├── pyproject.toml    # Python 依存設定（FastAPI, SQLAlchemy, Alembic, OpenAI 等）
+│   ├── tests/            # API・WebSocket・永続化・マイグレーション・アーキテクチャ境界の自動テスト
+│   ├── pyproject.toml    # Python 依存設定・Ruff・Import Linter（全24契約）
 │   ├── pylock.toml       # uv.lock から uv export で生成する Python ロックファイル
 │   ├── package.json      # pnpm 連携スクリプト（dev, test, lint, format）
 │   └── .env.local        # APIキー環境変数（GEMINI_API_KEY, OPENAI_API_KEY）
@@ -108,15 +108,18 @@ pnpm dev:frontend
 
 ---
 
-## 🔍 リンター & フォーマッター
+## 🔍 リンター & フォーマッター（アーキテクチャ制約の自動強制）
 
-フロントエンドは **Biome**、Python コードは **Ruff** を採用しています。ルートからワンコマンドで全領域のチェック・フォーマットを実行できます：
+フロントエンドは **Biome**、Python コードは **Ruff** と **Import Linter（全24契約）** を採用しています。
+特にバックエンドでは、オニオンアーキテクチャのレイヤー間境界（`Presentation -> Domain` の完全禁止など）だけでなく、レイヤー内部のモジュール階層・アダプター間の相互独立までリンターで機械的に強制することで、実装時の判断コストを削減し開発効率を高めています。
+
+ルートからワンコマンドで全領域のチェック・フォーマットを実行できます：
 
 ```bash
 # 全ワークスペースのリント・フォーマット一括チェック＆自動修正
 pnpm check
 
-# リントのみチェック
+# リントのみチェック（Biome + Ruff + Import Linter 24契約）
 pnpm lint
 
 # コード整形（フォーマット）のみ適用
@@ -128,11 +131,12 @@ pnpm typecheck
 
 個別実行の場合：
 ```bash
-pnpm --filter frontend check      # Biome
-pnpm --filter backend check       # Ruff
-pnpm --filter backend check      # XML/辞書CLIも含むRuff
-pnpm typecheck:frontend           # TypeScript (tsc)
-pnpm typecheck:python             # Python (Pyright / Pylance同等エンジン)
+pnpm --filter frontend check        # Biome
+pnpm --filter backend check         # Ruff チェック・フォーマット & Import Linter
+pnpm --filter backend lint          # Ruff + Import Linter（24契約）
+pnpm --filter backend lint:imports  # Import Linter（依存境界契約のみ高速実行）
+pnpm typecheck:frontend             # TypeScript (tsc)
+pnpm typecheck:python               # Python (Pyright / Pylance同等エンジン)
 ```
 
 ---

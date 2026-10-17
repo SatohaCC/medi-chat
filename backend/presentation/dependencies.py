@@ -6,6 +6,7 @@ from typing import Any
 
 from starlette.requests import HTTPConnection
 
+from ..application.attachment_import.import_document import AttachmentImportService
 from ..application.medicine.suggestions import MedicineSuggester
 from ..application.retrieval.snapshot_contracts import RetrievalSnapshotProvider
 from .chat_service import AppChatService as ChatService
@@ -14,6 +15,11 @@ from .chat_service import AppChatService as ChatService
 def get_chat_service(connection: HTTPConnection) -> ChatService:
     """チャットサービスを取得する依存関係関数"""
     return getattr(connection.app.state, "chat_service", None)  # type: ignore[no-any-return]
+
+
+def get_import_service(connection: HTTPConnection) -> AttachmentImportService:
+    """添付文書取り込みサービスを取得する依存関係関数"""
+    return connection.app.state.attachment_import_service  # type: ignore[no-any-return]
 
 
 async def get_medicine_suggester(connection: HTTPConnection) -> MedicineSuggester:

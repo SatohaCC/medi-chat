@@ -8,15 +8,15 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
+from ..foundation.json_types import JsonValue
 from ..foundation.value_objects import ImmutableMapping
-from ..json_types import JsonValue
 from ..medicine.identifiers import YjCode
 from .exceptions import (
     AttachmentDomainError,
     MissingOrInvalidYjError,
     MissingRevisionError,
 )
-from .identifiers import DocumentId, DocumentVersionId
+from .identifiers import DocumentId
 from .primitives import (
     AttachmentBrandName,
     AttachmentCellSpan,
@@ -28,6 +28,7 @@ from .primitives import (
     AttachmentText,
     AttachmentUrl,
     DefinitionTitle,
+    DocumentVersionId,
     InteractionColumnId,
     NumberedSectionCode,
     PmdaUrl,

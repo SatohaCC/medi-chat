@@ -3,8 +3,7 @@
 from contextlib import AbstractAsyncContextManager
 from typing import Protocol
 
-from ...domain.retrieval.identifiers import SearchGenerationId
-from .product_models import RegisteredMedicine
+from .product_models import RegisteredMedicine, SearchGenerationId
 
 
 class RegisteredMedicineReader(Protocol):
@@ -25,3 +24,11 @@ class MedicineSnapshotProvider(Protocol):
     """カタログ取得が終わるまで公開世代を所有する境界。"""
 
     def acquire(self) -> AbstractAsyncContextManager[MedicineSnapshot]: ...
+
+
+__all__ = [
+    "MedicineSnapshot",
+    "MedicineSnapshotProvider",
+    "RegisteredMedicineReader",
+    "SearchGenerationId",
+]

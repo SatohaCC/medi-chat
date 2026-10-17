@@ -4,7 +4,7 @@ import unittest
 
 from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
 from backend.application.retrieval.jev_detector import detect_jev_criteria
-from backend.domain.json_types import JsonValue
+from backend.domain.foundation.json_types import JsonValue
 from backend.domain.retrieval.services import select_intents
 from backend.infrastructure.intent.jev_intent_mapping import map_jev_intent_result
 from backend.infrastructure.package_insert_definitions.loader import (

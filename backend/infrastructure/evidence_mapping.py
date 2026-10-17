@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 
 from ..domain.attachment.identifiers import DocumentId
-from ..domain.json_types import JsonValue
+from ..domain.foundation.json_types import JsonValue
 from ..domain.medicine.identifiers import YjCode
 from ..domain.retrieval.identifiers import SearchUnitId
 from ..domain.retrieval.primitives import (

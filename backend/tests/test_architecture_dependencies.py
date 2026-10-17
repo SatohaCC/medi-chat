@@ -119,6 +119,28 @@ ALLOWED_APPLICATION_CONTEXT_DEPENDENCIES: dict[str, set[str]] = {
     "medicine": set(),
 }
 EXTERNAL_ADAPTER_PACKAGES = {"llm", "intent", "morphology", "pmda_xml"}
+INFRASTRUCTURE_ROOT_PAYLOAD_MODULES = {
+    "evidence_mapping",
+    "index_payloads",
+    "json_payloads",
+}
+ALLOWED_INFRASTRUCTURE_PACKAGES = {
+    "cli",
+    "composition",
+    "intent",
+    "llm",
+    "morphology",
+    "package_insert_definitions",
+    "persistence",
+    "pmda_xml",
+    "sources",
+}
+ALLOWED_INFRASTRUCTURE_ROOT_FILES = {
+    "__init__.py",
+    "evidence_mapping.py",
+    "index_payloads.py",
+    "json_payloads.py",
+}
 
 
 def _allowed_module(module: str, *, caller: str) -> bool:
@@ -149,11 +171,9 @@ def _allowed_module(module: str, *, caller: str) -> bool:
         caller_ctx = caller_parts[2]
         target_ctx = module_parts[2]
         if caller_ctx == "foundation":
-            return target_ctx in {"foundation", "json_types"}
+            return target_ctx == "foundation"
         if caller_ctx == "shared":
-            return target_ctx in {"shared", "foundation", "json_types"}
-        if target_ctx == "json_types":
-            return True
+            return target_ctx in {"shared", "foundation"}
         if target_ctx == "foundation":
             return len(module_parts) >= 4
         if target_ctx == "shared":
@@ -231,28 +251,37 @@ def _allowed_module(module: str, *, caller: str) -> bool:
                 )
             ):
                 return False
-    # Presentation層: Domain の entities / services への直接依存は全面禁止。
-    # また chat_service / chat_dto_mapper / evidence_models 以外は foundation.exceptions のみ参照可能。
+    # Presentation層: 内部の依存順序（*_routes -> dependencies -> chat_service -> chat_dto_mapper -> *_models）を強制する。
     if (
-        len(caller_parts) >= 2
+        len(caller_parts) >= 3
         and caller_parts[:2] == ["backend", "presentation"]
+        and caller_parts[2] != "fixture"
         and len(module_parts) >= 2
-        and module_parts[:2] == ["backend", "domain"]
+        and module_parts[:2] == ["backend", "presentation"]
     ):
-        if len(module_parts) >= 4 and module_parts[3] in {"entities", "services"}:
+        if len(module_parts) < 3:
             return False
-        if caller in {
-            "backend.presentation.chat_service",
-            "backend.presentation.chat_dto_mapper",
-            "backend.presentation.evidence_models",
-        }:
-            return len(module_parts) >= 4 or (
-                len(module_parts) >= 3 and module_parts[2] == "json_types"
-            )
-        return module == "backend.domain.foundation.exceptions" or module.startswith(
-            "backend.domain.foundation.exceptions."
-        )
-    # Infrastructure層: composition / cli への逆依存、persistence -> sources、外部技術Adapter間の相互依存を禁止する。
+        caller_mod = caller_parts[2]
+        target_mod = module_parts[2]
+        if caller_mod == target_mod:
+            return True
+        if caller_mod == "__init__":
+            return target_mod.endswith("_routes")
+        if caller_mod.endswith("_models"):
+            return target_mod.endswith("_models")
+        if caller_mod == "chat_dto_mapper":
+            return target_mod.endswith("_models")
+        if caller_mod == "chat_service":
+            return target_mod == "chat_dto_mapper" or target_mod.endswith("_models")
+        if caller_mod == "dependencies":
+            return target_mod == "chat_service" or target_mod.endswith("_models")
+        if caller_mod.endswith("_routes"):
+            return target_mod in {
+                "dependencies",
+                "chat_service",
+            } or target_mod.endswith("_models")
+    # Infrastructure層: composition / cli への逆依存、persistence -> sources、
+    # package_insert_definitions / root payload mappers -> 他adapter、外部技術Adapter間の相互依存を禁止する。
     if (
         len(caller_parts) >= 3
         and caller_parts[:2] == ["backend", "infrastructure"]
@@ -264,6 +293,10 @@ def _allowed_module(module: str, *, caller: str) -> bool:
             return False
         caller_pkg = caller_parts[2]
         target_pkg = module_parts[2]
+        if caller_pkg in INFRASTRUCTURE_ROOT_PAYLOAD_MODULES:
+            return target_pkg == caller_pkg
+        if caller_pkg == "package_insert_definitions":
+            return target_pkg == "package_insert_definitions" and len(module_parts) >= 4
         if caller_pkg not in {"composition", "cli"} and target_pkg in {
             "composition",
             "cli",
@@ -271,14 +304,24 @@ def _allowed_module(module: str, *, caller: str) -> bool:
             return False
         if caller_pkg == "composition" and target_pkg == "cli":
             return False
-        if caller_pkg == "persistence" and target_pkg == "sources":
-            return False
-        if (
-            caller_pkg in EXTERNAL_ADAPTER_PACKAGES
-            and target_pkg in EXTERNAL_ADAPTER_PACKAGES
-            and caller_pkg != target_pkg
-        ):
-            return False
+        if caller_pkg == "persistence":
+            if target_pkg in {"sources", "llm", "intent", "morphology"}:
+                return False
+            if target_pkg == "pmda_xml":
+                return (
+                    caller
+                    in {
+                        "backend.infrastructure.persistence.generation_runtime",
+                        "backend.infrastructure.persistence.registration_publisher",
+                    }
+                    and len(module_parts) >= 4
+                    and module_parts[3] in {"decoder", "artifact_mapping"}
+                )
+        if caller_pkg in EXTERNAL_ADAPTER_PACKAGES:
+            if target_pkg in {"persistence", "sources"}:
+                return False
+            if target_pkg in EXTERNAL_ADAPTER_PACKAGES and caller_pkg != target_pkg:
+                return False
     caller_layer = next(
         (
             layer
@@ -311,7 +354,7 @@ def _allowed_module(module: str, *, caller: str) -> bool:
             "domain": {"domain"},
             "application": {"domain", "application"},
             "infrastructure": {"domain", "application", "infrastructure"},
-            "presentation": {"domain", "application", "presentation"},
+            "presentation": {"application", "presentation"},
         }
         return caller_layer is None or dependency_layer in allowed_layers[caller_layer]
     if caller_layer in {"domain", "application"}:
@@ -824,7 +867,7 @@ def test_domain_models_have_explicit_primitive_entity_value_object_ownership() -
         "SectionCode": "backend.domain.attachment.primitives",
         "SearchUnitId": "backend.domain.retrieval.identifiers",
         "YjCode": "backend.domain.medicine.identifiers",
-        "JsonValue": "backend.domain.json_types",
+        "JsonValue": "backend.domain.foundation.json_types",
         "DetectionSource": "backend.domain.retrieval.primitives",
         "DocumentRevision": "backend.domain.retrieval.value_objects",
         "ResolvedMedicine": "backend.application.medicine.product_models",
@@ -1171,6 +1214,66 @@ print("canonical modules and API smoke passed")
             2,
             "import backend.domain.retrieval.value_objects.SearchCriteria",
         ),
+        (
+            "backend.presentation.chat_service",
+            "from ..domain.retrieval.repositories import EvidenceRepository\n",
+            1,
+            "import backend.domain.retrieval.repositories.EvidenceRepository",
+        ),
+        (
+            "backend.presentation.evidence_models",
+            "from ..domain.retrieval.primitives import DetectionSource\n",
+            1,
+            "import backend.domain.retrieval.primitives.DetectionSource",
+        ),
+        (
+            "backend.presentation.chat_models",
+            "from .chat_service import AppChatService\n",
+            1,
+            "import backend.presentation.chat_service.AppChatService",
+        ),
+        (
+            "backend.presentation.chat_dto_mapper",
+            "from .chat_service import AppChatService\n",
+            1,
+            "import backend.presentation.chat_service.AppChatService",
+        ),
+        (
+            "backend.presentation.chat_service",
+            "from .dependencies import get_chat_service\n",
+            1,
+            "import backend.presentation.dependencies.get_chat_service",
+        ),
+        (
+            "backend.presentation.dependencies",
+            "from .chat_routes import router\n",
+            1,
+            "import backend.presentation.chat_routes.router",
+        ),
+        (
+            "backend.presentation.chat_routes",
+            "from .search_routes import router\n",
+            1,
+            "import backend.presentation.search_routes.router",
+        ),
+        (
+            "backend.infrastructure.package_insert_definitions.loader",
+            "from ..intent.definition_settings import JevClassificationSettings\n",
+            1,
+            "import backend.infrastructure.intent.definition_settings.JevClassificationSettings",
+        ),
+        (
+            "backend.infrastructure.evidence_mapping",
+            "from .persistence.evidence_reader import SqlAlchemyEvidenceReader\n",
+            1,
+            "import backend.infrastructure.persistence.evidence_reader.SqlAlchemyEvidenceReader",
+        ),
+        (
+            "backend.infrastructure.persistence.attachment_import_store",
+            "from ..pmda_xml.artifact_mapping import result_from_dict\n",
+            1,
+            "import backend.infrastructure.pmda_xml.artifact_mapping.result_from_dict",
+        ),
     ],
 )
 def test_layer_specific_forbidden_dependencies_report_location(
@@ -1236,19 +1339,59 @@ def test_import_linter_contracts_detect_submodule_violations() -> None:
             "backend.domain.retrieval.services",
         ),
         (
-            "Presentation does not directly depend on domain entities or services",
+            "Presentation does not depend on domain",
             "backend.presentation.search_routes",
             "backend.domain.retrieval.services",
         ),
         (
-            "Presentation routes and dependencies do not depend on domain models or repositories",
+            "Presentation does not depend on domain",
             "backend.presentation.search_routes",
             "backend.domain.retrieval.value_objects",
         ),
         (
-            "Presentation routes and dependencies do not depend on domain models or repositories",
+            "Presentation does not depend on domain",
             "backend.presentation.chat_service",
-            "backend.domain.medicine",
+            "backend.domain.retrieval.repositories",
+        ),
+        (
+            "Presentation does not depend on domain",
+            "backend.presentation.evidence_models",
+            "backend.domain.retrieval.primitives",
+        ),
+        (
+            "Presentation does not depend on domain",
+            "backend.presentation.chat_dto_mapper",
+            "backend.domain.retrieval.value_objects",
+        ),
+        (
+            "Presentation does not depend on domain",
+            "backend.presentation.attachment_import_routes",
+            "backend.domain.foundation.exceptions",
+        ),
+        (
+            "Presentation modules follow internal dependency hierarchy",
+            "backend.presentation.chat_models",
+            "backend.presentation.chat_service",
+        ),
+        (
+            "Presentation modules follow internal dependency hierarchy",
+            "backend.presentation.chat_dto_mapper",
+            "backend.presentation.chat_service",
+        ),
+        (
+            "Presentation modules follow internal dependency hierarchy",
+            "backend.presentation.chat_service",
+            "backend.presentation.dependencies",
+        ),
+        (
+            "Presentation modules follow internal dependency hierarchy",
+            "backend.presentation.dependencies",
+            "backend.presentation.chat_routes",
+        ),
+        (
+            "Presentation modules follow internal dependency hierarchy",
+            "backend.presentation.chat_routes",
+            "backend.presentation.search_routes",
         ),
         (
             "Non-chat application contexts do not depend on chat",
@@ -1286,9 +1429,29 @@ def test_import_linter_contracts_detect_submodule_violations() -> None:
             "backend.infrastructure.sources.file_index_source",
         ),
         (
+            "Persistence does not depend on non-XML technology adapters and isolates XML fallback",
+            "backend.infrastructure.persistence.attachment_import_store",
+            "backend.infrastructure.pmda_xml.artifact_mapping",
+        ),
+        (
+            "Persistence does not depend on non-XML technology adapters and isolates XML fallback",
+            "backend.infrastructure.persistence.evidence_reader",
+            "backend.infrastructure.intent.jev_classifier",
+        ),
+        (
             "Infrastructure adapters do not depend on composition or CLI",
             "backend.infrastructure.persistence.registration_publisher",
             "backend.infrastructure.composition.index_verifier",
+        ),
+        (
+            "Package insert definitions do not depend on other infrastructure adapters",
+            "backend.infrastructure.package_insert_definitions.loader",
+            "backend.infrastructure.intent.definition_settings",
+        ),
+        (
+            "Infrastructure payload mappers do not depend on adapter packages",
+            "backend.infrastructure.evidence_mapping",
+            "backend.infrastructure.persistence.evidence_reader",
         ),
         (
             "External technology adapters are independent",
@@ -1380,6 +1543,26 @@ def test_tracked_production_packages_define_init_py() -> None:
     )
 
 
+def test_infrastructure_root_contains_only_allowed_packages_and_payload_modules() -> (
+    None
+):
+    """backend/infrastructure 直下には許可されたサブパッケージと純粋ペイロード変換モジュールのみを配置する。"""
+    generated = {"__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
+    infra_root = BACKEND_ROOT / "infrastructure"
+    packages = {
+        child.name
+        for child in infra_root.iterdir()
+        if child.is_dir() and child.name not in generated
+    }
+    py_files = {
+        child.name
+        for child in infra_root.iterdir()
+        if child.is_file() and child.suffix == ".py"
+    }
+    assert packages == ALLOWED_INFRASTRUCTURE_PACKAGES
+    assert py_files == ALLOWED_INFRASTRUCTURE_ROOT_FILES
+
+
 def test_domain_context_files_follow_canonical_flat_structure() -> None:
     """各ドメインコンテキスト直下に責務別の正本ファイル以外のファイルやサブディレクトリを追加させない。"""
     generated = {"__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
@@ -1387,7 +1570,15 @@ def test_domain_context_files_follow_canonical_flat_structure() -> None:
     violations: list[str] = []
 
     for context_dir in sorted(domain_root.iterdir()):
-        if not context_dir.is_dir() or context_dir.name in generated | {"foundation"}:
+        if context_dir.name in generated:
+            continue
+        if not context_dir.is_dir():
+            if context_dir.name != "__init__.py":
+                violations.append(
+                    f"{context_dir.relative_to(BACKEND_ROOT)}: domain直下にはコンテキストパッケージのみ配置してください"
+                )
+            continue
+        if context_dir.name == "foundation":
             continue
         for child in sorted(context_dir.iterdir()):
             if child.name in generated:
@@ -1405,6 +1596,23 @@ def test_domain_context_files_follow_canonical_flat_structure() -> None:
                 )
 
     assert not violations, "ドメインコンテキストの構成違反:\n" + "\n".join(violations)
+
+
+def test_each_domain_context_exposes_exactly_one_public_identifier() -> None:
+    """各ドメインコンテキストの identifiers.py は1つの公開IDクラスのみを定義する（1 Domain = 1 ID）。"""
+    expected = {
+        "attachment": ["DocumentId"],
+        "medicine": ["YjCode"],
+        "retrieval": ["SearchUnitId"],
+    }
+    actual: dict[str, list[str]] = {}
+    for context_name in sorted(expected):
+        identifiers_file = BACKEND_ROOT / "domain" / context_name / "identifiers.py"
+        tree = ast.parse(identifiers_file.read_text(encoding="utf-8"))
+        actual[context_name] = [
+            node.name for node in tree.body if isinstance(node, ast.ClassDef)
+        ]
+    assert actual == expected
 
 
 def test_domain_dataclasses_are_frozen_and_use_immutable_collections() -> None:

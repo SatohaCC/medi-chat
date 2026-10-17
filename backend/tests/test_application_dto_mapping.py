@@ -8,11 +8,11 @@ from dataclasses import fields
 import pytest
 from backend.application.chat.chat_models import ChatMessage, ChatResponse
 from backend.application.medicine.product_models import ResolvedMedicine
+from backend.domain.foundation.json_types import JsonValue
 from backend.domain.foundation.primitives.primitives import (
     BaseFiniteFloat,
     BaseString,
 )
-from backend.domain.json_types import JsonValue
 from backend.domain.medicine.value_objects import MedicineMatch
 from backend.domain.retrieval.primitives import DetectionSource
 from backend.domain.retrieval.value_objects import Evidence
