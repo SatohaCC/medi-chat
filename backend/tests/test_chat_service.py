@@ -120,14 +120,15 @@ def test_RESTとWebSocketで回答と根拠とLLM入力が一致する(tmp_path:
             event["content"] for event in events if event["type"] == "text_delta"
         )
     )
-    assert rest.json()["sources"] == next(
-        event["sources"] for event in events if event["type"] == "sources"
-    )
+    source_events = [event for event in events if event["type"] == "sources"]
+    assert rest.json()["sources"] == source_events[-1]["sources"]
+    assert len(source_events) >= 2
+
     assert len(provider.calls) == 2
     assert provider.calls[0] == provider.calls[1]
     assert [event["type"] for event in events] == [
         "retrieval_status",
-        "sources",
+        *["sources"] * len(source_events),
         "text_delta",
         "text_delta",
         "text_done",

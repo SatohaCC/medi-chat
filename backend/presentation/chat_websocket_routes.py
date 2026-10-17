@@ -148,7 +148,7 @@ async def stream_chat_response(
             reply = await service.prepare_reply(
                 payload.messages,
                 payload.product_yj_codes,
-                on_logic_sources=publish_logic if jev_was_searched else None,
+                on_logic_sources=publish_logic,
             )
 
             if not reply.needs_clarification:
