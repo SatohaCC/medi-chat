@@ -67,7 +67,9 @@ def restore(index):
         LegacyCopyStamp,
         validate_stamp_copy,
     )
-    from backend.tests.startup_recovery_fixture import restore_manifest_v3_fixture
+    from backend.tests.support.startup_recovery_fixture import (
+        restore_manifest_v3_fixture,
+    )
 
     fixture = ROOT / "backend/tests/fixtures/pre_registration_manifest_v3.sqlite3.gz"
     assert (
