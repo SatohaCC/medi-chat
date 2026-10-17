@@ -23,6 +23,7 @@ for (const trigger of ["focus", "upload"] as const) {
         },
       }),
     );
+    await page.route("**/data/medicines.json", (route) => route.fulfill({ json: [] }));
     await page.route("**/api/medicines/autocomplete", (route) =>
       route.fulfill({
         json: {

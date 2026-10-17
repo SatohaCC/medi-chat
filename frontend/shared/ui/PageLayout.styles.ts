@@ -9,4 +9,18 @@ export const styles = stylex.create({
     marginBlock: "0",
     marginInline: "auto",
   },
+  workspace: {
+    flex: "1",
+    minHeight: "0",
+    display: "flex",
+    flexDirection: { default: "row", "@media (max-width: 900px)": "column" },
+    overflow: "hidden",
+  },
+  chatColumn: {
+    flex: "1",
+    minWidth: "0",
+    minHeight: "0",
+    display: "flex",
+    flexDirection: "column",
+  },
 });

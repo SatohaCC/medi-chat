@@ -8,7 +8,10 @@ export function useMedicineCatalog(defaultYjCode = "3339003F5020") {
   const medicineOptions = active.groups;
   const medicineCatalogStatus = active.status;
   const [customMedicines, setCustomMedicines] = useState<CustomMedicine[]>([]);
-  const availableCodes = new Set(active.items.map((entry) => entry.y));
+  const availableCodes = new Set([
+    ...active.items.map((entry) => entry.y),
+    ...customMedicines.map((m) => m.yj_code),
+  ]);
   const missingSelectedYjCodes =
     active.status === "ready"
       ? selectedYjCodes.filter((code) => !availableCodes.has(code))

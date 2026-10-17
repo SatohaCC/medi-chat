@@ -65,10 +65,7 @@ def test_tc126_unknown_counterpart():
             "イグザレルトと未知薬の併用は可能ですか", ()
         )
     ) == (("イグザレルト", "未知薬"),)
-    assert (
-        product_identity_reason(((X, frozenset()),), X)
-        == ProductIdentityReason.UNRESOLVED
-    )
+    assert product_identity_reason(((X, frozenset()),), X) is None
 
 
 @pytest.mark.parametrize(
@@ -112,8 +109,8 @@ def test_tc127_fixed_grammar_and_exclusions(message, expected):
     "questions,expected",
     [
         (((A,), (X, frozenset())), ProductIdentityReason.CONFLICT),
-        (((X, frozenset()), (X, ITRA)), ProductIdentityReason.UNRESOLVED),
-        (((X, ITRA), (X, frozenset())), ProductIdentityReason.UNRESOLVED),
+        (((X, frozenset()), (X, ITRA)), ProductIdentityReason.PAIR_REQUIRED),
+        (((X, ITRA), (X, frozenset())), ProductIdentityReason.PAIR_REQUIRED),
     ],
 )
 def test_tc128_priority_independent_of_clause_order(questions, expected):

@@ -80,7 +80,7 @@ export function MedicineAutocompleteInput({
               const isSelected = idx === selectedIndex;
               return (
                 <div
-                  key={`${item.y}-${item.n}`}
+                  key={`${item.y}-${item.n}-${idx}`}
                   role="option"
                   aria-selected={isSelected}
                   tabIndex={-1}
@@ -133,7 +133,7 @@ export function MedicineAutocompleteInput({
                       styles.productReading(isSelected ? "#bfdbfe" : "#9ca3af"),
                     )}
                   >
-                    <span>読み: {item.k || item.h}</span>
+                    <span>読み: {item.k || item.h || item.n}</span>
                     {item.g && <span>一般名: {item.g}</span>}
                   </div>
                 </div>

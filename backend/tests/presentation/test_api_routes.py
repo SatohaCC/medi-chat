@@ -245,7 +245,7 @@ class ChatApiRouteTests(unittest.TestCase):
         self.assertIn("10.1 併用禁忌", payload["answer"])
         self.assertIn("10.2 併用注意", payload["answer"])
 
-    def test_unmatched_counterpart_does_not_claim_combination_is_safe(self) -> None:
+    def test_unmatched_counterpart_proceeds_with_available_medicine(self) -> None:
         response = self.client.post(
             "/api/chat",
             json={
@@ -256,14 +256,9 @@ class ChatApiRouteTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertTrue(payload["needs_clarification"])
-        self.assertEqual(payload["sources"], [])
-        self.assertNotIn("併用可能です", payload["answer"])
-        self.assertEqual(payload["retrieval_strategy"], "unresolved_counterpart")
-        self.assertEqual(payload["answer"], CONFIRMATIONS["unresolved_counterpart"][0])
-        self.assertEqual(
-            payload["notices"], [CONFIRMATIONS["unresolved_counterpart"][1]]
-        )
+        self.assertFalse(payload["needs_clarification"])
+        self.assertEqual(payload["retrieval_strategy"], "three_detectors")
+        self.assertIn("10", [s["section"]["code"] for s in payload["sources"]])
         self.assertEqual(payload["resolved_medicines"][0]["yj_codes"], ["3339003F5020"])
 
     def test_adverse_event_question_filters_to_adverse_event_sections(self) -> None:
@@ -417,7 +412,7 @@ class ChatApiRouteTests(unittest.TestCase):
         self.assertEqual(payload["resolved_medicines"], [])
         self.assertEqual(payload["sources"], [])
 
-    def test_unknown_yj_code_prevents_partial_answer_for_multiple_products(
+    def test_unknown_yj_code_proceeds_with_available_products(
         self,
     ) -> None:
         response = self.client.post(
@@ -430,14 +425,33 @@ class ChatApiRouteTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertTrue(payload["needs_clarification"])
+        self.assertFalse(payload["needs_clarification"])
         self.assertEqual(len(payload["resolved_medicines"]), 1)
         self.assertEqual(payload["resolved_medicines"][0]["yj_codes"], ["3339003F5020"])
         self.assertEqual(
             payload["resolved_medicines"][0]["document_ids"],
             ["630004_3339003F5020_1_08"],
         )
-        self.assertEqual(payload["sources"], [])
+        self.assertTrue(len(payload["sources"]) > 0)
+
+    def test_all_unknown_yj_codes_prevents_answer(
+        self,
+    ) -> None:
+        response = self.client.post(
+            "/api/chat",
+            json={
+                "message": "副作用を教えて",
+                "product_yj_codes": ["0000000A0000"],
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["needs_clarification"])
+        self.assertEqual(
+            payload["answer"],
+            "指定されたYJコードのすべてに対応する電子添文が、現在の検索データにありません。",
+        )
 
     def test_pair_interaction_requires_yj_code_for_each_product(self) -> None:
         response = self.client.post(

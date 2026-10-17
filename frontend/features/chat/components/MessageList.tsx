@@ -7,9 +7,17 @@ interface MessageListProps {
   messages: Message[];
   isStreaming: boolean;
   containerRef?: React.RefObject<HTMLElement | null>;
+  openEvidenceIndex?: number | null;
+  onToggleEvidence?: (index: number) => void;
 }
 
-export function MessageList({ messages, isStreaming, containerRef }: MessageListProps) {
+export function MessageList({
+  messages,
+  isStreaming,
+  containerRef,
+  openEvidenceIndex = null,
+  onToggleEvidence,
+}: MessageListProps) {
   return (
     <main
       ref={containerRef}
@@ -26,6 +34,8 @@ export function MessageList({ messages, isStreaming, containerRef }: MessageList
           message={msg}
           isStreaming={isStreaming}
           isLast={i === messages.length - 1}
+          isEvidenceOpen={openEvidenceIndex === i}
+          onToggleEvidence={onToggleEvidence ? () => onToggleEvidence(i) : undefined}
         />
       ))}
     </main>

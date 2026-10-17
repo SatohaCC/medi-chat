@@ -142,10 +142,13 @@ test("薬剤・モデルを指定して質問し、回答と根拠を表示し�
   await expect(
     page.locator('[data-message-role="assistant"] [data-message-bubble]'),
   ).toContainText("最初のテスト回答です。");
+  await page.getByRole("button", { name: /添付文書の根拠を表示/ }).click();
   const evidence = page.getByRole("complementary", { name: "添付文書の根拠引用" });
   await expect(evidence).toContainText(source.excerpt);
   await expect(evidence).toContainText("禁忌");
   await expect(evidence.locator(`a[href="${source.url}"]`)).toBeVisible();
+  await evidence.getByRole("button", { name: "根拠パネルを閉じる" }).click();
+  await expect(evidence).not.toBeVisible();
   await chat.input.fill("続きの質問");
   await chat.send.click();
   await expect.poll(() => chat.requests.length).toBe(2);
@@ -237,6 +240,7 @@ test("SX-26/27: section/all/zero selection, references and safe Markdown remain"
       "### Markdownの見出し\n\n- 原文の一覧\n\n```text\n安全なcode\n```\n\n|列|値|\n|---|---|\n|正文|保持|\n\n[安全なURL](https://example.invalid/safe) [危険なURL](javascript:alert(1))\n\n<script>alert(2)</script>",
   });
   chat.respond({ type: "text_done" });
+  await page.getByRole("button", { name: /添付文書の根拠を表示/ }).click();
   const evidence = page.getByRole("complementary");
   await expect(evidence).toContainText("合計：2件");
   await evidence.getByRole("button", { name: "[2] 禁忌 (1)", exact: true }).click();
@@ -263,7 +267,11 @@ test("SX-26/27: section/all/zero selection, references and safe Markdown remain"
   chat.respond({ type: "retrieval_status", stage: "complete" });
   chat.respond({ type: "text_delta", content: "根拠0の回答" });
   chat.respond({ type: "text_done" });
-  await expect(page.getByRole("complementary").last()).toContainText("合計：0件");
+  await page
+    .getByRole("button", { name: /添付文書の根拠を表示/ })
+    .last()
+    .click();
+  await expect(page.getByRole("complementary")).toContainText("合計：0件");
 });
 
 test("チャット送信時に、送信したユーザー質問が画面上部にスクロールする", async ({

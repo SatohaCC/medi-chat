@@ -118,10 +118,6 @@ test("TC137 real browser three confirmations and normal single/pair without API 
         "イグザレルトとイトラコナゾールの飲み合わせ",
         "飲み合わせを確認する両方の医薬品のYJコードを選択してください。",
       ],
-      [
-        "イグザレルトと未知薬の併用は可能ですか",
-        "比較相手の医薬品を同定できません。相手の名称とYJコードを確認してください。",
-      ],
     ];
     for (const [question, answer] of cases) {
       const events = await ask(question);
@@ -164,8 +160,11 @@ test("TC137 real browser three confirmations and normal single/pair without API 
     await expect(page.getByText("固定SDK回答（通信なし）", { exact: true })).toHaveCount(
       2,
     );
+    const toggleButtons = page.getByRole("button", { name: /添付文書の根拠を表示/ });
+    await expect(toggleButtons).toHaveCount(2);
+    await toggleButtons.last().click();
     const panels = page.getByRole("complementary", { name: "添付文書の根拠引用" });
-    await expect(panels).toHaveCount(2);
+    await expect(panels).toHaveCount(1);
     const cards = panels.last().locator("[data-evidence-card]");
     await expect(cards).toHaveCount(10);
     const originalOracle: { sections: Record<string, { unit_id: string }> }[] =

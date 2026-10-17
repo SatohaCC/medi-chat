@@ -107,6 +107,7 @@ for (const width of widths) {
         "### 回答\n\n原文に基づく回答。\n\n- 項目\n\n`code`\n\n[安全な参照](https://example.invalid/safe)",
     });
     chat.respond({ type: "text_done" });
+    await page.getByRole("button", { name: /添付文書の根拠を表示/ }).click();
     await expect(page.getByText("Jev検索完了", { exact: true })).toBeVisible();
     const bubble = await page
       .locator('[data-message-role="assistant"] [data-message-bubble]')
@@ -193,6 +194,7 @@ for (const width of [1280, 390]) {
     chat.respond({ type: "retrieval_status", stage: "complete" });
     chat.respond({ type: "text_delta", content: "固定された回答" });
     chat.respond({ type: "text_done" });
+    await page.getByRole("button", { name: /添付文書の根拠を表示/ }).click();
     await expect(page.getByText("Jev検索完了", { exact: true })).toBeVisible();
     const inspector = page.locator('[data-disclosure="jev"]');
     await inspector.locator("[data-disclosure-trigger]").click();

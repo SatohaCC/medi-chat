@@ -22,6 +22,14 @@ export function MedicineSelector({
   customMedicines,
   onToggleYjCode,
 }: MedicineSelectorProps) {
+  const registeredYjCodes = new Set(medicineOptions.flatMap((m) => m.yj_codes));
+  const unregisteredSelected = customMedicines.filter(
+    (m) => selectedYjCodes.includes(m.yj_code) && !registeredYjCodes.has(m.yj_code),
+  );
+  const registeredSelectedCount = selectedYjCodes.filter((code) =>
+    registeredYjCodes.has(code),
+  ).length;
+
   return (
     <div {...stylex.props(styles.root)}>
       <div {...stylex.props(styles.label)}>対象医薬品（YJコードで特定・複数選択可）:</div>
@@ -56,21 +64,49 @@ export function MedicineSelector({
           .filter((m) => !medicineOptions.some((opt) => opt.yj_codes.includes(m.yj_code)))
           .map((m) => {
             const isSelected = selectedYjCodes.includes(m.yj_code);
+            const isRegistered = registeredYjCodes.has(m.yj_code);
             return (
               <ToggleButton
                 key={m.yj_code}
                 selected={isSelected}
                 onSelectedChange={() => onToggleYjCode(m.yj_code)}
-                variant="custom"
+                variant={isRegistered ? "custom" : "unregistered"}
               >
                 {isSelected ? "✓ " : "+ "}
                 {m.name}
+                {!isRegistered && (
+                  <span {...stylex.props(styles.unregisteredTag)}>（対象外）</span>
+                )}
               </ToggleButton>
             );
           })}
       </div>
+
+      {unregisteredSelected.length > 0 && (
+        <div {...stylex.props(styles.unregisteredAlert)} role="status">
+          <span {...stylex.props(styles.alertIcon)}>⚠️</span>
+          <div {...stylex.props(styles.alertContent)}>
+            <span {...stylex.props(styles.alertTitle)}>
+              検索対象外（電子添文未登録）:
+            </span>{" "}
+            {unregisteredSelected.map((m) => m.name).join("、 ")}
+            <div {...stylex.props(styles.alertDesc)}>
+              ※
+              電子添文データが未登録のため、添付文書の検索・根拠引用は行われません（登録済み医薬品のみで検索・回答します）。
+            </div>
+          </div>
+        </div>
+      )}
+
       <div {...stylex.props(styles.selectionSummary)}>
         選択中: {selectedYjCodes.join(", ")}
+        {unregisteredSelected.length > 0 && (
+          <span {...stylex.props(styles.unregisteredSummary)}>
+            {" "}
+            (検索対象: {registeredSelectedCount}件 / 対象外: {unregisteredSelected.length}
+            件)
+          </span>
+        )}
       </div>
     </div>
   );

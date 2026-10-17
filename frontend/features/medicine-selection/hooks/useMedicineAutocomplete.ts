@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type MedicineEntry, searchMedicines } from "../model/medicineAutocomplete";
 import { useActiveMedicines } from "./useActiveMedicines";
 
@@ -15,7 +15,8 @@ export function useMedicineAutocomplete({
   onSubmit,
   onSelectMedicine,
 }: UseMedicineAutocompleteOptions) {
-  const { items: entries } = useActiveMedicines();
+  const { items: activeItems } = useActiveMedicines();
+  const [dictionaryEntries, setDictionaryEntries] = useState<MedicineEntry[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [suggestions, setSuggestions] = useState<MedicineEntry[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -24,6 +25,68 @@ export function useMedicineAutocomplete({
 
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const justAcceptedRef = useRef(false);
+
+  // Load full medicines dictionary from /data/medicines.json on mount
+  useEffect(() => {
+    let cancelled = false;
+    async function loadDictionary() {
+      try {
+        const res = await fetch("/data/medicines.json");
+        if (!res.ok) return;
+        const data = (await res.json()) as MedicineEntry[];
+        if (!cancelled && Array.isArray(data)) {
+          setDictionaryEntries(data);
+        }
+      } catch {
+        // Ignore dictionary fetch errors and fall back to activeItems
+      }
+    }
+    void loadDictionary();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const entries = useMemo(() => {
+    if (dictionaryEntries.length === 0) return activeItems;
+    if (activeItems.length === 0) return dictionaryEntries;
+
+    const dictByYj = new Map<string, MedicineEntry>();
+    for (const item of dictionaryEntries) {
+      if (item.y && !dictByYj.has(item.y)) {
+        dictByYj.set(item.y, item);
+      }
+    }
+
+    const activeYjs = new Set<string>();
+    const merged: MedicineEntry[] = [];
+
+    for (const active of activeItems) {
+      activeYjs.add(active.y);
+      const dict = dictByYj.get(active.y);
+      if (dict) {
+        merged.push({
+          n: active.n || dict.n,
+          k: active.k || dict.k,
+          h: active.h || dict.h,
+          y: active.y,
+          g: active.g || dict.g,
+          c: active.c && active.c !== "他" ? active.c : dict.c || active.c,
+        });
+      } else {
+        merged.push(active);
+      }
+    }
+
+    for (const item of dictionaryEntries) {
+      if (!activeYjs.has(item.y)) {
+        merged.push(item);
+      }
+    }
+
+    return merged;
+  }, [activeItems, dictionaryEntries]);
 
   // Update suggestions based on text at cursor
   const updateSuggestions = useCallback(
@@ -35,7 +98,7 @@ export function useMedicineAutocomplete({
 
       const textBefore = currentVal.slice(0, cursor);
       const match = textBefore.match(
-        /([a-zA-Z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAFー]+)$/,
+        /([a-zA-Z0-9.\uFF10-\uFF19\uFF21-\uFF3A\uFF41-\uFF5A\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAFー「」]+)$/,
       );
 
       if (!match) {
@@ -67,10 +130,15 @@ export function useMedicineAutocomplete({
   );
 
   useEffect(() => {
+    if (justAcceptedRef.current) {
+      justAcceptedRef.current = false;
+      return;
+    }
     updateSuggestions(value, inputRef.current?.selectionStart ?? value.length);
   }, [updateSuggestions, value]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    justAcceptedRef.current = false;
     const newVal = e.target.value;
     onChange(newVal);
     const cursor = e.target.selectionStart ?? newVal.length;
@@ -85,12 +153,13 @@ export function useMedicineAutocomplete({
   };
 
   const acceptSuggestion = useCallback(
-    (entry: MedicineEntry) => {
+    (entry: MedicineEntry, keepOpenOnRevalidate = false) => {
       const [start, end] = tokenRange;
       const before = value.slice(0, start);
       const after = value.slice(end);
       const completedText = before + entry.n + after;
 
+      justAcceptedRef.current = !keepOpenOnRevalidate;
       onChange(completedText);
       setIsOpen(false);
 
@@ -131,13 +200,13 @@ export function useMedicineAutocomplete({
 
     if (e.key === "Tab") {
       e.preventDefault();
-      acceptSuggestion(suggestions[selectedIndex]);
+      acceptSuggestion(suggestions[selectedIndex], e.nativeEvent.isComposing);
       return;
     }
 
     if (e.key === "Enter") {
       e.preventDefault();
-      acceptSuggestion(suggestions[selectedIndex]);
+      acceptSuggestion(suggestions[selectedIndex], e.nativeEvent.isComposing);
       return;
     }
 

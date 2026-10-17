@@ -180,7 +180,9 @@ def test_tc133_rest_all_fields_zero_search_generation(
         "answer": CONFIRMATIONS[strategy][0],
         "intent": intent,
         "retrieval_strategy": strategy,
-        "resolved_medicines": expected_resolved(),
+        "resolved_medicines": (
+            [] if strategy == "product_code_lookup" else expected_resolved()
+        ),
         "sources": [],
         "needs_clarification": True,
         "notices": [CONFIRMATIONS[strategy][1]],
@@ -255,6 +257,7 @@ def test_tc134_fixed_end_ping_then_normal_same_connection(
             else [
                 "retrieval_status",
                 "sources",
+                "sources",
                 "text_delta",
                 "text_delta",
                 "text_done",
@@ -265,8 +268,8 @@ def test_tc134_fixed_end_ping_then_normal_same_connection(
             "stage": "jev_searching" if available else "unavailable",
         }
         assert_normal_sources(events[1]["sources"], False)
+        assert_normal_sources(events[2]["sources"], available)
         if available:
-            assert_normal_sources(events[2]["sources"], True)
             assert events[3] == {"type": "jev_response", "data": {"fixed": True}}
             assert events[4] == {
                 "type": "retrieval_status",

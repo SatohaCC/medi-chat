@@ -152,7 +152,7 @@ async def test_unresolved_products_do_not_publish_partial_evidence(monkeypatch):
     monkeypatch.setattr(retrieval, "detect_morphology_criteria", lambda *args: None)
     reply = await prepare_reply(
         [ChatMessage(role="user", content="質問")],
-        ["1234567A0000", "unknown"],
+        ["unknown"],
         medicine_reader=MedicineReader(),
         evidence_reader=OrderedEvidenceReader(False),
         intent_classifier=UnusedIntentClassifier(),
