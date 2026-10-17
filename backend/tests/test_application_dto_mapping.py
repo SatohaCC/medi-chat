@@ -19,7 +19,6 @@ from backend.domain.retrieval.value_objects import Evidence
 from backend.presentation.chat_dto_mapper import (
     chat_message_from_api,
     chat_message_to_api,
-    chat_response_from_api,
     chat_response_to_api,
 )
 from backend.presentation.chat_models import ChatMessage as ApiChatMessage
@@ -143,8 +142,62 @@ def response_payload() -> dict[str, JsonValue]:
     }
 
 
+def _application_response(payload):
+    from backend.domain.attachment.identifiers import DocumentId
+    from backend.domain.medicine.identifiers import YjCode
+    from backend.domain.retrieval.identifiers import SearchUnitId
+    from backend.domain.retrieval.value_objects import (
+        DocumentRevision,
+        EvidenceColumns,
+        EvidenceReference,
+        EvidenceSection,
+    )
+
+    return ChatResponse(
+        answer=payload["answer"],
+        intent=payload["intent"],
+        retrieval_strategy=payload["retrieval_strategy"],
+        needs_clarification=payload["needs_clarification"],
+        notices=list(payload["notices"]),
+        jev_response=payload["jev_response"],
+        qualifying_intents=("interaction", "pharmacokinetics"),
+        resolved_medicines=[
+            ResolvedMedicine(
+                medicine=MedicineMatch(
+                    generic_name=m["generic_name"],
+                    brand_names=tuple(m["brand_names"]),
+                    yj_codes=tuple(m["yj_codes"]),
+                    matched_aliases=tuple(m["matched_aliases"]),
+                ),
+                document_ids=tuple(m["document_ids"]),
+            )
+            for m in payload["resolved_medicines"]
+        ],
+        sources=[
+            Evidence(
+                unit_id=SearchUnitId(v["unit_id"]),
+                document_id=DocumentId(v["document_id"]),
+                product_name=v["product_name"],
+                generic_name=v["generic_name"],
+                product_yj_codes=tuple(YjCode(c) for c in v["product_yj_codes"]),
+                document_revision=DocumentRevision(v["document_revision"]),
+                section=EvidenceSection(v["section"]),
+                kind=v["kind"],
+                excerpt=v["excerpt"],
+                columns=EvidenceColumns(v["columns"])
+                if v["columns"] is not None
+                else None,
+                references=tuple(EvidenceReference(r) for r in v["references"]),
+                url=v["url"],
+                retrieved_by=frozenset(DetectionSource(d) for d in v["retrieved_by"]),
+            )
+            for v in payload["sources"]
+        ],
+    )
+
+
 @pytest.mark.parametrize("scenario", ["message", "resolved", "unresolved"])
-def test_dto_round_trip_preserves_public_information(
+def test_directional_dto_mapping_preserves_public_information(
     scenario: str, response_payload: dict[str, JsonValue]
 ) -> None:
     if scenario == "message":
@@ -195,7 +248,7 @@ def test_dto_round_trip_preserves_public_information(
     if scenario == "resolved":
         assert all(type(source) is ApiChatSource for source in api_response.sources)
 
-    response = chat_response_from_api(api_response)
+    response = _application_response(response_payload)
 
     assert type(response) is ChatResponse
     assert type(response.resolved_medicines[0]) is ResolvedMedicine
@@ -217,7 +270,7 @@ def test_dto_round_trip_preserves_public_information(
 def test_empty_values_and_none_columns_remain_distinct(columns, response_payload):
     source = response_payload["sources"][0]
     source.update(columns=columns, section={}, document_revision={}, references=[])
-    response = chat_response_from_api(ApiChatResponse.model_validate(response_payload))
+    response = _application_response(response_payload)
     public = chat_response_to_api(response).model_dump(mode="json")
     assert public == response_payload
     assert "qualifying_intents" not in public

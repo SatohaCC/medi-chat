@@ -156,7 +156,10 @@ async def stream_chat_response(
                     await websocket.send_json(
                         {
                             "type": "sources",
-                            "sources": [s.model_dump() for s in reply.sources],
+                            "sources": [
+                                s.model_dump()
+                                for s in service.sources_to_api(reply.sources)
+                            ],
                         }
                     )
                 if reply.jev_response is not None:

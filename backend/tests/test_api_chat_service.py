@@ -4,10 +4,11 @@ import asyncio
 from collections.abc import AsyncGenerator
 
 import pytest
+from backend.application.chat.chat_models import ChatResponse
 from backend.infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,
 )
-from backend.presentation.chat_models import ChatMessage, ChatResponse
+from backend.presentation.chat_models import ChatMessage
 from backend.presentation.chat_service import AppChatService
 from backend.tests.test_answer_preparation import (
     MedicineReader,
@@ -115,3 +116,45 @@ def test_application_lifespan_closes_owned_intent_sdk(tmp_path, monkeypatch):
         assert client.get("/health").status_code == 200
         assert classifier.closed is False
     assert classifier.closed is True
+
+
+@pytest.mark.asyncio
+async def test_prepared_application_reply_is_retained_until_generation(monkeypatch):
+    from unittest.mock import AsyncMock
+
+    definitions = get_package_insert_definitions()
+    service = AppChatService(
+        medicine_reader=MedicineReader(),
+        evidence_reader=RecordingReader(),
+        intent_classifier=UnusedIntentClassifier(),
+        keyword_extractor=UnusedKeywordExtractor(),
+        intent_policy=definitions.intent_policy,
+        answer_prompt_policy=definitions.answer_prompt_policy,
+        provider_factory=lambda _: RecordingProvider(),
+    )
+    prepared = ChatResponse(
+        answer="",
+        intent="interaction",
+        retrieval_strategy="three_detectors",
+        qualifying_intents=("interaction",),
+        jev_response=None,
+    )
+    monkeypatch.setattr(
+        service._app_service, "prepare_reply", AsyncMock(return_value=prepared)
+    )
+    received = []
+
+    async def generate(reply, conversation, **kwargs):
+        received.append(reply)
+        assert reply.qualifying_intents == ("interaction",)
+        yield "answer"
+
+    monkeypatch.setattr(service._app_service, "stream_answer", generate)
+    conversation = [ChatMessage(role="user", content="質問")]
+    reply = await service.prepare_reply(conversation, ["1234567A0000"])
+    assert reply is prepared
+    assert [chunk async for chunk in service.stream_answer(reply, conversation)] == [
+        "answer"
+    ]
+    assert received == [prepared]
+    assert received[0] is prepared

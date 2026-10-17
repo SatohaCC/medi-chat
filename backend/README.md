@@ -36,13 +36,19 @@
 | `infrastructure/cli` | `build_search_index`、`migrate_legacy_index`の公開module入口 |
 | `infrastructure/package_insert_definitions` | 単一JSONのIO/検証と用途別組立、および各アダプター向け設定型（`definition_settings.py`）の所有。正式名称はattachment、検索規則・整形はretrieval、回答指示はApplicationが所有する |
 
-公開DTOの`ChatMessage`/`ChatResponse`/`ChatSource`/`MedicineMatch`は`presentation`に置き、REST JSON・WSイベント・OpenAPIの名前を維持します。applicationの同名モデルはフレームワーク非依存の入出力です。`IntentResult.candidates`が意図判定の業務契約で、`raw_response`は公開原本として保持します。applicationはSDKの`answers`/`choice`/`probabilities`を読まず、presentation mapperが公開JSONとの往復を担当します。
+公開DTOの`ChatMessage`/`ChatResponse`/`ChatSource`/`MedicineMatch`は`presentation`に置き、REST JSON・WSイベント・OpenAPIの名前を維持します。applicationの同名モデルはフレームワーク非依存の入出力です。`IntentResult.candidates`が意図判定の業務契約で、`raw_response`は公開原本として保持します。applicationはSDKの`answers`/`choice`/`probabilities`を読まず、presentation mapperが入力DTOからApplication入力への変換と、Application結果から公開JSONへの変換を担当します。準備済みの回答はApplicationモデルのまま生成まで保持し、出力DTOから内部モデルへ復元しません。
 
 `Evidence`と医薬品の改訂情報は深い値として保持し、公開辞書は独立コピーにします。根拠集合はunit_idで最初に取得した内容を採用し、由来を統合して数値項目順に並べます。検出器の完了順に依存する既存の条件順・最初採用を維持します。PrimitiveやValue Objectの導入は既存の入力形式を狭めず、境界で受けた基本型を内部の明示的な型へ変換します。
 
 医薬品候補の取得は `application/medicine/product_contracts.py` の `MedicineSnapshotProvider` を使い、同じ公開世代のIDと医薬品Readerだけを要求します。根拠検索側の `RetrievalSnapshotProvider` は根拠Readerも提供します。Infrastructureの世代runtimeは両契約を満たし、どちらも `acquire()` の終了まで同じ世代とleaseを保持します。
 
 `infrastructure/sources` は入力ファイルの読取を担当します。登録原本の不変保存は `persistence/attachment_import_store.py`、公開済みDBと所有artifactの整合性検証・読取は `persistence/registration_reader.py` が担当し、persistenceからsourcesへは依存しません。また、JSON/検索単位payloadのシリアライズ（`index_payloads.py`）は `pmda_xml` から分離し、`GenerationRuntime` や `SqliteRegistrationPublisher` には `PmdaXmlDecoder` / `PmdaArtifactEncoder` をコンストラクタDIで注入します。
+
+### 出力DTOの逆変換を防ぐ検査
+
+`pnpm --filter backend lint`はRuff・Import Linterに加え、`lint:boundaries`でAST検査を実行します。Presentationの関数が出力専用の`ChatResponse`・`ChatSource`・`MedicineMatch`を引数に受け、Application型を返す、またはApplicationの型・関数を呼ぶ経路を禁止します。入力`ChatMessage`の変換、出力への変換、送信用callbackは許可します。
+
+この検査は直接import・alias・修飾名・文字列型注釈・コレクション内の型を対象にします。`Any`や辞書に型を消した経路、動的import、別名の再代入を通じたデータフロー全体を証明するものではありません。型検査と、準備済みApplication結果の同一性・内部情報を保持するテストを併用します。
 
 ## リンターによるアーキテクチャ制約とドメイン基盤の利用
 
