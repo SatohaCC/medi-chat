@@ -40,6 +40,7 @@ export interface Message {
   sources?: SourceItem[];
   retrievalStatus?: RetrievalStatus;
   jevResponse?: JevResponseData | null;
+  notices?: string[];
 }
 
 export interface ModelOption {
@@ -61,6 +62,7 @@ export type WsServerMessage =
       jev_response?: JevResponseData | null;
     }
   | { type: "jev_response"; data: JevResponseData }
+  | { type: "notices"; notices: string[] }
   | { type: "text_delta"; content: string }
   | { type: "text_done" }
   | { type: "error"; content: string };

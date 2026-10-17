@@ -107,7 +107,8 @@ class Dependencies(TypedDict):
         ("アマリールの効能", [X], "product_identity_conflict"),
         ("イグザレルトとイトラコナゾールの飲み合わせ", [X], "pair_yj_codes_required"),
         ("イグザレルトと未知薬の併用", [X], "unresolved_counterpart"),
-        ("アマリールの効能", [X, "999999999999"], "product_code_lookup"),
+        ("アマリールの効能", [X, "999999999999"], "product_identity_conflict"),
+        ("アマリールの効能", ["999999999999"], "product_code_lookup"),
     ],
 )
 async def test_tc132_all_early_entries_release_real_lease_without_search_generation(
@@ -162,7 +163,10 @@ async def test_tc132_all_early_entries_release_real_lease_without_search_generat
             and reply.needs_clarification
             and reply.sources == []
         )
-        assert [code for m in reply.resolved_medicines for code in m.yj_codes] == [X]
+        expected_codes = [] if strategy == "product_code_lookup" else [X]
+        assert [
+            code for m in reply.resolved_medicines for code in m.yj_codes
+        ] == expected_codes
         assert observed.generations[0].value == final.generation_id
         assert search.calls == provider.factory_calls == provider.stream_calls == 0
         assert leases(publisher) == 0

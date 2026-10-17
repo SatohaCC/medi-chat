@@ -56,10 +56,7 @@ async def retrieve_evidence(
             )
     medicine_catalog = MedicineCatalog(await medicine_reader.read_medicines())
     resolved = medicine_catalog.resolve_medicines(message, product_yj_codes)
-    needs_clarification = (
-        not resolved
-        or not medicine_catalog.covers_requested_products(resolved, product_yj_codes)
-    )
+    needs_clarification = not resolved
     excluded_terms = medicine_catalog.aliases_for_yj_codes(product_yj_codes)
     reason = None
     if not needs_clarification:
@@ -132,11 +129,21 @@ async def retrieve_evidence(
     sources = await _search_evidence(
         evidence_reader, tuple(resolved), criteria, cache=search_batches
     )
+    resolved_codes = {code for group in resolved for code in group.yj_codes}
+    unregistered_codes = [
+        code for code in product_yj_codes if code not in resolved_codes
+    ]
+    notices = []
+    if unregistered_codes:
+        notices.append(
+            f"指定されたYJコード（{', '.join(unregistered_codes)}）は電子添文データが未登録のため、検索対象外として回答を作成しました。"
+        )
     return RetrievalResult(
         intent=intent,
         retrieval_strategy="three_detectors",
         resolved_medicines=resolved,
         sources=sources,
+        notices=notices,
         jev_response=deepcopy(jev_response),
         qualifying_intents=qualifying_intents,
     )

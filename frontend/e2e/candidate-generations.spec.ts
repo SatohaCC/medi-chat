@@ -21,6 +21,7 @@ test("TC110 focus changes both candidates and warns without replacing vanished Y
       },
     }),
   );
+  await page.route("**/data/medicines.json", (route) => route.fulfill({ json: [] }));
   await page.route("**/api/medicines/autocomplete", (route) =>
     route.fulfill({
       json: {

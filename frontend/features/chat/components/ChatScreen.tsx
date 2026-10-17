@@ -8,9 +8,11 @@ import { useChatWebSocket } from "../hooks/useChatWebSocket";
 import { ChatHeader } from "./ChatHeader";
 import { ChatInputForm } from "./ChatInputForm";
 import { MessageList } from "./MessageList";
+import { SourceEvidencePanel } from "./SourceEvidencePanel";
 
 export function ChatScreen() {
   const [selectedModel, setSelectedModel] = useState("openai:gpt-6-luna");
+  const [openEvidenceIndex, setOpenEvidenceIndex] = useState<number | null>(null);
   const messageListRef = useRef<HTMLElement | null>(null);
 
   const {
@@ -32,6 +34,19 @@ export function ChatScreen() {
   const handleSelectMedicine = (medicine: MedicineEntry) => {
     handleSelectMedicineFromAutocomplete(medicine, input);
   };
+
+  const handleToggleEvidence = (index: number) => {
+    setOpenEvidenceIndex((prev) => (prev === index ? null : index));
+  };
+
+  const activeEvidenceMessage =
+    openEvidenceIndex !== null ? messages[openEvidenceIndex] : undefined;
+  const showEvidencePane =
+    activeEvidenceMessage?.role === "assistant" &&
+    ((Array.isArray(activeEvidenceMessage.sources) &&
+      activeEvidenceMessage.sources.length > 0) ||
+      Boolean(activeEvidenceMessage.jevResponse) ||
+      activeEvidenceMessage.retrievalStatus === "complete");
 
   const handleSendMessage = (e?: React.FormEvent) => {
     if (!input.trim() || selectedYjCodes.length === 0 || isStreaming) {
@@ -72,35 +87,52 @@ export function ChatScreen() {
         status={status}
       />
 
-      <MessageList
-        messages={messages}
-        isStreaming={isStreaming}
-        containerRef={messageListRef}
-      />
+      <div {...stylex.props(layout.workspace)}>
+        <div {...stylex.props(layout.chatColumn)}>
+          <MessageList
+            messages={messages}
+            isStreaming={isStreaming}
+            containerRef={messageListRef}
+            openEvidenceIndex={openEvidenceIndex}
+            onToggleEvidence={handleToggleEvidence}
+          />
 
-      {missingSelectedYjCodes.length > 0 && (
-        <p role="alert" aria-label="選択YJの消失">
-          選択したYJコードが現在の候補にありません: {missingSelectedYjCodes.join(", ")}
-          。別の薬へ自動変更していません。
-        </p>
-      )}
-      <MedicineSelector
-        medicineOptions={medicineOptions}
-        medicineCatalogStatus={medicineCatalogStatus}
-        selectedYjCodes={selectedYjCodes}
-        customMedicines={customMedicines}
-        onToggleYjCode={toggleYjCode}
-      />
+          {missingSelectedYjCodes.length > 0 && (
+            <p role="alert" aria-label="選択YJの消失">
+              選択したYJコードが現在の候補にありません:{" "}
+              {missingSelectedYjCodes.join(", ")}
+              。別の薬へ自動変更していません。
+            </p>
+          )}
+          <MedicineSelector
+            medicineOptions={medicineOptions}
+            medicineCatalogStatus={medicineCatalogStatus}
+            selectedYjCodes={selectedYjCodes}
+            customMedicines={customMedicines}
+            onToggleYjCode={toggleYjCode}
+          />
 
-      <ChatInputForm
-        input={input}
-        onChangeInput={setInput}
-        onSubmit={handleSendMessage}
-        onSelectMedicine={handleSelectMedicine}
-        selectedYjCodes={selectedYjCodes}
-        status={status}
-        isStreaming={isStreaming}
-      />
+          <ChatInputForm
+            input={input}
+            onChangeInput={setInput}
+            onSubmit={handleSendMessage}
+            onSelectMedicine={handleSelectMedicine}
+            selectedYjCodes={selectedYjCodes}
+            status={status}
+            isStreaming={isStreaming}
+          />
+        </div>
+
+        {showEvidencePane && activeEvidenceMessage && (
+          <SourceEvidencePanel
+            key={`evidence-${openEvidenceIndex}`}
+            sources={activeEvidenceMessage.sources || []}
+            retrievalStatus={activeEvidenceMessage.retrievalStatus}
+            jevResponse={activeEvidenceMessage.jevResponse}
+            onClose={() => setOpenEvidenceIndex(null)}
+          />
+        )}
+      </div>
     </div>
   );
 }

@@ -20,9 +20,18 @@ const ROMAJI_TABLE: Record<string, string> = {
   sha: "しゃ",
   shu: "しゅ",
   sho: "しょ",
+  sya: "しゃ",
+  syu: "しゅ",
+  syo: "しょ",
   cha: "ちゃ",
   chu: "ちゅ",
   cho: "ちょ",
+  tya: "ちゃ",
+  tyu: "ちゅ",
+  tyo: "ちょ",
+  cya: "ちゃ",
+  cyu: "ちゅ",
+  cyo: "ちょ",
   nya: "にゃ",
   nyu: "にゅ",
   nyo: "にょ",
@@ -41,6 +50,12 @@ const ROMAJI_TABLE: Record<string, string> = {
   ja: "じゃ",
   ju: "じゅ",
   jo: "じょ",
+  jya: "じゃ",
+  jyu: "じゅ",
+  jyo: "じょ",
+  dya: "ぢゃ",
+  dyu: "ぢゅ",
+  dyo: "ぢょ",
   bya: "びゃ",
   byu: "びゅ",
   byo: "びょ",
@@ -50,7 +65,16 @@ const ROMAJI_TABLE: Record<string, string> = {
   shi: "し",
   chi: "ち",
   tsu: "つ",
+  fa: "ふぁ",
+  fi: "ふぃ",
   fu: "ふ",
+  fe: "ふぇ",
+  fo: "ふぉ",
+  va: "ゔぁ",
+  vi: "ゔぃ",
+  vu: "ゔ",
+  ve: "ゔぇ",
+  vo: "ゔぉ",
   ka: "か",
   ki: "き",
   ku: "く",
@@ -99,13 +123,14 @@ const ROMAJI_TABLE: Record<string, string> = {
   go: "ご",
   za: "ざ",
   zi: "じ",
+  ji: "じ",
   zu: "ず",
   ze: "ぜ",
   zo: "ぞ",
   da: "だ",
   di: "ぢ",
   du: "づ",
-  de: "de",
+  de: "で",
   do: "ど",
   ba: "ば",
   bi: "び",
@@ -232,37 +257,61 @@ export function searchMedicines(
 
   for (let i = 0; i < entries.length; i++) {
     const entry = entries[i];
+    if (!entry.y?.trim()) {
+      continue;
+    }
     let score = 0;
 
-    const nameLower = entry.n.toLowerCase();
-    const hira = entry.h;
-    const kata = entry.k;
-    const genericLower = entry.g.toLowerCase();
+    const nameLower = normalizeQuery(entry.n);
+    const nameHira = katakanaToHiragana(nameLower);
+    const nameKata = hiraganaToKatakana(nameLower);
+    const hira = entry.h ? normalizeQuery(entry.h) : nameHira;
+    const kata = entry.k ? normalizeQuery(entry.k) : nameKata;
+    const genericLower = normalizeQuery(entry.g);
+    const genericHira = katakanaToHiragana(genericLower);
+    const genericKata = hiraganaToKatakana(genericLower);
 
     // 1. Direct name match
     if (nameLower.startsWith(q)) {
       score = 200;
-    } else if (hira.startsWith(qHira) || hira.startsWith(qFromRomaji)) {
+    } else if (
+      hira.startsWith(qHira) ||
+      hira.startsWith(qFromRomaji) ||
+      nameHira.startsWith(qHira) ||
+      nameHira.startsWith(qFromRomaji)
+    ) {
       score = 180;
-    } else if (kata.startsWith(qKata) || kata.startsWith(qRomajiKata)) {
+    } else if (
+      kata.startsWith(qKata) ||
+      kata.startsWith(qRomajiKata) ||
+      nameKata.startsWith(qKata) ||
+      nameKata.startsWith(qRomajiKata)
+    ) {
       score = 170;
     } else if (nameLower.includes(q)) {
       score = 100;
     } else if (
       hira.includes(qHira) ||
-      (qFromRomaji.length >= 2 && hira.includes(qFromRomaji))
+      nameHira.includes(qHira) ||
+      (qFromRomaji.length >= 2 &&
+        (hira.includes(qFromRomaji) || nameHira.includes(qFromRomaji)))
     ) {
       score = 90;
     } else if (
       kata.includes(qKata) ||
-      (qRomajiKata.length >= 2 && kata.includes(qRomajiKata))
+      nameKata.includes(qKata) ||
+      (qRomajiKata.length >= 2 &&
+        (kata.includes(qRomajiKata) || nameKata.includes(qRomajiKata)))
     ) {
       score = 80;
     } else if (
       genericLower &&
       (genericLower.startsWith(q) ||
         genericLower.includes(q) ||
-        genericLower.includes(qKata))
+        genericKata.includes(qKata) ||
+        genericHira.includes(qHira) ||
+        (qFromRomaji.length >= 2 && genericHira.includes(qFromRomaji)) ||
+        (qRomajiKata.length >= 2 && genericKata.includes(qRomajiKata)))
     ) {
       score = 60;
     }

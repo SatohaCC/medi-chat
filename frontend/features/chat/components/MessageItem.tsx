@@ -3,15 +3,22 @@ import type { Message } from "../model/chat";
 import { AssistantMarkdown } from "./AssistantMarkdown";
 import { JevResponseInspector } from "./JevResponseInspector";
 import { styles } from "./MessageItem.styles";
-import { SourceEvidencePanel } from "./SourceEvidencePanel";
 
 interface MessageItemProps {
   message: Message;
   isStreaming: boolean;
   isLast: boolean;
+  isEvidenceOpen?: boolean;
+  onToggleEvidence?: () => void;
 }
 
-export function MessageItem({ message, isStreaming, isLast }: MessageItemProps) {
+export function MessageItem({
+  message,
+  isStreaming,
+  isLast,
+  isEvidenceOpen = false,
+  onToggleEvidence,
+}: MessageItemProps) {
   const hasEvidence =
     message.role === "assistant" &&
     ((Array.isArray(message.sources) && message.sources.length > 0) ||
@@ -20,11 +27,7 @@ export function MessageItem({ message, isStreaming, isLast }: MessageItemProps) 
 
   return (
     <div
-      {...stylex.props(
-        styles.message,
-        message.role === "user" && styles.user,
-        hasEvidence && styles.withSources,
-      )}
+      {...stylex.props(styles.message, message.role === "user" && styles.user)}
       data-message-role={message.role}
       data-message-error={message.isError ? "true" : "false"}
     >
@@ -52,6 +55,19 @@ export function MessageItem({ message, isStreaming, isLast }: MessageItemProps) 
           <div {...stylex.props(styles.userText)}>{message.content}</div>
         )}
 
+        {message.role === "assistant" &&
+          message.notices &&
+          message.notices.length > 0 && (
+            <div {...stylex.props(styles.noticeBox)} role="note">
+              {message.notices.map((notice, index) => (
+                <div key={index} {...stylex.props(styles.noticeRow)}>
+                  <span {...stylex.props(styles.noticeIcon)}>⚠️</span>
+                  <span>{notice}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
         {message.retrievalStatus && (
           <div role="status" {...stylex.props(styles.statusText)}>
             {message.retrievalStatus === "jev_searching" && "Jevで根拠を検索中…"}
@@ -68,18 +84,32 @@ export function MessageItem({ message, isStreaming, isLast }: MessageItemProps) 
 
         {message.jevResponse && <JevResponseInspector response={message.jevResponse} />}
 
+        {hasEvidence && onToggleEvidence && (
+          <div {...stylex.props(styles.evidenceActionRow)}>
+            <button
+              type="button"
+              onClick={onToggleEvidence}
+              aria-pressed={isEvidenceOpen}
+              data-evidence-toggle="true"
+              {...stylex.props(
+                styles.evidenceToggleButton,
+                isEvidenceOpen && styles.evidenceToggleButtonActive,
+              )}
+            >
+              <span>
+                📄 {isEvidenceOpen ? "添付文書の根拠を閉じる" : "添付文書の根拠を表示"}
+              </span>
+              <span {...stylex.props(styles.evidenceCountBadge)}>
+                {message.sources?.length ?? 0}件
+              </span>
+            </button>
+          </div>
+        )}
+
         {message.role === "assistant" && isStreaming && isLast && (
           <span {...stylex.props(styles.cursor)} data-stream-cursor="true" />
         )}
       </div>
-
-      {hasEvidence && (
-        <SourceEvidencePanel
-          sources={message.sources || []}
-          retrievalStatus={message.retrievalStatus}
-          jevResponse={message.jevResponse}
-        />
-      )}
     </div>
   );
 }

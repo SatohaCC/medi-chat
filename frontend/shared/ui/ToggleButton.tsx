@@ -8,7 +8,7 @@ export interface ToggleButtonProps {
   selected: boolean;
   onSelectedChange: (selected: boolean) => void;
   disabled?: boolean;
-  variant?: "medicine" | "custom";
+  variant?: "medicine" | "custom" | "unregistered";
   accessibleLabel?: string;
 }
 export function ToggleButton({
@@ -28,7 +28,13 @@ export function ToggleButton({
       className={
         stylex.props(
           styles.base,
-          selected && (variant === "custom" ? styles.customSelected : styles.selected),
+          variant === "unregistered" && !selected && styles.unregistered,
+          selected &&
+            (variant === "unregistered"
+              ? styles.unregisteredSelected
+              : variant === "custom"
+                ? styles.customSelected
+                : styles.selected),
           disabled && styles.disabled,
         ).className
       }

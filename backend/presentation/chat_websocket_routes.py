@@ -166,6 +166,10 @@ async def stream_chat_response(
                     await websocket.send_json(
                         {"type": "jev_response", "data": reply.jev_response}
                     )
+                if reply.notices:
+                    await websocket.send_json(
+                        {"type": "notices", "notices": reply.notices}
+                    )
                 if jev_was_searched:
                     await websocket.send_json(
                         {

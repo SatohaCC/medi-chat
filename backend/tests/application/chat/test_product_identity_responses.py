@@ -40,8 +40,13 @@ CASES = [
     ("イグザレルトと未知薬の併用は可能ですか", [X], "unresolved_counterpart"),
     (
         "アマリールの効能。イグザレルトと未知薬の併用",
-        [X, "999999999999"],
+        ["999999999999"],
         "product_code_lookup",
+    ),
+    (
+        "アマリールの効能。イグザレルトと未知薬の併用",
+        [X, "999999999999"],
+        "product_identity_conflict",
     ),
     ("アマリールの効能。イグザレルトと未知薬の併用", [X], "product_identity_conflict"),
     (
@@ -116,7 +121,10 @@ async def test_fixed_reason_full_text_priority_and_generation_zero(
         and reply.sources == []
     )
     assert reply.intent == "interaction" and reply.jev_response == {"fixed": True}
-    assert [code for m in reply.resolved_medicines for code in m.yj_codes] == [X]
+    expected_codes = [] if strategy == "product_code_lookup" else [X]
+    assert [
+        code for m in reply.resolved_medicines for code in m.yj_codes
+    ] == expected_codes
     if entry == "stream":
         assert [
             chunk

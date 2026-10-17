@@ -100,6 +100,15 @@ export function useChatWebSocket({
         );
         break;
 
+      case "notices":
+        setMessages((prev) =>
+          patchLastAssistant(prev, (last) => ({
+            ...last,
+            notices: data.notices,
+          })),
+        );
+        break;
+
       case "text_done":
         activeRequestRef.current = false;
         setIsStreaming(false);

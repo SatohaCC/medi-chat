@@ -88,7 +88,6 @@ class EvidenceReader:
     [
         ("アマリールの効能は？", [X], "product_identity_conflict"),
         ("イグザレルトとイトラコナゾールの飲み合わせ", [X], "pair_yj_codes_required"),
-        ("イグザレルトと未知薬の併用は可能ですか", [X], "unresolved_counterpart"),
     ],
 )
 async def test_tc124_126_real_catalog_early_stop(message, codes, strategy, progressive):
@@ -128,10 +127,28 @@ async def test_tc124_126_real_catalog_early_stop(message, codes, strategy, progr
     "message,codes,expected,strategy",
     [
         (
+            "イグザレルトの効能",
+            ["999999999999"],
+            [],
+            "product_code_lookup",
+        ),
+        (
+            "イグザレルトと未知薬の併用は可能ですか",
+            [X, "999999999999"],
+            [X],
+            "three_detectors",
+        ),
+        (
+            "イグザレルトと未知薬の併用は可能ですか",
+            [X],
+            [X],
+            "three_detectors",
+        ),
+        (
             "アマリールの効能。イグザレルトと未知薬の併用",
             [X, "999999999999"],
             [X],
-            "product_code_lookup",
+            "product_identity_conflict",
         ),
         (
             "アマリールの効能。イグザレルトと未知薬の併用",
@@ -143,7 +160,7 @@ async def test_tc124_126_real_catalog_early_stop(message, codes, strategy, progr
             "イグザレルトとイトラコナゾールの併用。イグザレルトと未知薬の併用",
             [X],
             [X],
-            "unresolved_counterpart",
+            "pair_yj_codes_required",
         ),
         (
             "イグザレルトとイトラコナゾールの併用",

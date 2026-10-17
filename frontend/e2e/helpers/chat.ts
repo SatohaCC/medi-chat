@@ -29,6 +29,7 @@ export async function openChat(page: Page, options: { candidates?: boolean } = {
     }),
   );
   // Keep autocomplete data deterministic too; no external API is contacted.
+  await page.route("**/data/medicines.json", (route) => route.fulfill({ json: [] }));
   await page.route("**/api/medicines/autocomplete", (route) =>
     route.fulfill({
       json: {

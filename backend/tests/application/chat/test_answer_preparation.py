@@ -276,9 +276,24 @@ async def test_partially_unresolved_products_preserve_resolved_medicine_and_skip
         keyword_extractor=UnusedKeywordExtractor(),
         intent_policy=get_package_insert_definitions().intent_policy,
     )
-    assert reply.needs_clarification is True
+    assert reply.needs_clarification is False
     assert reply.resolved_medicines[0].yj_codes == ("1234567A0000",)
     assert reply.resolved_medicines[0].document_ids == ("document",)
     assert reply.jev_response == {"error": "検出器エラー"}
-    assert reader.conditions == []
     assert codes == before
+
+    all_unknown_reply = await preparation.prepare_reply(
+        [ChatMessage(role="user", content="質問")],
+        ["unknown"],
+        medicine_reader=MedicineReader(),
+        evidence_reader=reader,
+        intent_classifier=UnusedIntentClassifier(),
+        keyword_extractor=UnusedKeywordExtractor(),
+        intent_policy=get_package_insert_definitions().intent_policy,
+    )
+    assert all_unknown_reply.needs_clarification is True
+    assert all_unknown_reply.resolved_medicines == []
+    assert (
+        all_unknown_reply.answer
+        == "指定されたYJコードのすべてに対応する電子添文が、現在の検索データにありません。"
+    )
