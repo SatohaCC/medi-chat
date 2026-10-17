@@ -52,7 +52,7 @@
 
 ## リンターによるアーキテクチャ制約とドメイン基盤の利用
 
-アーキテクチャ境界とレイヤー内モジュール階層は、`backend/pyproject.toml` の **Import Linter（全24契約）**、**Ruff（`TID251` 等の禁止API検査）**、および `backend/tests/test_architecture_dependencies.py` の **AST静的境界テスト** によって機械的に強制しています。
+アーキテクチャ境界とレイヤー内モジュール階層は、`backend/pyproject.toml` の **Import Linter（全24契約）**、**Ruff（`TID251` 等の禁止API検査）**、および `backend/tests/architecture/test_architecture_dependencies.py` の **AST静的境界テスト** によって機械的に強制しています。
 `pnpm --filter backend lint` はRuffとImport Linterを一括実行します（依存契約のみの検査は `pnpm --filter backend lint:imports`）。
 
 ### リンター駆動で実装を効率化する設計方針
@@ -407,3 +407,32 @@ DBの保存形式と既存APIの項目は維持します。
 WebSocketはJevの利用可否によらず、固定キーワード・形態素解析で取得した累積根拠を先行通知します。固定キーワード・形態素解析・Jevの3タスクを並行起動し、全検出と最終根拠の統合が完了した後にLLM生成へ進みます。Jev未接続時も分類タスクを実行し、利用不可の結果として完了します。製品同定に確認が必要な場合は先行根拠を公開せず、LLMを呼ばずに確認文を返します。
 
 `retrieval_status.unavailable`はJevの利用不可を表し、ローカル検索や先行通知を無効化しません。Jev未接続時にも`sources`が複数回届くため、利用側は累積リストを置換し、最後の`sources`を最終結果として扱います。
+
+## テストの配置
+
+`tests/`は検証する契約の責務で分類します。セットアップでimportする層の数だけでは分類しません。
+
+```text
+tests/
+├── domain/              # モデルの不変条件・照合・検索の純粋な規則
+│   ├── attachment/
+│   ├── foundation/
+│   ├── medicine/
+│   └── retrieval/
+├── application/         # ユースケース・ポート・投影
+│   ├── attachment_import/
+│   ├── chat/
+│   ├── indexing/
+│   ├── medicine/
+│   └── retrieval/
+├── presentation/        # DTO変換・REST・WebSocketの公開契約
+├── infrastructure/      # 永続化・XML・SDK・CLI・設定・入力ソース
+├── integration/         # 起動・登録→検索・世代切替などの層横断契約
+├── architecture/        # import・ASTによる責務と依存制約
+├── support/             # 共有データ生成・子プロセス・旧形式の検証用実装
+└── fixtures/            # 固定期待値と保全済みデータ
+```
+
+全体は`pnpm test:backend`、限定実行は例えば`uv run --project backend --locked pytest backend/tests/domain`や`uv run --project backend --locked pytest backend/tests/presentation`を使います。DTO逆変換の通常lintは`tests/architecture/test_architecture_dependencies.py`を参照します。
+
+複数層の契約が同居する既存モジュールは、期待値やfixtureのスコープを変えずに`integration`へ配置しています。既存のテスト間importは新しい正本パスへ更新し、旧パスの再公開は残しません。新しく共通補助処理を増やす場合は`support`へ置きます。共有パスは`support/paths.py`から取得し、各テストのディレクトリ深度や実行時のcwdに依存させません。

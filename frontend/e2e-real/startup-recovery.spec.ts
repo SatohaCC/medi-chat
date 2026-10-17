@@ -60,7 +60,7 @@ test("TC117 real legacy migration O→N(A)→P(B), search cleanup replay restart
     });
   const copy = command([
     "-m",
-    "backend.tests.registration_browser_fixture",
+    "backend.tests.support.registration_browser_fixture",
     "--root",
     isolated,
     "--old-index",
@@ -75,7 +75,7 @@ test("TC117 real legacy migration O→N(A)→P(B), search cleanup replay restart
   expect(digest(readFileSync(environment.MEDI_CHAT_INDEX_PATH))).toBe(before);
   const initialized = command([
     "-m",
-    "backend.tests.registration_browser_fixture",
+    "backend.tests.support.registration_browser_fixture",
     "--root",
     isolated,
     "--initialize",
@@ -92,7 +92,7 @@ test("TC117 real legacy migration O→N(A)→P(B), search cleanup replay restart
       python,
       [
         "-m",
-        "backend.tests.registration_browser_server",
+        "backend.tests.support.registration_browser_server",
         "--root",
         isolated,
         "--port",

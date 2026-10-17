@@ -36,7 +36,7 @@ test("real browser upload, resend, process restart GET and active registration",
       pythonBinary(root),
       [
         "-m",
-        "backend.tests.attachment_import_e2e_server",
+        "backend.tests.support.attachment_import_e2e_server",
         "--root",
         isolated,
         "--port",

@@ -40,7 +40,7 @@ test("TC137 real browser three confirmations and normal single/pair without API 
   ]) {
     const result = spawnSync(
       python,
-      ["-m", "backend.tests.registration_browser_fixture", ...args],
+      ["-m", "backend.tests.support.registration_browser_fixture", ...args],
       { cwd: root, env: environment, encoding: "utf8", timeout: 120000 },
     );
     expect(result.status, result.stdout + result.stderr).toBe(0);
@@ -50,7 +50,7 @@ test("TC137 real browser three confirmations and normal single/pair without API 
     python,
     [
       "-m",
-      "backend.tests.registration_browser_server",
+      "backend.tests.support.registration_browser_server",
       "--root",
       isolated,
       "--port",
@@ -154,7 +154,7 @@ test("TC137 real browser three confirmations and normal single/pair without API 
       python,
       [
         "-c",
-        "import json,sys; from backend.tests.test_interaction_xml_oracle import ORACLE,assert_public_source; observed=json.load(open(sys.argv[1],encoding='utf8')); expected=sorted([(d,c) for d in ORACLE for c in d['sections']],key=lambda x:(tuple(map(int,x[1].split('.'))),x[0]['sections'][x[1]]['unit_id'])); assert [s['unit_id'] for s in observed['single']]==[d['sections'][c]['unit_id'] for d,c in expected if d==ORACLE[0]]; assert [s['unit_id'] for s in observed['pair']]==[d['sections'][c]['unit_id'] for d,c in expected]; [assert_public_source(s,d,c) for s,(d,c) in zip(observed['pair'],expected,strict=True)]; [assert_public_source(s,ORACLE[0],c) for s,c in zip(observed['single'],ORACLE[0]['sections'],strict=True)]; print('original XML fixed oracle: all single/pair IDs, full body, tables, references and metadata match')",
+        "import json,sys; from backend.tests.integration.test_interaction_xml_oracle import ORACLE,assert_public_source; observed=json.load(open(sys.argv[1],encoding='utf8')); expected=sorted([(d,c) for d in ORACLE for c in d['sections']],key=lambda x:(tuple(map(int,x[1].split('.'))),x[0]['sections'][x[1]]['unit_id'])); assert [s['unit_id'] for s in observed['single']]==[d['sections'][c]['unit_id'] for d,c in expected if d==ORACLE[0]]; assert [s['unit_id'] for s in observed['pair']]==[d['sections'][c]['unit_id'] for d,c in expected]; [assert_public_source(s,d,c) for s,(d,c) in zip(observed['pair'],expected,strict=True)]; [assert_public_source(s,ORACLE[0],c) for s,c in zip(observed['single'],ORACLE[0]['sections'],strict=True)]; print('original XML fixed oracle: all single/pair IDs, full body, tables, references and metadata match')",
         sourceFile,
       ],
       { cwd: root, env: environment, encoding: "utf8" },

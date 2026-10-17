@@ -52,7 +52,7 @@
 - 未実施・環境不足・skip/xfail:
   なし。
 - 回帰テスト・lint・CI／既存規約へのリンク:
-  [backend/tests/test_generation_runtime.py](../../../backend/tests/test_generation_runtime.py)
+  [backend/tests/test_generation_runtime.py](../../../backend/tests/integration/test_generation_runtime.py)
 
 ## 次の関連作業での評価
 
