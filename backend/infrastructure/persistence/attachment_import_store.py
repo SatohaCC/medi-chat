@@ -91,7 +91,7 @@ class FileAttachmentImportStore:
             ):
                 raise ValueError("saved identity differs")
             return result
-        except OSError, ValueError, TypeError, KeyError:
+        except (OSError, ValueError, TypeError, KeyError):
             raise ImportConflict(
                 "storage_conflict", "Stored import is inconsistent"
             ) from None

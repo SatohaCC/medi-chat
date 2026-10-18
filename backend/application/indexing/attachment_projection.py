@@ -215,9 +215,10 @@ def project_active_attachment(
                 ),
             )
             if isinstance(block, AttachmentTableBlock):
-                block = _active_table(block, active, excluded_targets)
-                if block is None:
+                table_block = _active_table(block, active, excluded_targets)
+                if table_block is None:
                     continue
+                block = table_block
             codes = tuple(
                 code for code in block.context.product_codes if code.value in active
             )

@@ -3,8 +3,8 @@
 import ctypes
 import hashlib
 import json
-import os
 import sqlite3
+import sys
 from contextlib import closing
 from pathlib import Path
 
@@ -13,7 +13,7 @@ from ..composition.index_verifier import verify_schema_readiness
 
 def assert_stopped(target: Path) -> None:
     """Refuse an open Windows database/sidecar; callers must stop their own writers."""
-    if os.name != "nt":
+    if sys.platform != "win32":
         raise RuntimeError("Stopped-file verification requires the Windows runbook")
     kernel = ctypes.WinDLL("kernel32", use_last_error=True)
     create = kernel.CreateFileW

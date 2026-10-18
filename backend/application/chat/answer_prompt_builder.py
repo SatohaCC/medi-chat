@@ -48,7 +48,7 @@ def build_answer_system_prompt(
                 part for part in (target_section, target_url) if part
             )
             references.append(f"{kind}: {destination}".rstrip(": "))
-        details = []
+        details: list[str] = []
         if s.columns:
             details.extend(
                 f"{column.title}: {s.columns[column.id]}"

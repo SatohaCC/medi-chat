@@ -412,7 +412,7 @@ class SqliteRegistrationPublisher:
                                     "document_payload_json": payload,
                                 },
                             )
-                            for file in json.loads(record["files_json"]):
+                            for file in json.loads(str(record["files_json"])):
                                 connection.execute(
                                     insert(registration.registration_owned_files),
                                     {
@@ -496,9 +496,9 @@ class SqliteRegistrationPublisher:
         active: dict[str, set[YjCode]] = {}
         for code, version in active_versions.items():
             active.setdefault(version.version_id.value, set()).add(code)
-        documents = {}
-        medicines = []
-        units = []
+        documents: dict[Any, Any] = {}
+        medicines: list[Any] = []
+        units: list[Any] = []
         fingerprint = hashlib.sha256(
             _dump(
                 {
@@ -627,7 +627,7 @@ class SqliteRegistrationPublisher:
                     select(registration.generation_leases.c.generation_id)
                 ).scalars()
             )
-            protected = set()
+            protected: set[DocumentVersionId] = set()
             for snapshot in connection.execute(
                 select(registration.registration_generations.c.snapshot_json).where(
                     registration.registration_generations.c.generation_id.in_(

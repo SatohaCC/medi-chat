@@ -105,7 +105,7 @@ def run_gate(
                                 "pid": process.pid,
                                 "port": port,
                             }
-                    except URLError, TimeoutError, ConnectionError:
+                    except (URLError, TimeoutError, ConnectionError):
                         pass
                     time.sleep(0.1)
                 raise RuntimeError("Configured OS health timed out")

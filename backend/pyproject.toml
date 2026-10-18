@@ -21,6 +21,7 @@ dependencies = [
 dev = [
     "httpx>=0.28.1",
     "import-linter>=2.15",
+    "mypy>=2.4.0",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "ruff>=0.16.9",
@@ -29,6 +30,9 @@ dev = [
 [tool.pytest.ini_options]
 pythonpath = [".."]
 testpaths = ["tests"]
+filterwarnings = [
+    "ignore::DeprecationWarning:google.genai.types",
+]
 
 [tool.importlinter]
 root_package = "backend"
@@ -398,6 +402,10 @@ ignore_missing_imports = true
 check_untyped_defs = true
 explicit_package_bases = true
 disable_error_code = ["no-redef"]
+
+[[tool.mypy.overrides]]
+module = "backend.tests.*"
+ignore_errors = true
 
 [[tool.mypy.overrides]]
 module = "janome.*"

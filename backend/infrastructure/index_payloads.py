@@ -206,8 +206,8 @@ def _render_registered_block(block: dict[str, JsonValue]) -> str:
             body.append("<tr>" + "".join(cells) + "</tr>")
         rendered = "<table>" + header + "<tbody>" + "".join(body) + "</tbody></table>"
     elif kind in ("paragraph", "figure"):
-        value = block["text"] if kind == "paragraph" else block["description"]
-        escaped = html.escape(_string(value))
+        raw_value = block["text"] if kind == "paragraph" else block["description"]
+        escaped = html.escape(_string(raw_value))
         rendered = (
             "<p>"
             + (escaped.replace("\n", "<br>") if kind == "paragraph" else escaped)
@@ -332,7 +332,7 @@ def encode_registered_units(
             "source": {"pmda_url": document.source.pmda_url.value},
             "revisions": [revision.to_dict() for revision in unit.revisions],
         }
-        payload["text"] = _render_unit_blocks(payload)
+        payload["text"] = _render_unit_blocks(payload)  # type: ignore[arg-type]
         rows.append(payload)
     return "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows).encode(
         "utf-8"

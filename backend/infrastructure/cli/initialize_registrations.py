@@ -44,19 +44,19 @@ def main() -> int:
             assets = {}
             paths = [source_path]
             for element in root.iter():
-                name = element.attrib.get("gfname")
-                if not name:
+                gfname = element.attrib.get("gfname")
+                if not gfname:
                     continue
-                path = source_path.parent / name
+                path = source_path.parent / gfname
                 if (
-                    ".." in Path(name).parts
-                    or Path(name).is_absolute()
+                    ".." in Path(gfname).parts
+                    or Path(gfname).is_absolute()
                     or path.is_symlink()
                     or not path.resolve().is_relative_to(originals)
                 ):
                     raise ValueError("Unsafe initial figure inventory")
                 if path.is_file():
-                    assets[name] = path.read_bytes()
+                    assets[gfname] = path.read_bytes()
                     paths.append(path)
             decoded = PmdaXmlDecoder(
                 xml_settings=xml_settings,

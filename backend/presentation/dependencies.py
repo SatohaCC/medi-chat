@@ -14,7 +14,7 @@ from .chat_service import AppChatService as ChatService
 
 def get_chat_service(connection: HTTPConnection) -> ChatService:
     """チャットサービスを取得する依存関係関数"""
-    return getattr(connection.app.state, "chat_service", None)  # type: ignore[no-any-return]
+    return getattr(connection.app.state, "chat_service", None)  # type: ignore[return-value, no-any-return]
 
 
 def get_import_service(connection: HTTPConnection) -> AttachmentImportService:
@@ -27,7 +27,7 @@ async def get_medicine_suggester(connection: HTTPConnection) -> MedicineSuggeste
     runtime = getattr(connection.app.state, "generation_runtime", None)
     if runtime is not None:
         return await runtime.catalogue()
-    return getattr(connection.app.state, "medicine_suggester", None)  # type: ignore[no-any-return]
+    return getattr(connection.app.state, "medicine_suggester", None)  # type: ignore[return-value, no-any-return]
 
 
 def get_generation_runtime(connection: HTTPConnection) -> RetrievalSnapshotProvider:

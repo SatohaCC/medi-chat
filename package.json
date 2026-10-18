@@ -16,9 +16,9 @@
     "lint": "pnpm --filter frontend lint && pnpm --filter backend lint",
     "format": "pnpm --filter frontend format && pnpm --filter backend format",
     "check": "pnpm --filter frontend check && pnpm --filter backend check",
-    "typecheck": "pnpm --filter frontend typecheck && pyright",
+    "typecheck": "pnpm --filter frontend typecheck && pnpm run typecheck:python",
     "typecheck:frontend": "pnpm --filter frontend typecheck",
-    "typecheck:python": "pyright",
+    "typecheck:python": "pyright && pnpm --filter backend typecheck",
     "build": "pnpm --filter frontend build",
     "build:data": "pnpm --filter backend build-data && pnpm --filter backend build-index",
     "build:index": "pnpm --filter backend build-index"
