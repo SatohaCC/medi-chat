@@ -3,8 +3,10 @@ export { HighlightText } from "./components/HighlightText";
 export { SourceEvidenceCard } from "./components/SourceEvidenceCard";
 export { SourceEvidenceContent } from "./components/SourceEvidenceContent";
 export {
+  extractMedicineGroups,
   extractSectionGroups,
   SourceEvidenceSectionFilters,
+  type SourceMedicineGroup,
   type SourceSectionGroup,
 } from "./components/SourceEvidenceSectionFilters";
 export type { DetectionSource, SourceItem, SourceReference } from "./model/chat";

@@ -2,6 +2,7 @@
 
 import type { PromptFieldValue } from "@react-spectrum/ai";
 import * as stylex from "@stylexjs/stylex";
+import { Plus, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { MedicineEntry } from "../model/medicineAutocomplete";
 import type { SelectedMedicineItem } from "../model/promptSnapshot";
@@ -69,9 +70,10 @@ export function MedicinePromptDock({
 
   return (
     <div {...stylex.props(styles.container)} data-testid="medicine-prompt-dock">
-      {/* Tier 1: 対象処方箋（ベース処方薬） */}
+      <div {...stylex.props(styles.inner)}>
+        {/* Tier 1: 対象処方箋（ベース処方薬） */}
       <div {...stylex.props(styles.tier)} data-testid="tier-1-prescription">
-        <span {...stylex.props(styles.tierLabel)}>📋 対象処方箋:</span>
+        <span {...stylex.props(styles.tierLabel)}>対象処方箋:</span>
         <div {...stylex.props(styles.chipList)}>
           {baseline.map((med) => (
             <span key={med.yj_code} {...stylex.props(styles.chip)}>
@@ -88,7 +90,7 @@ export function MedicinePromptDock({
                 {...stylex.props(styles.chipRemoveBtn)}
                 onClick={() => onRemoveBaseline(med.yj_code)}
               >
-                ×
+                <X size={11} strokeWidth={2.5} />
               </button>
             </span>
           ))}
@@ -109,7 +111,8 @@ export function MedicinePromptDock({
               aria-expanded={isAddOpen}
               aria-label="処方薬を追加"
             >
-              ＋ 処方薬を追加
+              <Plus size={12} strokeWidth={2.5} />
+              処方薬を追加
             </button>
 
             {isAddOpen && (
@@ -134,7 +137,7 @@ export function MedicinePromptDock({
                     {...stylex.props(styles.popoverCloseBtn)}
                     aria-label="検索を閉じる"
                   >
-                    ✕
+                    <X size={13} />
                   </button>
                 </div>
                 <div {...stylex.props(styles.popoverList)} role="listbox">
@@ -185,7 +188,7 @@ export function MedicinePromptDock({
 
       {/* Tier 2: チャットでの追加薬 */}
       <div {...stylex.props(styles.tier)} data-testid="tier-2-additional">
-        <span {...stylex.props(styles.tierLabel)}>➕ チャットでの追加薬:</span>
+        <span {...stylex.props(styles.tierLabel)}>チャットでの追加薬:</span>
         <div {...stylex.props(styles.chipList)}>
           {additional.map((med) => (
             <span key={med.yj_code} {...stylex.props(styles.additionalChip)}>
@@ -196,27 +199,13 @@ export function MedicinePromptDock({
               >
                 {med.name}
               </button>
-              {onAddBaseline && (
-                <button
-                  type="button"
-                  aria-label={`${med.name}を処方箋に追加`}
-                  title="処方箋（ベース薬）に追加"
-                  {...stylex.props(styles.promoteBtn)}
-                  onClick={() => {
-                    onAddBaseline(med);
-                    onRemoveAdditional(med.yj_code);
-                  }}
-                >
-                  ↑処方箋へ
-                </button>
-              )}
               <button
                 type="button"
                 aria-label={`追加薬から${med.name}を削除`}
                 {...stylex.props(styles.chipRemoveBtn)}
                 onClick={() => onRemoveAdditional(med.yj_code)}
               >
-                ×
+                <X size={11} strokeWidth={2.5} />
               </button>
             </span>
           ))}
@@ -224,15 +213,6 @@ export function MedicinePromptDock({
             <span {...stylex.props(styles.emptyNotice)}>なし</span>
           )}
         </div>
-        {additional.length > 0 && (
-          <button
-            type="button"
-            {...stylex.props(styles.actionBtn)}
-            onClick={onClearAdditional}
-          >
-            今回はベースだけにする
-          </button>
-        )}
       </div>
 
       {/* Tier 3: PromptField */}
@@ -248,5 +228,6 @@ export function MedicinePromptDock({
         />
       </div>
     </div>
-  );
+  </div>
+);
 }

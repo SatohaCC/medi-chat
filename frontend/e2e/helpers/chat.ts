@@ -64,11 +64,11 @@ export async function openChat(page: Page, options: { candidates?: boolean } = {
   });
   await page.goto("/");
   await expect(page.getByText("connected", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "テスト医薬品A" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "テスト医薬品A", exact: true })).toBeVisible();
   return {
     requests,
-    input: page.getByPlaceholder("確認したい内容を入力", { exact: false }),
-    send: page.getByRole("button", { name: "Send", exact: true }),
+    input: page.getByRole("textbox", { name: "質問を入力" }),
+    send: page.getByRole("button", { name: /送信|Send/ }),
     respond(message: WsServerMessage) {
       if (!socket) throw new Error("Chat WebSocket is not connected");
       socket.send(JSON.stringify(message));

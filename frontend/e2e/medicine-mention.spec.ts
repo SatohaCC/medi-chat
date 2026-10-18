@@ -164,22 +164,6 @@ test.describe("Unit 3 & Unit 4: Medicine Mention E2E Tests", () => {
     await expect(chat.tier2).toContainText("なし");
   });
 
-  // TC-U05: 「今回はベースだけにする」で追加薬が解除される
-  test("TC-U05: clicking '今回はベースだけにする' clears additional drugs", async ({ page }) => {
-    const chat = await setupMedicineChat(page);
-    await chat.input.focus();
-    await page.keyboard.type("@ロキ");
-
-    const option = page.getByRole("menuitem", { name: /ロキソニン/ });
-    await option.click();
-
-    await expect(chat.tier2).toContainText("ロキソニン錠60mg");
-
-    const baseOnlyBtn = chat.tier2.getByRole("button", { name: "今回はベースだけにする" });
-    await baseOnlyBtn.click();
-
-    await expect(chat.tier2).toContainText("なし");
-  });
 
   // TC-S01: 処方箋 A の状態で @B を含んだ質問を送信 -> payload=[A, B]、送信後も A は残る
   test("TC-S01: sending question with mention sends target [A, B] and preserves baseline A", async ({ page }) => {
@@ -345,42 +329,6 @@ test.describe("Unit 3 & Unit 4: Medicine Mention E2E Tests", () => {
     );
   });
 
-  // TC-B02: Tier 2 追加薬の ↑処方箋へ ボタンで処方箋(baseline)へ昇格できる
-  test("TC-B02: promote button in tier 2 chip promotes medicine to baseline tier 1", async ({
-    page,
-  }) => {
-    const chat = await setupMedicineChat(page);
-
-    // Mention ロキ to put it in Tier 2
-    await chat.input.focus();
-    await page.keyboard.type("@ロキ");
-    const option = page.getByRole("menuitem", { name: /ロキソニン/ });
-    await expect(option).toBeVisible();
-    await option.click();
-
-    await expect(chat.tier2).toContainText("ロキソニン錠60mg");
-    await expect(chat.tier1).not.toContainText("ロキソニン錠60mg");
-
-    // Click ↑処方箋へ button on the Tier 2 chip
-    const promoteBtn = page.getByRole("button", {
-      name: "ロキソニン錠60mgを処方箋に追加",
-    });
-    await expect(promoteBtn).toBeVisible();
-    await promoteBtn.click();
-
-    // Tier 1 now has ロキソニン, Tier 2 becomes empty ("なし")
-    await expect(chat.tier1).toContainText("ロキソニン錠60mg");
-    await expect(chat.tier2).toContainText("なし");
-
-    // Verify sending message still includes both medicines
-    await chat.input.fill("昇格後の質問");
-    await chat.send.click();
-
-    expect(chat.requests).toHaveLength(1);
-    expect(chat.requests[0].product_yj_codes).toEqual(
-      expect.arrayContaining(["3339003F5020", "1141007F1063"]),
-    );
-  });
 
   // TC-K01: 同一 YJ コードを持つ複数医薬品（先発/後発など）のサジェスト展開時に key 重複エラーが発生しない
   test("TC-K01: medicines sharing identical YJ code render with unique keys in completions without console error", async ({

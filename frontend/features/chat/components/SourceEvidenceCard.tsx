@@ -19,7 +19,11 @@ export function SourceEvidenceCard({
   const cardStyle = variant === "compact" ? styles.cardCompact : styles.cardDefault;
 
   return (
-    <div {...stylex.props(styles.card, cardStyle)} data-evidence-card="true">
+    <div
+      {...stylex.props(styles.card, cardStyle)}
+      data-evidence-card="true"
+      data-unit-id={source.unit_id}
+    >
       <div {...stylex.props(styles.cardHeader)}>
         <div {...stylex.props(styles.sectionTitleRow)}>
           <span {...stylex.props(styles.sectionTitle)}>
@@ -32,7 +36,7 @@ export function SourceEvidenceCard({
             <HighlightText text={source.product_name} words={highlightWords} />
           </span>
         </div>
-        <div>
+        <div {...stylex.props(styles.badgeGroup)}>
           {source.retrieved_by?.map((method) => {
             const label =
               method === "logic"
@@ -54,27 +58,35 @@ export function SourceEvidenceCard({
       <SourceEvidenceDesign source={source} highlightWords={highlightWords} />
 
       <div {...stylex.props(styles.footer)}>
-        <div>改訂: {formatRevision(source.document_revision)}</div>
-        <div>
-          YJコード:{" "}
-          <HighlightText
-            text={source.product_yj_codes.join(", ") || "不明"}
-            words={highlightWords}
-          />
+        <div {...stylex.props(styles.citationRow)}>
+          <span {...stylex.props(styles.citationItem)}>
+            改訂: {formatRevision(source.document_revision)}
+          </span>
+          <span {...stylex.props(styles.citationDot)}>·</span>
+          <span {...stylex.props(styles.citationItem)}>
+            YJコード:{" "}
+            <HighlightText
+              text={source.product_yj_codes.join(", ") || "不明"}
+              words={highlightWords}
+            />
+          </span>
+          {source.url && (
+            <>
+              <span {...stylex.props(styles.citationDot)}>·</span>
+              <a
+                href={source.url}
+                target="_blank"
+                rel="noreferrer"
+                {...stylex.props(styles.documentLink)}
+              >
+                PMDAの出典を開く ↗
+              </a>
+            </>
+          )}
         </div>
-        {source.url && (
-          <a
-            href={source.url}
-            target="_blank"
-            rel="noreferrer"
-            {...stylex.props(styles.documentLink)}
-          >
-            PMDAの出典を開く
-          </a>
-        )}
         {source.references && source.references.length > 0 && (
-          <div>
-            参照先:{" "}
+          <div {...stylex.props(styles.referenceRow)}>
+            <span>参照先: </span>
             {source.references.map((reference, referenceIndex) => {
               const label = [
                 reference.kind,
@@ -105,7 +117,6 @@ export function SourceEvidenceCard({
           </div>
         )}
       </div>
-      <div {...stylex.props(styles.unitId)}>単位ID: {source.unit_id}</div>
     </div>
   );
 }

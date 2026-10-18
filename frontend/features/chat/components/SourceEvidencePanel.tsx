@@ -1,6 +1,7 @@
 "use client";
 
 import * as stylex from "@stylexjs/stylex";
+import { Check, FileText, X, Zap } from "lucide-react";
 import { useState } from "react";
 
 import type { RetrievalStatus, SourceItem } from "../model/chat";
@@ -9,6 +10,7 @@ import { JEV_INTENT_META, JevResponseInspector } from "./JevResponseInspector";
 import { SourceEvidenceCard } from "./SourceEvidenceCard";
 import { styles } from "./SourceEvidencePanel.styles";
 import {
+  extractMedicineGroups,
   extractSectionGroups,
   SourceEvidenceSectionFilters,
 } from "./SourceEvidenceSectionFilters";
@@ -31,6 +33,7 @@ export function SourceEvidencePanel({
   onClose,
 }: SourceEvidencePanelProps) {
   const [selectedSection, setSelectedSection] = useState<string>("all");
+  const [selectedMedicine, setSelectedMedicine] = useState<string>("all");
 
   const logicCount = sources.filter((s) => s.retrieved_by?.includes("logic")).length;
   const jevCount = sources.filter((s) => s.retrieved_by?.includes("jev")).length;
@@ -43,11 +46,16 @@ export function SourceEvidencePanel({
       : `ロジック：${logicCount}件、Jev：${jevCount}件、合計：${totalCount}件`;
 
   const sectionGroups = extractSectionGroups(sources);
+  const medicineGroups = extractMedicineGroups(sources);
 
-  const displayedSources =
-    selectedSection === "all"
-      ? sources
-      : sources.filter((s) => (s.section?.code || "other") === selectedSection);
+  const displayedSources = sources.filter((s) => {
+    const matchesSection =
+      selectedSection === "all" || (s.section?.code || "other") === selectedSection;
+    const drugName = s.product_name || s.generic_name || "その他";
+    const matchesMedicine =
+      selectedMedicine === "all" || drugName === selectedMedicine;
+    return matchesSection && matchesMedicine;
+  });
 
   const hasJev = Boolean(jevResponse);
   const currentTab = hasJev ? activeTab : "sources";
@@ -67,7 +75,8 @@ export function SourceEvidencePanel({
                 currentTab === "sources" && styles.tabButtonActiveSources,
               )}
             >
-              📄 添付文書の根拠 ({totalCount}件)
+              <FileText size={13} strokeWidth={2} />
+              <span>添付文書の根拠 ({totalCount}件)</span>
             </button>
             <button
               type="button"
@@ -79,13 +88,14 @@ export function SourceEvidencePanel({
                 currentTab === "jev" && styles.tabButtonActiveJev,
               )}
             >
-              ⚡ Jev判定インスペクター
+              <Zap size={13} strokeWidth={2} />
+              <span>Jev判定インスペクター</span>
             </button>
           </div>
         ) : (
           <div {...stylex.props(styles.headerTitleGroup)}>
-            <span>
-              📄{" "}
+            <span {...stylex.props(styles.headerTitle)}>
+              <FileText size={14} color="#0265dc" strokeWidth={2} />
               {retrievalStatus === "complete"
                 ? `統合根拠（${countSummary}）`
                 : retrievalStatus === "jev_searching"
@@ -93,10 +103,16 @@ export function SourceEvidencePanel({
                   : `ロジック検索根拠（${totalCount}件）`}
             </span>
             {retrievalStatus === "jev_searching" && (
-              <span {...stylex.props(styles.searchingBadge)}>⚡ Jev判定と統合中...</span>
+              <span {...stylex.props(styles.searchingBadge)}>
+                <Zap size={12} strokeWidth={2} />
+                Jev判定と統合中...
+              </span>
             )}
             {retrievalStatus === "complete" && (
-              <span {...stylex.props(styles.completeBadge)}>✓ Jev統合完了</span>
+              <span {...stylex.props(styles.completeBadge)}>
+                <Check size={12} strokeWidth={2.5} />
+                Jev統合完了
+              </span>
             )}
           </div>
         )}
@@ -108,7 +124,8 @@ export function SourceEvidencePanel({
             aria-label="根拠パネルを閉じる"
             {...stylex.props(styles.closeButton)}
           >
-            ✕ 閉じる
+            <X size={13} strokeWidth={2} />
+            <span>閉じる</span>
           </button>
         )}
       </div>
@@ -123,7 +140,10 @@ export function SourceEvidencePanel({
             {jevResponse?.qualifying_intents && jevResponse.qualifying_intents.length > 1 && (
               <div {...stylex.props(styles.multipleNotice)}>
                 <div {...stylex.props(styles.multipleTitle)}>
-                  <span>⚡ マルチセクション取得（閾値20%以上）</span>
+                  <span {...stylex.props(styles.multipleTitleGroup)}>
+                    <Zap size={13} color="#0265dc" strokeWidth={2} />
+                    マルチセクション取得（閾値20%以上）
+                  </span>
                 </div>
                 <div>
                   確率20%以上の全候補項目（
@@ -140,6 +160,9 @@ export function SourceEvidencePanel({
               totalCount={totalCount}
               selectedSection={selectedSection}
               onSelectSection={setSelectedSection}
+              medicineGroups={medicineGroups}
+              selectedMedicine={selectedMedicine}
+              onSelectMedicine={setSelectedMedicine}
               variant="dashedBorder"
             />
 

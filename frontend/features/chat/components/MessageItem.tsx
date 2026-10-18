@@ -1,4 +1,6 @@
 import * as stylex from "@stylexjs/stylex";
+import { PixelLoader, aiLogo } from "@react-spectrum/ai/loader";
+import { AlertTriangle, Bot, FileText, Zap } from "lucide-react";
 import type { Message } from "../model/chat";
 import { AssistantMarkdown } from "./AssistantMarkdown";
 import { JEV_INTENT_META } from "./JevResponseInspector";
@@ -45,16 +47,36 @@ export function MessageItem({
         data-message-bubble="true"
       >
         {message.role === "assistant" ? (
-          <div
-            {...{
-              ...stylex.props(styles.markdown),
-              className: ["markdown-content", stylex.props(styles.markdown).className]
-                .filter(Boolean)
-                .join(" "),
-            }}
-          >
-            <AssistantMarkdown content={message.content} />
-          </div>
+          <>
+            <div {...stylex.props(styles.assistantHeader)}>
+              <span {...stylex.props(styles.assistantAvatar)}>
+                <Bot size={13} strokeWidth={2.4} />
+              </span>
+              <span {...stylex.props(styles.assistantName)}>添付文書 AI</span>
+            </div>
+            {!message.content.trim() && isStreaming && isLast ? (
+              <div {...stylex.props(styles.generatingContainer)}>
+                <PixelLoader size={28} isPlaying={true} icon={aiLogo} color="#0265dc" />
+                <span {...stylex.props(styles.generatingText)}>
+                  添付文書を照会して回答を生成中...
+                </span>
+              </div>
+            ) : (
+              <div
+                {...{
+                  ...stylex.props(styles.markdown),
+                  className: ["markdown-content", stylex.props(styles.markdown).className]
+                    .filter(Boolean)
+                    .join(" "),
+                }}
+              >
+                <AssistantMarkdown content={message.content} />
+                {isStreaming && isLast && (
+                  <span {...stylex.props(styles.cursor)} data-stream-cursor="true" />
+                )}
+              </div>
+            )}
+          </>
         ) : (
           <div {...stylex.props(styles.userText)}>{message.content}</div>
         )}
@@ -65,17 +87,18 @@ export function MessageItem({
             <div {...stylex.props(styles.noticeBox)} role="note">
               {message.notices.map((notice, index) => (
                 <div key={index} {...stylex.props(styles.noticeRow)}>
-                  <span {...stylex.props(styles.noticeIcon)}>⚠️</span>
+                  <span {...stylex.props(styles.noticeIcon)}>
+                    <AlertTriangle size={13} strokeWidth={2.2} />
+                  </span>
                   <span>{notice}</span>
                 </div>
               ))}
             </div>
           )}
 
-        {message.retrievalStatus && (
+        {message.retrievalStatus && message.retrievalStatus !== "complete" && (
           <div role="status" {...stylex.props(styles.statusText)}>
             {message.retrievalStatus === "jev_searching" && "Jevで根拠を検索中…"}
-            {message.retrievalStatus === "complete" && "Jev検索完了"}
             {message.retrievalStatus === "unavailable" && "Jev未接続（ロジック検索のみ）"}
           </div>
         )}
@@ -101,8 +124,8 @@ export function MessageItem({
                     styles.evidenceToggleButtonActive,
                 )}
               >
+                <FileText size={13} strokeWidth={2} />
                 <span>
-                  📄{" "}
                   {isEvidenceOpen && activeEvidenceTab === "sources"
                     ? "添付文書の根拠を閉じる"
                     : "添付文書の根拠を表示"}
@@ -126,8 +149,8 @@ export function MessageItem({
                     styles.jevToggleButtonActive,
                 )}
               >
+                <Zap size={13} strokeWidth={2} />
                 <span>
-                  ⚡{" "}
                   {isEvidenceOpen && activeEvidenceTab === "jev"
                     ? "Jevレスポンスを閉じる"
                     : "Jevレスポンス確認"}
@@ -146,10 +169,6 @@ export function MessageItem({
               </button>
             )}
           </div>
-        )}
-
-        {message.role === "assistant" && isStreaming && isLast && (
-          <span {...stylex.props(styles.cursor)} data-stream-cursor="true" />
         )}
       </div>
     </div>

@@ -13,7 +13,7 @@ export const styles = stylex.create({
     borderWidth: "1px",
     borderStyle: "solid",
     borderColor: "var(--border)",
-    borderRadius: "8px",
+    borderRadius: 0,
     scrollbarWidth: "thin",
     outlineWidth: { default: null, ":focus-visible": "2px" },
     outlineStyle: { default: null, ":focus-visible": "solid" },

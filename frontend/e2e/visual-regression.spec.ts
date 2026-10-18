@@ -28,7 +28,7 @@ async function visualSnapshot(page: Page, testInfo: TestInfo, name: string) {
     messages: "main",
     form: "form",
     model: "header select, header [aria-haspopup=listbox]",
-    input: "input",
+    input: "input, [role=textbox]",
     send: "form button",
     assistant: '[data-message-role="assistant"] [data-message-bubble]',
     evidence: 'aside[aria-label="添付文書の根拠引用"]',
@@ -108,7 +108,7 @@ for (const width of widths) {
     });
     chat.respond({ type: "text_done" });
     await page.getByRole("button", { name: /添付文書の根拠を表示/ }).click();
-    await expect(page.getByText("Jev検索完了", { exact: true })).toBeVisible();
+    await expect(page.getByText("原文に基づく回答")).toBeVisible();
     const bubble = await page
       .locator('[data-message-role="assistant"] [data-message-bubble]')
       .boundingBox();
@@ -128,10 +128,12 @@ for (const width of [1280, 390]) {
   test(`V: chat states ${width}`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
     const chat = await openChat(page);
-    await page.getByRole("button", { name: "テスト医薬品B", exact: true }).click();
+    await page.getByRole("button", { name: "処方薬を追加" }).click();
+    await page.getByRole("option", { name: "テスト医薬品B" }).click();
     await visualSnapshot(page, testInfo, `chat-selected-${width}.png`);
-    await chat.input.fill("てす");
-    await expect(page.getByRole("listbox")).toBeVisible();
+    await chat.input.focus();
+    await page.keyboard.type("@てす");
+    await expect(page.getByRole("menuitem", { name: /テスト医薬品A/ })).toBeVisible();
     await visualSnapshot(page, testInfo, `chat-popup-${width}.png`);
     await chat.input.press("Escape");
     await chat.input.fill("原文を確認");
@@ -194,15 +196,14 @@ for (const width of [1280, 390]) {
     chat.respond({ type: "retrieval_status", stage: "complete" });
     chat.respond({ type: "text_delta", content: "固定された回答" });
     chat.respond({ type: "text_done" });
-    await page.getByRole("button", { name: /添付文書の根拠を表示/ }).click();
-    await expect(page.getByText("Jev検索完了", { exact: true })).toBeVisible();
-    const inspector = page.locator('[data-disclosure="jev"]');
-    await inspector.locator("[data-disclosure-trigger]").click();
+    await expect(page.getByText("固定された回答")).toBeVisible();
+    await page.getByRole("button", { name: /Jevレスポンス確認/ }).click();
     await visualSnapshot(page, testInfo, `chat-jev-summary-${width}.png`);
-    await inspector.getByRole("button", { name: "全9件を表示" }).click();
+    await page.getByRole("button", { name: "全9件を表示" }).click();
     await visualSnapshot(page, testInfo, `chat-jev-all-${width}.png`);
-    await inspector.getByRole("tab", { name: "生レスポンス", exact: false }).click();
+    await page.getByRole("tab", { name: "生レスポンス", exact: false }).click();
     await visualSnapshot(page, testInfo, `chat-jev-raw-${width}.png`);
+    await page.getByRole("tab", { name: /添付文書の根拠/ }).click();
     const table = page.getByRole("region", { name: "添付文書の表（横スクロール）" });
     await table.focus();
     if (width === 390) {

@@ -214,6 +214,10 @@ export function ChatScreen() {
     setPrompt(nextPrompt);
   }, []);
 
+  const handleSelectSuggestion = useCallback((promptText: string) => {
+    setPrompt(new PromptFieldValue([{ type: "text", text: promptText }]));
+  }, []);
+
   return (
     <div {...stylex.props(layout.root)} data-screen="chat">
       <ChatHeader
@@ -231,6 +235,8 @@ export function ChatScreen() {
             openEvidenceIndex={openEvidenceIndex}
             evidencePaneTab={evidencePaneTab}
             onToggleEvidence={handleToggleEvidence}
+            baseline={baseline}
+            onSelectSuggestion={handleSelectSuggestion}
           />
 
           {missingSelectedYjCodes.length > 0 && (

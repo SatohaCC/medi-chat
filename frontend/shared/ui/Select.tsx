@@ -8,6 +8,7 @@ import {
   Popover,
   SelectValue,
 } from "react-aria-components";
+import { ChevronDown } from "lucide-react";
 import { styles } from "./Select.styles";
 export interface SelectProps {
   value: string;
@@ -35,7 +36,9 @@ export function Select({
     >
       <Button {...stylex.props(styles.trigger, disabled && styles.disabled)}>
         <SelectValue />
-        <span aria-hidden="true">⌄</span>
+        <span {...stylex.props(styles.chevronWrapper)} aria-hidden="true">
+          <ChevronDown size={13} strokeWidth={2.2} />
+        </span>
       </Button>
       <Popover {...stylex.props(styles.popup)}>
         <ListBox {...stylex.props(styles.list)}>
