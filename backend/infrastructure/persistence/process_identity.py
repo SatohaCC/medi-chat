@@ -1,13 +1,12 @@
 """PID reuseを区別するOS開始識別子。時刻期限で生存ownerを追放しない。"""
 
 import ctypes
-import os
 import sys
 from pathlib import Path
 
 
 def process_identity(pid: int) -> str | None:
-    if os.name != "nt":
+    if sys.platform != "win32":
         if not sys.platform.startswith("linux"):
             return _posix_process_identity(pid)
         try:

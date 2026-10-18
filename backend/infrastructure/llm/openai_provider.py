@@ -54,7 +54,7 @@ class OpenAIProvider(LLMProvider):
                             if content:
                                 yield str(content)
                 finally:
-                    await response.aclose()
+                    await response.aclose()  # type: ignore[union-attr]
             finally:
                 await client.close()
         except Exception as exc:
