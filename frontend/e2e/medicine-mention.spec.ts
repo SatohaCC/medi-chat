@@ -305,4 +305,80 @@ test.describe("Unit 3 & Unit 4: Medicine Mention E2E Tests", () => {
     await expect(alert).toContainText("自動変更していません");
     await expect(chat.tier1).toContainText("イグザレルト錠15mg");
   });
+
+  // TC-B01: ＋ 処方薬を追加 ボタンからポップオーバーを開いて処方箋(baseline)に薬を追加できる
+  test("TC-B01: add baseline button opens popover and adds medicine to tier 1", async ({
+    page,
+  }) => {
+    const chat = await setupMedicineChat(page);
+
+    // Initial baseline has only イグザレルト
+    await expect(chat.tier1).toContainText("イグザレルト錠15mg");
+    await expect(chat.tier1).not.toContainText("ロキソニン錠60mg");
+
+    // Click ＋ 処方薬を追加
+    await page.getByRole("button", { name: "処方薬を追加" }).click();
+
+    const dialog = page.getByRole("dialog", { name: "処方薬を選択" });
+    await expect(dialog).toBeVisible();
+
+    // Search for ロキ
+    const searchInput = page.getByRole("searchbox", { name: "処方薬検索" });
+    await searchInput.fill("ロキ");
+
+    const option = page.getByRole("option", { name: /ロキソニン/ });
+    await expect(option).toBeVisible();
+    await option.click();
+
+    // Dialog closes and tier 1 now contains ロキソニン
+    await expect(dialog).toBeHidden();
+    await expect(chat.tier1).toContainText("イグザレルト錠15mg");
+    await expect(chat.tier1).toContainText("ロキソニン錠60mg");
+
+    // Sending message includes both YJ codes
+    await chat.input.fill("両方の薬について質問");
+    await chat.send.click();
+
+    expect(chat.requests).toHaveLength(1);
+    expect(chat.requests[0].product_yj_codes).toEqual(
+      expect.arrayContaining(["3339003F5020", "1141007F1063"]),
+    );
+  });
+
+  // TC-B02: Tier 2 追加薬の ↑処方箋へ ボタンで処方箋(baseline)へ昇格できる
+  test("TC-B02: promote button in tier 2 chip promotes medicine to baseline tier 1", async ({
+    page,
+  }) => {
+    const chat = await setupMedicineChat(page);
+
+    // Mention ロキ to put it in Tier 2
+    await chat.input.focus();
+    await page.keyboard.type("@ロキ");
+    const option = page.getByRole("menuitem", { name: /ロキソニン/ });
+    await expect(option).toBeVisible();
+    await option.click();
+
+    await expect(chat.tier2).toContainText("ロキソニン錠60mg");
+    await expect(chat.tier1).not.toContainText("ロキソニン錠60mg");
+
+    // Click ↑処方箋へ button on the Tier 2 chip
+    const promoteBtn = page.getByRole("button", {
+      name: "ロキソニン錠60mgを処方箋に追加",
+    });
+    await expect(promoteBtn).toBeVisible();
+    await promoteBtn.click();
+
+    // Tier 1 now has ロキソニン, Tier 2 becomes empty ("なし")
+    await expect(chat.tier1).toContainText("ロキソニン錠60mg");
+    await expect(chat.tier2).toContainText("なし");
+
+    // Verify sending message still includes both medicines
+    await chat.input.fill("昇格後の質問");
+    await chat.send.click();
+
+    expect(chat.requests).toHaveLength(1);
+    expect(chat.requests[0].product_yj_codes).toEqual(
+      expect.arrayContaining(["3339003F5020", "1141007F1063"]),
+    );
+  });
 });

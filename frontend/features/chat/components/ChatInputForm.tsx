@@ -7,6 +7,7 @@ import type { ConnectionStatus } from "../model/chat";
 
 export interface ChatInputFormProps {
   baseline: SelectedMedicineItem[];
+  onAddBaseline?: (medicine: SelectedMedicineItem) => void;
   onRemoveBaseline: (yjCode: string) => void;
   onClearBaseline: () => void;
   additional: SelectedMedicineItem[];
@@ -23,6 +24,7 @@ export interface ChatInputFormProps {
 
 export function ChatInputForm({
   baseline,
+  onAddBaseline,
   onRemoveBaseline,
   onClearBaseline,
   additional,
@@ -39,6 +41,7 @@ export function ChatInputForm({
   return (
     <MedicinePromptDock
       baseline={baseline}
+      onAddBaseline={onAddBaseline}
       onRemoveBaseline={onRemoveBaseline}
       onClearBaseline={onClearBaseline}
       additional={additional}

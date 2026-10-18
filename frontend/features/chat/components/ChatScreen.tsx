@@ -152,6 +152,13 @@ export function ChatScreen() {
     [targetState, isStreaming, sendMessage],
   );
 
+  const handleAddBaseline = useCallback((medicine: SelectedMedicineItem) => {
+    setBaseline((prev) => {
+      if (prev.some((m) => m.yj_code === medicine.yj_code)) return prev;
+      return [...prev, medicine];
+    });
+  }, []);
+
   const handleRemoveBaseline = useCallback((yjCode: string) => {
     setBaseline((prev) => prev.filter((m) => m.yj_code !== yjCode));
     setPersistentAdditional([]);
@@ -237,6 +244,7 @@ export function ChatScreen() {
           <ChatInputForm
             key={inputKey}
             baseline={baseline}
+            onAddBaseline={handleAddBaseline}
             onRemoveBaseline={handleRemoveBaseline}
             onClearBaseline={handleClearBaseline}
             additional={targetState.additional}

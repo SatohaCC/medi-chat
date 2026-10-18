@@ -2,6 +2,7 @@
 
 import type { PromptFieldValue } from "@react-spectrum/ai";
 import * as stylex from "@stylexjs/stylex";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { MedicineEntry } from "../model/medicineAutocomplete";
 import type { SelectedMedicineItem } from "../model/promptSnapshot";
 import { styles } from "./MedicinePromptDock.styles";
@@ -9,6 +10,7 @@ import { MedicinePromptField } from "./MedicinePromptField";
 
 export interface MedicinePromptDockProps {
   baseline: SelectedMedicineItem[];
+  onAddBaseline?: (medicine: SelectedMedicineItem) => void;
   onRemoveBaseline: (yjCode: string) => void;
   onClearBaseline: () => void;
   additional: SelectedMedicineItem[];
@@ -25,6 +27,7 @@ export interface MedicinePromptDockProps {
 
 export function MedicinePromptDock({
   baseline,
+  onAddBaseline,
   onRemoveBaseline,
   onClearBaseline,
   additional,
@@ -38,6 +41,32 @@ export function MedicinePromptDock({
   disabled = false,
   canSend = true,
 }: MedicinePromptDockProps) {
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isAddOpen) {
+      searchInputRef.current?.focus();
+    }
+  }, [isAddOpen]);
+
+  const candidates = useMemo(() => {
+    const currentYjs = new Set(baseline.map((m) => m.yj_code));
+    const q = searchQuery.trim().toLowerCase();
+    const available = medicineEntries.filter((m) => m.y && !currentYjs.has(m.y));
+    if (!q) return available.slice(0, 15);
+    return available
+      .filter(
+        (m) =>
+          m.n.toLowerCase().includes(q) ||
+          m.k?.toLowerCase().includes(q) ||
+          m.h?.toLowerCase().includes(q) ||
+          m.y.includes(q),
+      )
+      .slice(0, 20);
+  }, [medicineEntries, baseline, searchQuery]);
+
   return (
     <div {...stylex.props(styles.container)} data-testid="medicine-prompt-dock">
       {/* Tier 1: 対象処方箋（ベース処方薬） */}
@@ -67,6 +96,82 @@ export function MedicinePromptDock({
             <span {...stylex.props(styles.emptyNotice)}>なし</span>
           )}
         </div>
+
+        {onAddBaseline && (
+          <div {...stylex.props(styles.addBaselineWrapper)}>
+            <button
+              type="button"
+              {...stylex.props(styles.addBaselineBtn)}
+              onClick={() => {
+                setIsAddOpen((prev) => !prev);
+                setSearchQuery("");
+              }}
+              aria-expanded={isAddOpen}
+              aria-label="処方薬を追加"
+            >
+              ＋ 処方薬を追加
+            </button>
+
+            {isAddOpen && (
+              <div
+                {...stylex.props(styles.popoverMenu)}
+                role="dialog"
+                aria-label="処方薬を選択"
+              >
+                <div {...stylex.props(styles.popoverHeader)}>
+                  <input
+                    ref={searchInputRef}
+                    type="search"
+                    placeholder="薬名・YJコードで検索..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    {...stylex.props(styles.popoverSearchInput)}
+                    aria-label="処方薬検索"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setIsAddOpen(false)}
+                    {...stylex.props(styles.popoverCloseBtn)}
+                    aria-label="検索を閉じる"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div {...stylex.props(styles.popoverList)} role="listbox">
+                  {candidates.length === 0 ? (
+                    <div {...stylex.props(styles.popoverEmpty)}>
+                      候補が見つかりません
+                    </div>
+                  ) : (
+                    candidates.map((item) => (
+                      <button
+                        key={item.y}
+                        type="button"
+                        role="option"
+                        {...stylex.props(styles.popoverItem)}
+                        onClick={() => {
+                          onAddBaseline({ yj_code: item.y, name: item.n });
+                          setIsAddOpen(false);
+                          setSearchQuery("");
+                        }}
+                      >
+                        <span {...stylex.props(styles.popoverItemName)}>
+                          {item.n}
+                        </span>
+                        {item.g && (
+                          <span {...stylex.props(styles.popoverItemGeneric)}>
+                            ({item.g})
+                          </span>
+                        )}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {baseline.length > 0 && (
           <button
             type="button"
@@ -91,6 +196,20 @@ export function MedicinePromptDock({
               >
                 {med.name}
               </button>
+              {onAddBaseline && (
+                <button
+                  type="button"
+                  aria-label={`${med.name}を処方箋に追加`}
+                  title="処方箋（ベース薬）に追加"
+                  {...stylex.props(styles.promoteBtn)}
+                  onClick={() => {
+                    onAddBaseline(med);
+                    onRemoveAdditional(med.yj_code);
+                  }}
+                >
+                  ↑処方箋へ
+                </button>
+              )}
               <button
                 type="button"
                 aria-label={`追加薬から${med.name}を削除`}
