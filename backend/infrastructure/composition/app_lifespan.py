@@ -15,7 +15,10 @@ from ...application.attachment_import.import_document import AttachmentImportSer
 from ...application.medicine.suggestions import MedicineSuggester
 from ...config.database_settings import DatabaseSettings
 from ...config.generation_settings import read_generation_defaults
-from ...config.import_settings import resolve_import_directory
+from ...config.import_settings import (
+    resolve_import_directory,
+    resolve_original_directory,
+)
 from ..intent.jev_classifier import JevIntentClassifier
 from ..llm.provider_factory import create_llm_provider
 from ..morphology.janome_keyword_extractor import JanomeKeywordExtractor
@@ -129,7 +132,7 @@ def create_app_lifespan(
                 engine=registration_engine,
                 allowed_roots=(
                     settings.structured_dir,
-                    settings.structured_dir.parent / "originals",
+                    resolve_original_directory(),
                 ),
             )
             import_service = AttachmentImportService(

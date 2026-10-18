@@ -1,5 +1,6 @@
 """検索語抽出の契約を用いた添付文書の検索条件生成。"""
 
+import re
 from collections.abc import Iterable
 
 from ...domain.retrieval.primitives import DetectionSource, SearchKeyword
@@ -16,7 +17,10 @@ def detect_morphology_criteria(
     cleaned = message
     for term in sorted(set(excluded_terms), key=len, reverse=True):
         if len(term) >= 2:
+            cleaned = cleaned.replace(f"@{term}", " ")
             cleaned = cleaned.replace(term, " ")
+    cleaned = re.sub(r"@[^\s　]+", " ", cleaned)
+    cleaned = cleaned.replace("@", " ")
 
     keywords = extractor.extract_keywords(cleaned)
     if not keywords:

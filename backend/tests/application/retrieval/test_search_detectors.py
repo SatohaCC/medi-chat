@@ -41,3 +41,39 @@ class SearchDetectorTests(unittest.TestCase):
         self.assertEqual(target.source, "keyword")
         self.assertIn("頭痛", tuple(keyword.value for keyword in target.keywords))
         self.assertEqual(tuple(code.value for code in target.section_codes), ())
+
+    def test_fixed_keyword_detector_detects_interaction_for_issho_ni_tsukaeru(
+        self,
+    ) -> None:
+        target = detect_fixed_keyword_criteria(
+            "@イトラコナゾールカプセル50mg「SW」 　一緒に使える？",
+            get_package_insert_definitions().intent_policy,
+        )
+
+        self.assertIsNotNone(target)
+        assert target is not None
+        self.assertEqual(target.source, "logic")
+        assert target.intent is not None
+        self.assertEqual(target.intent.value, "interaction")
+        self.assertEqual(
+            tuple(code.value for code in target.section_codes),
+            ("10", "10.1", "10.2", "16.7"),
+        )
+        self.assertEqual(target.keywords, ())
+
+    def test_morphology_detector_excludes_at_mentions_and_product_aliases(self) -> None:
+        target = detect_morphology_criteria(
+            JanomeKeywordExtractor(
+                search_policy=get_package_insert_definitions().text_search_policy,
+                morphology_settings=get_package_insert_definitions().morphology_settings,
+            ),
+            "@イトラコナゾールカプセル50mg「SW」 　一緒に使える？",
+            excluded_terms=(
+                "イトラコナゾールカプセル50mg「SW」",
+                "イトラコナゾール",
+                "SW",
+            ),
+        )
+
+        self.assertIsNone(target)
+

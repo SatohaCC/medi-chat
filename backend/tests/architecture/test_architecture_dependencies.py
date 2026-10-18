@@ -617,6 +617,7 @@ def test_backend_root_contains_only_onion_layers_and_exceptions() -> None:
         ".mypy_cache",
         ".ruff_cache",
         ".venv",
+        ".grimp_cache",
     }
     directories = {
         path.name

@@ -38,6 +38,7 @@ storybook-static/
 
 # Temporary & local tools
 .import_linter_cache/
+.grimp_cache/
 tmp/
 temp/
 graphify-out/

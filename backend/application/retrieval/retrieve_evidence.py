@@ -57,7 +57,12 @@ async def retrieve_evidence(
     medicine_catalog = MedicineCatalog(await medicine_reader.read_medicines())
     resolved = medicine_catalog.resolve_medicines(message, product_yj_codes)
     needs_clarification = not resolved
-    excluded_terms = medicine_catalog.aliases_for_yj_codes(product_yj_codes)
+    all_target_codes = list(
+        dict.fromkeys(
+            [*product_yj_codes, *(code for item in resolved for code in item.yj_codes)]
+        )
+    )
+    excluded_terms = medicine_catalog.aliases_for_yj_codes(all_target_codes)
     reason = None
     if not needs_clarification:
         questions = recognize_product_questions(

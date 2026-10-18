@@ -5,6 +5,7 @@ import json
 import os
 import re
 import uuid
+from contextlib import suppress
 from pathlib import Path
 
 from ...application.attachment_import.import_errors import ImportStorageError
@@ -68,6 +69,7 @@ class RegistrationAttempt:
                 ):
                     continue
                 complete = True
+                artifact_directories: set[Path] = set()
                 for raw, digest in value["files"].items():
                     path = Path(raw)
                     if raw in referenced:
@@ -107,6 +109,7 @@ class RegistrationAttempt:
                     ):
                         complete = False
                         continue
+                    artifact_directories.add(path.parent)
                     if not path.exists():
                         continue
                     if (
@@ -116,6 +119,10 @@ class RegistrationAttempt:
                         complete = False
                         continue
                     path.unlink()
+                for artifact_directory in artifact_directories:
+                    # Preserve directories containing referenced or unknown files.
+                    with suppress(OSError):
+                        artifact_directory.rmdir()
                 if complete:
                     journal.unlink()
             except (OSError, ValueError, TypeError, KeyError):
