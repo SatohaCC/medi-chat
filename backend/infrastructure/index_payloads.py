@@ -161,6 +161,70 @@ def _block(block: SearchContentBlock) -> tuple[str, dict[str, Any]]:
     return labels + rendered, {**payload, "context": context, "references": references}
 
 
+def _render_registered_block(block: dict[str, JsonValue]) -> str:
+    """Render both new and persisted registration blocks from their source fields."""
+    kind = block["kind"]
+    if kind == "table":
+        columns = _strings(block.get("columns") or [])
+        raw_rows = block.get("rows") or []
+        if not isinstance(raw_rows, list):
+            raise TypeError("Expected a JSON array of table rows")
+        rows = [_objects(row) for row in raw_rows]
+        header = ""
+        # Generic XML tables may already carry their heading cells in the first row.
+        first_row = [_string(cell["text"]) for cell in rows[0]] if rows else []
+        if columns and columns != first_row:
+            header = (
+                "<thead><tr>"
+                + "".join(
+                    '<th scope="col">' + html.escape(column) + "</th>"
+                    for column in columns
+                )
+                + "</tr></thead>"
+            )
+        body = []
+        for row in rows:
+            cells = []
+            for cell in row:
+                rowspan = cell["rowspan"]
+                colspan = cell["colspan"]
+                if type(rowspan) is not int or type(colspan) is not int:
+                    raise TypeError("Expected integer table spans")
+                value = html.escape(_string(cell["text"])).replace("\n", "<br>")
+                cells.append(
+                    f'<td rowspan="{rowspan}" colspan="{colspan}">{value}</td>'
+                )
+            body.append("<tr>" + "".join(cells) + "</tr>")
+        rendered = "<table>" + header + "<tbody>" + "".join(body) + "</tbody></table>"
+    elif kind in ("paragraph", "figure"):
+        value = block["text"] if kind == "paragraph" else block["description"]
+        escaped = html.escape(_string(value))
+        rendered = (
+            "<p>"
+            + (escaped.replace("\n", "<br>") if kind == "paragraph" else escaped)
+            + "</p>"
+        )
+    else:
+        raise ValueError(f"Unknown registration block kind: {kind}")
+    context = _object(block.get("context") or {})
+    labels = "".join(
+        "<p><strong>〈" + html.escape(label) + "〉</strong></p>"
+        for label in _strings(context.get("labels") or [])
+    )
+    return labels + rendered
+
+
+def registered_unit_text(unit: dict[str, JsonValue]) -> str:
+    """Restore source column headings for existing v3 units without rewriting storage."""
+    if unit.get("schema_version") == "medi-chat.pmda-sections.v3" and unit.get(
+        "blocks"
+    ):
+        return "".join(
+            _render_registered_block(block) for block in _objects(unit["blocks"])
+        )
+    return _string(unit.get("text") or "")
+
+
 def encode_registered_units(
     document: AttachmentDocument, units: tuple[SearchUnit, ...]
 ) -> bytes:

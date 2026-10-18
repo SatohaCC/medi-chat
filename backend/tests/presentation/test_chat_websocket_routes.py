@@ -219,6 +219,34 @@ class ChatWebSocketRouteTests(unittest.TestCase):
             )
             self.assertEqual(received_status_response, received_jev_response)
 
+    def test_websocket_chat_sends_evidence_without_generated_ui(self) -> None:
+        with (
+            patch.dict(os.environ, {"OPENAI_API_KEY": ""}),
+            self.client.websocket_connect("/ws/chat") as websocket,
+        ):
+            websocket.send_json(
+                {
+                    "type": "message",
+                    "provider": "openai",
+                    "product_yj_codes": ["3339003F5020"],
+                    "messages": [
+                        {"role": "user", "content": "イグザレルトの併用禁忌について教えて"}
+                    ],
+                }
+            )
+            received_sources = []
+            while True:
+                data = websocket.receive_json()
+                self.assertNotEqual(data["type"], "genui_spec")
+                if data["type"] == "sources":
+                    received_sources = data["sources"]
+                elif data["type"] == "text_done":
+                    break
+                elif data["type"] == "error":
+                    self.fail(f"Unexpected error: {data['content']}")
+            self.assertTrue(received_sources)
+            self.assertTrue(all("excerpt" in source for source in received_sources))
+
     def test_websocket_chat_missing_yj_codes_returns_error(self) -> None:
         with self.client.websocket_connect("/ws/chat") as websocket:
             websocket.send_json(

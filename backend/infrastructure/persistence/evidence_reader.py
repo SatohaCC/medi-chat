@@ -12,6 +12,7 @@ from ...domain.shared.services import (
     normalize_search_text,
 )
 from ..evidence_mapping import build_evidence, is_scope_heading_only
+from ..index_payloads import registered_unit_text
 from ..json_payloads import parse_json_object
 from ..package_insert_definitions.loader import get_package_insert_definitions
 from . import registration_schema, schema
@@ -73,7 +74,11 @@ def _read_evidence(
                 )
             ).scalar_one()
             document = parse_json_object(payload)
-        evidence.append(build_evidence(unit, document, source))
+        evidence.append(
+            build_evidence(
+                {**unit, "text": registered_unit_text(unit)}, document, source
+            )
+        )
     return evidence
 
 

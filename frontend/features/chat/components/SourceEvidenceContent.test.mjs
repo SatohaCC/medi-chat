@@ -38,6 +38,27 @@ test("removes scripts, event handlers, source styles and unsafe links", () => {
   assert.doesNotMatch(html, /<script|alert\(|onclick|onmouseover|style=|javascript:/i);
 });
 
+test("PMDA contraindication table retains all three column headers in thead", () => {
+  const units = readFileSync(
+    new URL(
+      "../../../../data/pmda/structured/630004_3339003F5020_1_08/search_units.jsonl",
+      import.meta.url,
+    ),
+    "utf8",
+  )
+    .trim()
+    .split("\n")
+    .map((line) => JSON.parse(line));
+  const original = units.find((unit) => unit.section.code === "10.1");
+  assert.ok(original);
+  const html = render(original.text);
+  assert.match(
+    html,
+    /<thead><tr><th>薬剤名等<\/th><th>臨床症状・措置方法<\/th><th>機序・危険因子<\/th><\/tr><\/thead>/,
+  );
+  assert.match(html, /イトラコナゾール/);
+});
+
 test("renders the real 11.2 section as one table with category and frequency labels", () => {
   const rows = readFileSync(
     new URL(

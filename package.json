@@ -8,6 +8,8 @@
     "dev": "pnpm --parallel --filter frontend --filter backend dev",
     "dev:frontend": "pnpm --filter frontend dev",
     "dev:backend": "pnpm --filter backend dev",
+    "storybook": "pnpm --filter frontend storybook",
+    "build-storybook": "pnpm --filter frontend build-storybook",
     "test": "pnpm --filter backend test",
     "test:backend": "pnpm --filter backend test",
     "test:data": "pnpm --filter backend test",
