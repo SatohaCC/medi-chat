@@ -51,10 +51,10 @@ export function MedicinePromptField({
       if (matches.length === 0) {
         return null;
       }
-      return matches.map((item) => (
+      return matches.map((item, idx) => (
         <InsertTokenMenuItem
-          key={item.y}
-          id={item.y}
+          key={`${item.y}-${item.n}-${idx}`}
+          id={`${item.y}-${item.n}-${idx}`}
           textValue={item.n}
           token={{
             type: "token",

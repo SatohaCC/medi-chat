@@ -143,9 +143,9 @@ export function MedicinePromptDock({
                       候補が見つかりません
                     </div>
                   ) : (
-                    candidates.map((item) => (
+                    candidates.map((item, idx) => (
                       <button
-                        key={item.y}
+                        key={`${item.y}-${item.n}-${idx}`}
                         type="button"
                         role="option"
                         {...stylex.props(styles.popoverItem)}

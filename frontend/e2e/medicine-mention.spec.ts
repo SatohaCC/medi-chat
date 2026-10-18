@@ -381,4 +381,53 @@ test.describe("Unit 3 & Unit 4: Medicine Mention E2E Tests", () => {
       expect.arrayContaining(["3339003F5020", "1141007F1063"]),
     );
   });
+
+  // TC-K01: 同一 YJ コードを持つ複数医薬品（先発/後発など）のサジェスト展開時に key 重複エラーが発生しない
+  test("TC-K01: medicines sharing identical YJ code render with unique keys in completions without console error", async ({
+    page,
+  }) => {
+    const consoleErrors: string[] = [];
+    page.on("console", (msg) => {
+      if (msg.type() === "error") {
+        consoleErrors.push(msg.text());
+      }
+    });
+
+    const isoniaEntry1 = {
+      n: "イソニアジド",
+      k: "イソニアジド",
+      h: "いそにあじど",
+      y: "6222001X1013",
+      g: "",
+      c: "内用",
+    };
+    const isoniaEntry2 = {
+      n: "イスコチン原末",
+      k: "イスコチンゲンマツ",
+      h: "いすこちんげんまつ",
+      y: "6222001X1013",
+      g: "",
+      c: "内用",
+    };
+
+    const chat = await setupMedicineChat(page, {
+      autocompleteItems: [isoniaEntry1, isoniaEntry2],
+      staticMedicines: [isoniaEntry1, isoniaEntry2],
+    });
+
+    await chat.input.focus();
+    await page.keyboard.type("@イ");
+
+    const option1 = page.getByRole("menuitem", { name: "イソニアジド" });
+    const option2 = page.getByRole("menuitem", { name: "イスコチン原末" });
+
+    await expect(option1).toBeVisible();
+    await expect(option2).toBeVisible();
+
+    // Verify no React duplicate key console error occurred
+    const keyErrors = consoleErrors.filter((msg) =>
+      msg.includes("Encountered two children with the same key"),
+    );
+    expect(keyErrors).toHaveLength(0);
+  });
 });
