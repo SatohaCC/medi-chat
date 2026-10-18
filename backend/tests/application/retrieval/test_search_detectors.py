@@ -105,4 +105,34 @@ class SearchDetectorTests(unittest.TestCase):
             "ロキソニン", tuple(keyword.value for keyword in target_known.keywords)
         )
 
+    def test_morphology_detector_extracts_only_symptom_for_bracketed_medicine(
+        self,
+    ) -> None:
+        extractor = JanomeKeywordExtractor(
+            search_policy=get_package_insert_definitions().text_search_policy,
+            morphology_settings=get_package_insert_definitions().morphology_settings,
+        )
+        for message in (
+            "@イトラコナゾールカプセル50mg「SW」 で下痢する？",
+            "@イトラコナゾールカプセル50mg「SW」で下痢する？",
+        ):
+            target = detect_morphology_criteria(
+                extractor,
+                message,
+                excluded_terms=(
+                    "イトラコナゾールカプセル50mg「SW」",
+                    "イトラコナゾールカプセル",
+                    "イトラコナゾール",
+                    "SW",
+                    "いとらこなぞーる",
+                ),
+            )
+            self.assertIsNotNone(target)
+            assert target is not None
+            keywords = tuple(keyword.value for keyword in target.keywords)
+            self.assertEqual(keywords, ("下痢",))
+            self.assertNotIn("イトラコナゾール", keywords)
+            self.assertNotIn("SW", keywords)
+
+
 
