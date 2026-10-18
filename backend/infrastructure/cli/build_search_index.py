@@ -9,7 +9,10 @@ from pathlib import Path
 from sqlalchemy.engine import URL
 
 from ...config.database_settings import resolve_database_settings
-from ...config.import_settings import resolve_import_directory
+from ...config.import_settings import (
+    resolve_import_directory,
+    resolve_original_directory,
+)
 from ..composition.index_verifier import verify_schema_readiness
 from ..persistence.attachment_import_store import FileAttachmentImportStore
 from ..persistence.index_writer import SqlAlchemyIndexWriter
@@ -77,7 +80,7 @@ def main() -> int:
             FileAttachmentImportStore(resolve_import_directory()),
             allowed_roots=(
                 settings.structured_dir,
-                settings.structured_dir.parent / "originals",
+                resolve_original_directory(),
             ),
         ).recover()
         with registration_lock(settings.index_path):

@@ -542,6 +542,10 @@ def test_tc097_113_recovery_removes_only_failed_registration_owned_artifacts(pub
     )
     assert not (target / "source.xml").exists()
     assert {path: path.read_bytes() for path in legacy_target.iterdir()} == preserved
+    assert not target.exists()
+    retried = publish(publisher, failed)
+    assert retried.status == "registered"
+    assert not retried.reused
 
 
 def test_tc102_114_existing_build_cli_retries_cleanup_without_new_generation(

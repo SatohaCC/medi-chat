@@ -16,7 +16,10 @@ def detect_morphology_criteria(
     cleaned = message
     for term in sorted(set(excluded_terms), key=len, reverse=True):
         if len(term) >= 2:
+            cleaned = cleaned.replace(f"@{term}", " ")
+            cleaned = cleaned.replace(f"＠{term}", " ")
             cleaned = cleaned.replace(term, " ")
+    cleaned = cleaned.replace("@", " ").replace("＠", " ")
 
     keywords = extractor.extract_keywords(cleaned)
     if not keywords:

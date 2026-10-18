@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections import deque
 from collections.abc import Sequence
 from dataclasses import dataclass, field
@@ -289,13 +290,24 @@ class MedicineCatalog:
 
     def aliases_for_yj_codes(self, codes: Sequence[str | YjCode]) -> list[str]:
         """指定製品の別名をキーワード抽出の除外語として返す。"""
-        return collect_aliases(
-            [
-                medicine.medicine
-                for group in self._match_yj_groups(codes)
-                for medicine in group.medicines
-            ]
-        )
+        matched_medicines = [
+            medicine.medicine
+            for group in self._match_yj_groups(codes)
+            for medicine in group.medicines
+        ]
+        raw_names: list[str] = []
+        for med in matched_medicines:
+            for name in (
+                med.brand_name,
+                med.generic_name,
+                med.english_name,
+                med.hiragana_name,
+            ):
+                if name:
+                    raw_names.append(name)
+                    # 括弧内の注記・屋号（例: 「SW」 -> SW）も除外語に含める
+                    raw_names.extend(re.findall(r"[「\(（\[](.*?)[」\)）\]]", name))
+        return list(dict.fromkeys([*raw_names, *collect_aliases(matched_medicines)]))
 
     def question_name_candidates(self, name: str) -> frozenset[YjCode]:
         """スロット全体が既存別名に一致する製品だけを返す。"""

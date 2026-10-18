@@ -5,6 +5,13 @@ from pathlib import Path
 from ..project_paths import resolve_project_path
 
 
+def resolve_original_directory(*, environ: Mapping[str, str] | None = None) -> Path:
+    environment = os.environ if environ is None else environ
+    return resolve_project_path(
+        Path(environment.get("MEDI_CHAT_ORIGINALS_DIR", "data/pmda/originals"))
+    )
+
+
 def resolve_import_directory(*, environ: Mapping[str, str] | None = None) -> Path:
     environment = os.environ if environ is None else environ
     return resolve_project_path(

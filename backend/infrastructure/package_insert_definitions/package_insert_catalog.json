@@ -711,6 +711,18 @@
         {
           "text": "併用",
           "exclude_from_text_search": true
+        },
+        {
+          "text": "一緒に使える",
+          "exclude_from_text_search": true
+        },
+        {
+          "text": "一緒に使",
+          "exclude_from_text_search": true
+        },
+        {
+          "text": "一緒に飲",
+          "exclude_from_text_search": true
         }
       ],
       "classification": {

@@ -214,3 +214,26 @@ def test_Core読取の一般名aliasと薬剤全情報を保持する(tmp_path: 
     assert groups[0].brand_names == (expected.brand_name,)
     assert groups[0].generic_name == expected.generic_name
     assert groups[0].document_ids == (expected.document_id.value,)
+
+
+def test_aliases_for_yj_codes_includes_raw_names_and_brackets(tmp_path: Path) -> None:
+    expected = RegisteredMedicine(
+        medicine=MedicineProduct(
+            yj_code=YjCode("6179001F1025"),
+            brand_name="イトラコナゾールカプセル50mg「SW」",
+            generic_name="イトラコナゾールカプセル",
+            english_name="",
+            hiragana_name="",
+        ),
+        reference=MedicineDocumentReference(
+            document_id=DocumentId("doc-sw"),
+            pmda_url=PmdaUrl("https://example.test/sw"),
+            revision=AttachmentProductRevision({}),
+        ),
+    )
+    medicines = _read_indexed_medicines(tmp_path, (expected,))
+    catalog = MedicineCatalog(medicines)
+    aliases = catalog.aliases_for_yj_codes(["6179001F1025"])
+    assert "イトラコナゾールカプセル50mg「SW」" in aliases
+    assert "SW" in aliases
+
