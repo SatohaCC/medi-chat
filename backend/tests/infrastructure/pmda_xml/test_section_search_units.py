@@ -6,6 +6,7 @@ import json
 import pytest
 from backend.infrastructure.pmda_xml.transform import transform
 from backend.tests.support.paths import PROJECT_ROOT
+from backend.tests.support.section_records import assert_original_records_preserved
 
 
 def test_numbered_sections_own_their_body_without_duplicating_children(tmp_path):
@@ -29,27 +30,20 @@ def test_numbered_sections_own_their_body_without_duplicating_children(tmp_path)
         .splitlines()
     ]
     by_code = {row["section"]["code"]: row for row in rows}
-    assert len(rows) == len(by_code) == 3
+    assert len(rows) == len(by_code) == 2
     assert "警告A" in by_code["1"]["text"] and "警告B" in by_code["1"]["text"]
-    assert "子項目本文" not in by_code["16"]["text"]
-    assert by_code["16.2"]["text"] == "子項目本文"
+    assert "子項目本文" in by_code["16"]["text"]
+    assert {
+        block["context"]["section"]["code"] for block in by_code["16"]["blocks"]
+    } == {"16", "16.2"}
     assert all(
-        set(row)
-        == {
-            "unit_id",
-            "document_key",
-            "kind",
-            "section",
-            "product_yj_codes",
-            "text",
-            "source",
-            "references",
-        }
+        row["schema_version"] == "medi-chat.pmda-sections.v4"
+        and isinstance(row["blocks"], list)
         for row in rows
     )
     assert all(row["kind"] == "section" for row in rows)
     assert validation["status"] == "pass"
-    assert validation["search_schema_version"] == "medi-chat.pmda-sections.v2"
+    assert validation["search_schema_version"] == "medi-chat.pmda-sections.v4"
     before = (output / "search_units.jsonl").read_bytes()
     transform(source, output)
     assert (output / "search_units.jsonl").read_bytes() == before
@@ -75,10 +69,7 @@ def test_real_documents_keep_adverse_table_and_all_section_bodies(source, tmp_pa
     assert validation["unresolved_references"] == []
     assert validation["duplicate_section_codes"] == []
     assert validation["duplicate_unit_ids"] == []
-    adverse = next(row for row in rows if row["section"]["code"] == "11.2")
-    prefix = adverse["text"].split("<table>", 1)[0]
-    assert "頻度不明" not in prefix
-    assert "消化器" not in prefix
+    adverse = next(row for row in rows if row["section"]["code"] == "11")
     assert "頻度不明" in adverse["text"]
     assert "消化器" in adverse["text"]
     assert adverse["text"].count("<table>") == 1
@@ -93,6 +84,6 @@ def test_real_documents_keep_adverse_table_and_all_section_bodies(source, tmp_pa
         figure["file"] = figure["file"].replace(
             "data_tools/data/", "data/pmda/originals/", 1
         )
-    assert (
-        json.loads((output / "document.json").read_text(encoding="utf-8")) == expected
+    assert_original_records_preserved(
+        json.loads((output / "document.json").read_text(encoding="utf-8")), expected
     )

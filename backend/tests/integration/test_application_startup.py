@@ -2,24 +2,18 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
-import socket
 import sqlite3
-import subprocess
 from pathlib import Path
 
 import httpx
 import pytest
-from backend.config.database_settings import resolve_database_settings
-from backend.infrastructure.cli.configured_e2e_gate import run_gate
 from backend.infrastructure.persistence.index_writer import SqlAlchemyIndexWriter
 from backend.infrastructure.persistence.registration_reader import (
     read_registered_snapshot,
 )
 from backend.infrastructure.sources.file_index_source import FileIndexSourceReader
 from backend.main import create_app
-from backend.project_paths import PROJECT_ROOT
 from backend.tests.infrastructure.persistence.test_alembic_migrations import (
     _migrate_database,
     _snapshot_existing_database,
@@ -30,164 +24,7 @@ from backend.tests.infrastructure.persistence.test_package_insert_index import (
 from backend.tests.support.registration_runtime_fixtures import (
     register_synthetic_prepared_index,
 )
-from backend.tests.support.startup_recovery_fixture import create_legacy_copy
 from sqlalchemy.engine import Engine
-
-
-def test_real_legacy_copy_refuses_os_start_then_cli_recovers_same_copy(
-    tmp_path, monkeypatch
-):
-    from argparse import Namespace
-
-    from alembic import command as alembic_command
-    from alembic.config import Config
-    from backend.infrastructure.persistence.legacy_content_validator import (
-        validate_legacy_content,
-    )
-    from backend.migrations.legacy_copy_stamp import (
-        STAMP_COPY_ATTRIBUTE,
-        LegacyCopyStamp,
-        validate_stamp_copy,
-    )
-    from backend.tests.support.startup_recovery_fixture import (
-        restore_manifest_v3_fixture,
-    )
-
-    old = tmp_path / "historical-manifest.sqlite3"
-    restore_manifest_v3_fixture(old)
-    validate_legacy_content(old)
-    stamp_config = Config(str(PROJECT_ROOT / "backend/alembic.ini"))
-    stamp_config.cmd_opts = Namespace(x=[f"index_path={old.resolve()}"])
-    approval = LegacyCopyStamp(old.resolve())
-    validate_stamp_copy(approval, old)
-    stamp_config.attributes[STAMP_COPY_ATTRIBUTE] = approval
-    alembic_command.stamp(stamp_config, "0001_v3_schema")
-    original = hashlib.sha256(old.read_bytes()).hexdigest()
-    source, index = create_legacy_copy(tmp_path, old)
-    copy_before = hashlib.sha256(index.read_bytes()).hexdigest()
-    for name in [
-        "OPENAI_API_KEY",
-        "GEMINI_API_KEY",
-        "GOOGLE_API_KEY",
-        "JEV_API_KEY",
-        "TYPESAFE_API_KEY",
-    ]:
-        monkeypatch.setenv(name, "")
-    monkeypatch.setenv("PYTHON_DOTENV_DISABLED", "1")
-    monkeypatch.setenv("MEDI_CHAT_STRUCTURED_DIR", str(source))
-    monkeypatch.setenv("MEDI_CHAT_INDEX_PATH", str(index))
-    monkeypatch.setenv("MEDI_CHAT_IMPORT_DIR", str(tmp_path / "imports"))
-    failed = subprocess.run(
-        [
-            "uv",
-            "run",
-            "--project",
-            str(PROJECT_ROOT / "backend"),
-            "--locked",
-            "uvicorn",
-            "--app-dir",
-            str(PROJECT_ROOT),
-            "backend.main:app",
-            "--host",
-            "127.0.0.1",
-            "--port",
-            "3213",
-        ],
-        cwd=PROJECT_ROOT,
-        capture_output=True,
-        text=True,
-        timeout=40,
-    )
-    assert failed.returncode != 0
-    assert "revision" in failed.stderr
-    assert "Application startup complete" not in failed.stderr
-    assert hashlib.sha256(index.read_bytes()).hexdigest() == copy_before
-    import shutil
-
-    from backend.tests.integration.test_registration_initialization import command
-
-    shutil.copytree(PROJECT_ROOT / "data/pmda/originals", tmp_path / "originals")
-    _migrate_database(index, source)
-    initialized = command(
-        tmp_path,
-        "backend.infrastructure.cli.initialize_registrations",
-        "--originals-dir",
-        tmp_path / "originals",
-        "--structured-dir",
-        source,
-        "--index-path",
-        index,
-        "--import-dir",
-        tmp_path / "imports",
-    )
-    assert initialized.returncode == 0, initialized.stdout + initialized.stderr
-    rebuilt = subprocess.run(
-        [
-            "uv",
-            "run",
-            "--project",
-            str(PROJECT_ROOT / "backend"),
-            "--locked",
-            "python",
-            "-m",
-            "backend.infrastructure.cli.build_search_index",
-            "--structured-dir",
-            str(source),
-            "--index-path",
-            str(index),
-        ],
-        cwd=PROJECT_ROOT,
-        capture_output=True,
-        text=True,
-        timeout=60,
-    )
-    assert rebuilt.returncode == 0, rebuilt.stderr
-    assert "'document_count': 7, 'unit_count': 267" in rebuilt.stdout
-    assert "15 medicines loaded" in rebuilt.stdout
-    with sqlite3.connect(index) as connection:
-        assert [
-            connection.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
-            for table in ["documents", "units", "medicines"]
-        ] == [7, 267, 15]
-        assert (
-            connection.execute(
-                "SELECT value FROM index_meta WHERE key='source_fingerprint'"
-            )
-            .fetchone()[0]
-            .startswith("content-v1:")
-        )
-    result = run_gate(
-        resolve_database_settings(structured_dir=source, index_path=index), port=3213
-    )
-    assert {
-        k: result["os_health"][k] for k in ("status", "document_count", "unit_count")
-    } == {
-        "status": "ok",
-        "document_count": 7,
-        "unit_count": 267,
-    }
-    with sqlite3.connect(index) as connection:
-        assert (
-            result["os_health"]["generation_id"]
-            == connection.execute(
-                "SELECT generation_id FROM registration_state WHERE singleton=1"
-            ).fetchone()[0]
-        )
-    with socket.socket() as stopped:
-        assert stopped.connect_ex(("127.0.0.1", 3213)) != 0
-    print(
-        json.dumps(
-            {
-                "legacy_failure_exit": failed.returncode,
-                "legacy_failure": failed.stderr,
-                "cli_exit": rebuilt.returncode,
-                "cli_output": rebuilt.stdout,
-                "health": result,
-            },
-            ensure_ascii=False,
-        )
-    )
-    assert hashlib.sha256(old.read_bytes()).hexdigest() == original
 
 
 @pytest.mark.asyncio

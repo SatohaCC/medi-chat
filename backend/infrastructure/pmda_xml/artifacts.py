@@ -10,6 +10,7 @@ from pathlib import PurePosixPath
 from typing import Any
 
 from ...application.attachment_import.import_errors import InvalidAttachment
+from ..index_payloads import DOCUMENT_SCHEMA_VERSION, SEARCH_SCHEMA_VERSION
 from ..package_insert_definitions.loader import get_package_insert_definitions
 from .definition_settings import PmdaXmlSettings
 from .sections import make_section_index
@@ -17,6 +18,7 @@ from .units import make_units
 from .xml_nodes import (
     attr_name,
     build_paths,
+    direct_child,
     field,
     metadata,
     source_node,
@@ -143,8 +145,27 @@ def build_artifacts(
             for unit_text in unit_texts
         )
     ]
+
+    def section_record(element: ET.Element, sec: dict[str, Any]) -> dict[str, Any]:
+        header = direct_child(element, "Header")
+        return {
+            "code": sec["code"],
+            "title": sec["title"],
+            "header": text_of(header, xml_settings=xml_settings)
+            if header is not None
+            else None,
+            "xml_id": sec.get("xml_id"),
+            "xml_path": sec["xml_path"],
+            "tree": source_node(element),
+            "children": [
+                section_record(child_element, child)
+                for child_element, child in section_by_element.items()
+                if child["parent_code"] == sec["code"]
+            ],
+        }
+
     document = {
-        "schema_version": "medi-chat.pmda-prescription-xml.v1",
+        "schema_version": DOCUMENT_SCHEMA_VERSION,
         "source": {
             "file": source_filename,
             "sha256": source_sha256,
@@ -165,14 +186,9 @@ def build_artifacts(
         ],
         "section_index": sections,
         "sections": [
-            {
-                "code": sec["code"],
-                "title": sec["title"],
-                "xml_id": sec.get("xml_id"),
-                "xml_path": sec.get("xml_path", paths.get(element, "")),
-                "tree": source_node(element),
-            }
+            section_record(element, sec)
             for element, sec in section_by_element.items()
+            if sec["parent_code"] is None
         ],
     }
     validation = {
@@ -189,10 +205,15 @@ def build_artifacts(
         "covered_section_lang_count": len(section_langs & covered_langs),
         "uncovered_section_lang_paths": sorted(uncovered),
         "unrepresented_nonempty_lang_paths": sorted(unrepresented_text),
-        "section_count": len(sections),
-        "search_schema_version": "medi-chat.pmda-sections.v2",
-        "search_unit_count": len(units),
-        "search_unit_types": dict(Counter(unit["kind"] for unit in units)),
+        "section_count": len(document["sections"]),
+        "numbered_section_count": len(sections),
+        "search_schema_version": SEARCH_SCHEMA_VERSION,
+        "search_unit_count": len(
+            {unit["section"]["code"].split(".", 1)[0] for unit in units}
+        ),
+        "search_unit_types": {
+            "section": len({unit["section"]["code"].split(".", 1)[0] for unit in units})
+        },
         "duplicate_section_codes": duplicate_section_codes,
         "duplicate_unit_ids": duplicate_unit_ids,
         "reference_count": len(all_refs),

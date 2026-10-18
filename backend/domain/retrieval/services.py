@@ -246,6 +246,11 @@ def build_evidence(
     )
 
 
+def section_code_matches(stored: str, requested: str) -> bool:
+    """要求された項目自身か、その配下の番号かを判定する。"""
+    return stored == requested or stored.startswith(requested + ".")
+
+
 def select_units(
     units: Iterable[SearchUnit],
     criteria: SearchUnitCriteria,
@@ -255,7 +260,18 @@ def select_units(
     section_codes = {code.value for code in criteria.section_codes}
     product_codes = criteria.product_codes
     for unit in units:
-        if section_codes and unit.section_code.value not in section_codes:
+        if section_codes and not any(
+            section_code_matches(member, code)
+            for code in section_codes
+            for member in (
+                unit.section_code.value,
+                *(
+                    block.context.section_code.value
+                    for block in unit.blocks
+                    if block.context.section_code is not None
+                ),
+            )
+        ):
             continue
         if product_codes and not product_codes.intersection(unit.product_codes):
             continue

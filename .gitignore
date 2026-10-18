@@ -54,6 +54,7 @@ for-llm
 # Package insert source/body datasets are supplied locally, not redistributed.
 /data/pmda/originals/
 /data/pmda/imports/
+/data/pmda/current-v4/
 /data/pmda/structured/*
 !/data/pmda/structured/README.md
 /data_tools/data/

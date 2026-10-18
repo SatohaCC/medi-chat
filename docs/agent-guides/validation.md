@@ -32,7 +32,7 @@ pnpm-workspaceの`python.enabled=false`でpnpmの別Python環境管理を停止�
 `pnpm test:e2e`は通常devのdotenvと設定解決を保持し、configured検索索引のread-only readiness→実`backend.main:app` OS health（3212）→モックChromium→実接続Chromiumの順に検証する。どの必須層の非0も全体非0とし、未準備/staleをfresh fixture成功で代替しない。configured要求はhealthだけで、索引の自動更新・LLM質問・Web保存をしない。占有portは拒否し、試験所有processだけを終了する。
 モック層はチャット画面とイベントを検証する。実接続層は一時DB・実backendを使い、外部LLM/検出SDKの固定ダブルは実通信として扱わない。
 
-明示的な単独実行は`pnpm --filter frontend test:e2e:mock`/`test:e2e:real`。実接続は専用Next/backendと一時SQLite/import rootを使い、APIをinterceptせず、登録・同YJ置換・一部旧版保持・参照0旧ファイル削除・同原本再送の非復活・OS再起動後GET/候補/検索の維持を検証する。更新対象の一時DBと、変更してはいけない運用DB/原物/backupを区別する。fresh prepared正常系に加えて、実旧manifest DBの整合copy→明示Alembic/初期登録CLI→同copy実browserの回帰を維持する。copy suiteでは外部LLM keysを空・dotenv無効にし、configured smokeへ漏らさない。Next試験出力は`.next-e2e-mock`/`.next-e2e-real`（必要時buildは`.next-e2e-build`）で通常`.next`と分離する。
+明示的な単独実行は`pnpm --filter frontend test:e2e:mock`/`test:e2e:real`。実接続は専用Next/backendと一時SQLite/import rootを使い、APIをinterceptせず、登録・同YJ置換・一部旧版保持・参照0旧ファイル削除・同原本再送の非復活・OS再起動後GET/候補/検索の維持を検証する。更新対象の一時DBと、変更してはいけない運用DB/原物/backupを区別する。現行形式のfixtureは空DBへのAlembicと原本からの登録で作成し、旧索引の移行・stamp・互換読み取りを行わない。実接続試験では外部LLM keysを空・dotenv無効にし、configured smokeへ漏らさない。Next試験出力は`.next-e2e-mock`/`.next-e2e-real`（必要時buildは`.next-e2e-build`）で通常`.next`と分離する。
 
 ## 原本XML・添付文書の検証規則（内容・文脈保持と許容される表示形式差）
 

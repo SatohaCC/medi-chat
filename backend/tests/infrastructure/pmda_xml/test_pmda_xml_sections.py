@@ -41,7 +41,8 @@ def test_sx_r09_original_xml_continued_reference(identifier, expected):
     assert resolve_targets(root, [identifier]) == {identifier: expected}
 
 
-def test_sx_r10_continued_reset_nested_parent_and_section_boundaries():
+@pytest.mark.parametrize("boolean_one", ["true", "1"])
+def test_sx_r10_continued_reset_nested_parent_and_section_boundaries(boolean_one):
     root = ET.fromstring("""
       <PackIns>
         <ContraIndications><SimpleList>
@@ -59,6 +60,10 @@ def test_sx_r10_continued_reset_nested_parent_and_section_boundaries():
         <Warnings><OrderedList numberContinued="true"><Item id="other_section"/></OrderedList></Warnings>
       </PackIns>
     """)
+    if boolean_one == "1":
+        root = ET.fromstring(
+            ET.tostring(root).replace(b'numberContinued="true"', b'numberContinued="1"')
+        )
     expected = {
         "a": "2.1",
         "b": "2.2",

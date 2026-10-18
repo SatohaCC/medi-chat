@@ -31,10 +31,6 @@ def context_labels(
         if tag_name(current) == "Item":
             header = direct_child(current, "Header")
             label = text_of(header, xml_settings=xml_settings)
-            if not label and any(tag_name(child).endswith("List") for child in current):
-                detail = direct_child(current, "Detail")
-                candidate = text_of(detail, xml_settings=xml_settings)
-                label = candidate if len(candidate) <= 80 else ""
             if label:
                 labels.append(label)
         current = parents.get(current)
@@ -176,24 +172,6 @@ def _make_fragments(
                 rows = [child for child in table if tag_name(child) == "SimpTblRow"]
                 extra["row_index_zero_based"] = rows.index(element)
                 extra["table_xml_path"] = paths[table]
-                first_row_has_spans = (
-                    any(
-                        int(cell.attrib.get(span, "1")) > 1
-                        for cell in rows[0]
-                        for span in ("rspan", "cspan")
-                    )
-                    if rows
-                    else False
-                )
-                top_rows = rows[:2] if first_row_has_spans else rows[:1]
-                extra["table_top_rows"] = [
-                    [
-                        "\n".join(text_lines(cell, xml_settings=xml_settings))
-                        for cell in row
-                        if tag_name(cell) == "SimpTblCell"
-                    ]
-                    for row in top_rows
-                ]
             text = " | ".join(cell["text"] for cell in extra["cells"])
         elif kind == "graphic":
             filenames = list(
@@ -250,7 +228,12 @@ def _make_fragments(
         scope = context_labels(element, parents, xml_settings=xml_settings)
 
         scoped_products = _scoped_products(
-            element, parts, parents, products, products_by_id, scope
+            element,
+            [] if kind == "table_row" else parts,
+            parents,
+            products,
+            products_by_id,
+            scope,
         )
 
         unit_yj_codes = [p["yj_code"] for p in scoped_products if p.get("yj_code")]
@@ -278,33 +261,6 @@ def _make_fragments(
             return
         if name in xml_settings.atomic_units:
             emit(element, xml_settings.atomic_units[name])
-            return
-        if name == "Item":
-            direct_parts = [
-                child for child in element if tag_name(child) in {"Header", "Detail"}
-            ]
-            has_child_list = any(tag_name(child).endswith("List") for child in element)
-            is_pure_label = False
-            if has_child_list and len(direct_parts) == 1:
-                part = direct_parts[0]
-                ptag = tag_name(part)
-                ptext = text_of(part, xml_settings=xml_settings)
-                if ptag == "Header" or ptag == "Detail" and len(ptext) <= 80:
-                    is_pure_label = True
-
-            if direct_parts:
-                if is_pure_label:
-                    covered_langs.update(
-                        child
-                        for part in direct_parts
-                        for child in part.iter()
-                        if tag_name(child) == "Lang"
-                    )
-                else:
-                    emit(element, "item", direct_parts)
-            for child in element:
-                if child not in direct_parts:
-                    visit(child)
             return
         if name in {"Detail", "Header", "Lang"}:
             emit(element, name.lower())

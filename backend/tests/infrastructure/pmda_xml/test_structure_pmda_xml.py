@@ -13,6 +13,7 @@ from backend.infrastructure.package_insert_definitions.loader import (
 )
 from backend.infrastructure.pmda_xml.transform import transform
 from backend.tests.support.paths import PROJECT_ROOT
+from backend.tests.support.section_records import flatten_sections
 
 DATA_DIR = PROJECT_ROOT / "data/pmda/originals"
 SOURCE = DATA_DIR / "イグザレルト錠２．５ｍｇ" / "630004_3339003F5020_1_08.xml"
@@ -65,20 +66,20 @@ class StructurePmdaXmlTests(unittest.TestCase):
         contraindications = next(
             unit for unit in self.units if unit["section"]["code"] == "2"
         )
-        paragraphs = contraindications["text"].split("\n\n")
-        pad = next(text for text in paragraphs if "eGFR15" in text)
-        fontan = next(text for text in paragraphs if "eGFR30" in text)
-        self.assertNotEqual(pad, fontan)
-        text = contraindications["text"]
-        headings = []
-        for threshold in ("eGFR15", "eGFR30"):
-            position = text.index(threshold)
-            start = text.rfind("### ", 0, position)
-            self.assertGreaterEqual(start, 0)
-            headings.append(text[start : text.index("\n\n", start)])
-        self.assertNotEqual(headings[0], headings[1])
+        paragraphs = [
+            block
+            for block in contraindications["blocks"]
+            if block["kind"] == "paragraph"
+        ]
+        pad = next(block for block in paragraphs if "eGFR15" in block["text"])
+        fontan = next(block for block in paragraphs if "eGFR30" in block["text"])
+        self.assertNotEqual(pad["context"]["labels"], fontan["context"]["labels"])
+        self.assertIn("下肢血行再建術", pad["context"]["labels"][-1])
+        self.assertIn("Fontan", fontan["context"]["labels"][-1])
 
-    def test_indications_include_scope_and_omit_pure_labels(self) -> None:
+    def test_indications_keep_original_labels_as_body_without_invented_headings(
+        self,
+    ) -> None:
         sec4_units = [u for u in self.units if u["section"]["code"] == "4"]
         self.assertEqual(len(sec4_units), 1)
         sec4_texts = [u["text"] for u in sec4_units]
@@ -86,7 +87,7 @@ class StructurePmdaXmlTests(unittest.TestCase):
         self.assertNotIn("小児", sec4_texts)
         self.assertTrue(
             any(
-                "〈成人〉" in t
+                "成人" in t
                 and "下肢血行再建術施行後の末梢動脈疾患患者における血栓・塞栓形成の抑制"
                 in t
                 for t in sec4_texts
@@ -94,20 +95,19 @@ class StructurePmdaXmlTests(unittest.TestCase):
         )
         self.assertTrue(
             any(
-                "〈小児〉" in t and "Fontan手術施行後における血栓・塞栓形成の抑制" in t
+                "小児" in t and "Fontan手術施行後における血栓・塞栓形成の抑制" in t
                 for t in sec4_texts
             )
         )
 
     def test_interactions_and_adverse_events_keep_table_meaning(self) -> None:
         sections = {unit["section"]["code"]: unit for unit in self.units}
-        self.assertEqual(sections["10.1"]["text"].count("<tr>"), 6)
-        self.assertEqual(sections["10.2"]["text"].count("<tr>"), 9)
+        self.assertEqual(sections["10"]["text"].count("<tr>"), 15)
         for column in get_package_insert_definitions().interaction_columns:
-            self.assertIn(column.title.value, sections["10.1"]["text"])
-        self.assertEqual(sections["11.2"]["text"].count("<tr>"), 34)
-        self.assertIn("頻度", sections["11.2"]["text"])
-        self.assertIn("分類", sections["11.2"]["text"])
+            self.assertIn(column.title.value, sections["10"]["text"])
+        self.assertEqual(sections["11"]["text"].count("<tr>"), 34)
+        self.assertIn("頻度", sections["11"]["text"])
+        self.assertIn("分類", sections["11"]["text"])
         self.assertTrue(
             any(
                 'rowspan="' in unit["text"] or 'colspan="' in unit["text"]
@@ -140,12 +140,16 @@ class StructurePmdaXmlTests(unittest.TestCase):
                 self.assertEqual(validation["unrepresented_nonempty_lang_paths"], [])
                 self.assertTrue({"5", "20"}.issubset(section_codes))
                 self.assertTrue(document["root_misc_nodes"])
-                graphics = [unit for unit in units if "図ファイル:" in unit["text"]]
+                graphics = [
+                    block
+                    for unit in units
+                    for block in unit["blocks"]
+                    if block["kind"] == "figure"
+                ]
                 self.assertTrue(graphics)
+                self.assertTrue(all(block["reference"] for block in graphics))
                 if source.name == "800155_6290004M1029_1_47.xml":
-                    self.assertTrue(
-                        any("図の説明:" in unit["text"] for unit in graphics)
-                    )
+                    self.assertTrue(any(block["description"] for block in graphics))
 
     def test_reproductive_potential_is_section_9_4_in_both_xml_documents(self) -> None:
         for source in ADDED_SOURCES:
@@ -185,7 +189,7 @@ class StructurePmdaXmlTests(unittest.TestCase):
                 reproductive_unit = next(
                     unit
                     for unit in units
-                    if unit["section"]["code"] == "9.4"
+                    if unit["section"]["code"] == "9"
                     and "最終投与後1ヵ月間" in unit["text"]
                 )
                 self.assertEqual(reproductive_unit["kind"], "section")
@@ -258,15 +262,49 @@ class StructurePmdaXmlTests(unittest.TestCase):
         self.assertNotIn("13.2", by_code)
         self.assertNotIn("18.2", by_code)
         self.assertNotIn("26.1", by_code)
-        sections_by_code = {s["code"]: s for s in document["sections"]}
+        sections_by_code = {
+            s["code"]: s for s in flatten_sections(document["sections"])
+        }
         self.assertIn("16.8", sections_by_code)
         self.assertIn("17.3", sections_by_code)
-        section_by_text = {unit["text"]: unit["section"]["code"] for unit in units}
-        self.assertEqual(section_by_text["薬物動態のその他"], "16.8")
-        self.assertEqual(section_by_text["臨床成績のその他"], "17.3")
-        self.assertEqual(section_by_text["薬理作用"], "18")
-        self.assertEqual(section_by_text["適用上のその他"], "14")
-        self.assertEqual(section_by_text["製造販売元"], "26")
+        self.assertEqual(
+            next(
+                unit["section"]["code"]
+                for unit in units
+                if "薬物動態のその他" in unit["text"]
+            ),
+            "16",
+        )
+        self.assertEqual(
+            next(
+                unit["section"]["code"]
+                for unit in units
+                if "臨床成績のその他" in unit["text"]
+            ),
+            "17",
+        )
+        self.assertEqual(
+            next(
+                unit["section"]["code"] for unit in units if "薬理作用" in unit["text"]
+            ),
+            "18",
+        )
+        self.assertEqual(
+            next(
+                unit["section"]["code"]
+                for unit in units
+                if "適用上のその他" in unit["text"]
+            ),
+            "14",
+        )
+        self.assertEqual(
+            next(
+                unit["section"]["code"]
+                for unit in units
+                if "製造販売元" in unit["text"]
+            ),
+            "26",
+        )
         self.assertEqual(
             next(
                 unit["section"]["code"]
@@ -449,8 +487,8 @@ class StructurePmdaXmlTests(unittest.TestCase):
             set(unit_a["product_yj_codes"]), {"111111111111", "222222222222"}
         )
         text = unit_a["text"]
-        heading_a = "### 対象製品: 製品A錠10mg [YJ: 111111111111]"
-        heading_b = "### 対象製品: 製品B細粒20% [YJ: 222222222222]"
+        heading_a = "対象製品: 製品A錠10mg [YJ: 111111111111]"
+        heading_b = "対象製品: 製品B細粒20% [YJ: 222222222222]"
         self.assertIn(heading_a, text)
         self.assertIn(heading_b, text)
         first, second = text.split(heading_b)

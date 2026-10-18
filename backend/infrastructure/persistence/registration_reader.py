@@ -17,7 +17,11 @@ from ...domain.attachment.identifiers import DocumentId
 from ...domain.attachment.primitives import PmdaUrl
 from ...domain.attachment.value_objects import AttachmentProductRevision
 from ...domain.medicine.identifiers import YjCode
-from ..index_payloads import build_index_unit
+from ..index_payloads import (
+    DOCUMENT_SCHEMA_VERSION,
+    build_index_unit,
+    registered_unit_text,
+)
 from ..json_payloads import parse_json_object
 from .owned_sqlite import OwnedSqliteConnection
 from .revision_selection import validate_active_revisions
@@ -123,6 +127,13 @@ def read_registered_snapshot(index_path: Path) -> SourceSnapshot | None:
             if actual != generation["fingerprint"]:
                 raise IndexSourceError("Published artifact fingerprint differs")
             value = json.loads(generation["snapshot_json"])
+            for document in value["documents"]:
+                if document["payload"].get("schema_version") != DOCUMENT_SCHEMA_VERSION:
+                    raise ValueError(
+                        "Unsupported document format; regenerate from original sources"
+                    )
+            for unit in value["units"]:
+                registered_unit_text(parse_json_object(json.dumps(unit)))
             medicines = tuple(
                 RegisteredMedicine(
                     medicine=MedicineProduct(

@@ -74,7 +74,6 @@ class RegistrationInput:
     # Explicit initial-copy inventory, never a recursive ownership scan.
     owned_files: tuple[Path, ...] = ()
     source_path: Path | None = None
-    document_payload: dict[str, Any] | None = None
 
 
 def _dump(value: object) -> str:
@@ -369,9 +368,7 @@ class SqliteRegistrationPublisher:
                             sorted(code.value for code in replaced_codes)
                         ),
                         "result_json": _dump(result_dict(bundle.result)),
-                        "document_payload_json": _dump(
-                            item.document_payload or info.document
-                        ),
+                        "document_payload_json": _dump(info.document),
                         "source_path": str(source_path.absolute()),
                         "files_json": _dump(files),
                         "cleanup_targets_json": _dump(cleanup_targets),

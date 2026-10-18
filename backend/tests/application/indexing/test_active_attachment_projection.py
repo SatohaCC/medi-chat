@@ -47,7 +47,7 @@ def test_tc092_xml_mixed_row_does_not_apply_first_child_scope_to_b_and_common():
     (table,) = [
         block.table for block in unit.blocks if isinstance(block, SearchTableBlock)
     ]
-    assert [c.value for c in table.columns] == ["B列", "共通列"]
+    assert table.columns == ()  # Original first-row cells are not declared headings.
     assert [
         [(c.text.value, c.column, c.rowspan, c.colspan) for c in row]
         for row in table.rows
@@ -57,6 +57,22 @@ def test_tc092_xml_mixed_row_does_not_apply_first_child_scope_to_b_and_common():
         [("B次", 0, 1, 1)],
     ]
     assert document.sections == original
+
+
+def test_typed_interaction_rows_keep_product_scope_without_cell_references():
+    source = mixed_source()
+    start = source.index(b"<Warnings>")
+    end = source.index(b"</Warnings>") + len(b"</Warnings>")
+    body = """<Interactions><ContraIndicatedCombinations>
+      <Drug brandRef="A"><DrugName><Lang>A専用の薬剤</Lang></DrugName><ClinSymptomsAndMeasures><Lang>Aの症状</Lang></ClinSymptomsAndMeasures><MechanismAndRiskFactors><Lang>Aの機序</Lang></MechanismAndRiskFactors></Drug>
+      <Drug brandRef="B"><DrugName><Lang>B専用の薬剤</Lang></DrugName><ClinSymptomsAndMeasures><Lang>Bの症状</Lang></ClinSymptomsAndMeasures><MechanismAndRiskFactors><Lang>Bの機序</Lang></MechanismAndRiskFactors></Drug>
+    </ContraIndicatedCombinations></Interactions>""".encode()
+    source = source[:start] + body + source[end:]
+    document = PmdaXmlDecoder().decode(source).document
+    (unit,) = project_active_attachment(document, frozenset({YjCode("222222222222")}))
+    assert unit.section_code.value == "10"
+    assert "B専用の薬剤" in unit.text.value
+    assert "A専用の薬剤" not in unit.text.value
 
 
 def test_tc093_v3_rows_qualify_original_sha_and_preserve_original_document_id():
@@ -69,7 +85,7 @@ def test_tc093_v3_rows_qualify_original_sha_and_preserve_original_document_id():
         rows.append(json.loads(encode_registered_units(document, units)))
     for source, row in zip((o, n), rows, strict=True):
         sha = hashlib.sha256(source).hexdigest()
-        assert row["schema_version"] == "medi-chat.pmda-sections.v3"
+        assert row["schema_version"] == "medi-chat.pmda-sections.v4"
         assert row["document_key"] == "000001_test"
         assert row["source_sha256"] == sha
         assert row["version_id"] == f"000001_test:{sha}"

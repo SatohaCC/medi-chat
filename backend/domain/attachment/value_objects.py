@@ -120,9 +120,15 @@ class AttachmentContext:
 
     product_codes: tuple[AttachmentProductCode, ...] = ()
     labels: tuple[AttachmentText, ...] = ()
+    # 文書全体での出現順。同じ文脈の隣接表行の結合判定には含めない。
+    source_order: int | None = field(default=None, compare=False)
 
     def __post_init__(self) -> None:
         _require_tuples(self.product_codes, self.labels)
+        if self.source_order is not None and (
+            type(self.source_order) is not int or self.source_order < 0
+        ):
+            raise AttachmentDomainError("source order must be a nonnegative integer")
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -166,6 +172,7 @@ class AttachmentTable:
 @dataclass(frozen=True, slots=True, kw_only=True)
 class AttachmentParagraph:
     text: AttachmentText
+    is_heading: bool = False
     context: AttachmentContext = field(default_factory=AttachmentContext)
     references: tuple[AttachmentReference, ...] = ()
 
@@ -240,11 +247,24 @@ class AttachmentProduct:
 
 @dataclass(frozen=True, slots=True)
 class AttachmentSection:
-    """添付文書の項目番号と正式名称。"""
+    """標準項目名と原文見出しを区別し、配下の項目を所有する。"""
 
     code: NumberedSectionCode
     title: AttachmentSectionTitle
     body: AttachmentBody | None = None
+    header: AttachmentText | None = None
+    children: tuple[AttachmentSection, ...] = ()
+
+    def __post_init__(self) -> None:
+        _require_tuples(self.children)
+        if any(child.parent_code != self.code for child in self.children):
+            raise AttachmentDomainError(
+                "section children must have the owning parent code"
+            )
+
+    def walk(self) -> tuple[AttachmentSection, ...]:
+        """自身と配下を保存順に返す。"""
+        return (self, *(section for child in self.children for section in child.walk()))
 
     @property
     def parent_code(self) -> NumberedSectionCode | None:

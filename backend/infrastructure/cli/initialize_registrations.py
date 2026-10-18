@@ -75,15 +75,9 @@ def main() -> int:
                 path = document_dir / name
                 if path.is_file():
                     paths.append(path)
-            legacy_document = document_dir / "document.json"
-            payload = (
-                json.loads(legacy_document.read_bytes())
-                if legacy_document.is_file()
-                else None
-            )
             inputs.append(
                 RegistrationInput(
-                    decoded, source, tuple(dict.fromkeys(paths)), source_path, payload
+                    decoded, source, tuple(dict.fromkeys(paths)), source_path
                 )
             )
         if not inputs:

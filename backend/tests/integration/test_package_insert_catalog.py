@@ -54,6 +54,7 @@ from backend.tests.infrastructure.persistence.test_alembic_migrations import (
 )
 from backend.tests.support.storage_fixtures import (
     build_document_store,
+    make_search_payload,
     write_structured_document,
 )
 from sqlalchemy.engine import URL
@@ -432,7 +433,10 @@ def test_新しい項目の定義だけで検索とプロンプトとXMLに反�
         .splitlines()
     ]
     assert units[0]["section"] == {"code": "27", "title": "追加の項目"}
-    assert units[0]["text"] == "追補の本文"
+    assert (
+        units[0]["text"]
+        == '<h3 data-section-code="27">27 追加の項目</h3><p>追補の本文</p>'
+    )
 
 
 @pytest.mark.asyncio
@@ -677,7 +681,10 @@ def test_SQLiteと根拠一覧の項目順が一致する(
             for evidence in sources
         ]
         (source / "test_001" / "search_units.jsonl").write_text(
-            "\n".join(json.dumps(unit, ensure_ascii=False) for unit in units),
+            "\n".join(
+                json.dumps(make_search_payload(unit), ensure_ascii=False)
+                for unit in units
+            ),
             encoding="utf-8",
         )
         index_path = tmp_path / "sort.sqlite3"

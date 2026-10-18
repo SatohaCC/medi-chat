@@ -40,6 +40,7 @@ from backend.tests.infrastructure.persistence.test_alembic_migrations import (
 )
 from backend.tests.support.storage_fixtures import (
     build_document_store,
+    make_search_payload,
     write_structured_document,
 )
 from fastapi.testclient import TestClient
@@ -214,7 +215,9 @@ def test_重複はunit_idだけで除去し固有unitと取得元を保持する
         unit["section"] = {"code": code, "title": title}
         unit["text"] = text
     path.write_text(
-        "\n".join(json.dumps(unit, ensure_ascii=False) for unit in units),
+        "\n".join(
+            json.dumps(make_search_payload(unit), ensure_ascii=False) for unit in units
+        ),
         encoding="utf-8",
     )
     build_document_store(structured, tmp_path / "index.sqlite3")

@@ -153,9 +153,9 @@ def expected_resolved():
 
 def assert_normal_sources(sources, available):
     x = ORACLE[0]
-    codes = ("10", "10.1", "10.2", "16.7")
+    codes = ("10", "16")
     assert [s["unit_id"] for s in sources] == [
-        x["sections"][c]["unit_id"] for c in codes
+        f"{x['document_id']}:{x['sha256']}:{c}" for c in codes
     ]
     for s, c in zip(sources, codes, strict=True):
         assert_public_source(s, x, c)

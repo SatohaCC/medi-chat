@@ -19,7 +19,6 @@ from backend.tests.support.attachment_import_fixtures import xml_source
 def register_synthetic_prepared_index(structured: Path, index: Path) -> None:
     document = structured / "test_001" / "document.json"
     units = document.parent / "search_units.jsonl"
-    payload = json.loads(document.read_bytes())
     texts = [
         json.loads(line)["text"]
         for line in units.read_text(encoding="utf-8").splitlines()
@@ -31,6 +30,10 @@ def register_synthetic_prepared_index(structured: Path, index: Path) -> None:
         "<AdverseEvents><Detail><Lang>"
         + html.escape(" ".join(texts))
         + "</Lang></Detail></AdverseEvents>"
+    )
+    raw = raw.replace(
+        b"</ApprovalEtc>",
+        "</ApprovalEtc><GenericName><Lang>テスト成分</Lang></GenericName>".encode(),
     )
     raw = (
         raw.replace(b"000001", b"test")
@@ -56,7 +59,6 @@ def register_synthetic_prepared_index(structured: Path, index: Path) -> None:
                 raw,
                 (original, document, units),
                 original,
-                payload,
             ),
         ),
         initial=True,
@@ -68,7 +70,15 @@ def register_existing_test_source(structured: Path, index: Path) -> Path:
     originals = root / "originals"
     copied = root / "structured"
     shutil.copytree(structured.parent / "originals", originals)
-    shutil.copytree(structured, copied, ignore=shutil.ignore_patterns("*.sqlite3*"))
+    from backend.infrastructure.pmda_xml.transform import transform
+    from backend.tests.infrastructure.persistence.test_alembic_migrations import (
+        _migrate_database,
+    )
+
+    copied.mkdir(parents=True)
+    for original in sorted(originals.rglob("*.xml")):
+        transform(original, copied / original.stem)
+    _migrate_database(index, copied)
     result = command(
         root,
         "backend.infrastructure.cli.initialize_registrations",

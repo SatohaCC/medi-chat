@@ -47,7 +47,7 @@ from .definition_settings import PmdaXmlSettings
 from .safe_parser import parse_source
 from .sections import make_section_index, reference_section_code
 from .units import _make_fragments, _scoped_products, context_labels
-from .xml_nodes import build_paths, tag_name, text_of
+from .xml_nodes import build_paths, direct_child, tag_name, text_of
 
 
 @dataclass(frozen=True)
@@ -64,6 +64,7 @@ def _context(fragment: dict[str, Any]) -> AttachmentContext:
             AttachmentProductCode(code) for code in fragment["product_yj_codes"]
         ),
         labels=tuple(AttachmentText(label) for label in fragment["context_labels"]),
+        source_order=fragment.get("source_order"),
     )
 
 
@@ -99,9 +100,15 @@ def _blocks(
 
     blocks: list[AttachmentBlock] = []
     table_key = None
+    previous_order = None
     for fragment in fragments:
         kind = fragment["kind"]
         context = _context(fragment)
+        adjacent = (
+            previous_order is None
+            or context.source_order is None
+            or context.source_order == previous_order + 1
+        )
         references = _references(fragment)
         key = None
         columns: tuple[AttachmentText, ...] = ()
@@ -137,11 +144,6 @@ def _blocks(
             )
             key = kind
         elif kind == "table_row":
-            columns = (
-                tuple(AttachmentText(text) for text in fragment["table_top_rows"][0])
-                if fragment["table_top_rows"]
-                else ()
-            )
             cells_list = []
             occupied: set[int] = set()
             previous = blocks[-1] if blocks else None
@@ -149,6 +151,7 @@ def _blocks(
                 table_key == fragment["table_xml_path"]
                 and isinstance(previous, AttachmentTableBlock)
                 and previous.context == context
+                and adjacent
             ):
                 current_row = len(previous.table.rows)
                 for row_index, row in enumerate(previous.table.rows):
@@ -192,6 +195,7 @@ def _blocks(
                 table_key == key
                 and isinstance(previous, AttachmentTableBlock)
                 and previous.context == context
+                and adjacent
             ):
                 blocks[-1] = replace(
                     previous,
@@ -226,11 +230,13 @@ def _blocks(
             blocks.append(
                 AttachmentParagraph(
                     text=AttachmentText(fragment["text"]),
+                    is_heading=kind == "header",
                     context=context,
                     references=references,
                 )
             )
         table_key = key
+        previous_order = context.source_order
     return tuple(blocks)
 
 
@@ -321,7 +327,8 @@ class PmdaXmlDecoder:
                         target, parents, by_element, xml_settings=xml_settings
                     )
         grouped: dict[str, list[dict[str, Any]]] = {}
-        for fragment in fragments:
+        for source_order, fragment in enumerate(fragments):
+            fragment["source_order"] = source_order
             grouped.setdefault(fragment["section"]["code"], []).append(fragment)
         rows_by_code = {row["section"]["code"]: row for row in rows}
         meta = document["document"]
@@ -338,7 +345,7 @@ class PmdaXmlDecoder:
         }
 
         for table in root.iter():
-            if tag_name(table) != "SimpTbl":
+            if tag_name(table) not in {"SimpTbl", "SimpleTable"}:
                 continue
             for row_index, row in enumerate(
                 child for child in table if tag_name(child) == "SimpTblRow"
@@ -395,6 +402,36 @@ class PmdaXmlDecoder:
                         )
                     )
                 cell_details[paths[table] + ":" + str(row_index)] = tuple(details)
+
+        def section_model(section: dict[str, Any]) -> AttachmentSection:
+            code = section["code"]
+            element = next(
+                element
+                for element, value in by_element.items()
+                if value["code"] == code
+            )
+            header = direct_child(element, "Header")
+            return AttachmentSection(
+                NumberedSectionCode(code),
+                AttachmentSectionTitle(section["title"]),
+                AttachmentBody(
+                    blocks=_blocks(
+                        grouped.get(code, []), cell_details, xml_settings=xml_settings
+                    ),
+                    text=AttachmentText(rows_by_code[code]["text"])
+                    if code in rows_by_code
+                    else None,
+                ),
+                header=AttachmentText(text_of(header, xml_settings=xml_settings))
+                if header is not None
+                else None,
+                children=tuple(
+                    section_model(child)
+                    for child in document["section_index"]
+                    if child["parent_code"] == code
+                ),
+            )
+
         try:
             model = AttachmentDocument(
                 document_id=DocumentId(validation["document_key"]),
@@ -429,21 +466,9 @@ class PmdaXmlDecoder:
                     for index, product in enumerate(meta["products"])
                 ),
                 sections=tuple(
-                    AttachmentSection(
-                        NumberedSectionCode(section["code"]),
-                        AttachmentSectionTitle(section["title"]),
-                        AttachmentBody(
-                            blocks=_blocks(
-                                grouped.get(section["code"], []),
-                                cell_details,
-                                xml_settings=xml_settings,
-                            ),
-                            text=AttachmentText(rows_by_code[section["code"]]["text"])
-                            if section["code"] in rows_by_code
-                            else None,
-                        ),
-                    )
+                    section_model(section)
                     for section in document["section_index"]
+                    if section["parent_code"] is None
                 ),
                 reference_targets=tuple(
                     AttachmentReferenceTarget(

@@ -86,6 +86,7 @@ from backend.tests.infrastructure.persistence.test_package_insert_index import (
     migrated_index as migrated_index,
 )
 from backend.tests.support.paths import FIXTURES_ROOT
+from backend.tests.support.storage_fixtures import make_search_payload
 from sqlalchemy import select, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import IntegrityError
@@ -450,6 +451,7 @@ def test_index_ports_accept_equivalent_snapshots(
     snapshot = file_source.read_snapshot()
     # 全保存項目は既存fixtureの固定値から期待する。動的fingerprintだけは同じ取得値を渡す。
     document: dict[str, JsonValue] = {
+        "schema_version": "medi-chat.pmda-prescription-xml.v2",
         "document": {
             "company_identifier": "test",
             "package_insert_no": "001",
@@ -482,14 +484,16 @@ def test_index_ports_accept_equivalent_snapshots(
                 document_id="test_001",
                 section_code="11.1",
                 kind="text",
-                payload={
-                    "unit_id": f"test_001:{index:03d}",
-                    "document_key": "test_001",
-                    "product_yj_codes": ["1234567A0000"],
-                    "section": {"code": "11.1", "title": "重大な副作用"},
-                    "kind": "text",
-                    "text": f"頭痛に注意してください。記載{index}",
-                },
+                payload=make_search_payload(
+                    {
+                        "unit_id": f"test_001:{index:03d}",
+                        "document_key": "test_001",
+                        "product_yj_codes": ["1234567A0000"],
+                        "section": {"code": "11.1", "title": "重大な副作用"},
+                        "kind": "text",
+                        "text": f"頭痛に注意してください。記載{index}",
+                    }
+                ),
                 query_text=f"頭痛に注意してください 記載{index} 重大な副作用",
                 drug_name="",
             )

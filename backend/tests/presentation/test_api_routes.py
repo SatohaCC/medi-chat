@@ -17,14 +17,8 @@ from xml.etree import ElementTree as ET
 from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
 from backend.domain.retrieval.primitives import IntentName, Probability
 from backend.domain.retrieval.value_objects import IntentCandidate
-from backend.infrastructure.persistence.index_writer import SqlAlchemyIndexWriter
-from backend.infrastructure.persistence.sqlite_engine import create_sqlite_engine
-from backend.infrastructure.sources.file_index_source import FileIndexSourceReader
 from backend.main import create_app
 from backend.tests.application.chat.test_product_identity_responses import CONFIRMATIONS
-from backend.tests.infrastructure.persistence.test_alembic_migrations import (
-    _migrate_database,
-)
 from backend.tests.integration.test_interaction_xml_oracle import (
     ORACLE,
     assert_prompt_oracle,
@@ -34,7 +28,6 @@ from backend.tests.support.paths import PROJECT_ROOT
 from backend.tests.support.storage_fixtures import build_document_store
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from sqlalchemy.engine import URL
 
 REPO_ROOT = PROJECT_ROOT
 STRUCTURED_DIR = REPO_ROOT / "data" / "pmda" / "structured"
@@ -91,23 +84,12 @@ class ChatApiRouteTests(unittest.TestCase):
         cls.temp_dir = tempfile.TemporaryDirectory()
         index_path = Path(cls.temp_dir.name) / "chat-search.sqlite3"
         cls.index_path = index_path
-        _migrate_database(index_path, STRUCTURED_DIR)
-        engine = create_sqlite_engine(
-            URL.create("sqlite", database=index_path.as_posix()).render_as_string(
-                hide_password=False
-            )
-        )
-        try:
-            SqlAlchemyIndexWriter(engine).replace(
-                FileIndexSourceReader(STRUCTURED_DIR).read_snapshot()
-            )
-        finally:
-            engine.dispose()
         from backend.tests.support.registration_runtime_fixtures import (
             register_existing_test_source,
         )
 
         prepared = register_existing_test_source(STRUCTURED_DIR, index_path)
+        cls.structured_dir = prepared
         cls.classifier_patch = patch(
             "backend.main.JevIntentClassifier", UnavailableIntentClassifier
         )
@@ -132,7 +114,7 @@ class ChatApiRouteTests(unittest.TestCase):
         response = self.client.get("/health")
 
         self.assertEqual(response.status_code, 200)
-        expected_documents = list(STRUCTURED_DIR.glob("*/document.json"))
+        expected_documents = list(self.structured_dir.glob("*/document.json"))
         expected_units = sum(
             sum(
                 1
@@ -302,11 +284,9 @@ class ChatApiRouteTests(unittest.TestCase):
             {source["unit_id"] for source in payload["sources"]},
             {
                 f"630004_3339003F5020_1_08:{expected_sha}:11",
-                f"630004_3339003F5020_1_08:{expected_sha}:11.1",
-                f"630004_3339003F5020_1_08:{expected_sha}:11.2",
             },
         )
-        self.assertEqual(len(payload["sources"]), 3)
+        self.assertEqual(len(payload["sources"]), 1)
         self.assertTrue(
             all(
                 source["section"]["code"].startswith("11")
@@ -328,7 +308,7 @@ class ChatApiRouteTests(unittest.TestCase):
         self.assertEqual(payload["intent"], "reproductive_potential")
         self.assertTrue(payload["sources"])
         self.assertTrue(
-            all(source["section"]["code"] == "9.4" for source in payload["sources"])
+            all(source["section"]["code"] == "9" for source in payload["sources"])
         )
         self.assertTrue(
             any(
@@ -351,7 +331,7 @@ class ChatApiRouteTests(unittest.TestCase):
         self.assertEqual(payload["intent"], "pregnancy")
         self.assertTrue(payload["sources"])
         self.assertTrue(
-            all(source["section"]["code"] == "9.5" for source in payload["sources"])
+            all(source["section"]["code"] == "9" for source in payload["sources"])
         )
 
     def test_invalid_message_length_is_rejected(self) -> None:
@@ -505,8 +485,8 @@ class ChatApiRouteTests(unittest.TestCase):
             root = Path(temp_dir)
             structured_dir = root / "structured"
             structured_dir.mkdir()
-            first_source = STRUCTURED_DIR / "630004_3339003F5020_1_08"
-            second_source = STRUCTURED_DIR / "800155_6290004M1029_1_47"
+            first_source = self.structured_dir / "630004_3339003F5020_1_08"
+            second_source = self.structured_dir / "800155_6290004M1029_1_47"
             shutil.copytree(first_source, structured_dir / first_source.name)
 
             first_document_store = build_document_store(
@@ -613,7 +593,7 @@ class ChatApiRouteTests(unittest.TestCase):
         payload_x = response_xarelto.json()
         self.assertEqual(payload_x["intent"], "storage_and_handling")
         self.assertFalse(
-            any(source["section"]["code"] == "3.2" for source in payload_x["sources"])
+            any(source["section"]["code"] == "3" for source in payload_x["sources"])
         )
 
     def test_appearance_query_returns_section_3_2(self) -> None:
@@ -630,7 +610,7 @@ class ChatApiRouteTests(unittest.TestCase):
         self.assertEqual(payload["intent"], "appearance")
         self.assertTrue(len(payload["sources"]) > 0)
         self.assertTrue(
-            all(source["section"]["code"] == "3.2" for source in payload["sources"])
+            all(source["section"]["code"] == "3" for source in payload["sources"])
         )
 
     def test_amaryl_indications_resolved_and_returns_section_4(self) -> None:
@@ -738,7 +718,7 @@ class ChatApiRouteTests(unittest.TestCase):
         self.assertNotIn("小児", excerpts)
         self.assertTrue(
             any(
-                "〈成人〉" in e
+                "成人" in e
                 and "下肢血行再建術施行後の末梢動脈疾患患者における血栓・塞栓形成の抑制"
                 in e
                 for e in excerpts
@@ -746,7 +726,7 @@ class ChatApiRouteTests(unittest.TestCase):
         )
         self.assertTrue(
             any(
-                "〈小児〉" in e and "Fontan手術施行後における血栓・塞栓形成の抑制" in e
+                "小児" in e and "Fontan手術施行後における血栓・塞栓形成の抑制" in e
                 for e in excerpts
             )
         )
@@ -773,10 +753,7 @@ class ChatApiRouteTests(unittest.TestCase):
         self.assertIn("530169_2149044F1121_1_06", doc_keys)
         # All sources belong to interaction sections
         self.assertTrue(
-            all(
-                s["section"]["code"] in {"10", "10.1", "10.2", "16.7"}
-                for s in payload["sources"]
-            )
+            all(s["section"]["code"] in {"10", "16"} for s in payload["sources"])
         )
         # Answer conveys that direct mutual rows were not found, but interaction sections were retrieved
         self.assertIn("互いを直接指定する", payload["answer"])

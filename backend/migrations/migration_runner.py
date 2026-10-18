@@ -15,12 +15,6 @@ from ..infrastructure.persistence.registration_schema import (
 )
 from ..infrastructure.persistence.schema import metadata
 from ..infrastructure.persistence.sqlite_engine import create_sqlite_engine
-from .legacy_copy_stamp import (
-    LEGACY_REVISION,
-    STAMP_COPY_ATTRIBUTE,
-    LegacyCopyStamp,
-    validate_stamp_copy,
-)
 
 
 def _include_schema_name(
@@ -47,6 +41,10 @@ def _validate_managed_database(connection: Connection) -> None:
     scripts = ScriptDirectory.from_config(context.config)
     for revision in revisions:
         scripts.get_revision(revision)
+    if revisions and set(revisions) != set(scripts.get_heads()):
+        raise ValueError(
+            "Unsupported database revision; create a new database and register original sources"
+        )
 
     expected_objects = {("table", "alembic_version")} if table_names else set()
     if revisions:
@@ -92,19 +90,10 @@ def _validate_managed_database(connection: Connection) -> None:
 
 
 def run_migrations(settings: DatabaseSettings) -> None:
-    approval = context.config.attributes.get(STAMP_COPY_ATTRIBUTE)
-    if approval is not None:
-        if (
-            not isinstance(approval, LegacyCopyStamp)
-            or context.get_revision_argument() != LEGACY_REVISION
-        ):
-            raise ValueError("Invalid legacy copy stamp permission")
-        validate_stamp_copy(approval, settings.index_path)
     engine = create_sqlite_engine(settings.database_url)
     try:
         with engine.begin() as connection:
-            if approval is None:
-                _validate_managed_database(connection)
+            _validate_managed_database(connection)
             context.configure(
                 connection=connection,
                 target_metadata=metadata,

@@ -12,12 +12,21 @@ from typing import Literal
 import pytest
 from alembic.config import CommandLine, Config
 from alembic.script import ScriptDirectory
-from backend.tests.support.legacy_v3.package_insert_index import (
-    PackageInsertIndexBuilder,
-)
-from backend.tests.support.legacy_v3.sqlite_database import SQLiteDatabase
+from backend.infrastructure.persistence.index_writer import SqlAlchemyIndexWriter
+from backend.infrastructure.persistence.sqlite_engine import create_sqlite_engine
+from backend.infrastructure.sources.file_index_source import FileIndexSourceReader
 from backend.tests.support.paths import BACKEND_ROOT
 from backend.tests.support.storage_fixtures import write_structured_document
+
+
+def _build_current_index(source: Path, index_path: Path) -> None:
+    engine = create_sqlite_engine(f"sqlite:///{index_path.as_posix()}")
+    try:
+        SqlAlchemyIndexWriter(engine).replace(
+            FileIndexSourceReader(source).read_snapshot()
+        )
+    finally:
+        engine.dispose()
 
 
 def _migrate_database(
@@ -264,7 +273,7 @@ def test_repeated_upgrade_preserves_index(
     index_path = tmp_path / "managed.sqlite3"
     _migrate_database(index_path, source)
     # 現在の明示builderで準備する。後続のCore writer/use caseを先行要求しない。
-    PackageInsertIndexBuilder(source, SQLiteDatabase(index_path)).build_if_needed()
+    _build_current_index(source, index_path)
     before = _snapshot_managed_index(index_path)
     assert before.counts["alembic_version"] == 1
     assert {
@@ -304,7 +313,7 @@ def test_downgrade_and_reupgrade_recreate_managed_schema(
     source = write_structured_document(tmp_path, unit_count=3)
     index_path = tmp_path / "downgrade-deletes-data.sqlite3"
     _migrate_database(index_path, source)
-    PackageInsertIndexBuilder(source, SQLiteDatabase(index_path)).build_if_needed()
+    _build_current_index(source, index_path)
     before = _snapshot_managed_index(index_path)
     assert before.counts["documents"] == 1
     assert before.counts["units"] == 3
@@ -355,7 +364,7 @@ def test_downgrade_and_reupgrade_recreate_managed_schema(
             "SELECT version_num FROM alembic_version"
         ).fetchall() == list(before.rows["alembic_version"])
 
-    PackageInsertIndexBuilder(source, SQLiteDatabase(index_path)).build_if_needed()
+    _build_current_index(source, index_path)
     rebuilt = _snapshot_managed_index(index_path)
     assert rebuilt == before
 
@@ -429,9 +438,11 @@ def test_upgrade_rejects_unmanaged_or_unknown_database(
             )
             connection.commit()
     else:
-        if variant == "unknown_revision":
-            _migrate_database(index_path, source)
-        PackageInsertIndexBuilder(source, SQLiteDatabase(index_path)).build_if_needed()
+        _migrate_database(index_path, source)
+        _build_current_index(source, index_path)
+        if variant == "unmanaged_v3":
+            with sqlite3.connect(index_path) as connection:
+                connection.execute("DROP TABLE alembic_version")
         if variant == "unknown_revision":
             with closing(sqlite3.connect(index_path)) as connection:
                 connection.execute(
@@ -445,7 +456,7 @@ def test_upgrade_rejects_unmanaged_or_unknown_database(
     else:
         assert before.revision is None
     if variant == "unmanaged_v3":
-        assert ("schema_version", "3") in before.rows["index_meta"]
+        assert any(row[0] == "source_fingerprint" for row in before.rows["index_meta"])
         assert len(before.rows["units"]) == 3
     elif variant == "unmanaged_unknown_table":
         assert before.rows["mystery_table"] == (("sentinel", "変更してはいけない値"),)

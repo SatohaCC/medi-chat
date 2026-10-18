@@ -99,7 +99,6 @@ def reference_section_code(
 ) -> str:
     """Resolve ordered child targets without adding child search units.
 
-    Legacy v2 section/fragment generation retains its existing representation.
     Typed references preserve the original numbered destination within a section.
     """
     section = nearest_section(element, parents, section_by_element)
@@ -129,7 +128,7 @@ def reference_section_code(
                 continue
             if nearest_section(candidate, parents, section_by_element) is not section:
                 continue
-            if candidate.attrib.get("numberContinued") != "true":
+            if candidate.attrib.get("numberContinued") not in {"true", "1"}:
                 offset = 0
             items = [child for child in candidate if tag_name(child) == "Item"]
             if candidate is ordered:

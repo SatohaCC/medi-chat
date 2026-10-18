@@ -4,7 +4,6 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { expect, test } from "@playwright/test";
 import { ensurePortAvailable } from "../scripts/owned-server.mjs";
-import { restoreHistoricalManifest } from "./helpers/sqlite-fixture";
 
 const root = resolve("..");
 const evidence = resolve(
@@ -33,18 +32,12 @@ test("TC137 real browser three confirmations and normal single/pair without API 
     TYPESAFE_API_KEY: "",
     ALLOWED_ORIGINS: "http://127.0.0.1:3110",
   };
-  const oldIndex = restoreHistoricalManifest(root, isolated, environment);
-  for (const args of [
-    ["--root", isolated, "--old-index", oldIndex],
-    ["--root", isolated, "--initialize"],
-  ]) {
-    const result = spawnSync(
-      python,
-      ["-m", "backend.tests.support.registration_browser_fixture", ...args],
-      { cwd: root, env: environment, encoding: "utf8", timeout: 120000 },
-    );
-    expect(result.status, result.stdout + result.stderr).toBe(0);
-  }
+  const prepared = spawnSync(
+    python,
+    ["-m", "backend.tests.support.registration_browser_fixture", "--root", isolated],
+    { cwd: root, env: environment, encoding: "utf8", timeout: 120000 },
+  );
+  expect(prepared.status, prepared.stdout + prepared.stderr).toBe(0);
   await ensurePortAvailable(3211);
   const owned = spawn(
     python,

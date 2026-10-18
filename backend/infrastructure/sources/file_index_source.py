@@ -12,7 +12,12 @@ from ...application.indexing.index_models import (
     IndexUnit,
     SourceSnapshot,
 )
-from ..index_payloads import build_index_document, build_index_unit
+from ..index_payloads import (
+    DOCUMENT_SCHEMA_VERSION,
+    build_index_document,
+    build_index_unit,
+    registered_unit_text,
+)
 from ..json_payloads import parse_json_object
 
 
@@ -51,7 +56,7 @@ class FileIndexSourceReader:
         if manifest_path.is_file():
             try:
                 manifest = parse_json_object(manifest_path.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError):
+            except OSError, json.JSONDecodeError:
                 pass
             else:
                 count = manifest.get("document_count", 0)
@@ -81,6 +86,10 @@ class FileIndexSourceReader:
     ) -> tuple[IndexDocument, list[RegisteredMedicine]]:
         try:
             payload = parse_json_object(document_path.read_text(encoding="utf-8"))
+            if payload.get("schema_version") != DOCUMENT_SCHEMA_VERSION:
+                raise ValueError(
+                    "Unsupported document format; regenerate from original sources"
+                )
             return build_index_document(payload)
         except (OSError, ValueError, TypeError, KeyError) as exc:
             raise IndexSourceError(
@@ -99,6 +108,7 @@ class FileIndexSourceReader:
                         continue
                     try:
                         payload = parse_json_object(line)
+                        registered_unit_text(payload)
                         if payload.get("document_key") != document_id:
                             raise IndexSourceError(
                                 f"Document key mismatch at {units_path}:{line_number}"

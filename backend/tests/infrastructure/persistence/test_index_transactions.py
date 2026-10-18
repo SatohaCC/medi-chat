@@ -29,6 +29,7 @@ from backend.tests.infrastructure.persistence.test_alembic_migrations import (
 from backend.tests.infrastructure.persistence.test_package_insert_index import (
     migrated_index as migrated_index,
 )
+from backend.tests.support.storage_fixtures import make_search_payload
 from sqlalchemy import event
 from sqlalchemy.engine import Connection, Engine, ExecutionContext
 from sqlalchemy.sql.dml import Insert
@@ -91,12 +92,14 @@ def test_partial_build_rolls_back_all_index_data(
         stream.write(
             "\n"
             + json.dumps(
-                {
-                    "unit_id": "added",
-                    "document_key": "test_001",
-                    "section": {"code": "11.1"},
-                    "text": "変更後の頭痛に注意してください",
-                },
+                make_search_payload(
+                    {
+                        "unit_id": "added",
+                        "document_key": "test_001",
+                        "section": {"code": "11.1"},
+                        "text": "変更後の頭痛に注意してください",
+                    }
+                ),
                 ensure_ascii=False,
             )
         )

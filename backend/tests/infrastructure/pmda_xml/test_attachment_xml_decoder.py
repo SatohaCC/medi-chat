@@ -17,6 +17,7 @@ from backend.tests.support.attachment_import_fixtures import (
     json_artifact,
     xml_source,
 )
+from backend.tests.support.section_records import assert_original_records_preserved
 
 
 @pytest.mark.parametrize(
@@ -265,7 +266,7 @@ def test_new_decoder_and_encoder_match_all_legacy_document_fields_and_rows(sourc
         figure["file"] = figure["file"].replace(
             "data_tools/data/", "data/pmda/originals/", 1
         )
-    assert json_artifact(bundle, "document.json") == expected
+    assert_original_records_preserved(json_artifact(bundle, "document.json"), expected)
     rows = [
         json.loads(line)
         for line in next(
@@ -280,7 +281,10 @@ def test_new_decoder_and_encoder_match_all_legacy_document_fields_and_rows(sourc
         .read_bytes()
         .splitlines()
     ]
-    assert rows == old_rows
+    assert {row["section"]["code"] for row in rows} == {
+        row["section"]["code"].split(".", 1)[0] for row in old_rows
+    }
+    assert all("." not in row["section"]["code"] for row in rows)
     assert len(rows) == len({row["section"]["code"] for row in rows})
 
 
@@ -300,7 +304,7 @@ def test_strict_asset_policy_accepts_complete_assets_and_rejects_missing():
     assert caught.value.code == "missing_figure"
 
 
-def test_table_encoding_keeps_three_independent_numbered_rows_and_typed_column_positions():
+def test_table_encoding_groups_children_and_keeps_typed_column_positions():
     table = '<SimpTbl><SimpTblRow><SimpTblCell rspan="2"><Lang>分類</Lang></SimpTblCell><SimpTblCell cspan="2"><Lang>頻度<?enter newline?>症状</Lang></SimpTblCell></SimpTblRow><SimpTblRow><SimpTblCell><Lang>悪心</Lang></SimpTblCell><SimpTblCell><Lang>嘔吐</Lang></SimpTblCell></SimpTblRow></SimpTbl>'
     source = xml_source(
         "<Interactions><ContraIndicatedCombinations>"
@@ -319,16 +323,17 @@ def test_table_encoding_keeps_three_independent_numbered_rows_and_typed_column_p
             file.content for file in bundle.files if file.name == "search_units.jsonl"
         ).splitlines()
     ]
-    assert [row["section"]["code"] for row in rows] == ["10.1", "10.2", "11.2"]
+    assert [row["section"]["code"] for row in rows] == ["10", "11"]
+    assert [row["text"].count("<table>") for row in rows] == [2, 1]
     for row in rows:
-        assert row["text"].count("<table>") == 1
         assert 'rowspan="2"' in row["text"] and 'colspan="2"' in row["text"]
-        assert "頻度\n症状" in row["text"]
+        assert "頻度<br>症状" in row["text"]
     from backend.domain.attachment.value_objects import AttachmentTableBlock
 
     body = next(
         section.body
-        for section in decoded.document.sections
+        for root in decoded.document.sections
+        for section in root.walk()
         if section.code.value == "11.2"
     )
     assert body is not None
