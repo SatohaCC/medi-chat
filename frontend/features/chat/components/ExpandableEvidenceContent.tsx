@@ -15,6 +15,22 @@ export interface ExpandableEvidenceContentProps {
 const COLLAPSED_HEIGHT = 150;
 const OVERFLOW_MARGIN = 20;
 
+function restoreFocusableElements(container: HTMLElement) {
+  const clampedEls = container.querySelectorAll<HTMLElement>(
+    '[data-hidden-by-clamp="true"]',
+  );
+  for (const el of clampedEls) {
+    const orig = el.getAttribute("data-orig-tabindex");
+    if (orig !== null) {
+      el.setAttribute("tabindex", orig);
+      el.removeAttribute("data-orig-tabindex");
+    } else {
+      el.removeAttribute("tabindex");
+    }
+    el.removeAttribute("data-hidden-by-clamp");
+  }
+}
+
 export function ExpandableEvidenceContent({
   content,
   highlightWords,
@@ -51,6 +67,41 @@ export function ExpandableEvidenceContent({
     return valid.some((w) => lowerContent.includes(w.toLowerCase()));
   }, [content, highlightWords]);
 
+  const showClamping = isClamped && !isExpanded;
+
+  // Manage keyboard accessibility: remove visually clipped descendants from tab order when collapsed
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !content) return;
+
+    if (showClamping) {
+      const containerRect = container.getBoundingClientRect();
+      const focusable = container.querySelectorAll<HTMLElement>(
+        'a[href], button, input, textarea, select, details, [tabindex]:not([tabindex="-1"])',
+      );
+      for (const el of focusable) {
+        const rect = el.getBoundingClientRect();
+        // If the element top is at or below the 150px cutoff, remove from tab order
+        if (rect.top >= containerRect.top + COLLAPSED_HEIGHT - 4) {
+          if (!el.hasAttribute("data-hidden-by-clamp")) {
+            const orig = el.getAttribute("tabindex");
+            if (orig !== null) {
+              el.setAttribute("data-orig-tabindex", orig);
+            }
+            el.setAttribute("data-hidden-by-clamp", "true");
+            el.tabIndex = -1;
+          }
+        }
+      }
+    } else {
+      restoreFocusableElements(container);
+    }
+
+    return () => {
+      restoreFocusableElements(container);
+    };
+  }, [showClamping, content]);
+
   // Always expanded (e.g. Warning / Contraindication) bypasses clamping and accordion
   if (alwaysExpanded) {
     return (
@@ -67,12 +118,15 @@ export function ExpandableEvidenceContent({
     }
   };
 
-  const showClamping = isClamped && !isExpanded;
-
   return (
     <div>
       <div
         ref={containerRef}
+        onScroll={() => {
+          if (showClamping && containerRef.current) {
+            containerRef.current.scrollTop = 0;
+          }
+        }}
         {...stylex.props(
           styles.wrapper,
           showClamping ? styles.clamped : styles.expanded,
