@@ -127,6 +127,14 @@ def project_attachment(document: AttachmentDocument) -> tuple[SearchUnit, ...]:
     units = []
     for section in document.sections:
         members = section.walk()
+        ordered = [
+            (member, block)
+            for member in members
+            if member.body is not None
+            for block in member.body.blocks
+        ]
+        if all(block.context.source_order is not None for _, block in ordered):
+            ordered.sort(key=lambda item: item[1].context.source_order or 0)
         blocks = tuple(
             replace(
                 projected,
@@ -136,13 +144,18 @@ def project_attachment(document: AttachmentDocument) -> tuple[SearchUnit, ...]:
                     section_title=SearchUnitText(member.title.value),
                 ),
             )
-            for member in members
-            if member.body is not None
-            for block in member.body.blocks
+            for member, block in ordered
             for projected in (_block(block),)
         )
         if not blocks:
             continue
+        text_parts = []
+        previous_code = section.code
+        for (member, _), block in zip(ordered, blocks, strict=True):
+            if member.code != previous_code:
+                text_parts.append(f"{member.code.value} {member.title.value}")
+            text_parts.append(_text(block))
+            previous_code = member.code
         scoped_codes = {
             code for block in blocks for code in block.context.product_codes
         }
@@ -165,24 +178,7 @@ def project_attachment(document: AttachmentDocument) -> tuple[SearchUnit, ...]:
                 section_code=SearchUnitSectionCode(section.code.value),
                 section_title=SearchUnitText(section.title.value),
                 kind=SearchUnitKind("section"),
-                text=SearchUnitText(
-                    "\n\n".join(
-                        (
-                            f"{member.code.value} {member.title.value}\n\n"
-                            if member is not section
-                            else ""
-                        )
-                        + (
-                            member.body.text.value
-                            if member.body.text is not None
-                            else "\n\n".join(
-                                _text(_block(block)) for block in member.body.blocks
-                            )
-                        )
-                        for member in members
-                        if member.body is not None and member.body.blocks
-                    )
-                ),
+                text=SearchUnitText("\n\n".join(text_parts)),
                 source_url=SearchUnitUrl(document.source.pmda_url.value),
                 product_codes=product_codes,
                 blocks=blocks,

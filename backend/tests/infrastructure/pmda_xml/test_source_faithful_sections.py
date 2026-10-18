@@ -9,18 +9,104 @@ from backend.application.indexing.attachment_projection import (
 )
 from backend.domain.attachment.value_objects import AttachmentTableBlock
 from backend.domain.medicine.identifiers import YjCode
-from backend.domain.retrieval.value_objects import SearchParagraph
+from backend.domain.retrieval.value_objects import SearchParagraph, SearchTableBlock
 from backend.infrastructure.index_payloads import (
     build_index_document,
     encode_registered_units,
     registered_unit_text,
 )
+from backend.infrastructure.pmda_xml.artifact_mapping import PmdaArtifactEncoder
 from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder, SourceInformation
 from backend.tests.support.attachment_import_fixtures import (
     encoded,
     json_artifact,
     xml_source,
 )
+
+
+@pytest.mark.parametrize("active", [False, True])
+def test_major_projection_preserves_interleaved_parent_and_child_order(active):
+    source = xml_source(
+        "<Interactions><Detail><Lang>PARENT_BEFORE</Lang></Detail>"
+        '<ContraIndicatedCombinations id="s101"><Detail><Lang>CHILD_FIRST</Lang>'
+        "</Detail></ContraIndicatedCombinations>"
+        "<Detail><Lang>PARENT_BETWEEN</Lang></Detail>"
+        '<PrecautionsForCombinations id="s102"><Detail><Lang>CHILD_SECOND</Lang>'
+        "</Detail></PrecautionsForCombinations>"
+        '<Detail><Lang>PARENT_AFTER</Lang><HeaderRef ref="s101"/></Detail></Interactions>'
+    )
+    decoded = PmdaXmlDecoder().decode(source)
+    units = (
+        project_active_attachment(decoded.document, frozenset({YjCode("111111111111")}))
+        if active
+        else project_attachment(decoded.document)
+    )
+    (unit,) = units
+    expected = [
+        "PARENT_BEFORE",
+        "CHILD_FIRST",
+        "PARENT_BETWEEN",
+        "CHILD_SECOND",
+        "PARENT_AFTER",
+    ]
+    paragraphs = [block for block in unit.blocks if isinstance(block, SearchParagraph)]
+    assert len(paragraphs) == len(unit.blocks)
+    assert [block.text.value for block in paragraphs] == expected
+    assert [
+        block.context.section_code.value if block.context.section_code else None
+        for block in unit.blocks
+    ] == [
+        "10",
+        "10.1",
+        "10",
+        "10.2",
+        "10",
+    ]
+    positions = [unit.text.value.index(text) for text in expected]
+    assert positions == sorted(positions)
+    bundle = PmdaArtifactEncoder().encode(decoded.document, units, decoded.source_info)
+    saved = json.loads(
+        next(file.content for file in bundle.files if file.name == "search_units.jsonl")
+        .decode()
+        .splitlines()[0]
+    )
+    positions = [saved["text"].index(text) for text in expected]
+    assert positions == sorted(positions)
+    assert [block["context"]["section"]["code"] for block in saved["blocks"]] == [
+        "10",
+        "10.1",
+        "10",
+        "10.2",
+        "10",
+    ]
+    assert saved["blocks"][-1]["references"][0]["target_section_code"] == "10.1"
+
+
+def test_parent_table_rows_separated_by_child_are_not_merged():
+    def drug(text):
+        return (
+            f"<Drug><DrugName><Lang>{text}</Lang></DrugName>"
+            "<ClinSymptomsAndMeasures><Lang>SYMPTOM</Lang></ClinSymptomsAndMeasures></Drug>"
+        )
+
+    source = xml_source(
+        "<Interactions>"
+        + drug("BEFORE")
+        + '<ContraIndicatedCombinations id="s101"><Detail><Lang>CHILD</Lang></Detail>'
+        "</ContraIndicatedCombinations>" + drug("AFTER") + "</Interactions>"
+    )
+    (unit,) = project_attachment(PmdaXmlDecoder().decode(source).document)
+    assert [type(block) for block in unit.blocks] == [
+        SearchTableBlock,
+        SearchParagraph,
+        SearchTableBlock,
+    ]
+    tables = [block for block in unit.blocks if isinstance(block, SearchTableBlock)]
+    assert [len(block.table.rows) for block in tables] == [1, 1]
+    assert [block.table.rows[0][0].text.value for block in tables] == [
+        "BEFORE",
+        "AFTER",
+    ]
 
 
 def test_major_section_is_one_saved_record_with_original_children():

@@ -120,9 +120,15 @@ class AttachmentContext:
 
     product_codes: tuple[AttachmentProductCode, ...] = ()
     labels: tuple[AttachmentText, ...] = ()
+    # 文書全体での出現順。同じ文脈の隣接表行の結合判定には含めない。
+    source_order: int | None = field(default=None, compare=False)
 
     def __post_init__(self) -> None:
         _require_tuples(self.product_codes, self.labels)
+        if self.source_order is not None and (
+            type(self.source_order) is not int or self.source_order < 0
+        ):
+            raise AttachmentDomainError("source order must be a nonnegative integer")
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

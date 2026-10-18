@@ -64,6 +64,7 @@ def _context(fragment: dict[str, Any]) -> AttachmentContext:
             AttachmentProductCode(code) for code in fragment["product_yj_codes"]
         ),
         labels=tuple(AttachmentText(label) for label in fragment["context_labels"]),
+        source_order=fragment.get("source_order"),
     )
 
 
@@ -99,9 +100,15 @@ def _blocks(
 
     blocks: list[AttachmentBlock] = []
     table_key = None
+    previous_order = None
     for fragment in fragments:
         kind = fragment["kind"]
         context = _context(fragment)
+        adjacent = (
+            previous_order is None
+            or context.source_order is None
+            or context.source_order == previous_order + 1
+        )
         references = _references(fragment)
         key = None
         columns: tuple[AttachmentText, ...] = ()
@@ -144,6 +151,7 @@ def _blocks(
                 table_key == fragment["table_xml_path"]
                 and isinstance(previous, AttachmentTableBlock)
                 and previous.context == context
+                and adjacent
             ):
                 current_row = len(previous.table.rows)
                 for row_index, row in enumerate(previous.table.rows):
@@ -187,6 +195,7 @@ def _blocks(
                 table_key == key
                 and isinstance(previous, AttachmentTableBlock)
                 and previous.context == context
+                and adjacent
             ):
                 blocks[-1] = replace(
                     previous,
@@ -227,6 +236,7 @@ def _blocks(
                 )
             )
         table_key = key
+        previous_order = context.source_order
     return tuple(blocks)
 
 
@@ -317,7 +327,8 @@ class PmdaXmlDecoder:
                         target, parents, by_element, xml_settings=xml_settings
                     )
         grouped: dict[str, list[dict[str, Any]]] = {}
-        for fragment in fragments:
+        for source_order, fragment in enumerate(fragments):
+            fragment["source_order"] = source_order
             grouped.setdefault(fragment["section"]["code"], []).append(fragment)
         rows_by_code = {row["section"]["code"]: row for row in rows}
         meta = document["document"]
