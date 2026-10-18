@@ -46,6 +46,8 @@ yj
 reference
 .agents/
 skills-lock.json
+.vscode/
+
 
 
 # OS
