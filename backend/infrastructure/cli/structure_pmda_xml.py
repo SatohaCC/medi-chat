@@ -180,7 +180,10 @@ def _guard_managed_output(
 def _register(args: argparse.Namespace) -> int:
     from ...application.attachment_import.import_errors import AttachmentImportError
     from ...config.database_settings import resolve_database_settings
-    from ...config.import_settings import resolve_import_directory
+    from ...config.import_settings import (
+        resolve_import_directory,
+        resolve_original_directory,
+    )
     from ..composition.index_verifier import verify_schema_readiness
     from ..persistence.attachment_import_store import FileAttachmentImportStore
     from ..persistence.registration_publisher import SqliteRegistrationPublisher
@@ -225,7 +228,7 @@ def _register(args: argparse.Namespace) -> int:
             xml_settings=xml_settings,
             allowed_roots=(
                 settings.structured_dir,
-                settings.structured_dir.parent / "originals",
+                resolve_original_directory(),
             ),
         )
         results = []

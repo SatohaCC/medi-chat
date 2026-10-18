@@ -77,3 +77,32 @@ class SearchDetectorTests(unittest.TestCase):
 
         self.assertIsNone(target)
 
+    def test_morphology_detector_preserves_unrelated_terms_without_whitespace(
+        self,
+    ) -> None:
+        extractor = JanomeKeywordExtractor(
+            search_policy=get_package_insert_definitions().text_search_policy,
+            morphology_settings=get_package_insert_definitions().morphology_settings,
+        )
+        target = detect_morphology_criteria(
+            extractor,
+            "@旧販売名で頭痛が出た",
+            excluded_terms=(),
+        )
+        self.assertIsNotNone(target)
+        assert target is not None
+        self.assertIn("頭痛", tuple(keyword.value for keyword in target.keywords))
+
+        target_known = detect_morphology_criteria(
+            extractor,
+            "@ロキソニンで頭痛が出た",
+            excluded_terms=("ロキソニン",),
+        )
+        self.assertIsNotNone(target_known)
+        assert target_known is not None
+        self.assertIn("頭痛", tuple(keyword.value for keyword in target_known.keywords))
+        self.assertNotIn(
+            "ロキソニン", tuple(keyword.value for keyword in target_known.keywords)
+        )
+
+

@@ -60,3 +60,53 @@ def test_http_import_preserves_separately_located_initial_original(
         assert response.json()["status"] == "registered"
         assert original.read_bytes() == source("テスト既存原本")
         assert client.get("/health").json()["document_count"] == 2
+
+
+def test_structure_cli_register_preserves_separately_located_initial_original(
+    tmp_path, monkeypatch
+):
+    from backend.infrastructure.cli.structure_pmda_xml import main as structure_main
+
+    originals = tmp_path / "separate_originals"
+    originals.mkdir()
+    structured = tmp_path / "structured_output"
+    structured.mkdir(parents=True)
+    index = structured.parent / "index.sqlite3"
+    imports = structured.parent / "imports"
+    _migrate_database(index, structured)
+
+    original = originals / "initial.xml"
+    original.write_bytes(source("初期原本"))
+    publisher = SqliteRegistrationPublisher(
+        index, FileAttachmentImportStore(imports), allowed_roots=(originals, structured)
+    )
+    publisher.publish_inputs(
+        (
+            RegistrationInput(
+                PmdaXmlDecoder().decode(original.read_bytes()),
+                original.read_bytes(),
+                (original,),
+                original,
+            ),
+        ),
+        initial=True,
+    )
+
+    new_xml = tmp_path / "new_incoming.xml"
+    new_xml.write_bytes(source("追加原本", ("333333333333",), doc="doc333"))
+
+    monkeypatch.setenv("MEDI_CHAT_ORIGINALS_DIR", str(originals))
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "structure_pmda_xml",
+            "--register",
+            "--index-path",
+            str(index),
+            "--import-dir",
+            str(imports),
+            str(new_xml),
+        ],
+    )
+    assert structure_main() == 0
+
