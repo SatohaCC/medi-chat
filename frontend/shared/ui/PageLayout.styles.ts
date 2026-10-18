@@ -8,6 +8,7 @@ export const styles = stylex.create({
     maxWidth: { default: "1920px", "@media (max-width: 900px)": "100%" },
     marginBlock: "0",
     marginInline: "auto",
+    backgroundColor: "var(--bg)",
   },
   workspace: {
     flex: "1",
@@ -25,10 +26,12 @@ export const styles = stylex.create({
   },
   missingAlert: {
     marginBlock: "6px",
-    marginInline: "16px",
+    marginInline: "auto",
+    width: "calc(100% - 32px)",
+    maxWidth: "840px",
     paddingBlock: "8px",
     paddingInline: "12px",
-    borderRadius: "8px",
+    borderRadius: "12px",
     backgroundColor: "rgba(245, 158, 11, 0.12)",
     borderWidth: "1px",
     borderStyle: "solid",

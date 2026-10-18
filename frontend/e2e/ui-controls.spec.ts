@@ -13,7 +13,7 @@ async function answer(
   chat.respond({ type: "retrieval_status", stage: "complete" });
   chat.respond({ type: "text_delta", content: "固定された回答" });
   chat.respond({ type: "text_done" });
-  await expect(page.getByText("Jev検索完了", { exact: true }).last()).toBeVisible();
+  await expect(page.getByText("固定された回答").last()).toBeVisible();
 }
 test("SX-20/22: keyboard medicine selection and model agree with WS payload", async ({
   page,

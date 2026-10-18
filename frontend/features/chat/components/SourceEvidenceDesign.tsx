@@ -22,49 +22,49 @@ const evidenceProps = z.object({
 
 const catalog = defineCatalog(schema, {
   components: {
-    WarningEvidence: { props: evidenceProps, description: "添文の警告の原文" },
-    ContraindicationEvidence: { props: evidenceProps, description: "添文の禁忌の原文" },
-    CompositionPropertyEvidence: { props: evidenceProps, description: "添文の組成・性状の原文" },
-    DosageEvidence: { props: evidenceProps, description: "添文の用法・用量の原文" },
-    PrecautionEvidence: { props: evidenceProps, description: "添文の注意事項の原文" },
-    SpecificPopulationEvidence: { props: evidenceProps, description: "添文の特定背景患者の原文" },
-    InteractionEvidence: { props: evidenceProps, description: "添文の相互作用の原文" },
-    AdverseReactionEvidence: { props: evidenceProps, description: "添文の副作用の原文" },
-    OverdosageEvidence: { props: evidenceProps, description: "添文の過量投与の原文" },
-    PharmacokineticsEvidence: { props: evidenceProps, description: "添文の薬物動態の原文" },
-    ClinicalStudiesEvidence: { props: evidenceProps, description: "添文の臨床成績の原文" },
-    PharmacologyEvidence: { props: evidenceProps, description: "添文の薬効薬理の原文" },
-    PhysicochemicalEvidence: { props: evidenceProps, description: "添文の理化学的知見の原文" },
-    HandlingPackagingEvidence: { props: evidenceProps, description: "添文の取扱い・包装の原文" },
-    ReferenceEvidence: { props: evidenceProps, description: "添文の主要文献の原文" },
-    TextEvidence: { props: evidenceProps, description: "添文の原文" },
+    WarningEvidence: { props: evidenceProps, description: "添文の警告" },
+    ContraindicationEvidence: { props: evidenceProps, description: "添文の禁忌" },
+    CompositionPropertyEvidence: { props: evidenceProps, description: "添文の組成・性状" },
+    DosageEvidence: { props: evidenceProps, description: "添文の用法・用量" },
+    PrecautionEvidence: { props: evidenceProps, description: "添文の注意事項" },
+    SpecificPopulationEvidence: { props: evidenceProps, description: "添文の特定背景患者" },
+    InteractionEvidence: { props: evidenceProps, description: "添文の相互作用" },
+    AdverseReactionEvidence: { props: evidenceProps, description: "添文の副作用" },
+    OverdosageEvidence: { props: evidenceProps, description: "添文の過量投与" },
+    PharmacokineticsEvidence: { props: evidenceProps, description: "添文の薬物動態" },
+    ClinicalStudiesEvidence: { props: evidenceProps, description: "添文の臨床成績" },
+    PharmacologyEvidence: { props: evidenceProps, description: "添文の薬効薬理" },
+    PhysicochemicalEvidence: { props: evidenceProps, description: "添文の理化学的知見" },
+    HandlingPackagingEvidence: { props: evidenceProps, description: "添文の取扱い・包装" },
+    ReferenceEvidence: { props: evidenceProps, description: "添文の主要文献" },
+    TextEvidence: { props: evidenceProps, description: "添文の記載" },
   },
   actions: {},
 });
 
 const columnLabels: Record<string, string> = {
-  drug_name: "薬剤名等（原文）",
-  clinical_symptoms_and_measures: "臨床症状・措置方法（原文）",
-  mechanism_and_risk_factors: "機序・危険因子（原文）",
+  drug_name: "薬剤名等",
+  clinical_symptoms_and_measures: "臨床症状・措置方法",
+  mechanism_and_risk_factors: "機序・危険因子",
 };
 
 const headings: Record<EvidenceDesign, string> = {
-  WarningEvidence: "警告（原文）",
-  ContraindicationEvidence: "禁忌（原文）",
-  CompositionPropertyEvidence: "組成・性状（原文）",
-  DosageEvidence: "用法・用量と関連する注意（原文）",
-  PrecautionEvidence: "適用・使用上の注意（原文）",
-  SpecificPopulationEvidence: "特定の背景を有する患者に関する注意（原文）",
-  InteractionEvidence: "添文の相互作用記載",
-  AdverseReactionEvidence: "副作用（原文）",
-  OverdosageEvidence: "過量投与（原文）",
-  PharmacokineticsEvidence: "薬物動態（原文）",
-  ClinicalStudiesEvidence: "臨床成績（原文）",
-  PharmacologyEvidence: "薬効薬理（原文）",
-  PhysicochemicalEvidence: "有効成分に関する理化学的知見（原文）",
-  HandlingPackagingEvidence: "取扱い上の注意・包装（原文）",
-  ReferenceEvidence: "主要文献（原文）",
-  TextEvidence: "添文の記載（原文）",
+  WarningEvidence: "警告",
+  ContraindicationEvidence: "禁忌",
+  CompositionPropertyEvidence: "組成・性状",
+  DosageEvidence: "用法・用量と関連する注意",
+  PrecautionEvidence: "適用・使用上の注意",
+  SpecificPopulationEvidence: "特定の背景を有する患者に関する注意",
+  InteractionEvidence: "相互作用",
+  AdverseReactionEvidence: "副作用",
+  OverdosageEvidence: "過量投与",
+  PharmacokineticsEvidence: "薬物動態",
+  ClinicalStudiesEvidence: "臨床成績",
+  PharmacologyEvidence: "薬効薬理",
+  PhysicochemicalEvidence: "有効成分に関する理化学的知見",
+  HandlingPackagingEvidence: "取扱い上の注意・包装",
+  ReferenceEvidence: "主要文献",
+  TextEvidence: "添文の記載",
 };
 
 const designStyles: Record<EvidenceDesign, StyleXStyles | null | undefined> = {
@@ -102,7 +102,6 @@ function EvidenceBody({
       aria-label={headings[design]}
       {...stylex.props(styles.body, designStyles[design])}
     >
-      <h4 {...stylex.props(styles.heading)}>{headings[design]}</h4>
       {entries.length > 0 ? (
         <>
           <div {...stylex.props(styles.tableContainer)}>
@@ -129,7 +128,7 @@ function EvidenceBody({
           </div>
           {content && (
             <details {...stylex.props(styles.original)}>
-              <summary {...stylex.props(styles.summary)}>原文全体・注記を表示</summary>
+              <summary {...stylex.props(styles.summary)}>注記・全文を表示</summary>
               <SourceEvidenceContent content={content} highlightWords={highlightWords} />
             </details>
           )}

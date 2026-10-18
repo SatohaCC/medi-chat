@@ -1,8 +1,32 @@
 import * as stylex from "@stylexjs/stylex";
 import type { CSSProperties } from "react";
 export const styles = stylex.create({
-  searchingBadge: { fontSize: "11px", color: "#fbbf24", fontWeight: 500 },
-  completeBadge: { fontSize: "11px", color: "#34d399", fontWeight: 500 },
+  searchingBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "4px",
+    fontSize: "11px",
+    color: "#fbbf24",
+    fontWeight: 500,
+  },
+  completeBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "4px",
+    fontSize: "11px",
+    color: "#34d399",
+    fontWeight: 500,
+  },
+  headerTitle: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "6px",
+  },
+  multipleTitleGroup: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "5px",
+  },
   intentBadge: (
     value0: NonNullable<CSSProperties["color"]>,
     value1: NonNullable<CSSProperties["backgroundColor"]>,
@@ -53,8 +77,8 @@ export const styles = stylex.create({
     alignItems: "center",
     gap: "6px",
     paddingBlock: "4px",
-    paddingInline: "10px",
-    borderRadius: "6px",
+    paddingInline: "12px",
+    borderRadius: "14px",
     borderWidth: "1px",
     borderStyle: "solid",
     borderColor: "transparent",
@@ -69,7 +93,7 @@ export const styles = stylex.create({
     transition: "background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease",
   },
   tabButtonActiveSources: {
-    borderColor: "rgba(2, 101, 220, 0.3)",
+    borderColor: "rgba(2, 101, 220, 0.25)",
     backgroundColor: {
       default: "rgba(2, 101, 220, 0.08)",
       ":hover": "rgba(2, 101, 220, 0.12)",
@@ -78,7 +102,7 @@ export const styles = stylex.create({
     fontWeight: 600,
   },
   tabButtonActiveJev: {
-    borderColor: "rgba(124, 58, 237, 0.3)",
+    borderColor: "rgba(124, 58, 237, 0.25)",
     backgroundColor: {
       default: "rgba(124, 58, 237, 0.08)",
       ":hover": "rgba(124, 58, 237, 0.12)",
@@ -92,7 +116,7 @@ export const styles = stylex.create({
     gap: "4px",
     paddingBlock: "4px",
     paddingInline: "10px",
-    borderRadius: "6px",
+    borderRadius: "14px",
     borderWidth: "1px",
     borderStyle: "solid",
     borderColor: "var(--border)",

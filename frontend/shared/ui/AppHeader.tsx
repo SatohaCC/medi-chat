@@ -1,6 +1,7 @@
 "use client";
 
 import * as stylex from "@stylexjs/stylex";
+import { Pill } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
@@ -21,6 +22,9 @@ export function AppHeader({ children }: AppHeaderProps) {
     <header {...stylex.props(styles.header)}>
       <div {...stylex.props(styles.leftSection)}>
         <Link href="/" {...stylex.props(styles.titleLink)}>
+          <span {...stylex.props(styles.logoBadge)}>
+            <Pill size={16} color="#0265dc" strokeWidth={2.2} />
+          </span>
           <h1 {...stylex.props(styles.title)}>薬剤師向け 添付文書検索</h1>
         </Link>
         <nav {...stylex.props(styles.nav)} aria-label="メインナビゲーション">

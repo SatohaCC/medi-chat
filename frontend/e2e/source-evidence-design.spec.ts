@@ -49,15 +49,15 @@ for (const width of [1280, 390]) {
     ).toBeVisible();
     await expect(evidence.getByText("原文の相手薬", { exact: true })).toBeVisible();
     for (const name of [
-      "薬剤名等（原文）",
-      "臨床症状・措置方法（原文）",
-      "機序・危険因子（原文）",
+      "薬剤名等",
+      "臨床症状・措置方法",
+      "機序・危険因子",
     ]) {
       await expect(
         evidence.getByRole("columnheader", { name, exact: true }),
       ).toBeVisible();
     }
-    await evidence.getByText("原文全体・注記を表示", { exact: true }).click();
+    await evidence.getByText("注記・全文を表示", { exact: true }).click();
     // A progressive source update must add the next design without changing the answer.
     chat.respond({ type: "sources", sources: [base, dosage] });
     chat.respond({ type: "text_delta", content: "を継続します。" });

@@ -10,7 +10,14 @@ export interface ButtonProps {
   type?: "button" | "submit" | "reset";
   disabled?: boolean;
   selected?: boolean;
-  variant?: "primary" | "copy" | "copySuccess" | "text" | "filterAll" | "filterSection";
+  variant?:
+    | "primary"
+    | "copy"
+    | "copySuccess"
+    | "text"
+    | "filterAll"
+    | "filterSection"
+    | "filterMedicine";
   onActivate?: () => void;
   accessibleLabel?: string;
 }
@@ -35,6 +42,7 @@ export function Button({
           styles[variant],
           selected && variant === "filterAll" && styles.filterAllSelected,
           selected && variant === "filterSection" && styles.filterSectionSelected,
+          selected && variant === "filterMedicine" && styles.filterMedicineSelected,
           variant === "primary" && isHovered && !isDisabled && styles.hovered,
           isDisabled && styles.disabled,
         ).className ?? ""

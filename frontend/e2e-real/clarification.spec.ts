@@ -168,9 +168,11 @@ test("TC137 real browser three confirmations and normal single/pair without API 
         ),
       );
     expect(
-      (await cards.allTextContents())
-        .map((text) => text.match(/単位ID: (.+)$/)?.[1])
-        .sort(),
+      (
+        await cards.evaluateAll((elements) =>
+          elements.map((el) => el.getAttribute("data-unit-id")),
+        )
+      ).sort(),
     ).toEqual(
       originalOracle
         .flatMap((document) =>

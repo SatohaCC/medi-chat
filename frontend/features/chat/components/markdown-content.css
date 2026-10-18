@@ -45,7 +45,7 @@
     vertical-align: top;
   }
   .markdown-content th {
-    background: #f4f4f5;
+    background: rgba(0, 0, 0, 0.03);
     color: var(--fg);
     font-weight: 600;
   }
@@ -61,9 +61,9 @@
   }
   .markdown-content pre {
     overflow-x: auto;
-    padding: 10px;
-    border-radius: 6px;
-    background: #f4f4f5;
+    padding: 12px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.03);
     border: 1px solid var(--border);
     color: var(--fg);
   }
@@ -105,7 +105,7 @@
   .source-evidence-content table:not(:has(thead)) > tr:first-child > td,
   .source-evidence-content table:not(:has(thead)) > tbody > tr:first-child > th,
   .source-evidence-content table:not(:has(thead)) > tbody > tr:first-child > td {
-    background: #f4f4f5;
+    background: rgba(0, 0, 0, 0.03);
     color: var(--fg);
     font-weight: 600;
   }
@@ -113,8 +113,8 @@
   .search-highlight {
     background-color: rgba(234, 179, 8, 0.2);
     color: #854d0e;
-    border-radius: 3px;
-    padding: 1px 3px;
+    border-radius: 4px;
+    padding: 1px 4px;
     font-weight: 600;
   }
 }
