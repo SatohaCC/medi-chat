@@ -125,6 +125,6 @@ class RegistrationAttempt:
                         artifact_directory.rmdir()
                 if complete:
                     journal.unlink()
-            except OSError, ValueError, TypeError, KeyError:
+            except (OSError, ValueError, TypeError, KeyError):
                 # Unknown owner/path/content is preserved, never guessed or aged out.
                 continue

@@ -94,8 +94,8 @@ def recognize_product_questions(
         while start >= 0:
             protected.update(original_positions[start : start + len(normalized_alias)])
             start = normalized_message.find(normalized_alias, start + 1)
-    clauses = []
-    current = []
+    clauses: list[str] = []
+    current: list[str] = []
     quote_end = None
     blocked = False
     pairs = {"「": "」", "『": "』", "“": "”", '"': '"'}

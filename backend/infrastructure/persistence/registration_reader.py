@@ -89,7 +89,7 @@ def read_registered_snapshot(index_path: Path) -> SourceSnapshot | None:
             ).fetchone()
             if generation is None:
                 raise IndexSourceError("Published generation is missing")
-            active = {}
+            active: dict[str, list[str]] = {}
             for code, version in connection.execute(
                 "SELECT yj_code,version_id FROM active_registrations ORDER BY version_id,yj_code"
             ):

@@ -1,5 +1,7 @@
 """SQLAlchemyによる根拠読取りの境界。"""
 
+from typing import Any
+
 from sqlalchemy import Text, column, func, or_, select, table, text
 from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.sql.elements import ColumnElement
@@ -42,7 +44,7 @@ def _section_filter(
     )
 
 
-def _unit_document_select(unit_tables: FromClause) -> Select[str, str | None]:
+def _unit_document_select(unit_tables: FromClause) -> Select[Any, Any]:  # type: ignore[type-arg]
     return select(
         schema.units.c.payload_json,
         schema.documents.c.payload_json.label("document_payload_json"),
@@ -56,7 +58,7 @@ def _unit_document_select(unit_tables: FromClause) -> Select[str, str | None]:
 
 def _read_evidence(
     connection: Connection,
-    statement: Select[str, str | None],
+    statement: Select[Any, Any],  # type: ignore[type-arg]
     source: DetectionSource,
     text_search_policy: TextSearchPolicy,
     requested_yj_codes: frozenset[str] = frozenset(),
@@ -165,8 +167,8 @@ class SqlAlchemyEvidenceReader(EvidenceRepository):
                 if alias_length < 2:
                     continue
                 unit_tables: FromClause = schema.units
-                document_key_column = schema.units.c.document_key
-                section_code_column = schema.units.c.section_code
+                document_key_column: Any = schema.units.c.document_key
+                section_code_column: Any = schema.units.c.section_code
                 if alias_length >= 3:
                     unit_tables = _UNIT_FTS.join(
                         schema.units, _UNIT_FTS.c.unit_id == schema.units.c.unit_id
