@@ -20,6 +20,7 @@ node_modules/
 .next*/
 dist/
 build/
+storybook-static/
 
 # Environment files
 .env
@@ -42,6 +43,7 @@ temp/
 graphify-out/
 *.log
 yj
+reference
 
 # OS
 .DS_Store

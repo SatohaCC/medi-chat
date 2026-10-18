@@ -3,7 +3,7 @@ import type { SourceItem } from "../model/chat";
 import { formatRevision } from "../model/markdown";
 import { HighlightText } from "./HighlightText";
 import { styles } from "./SourceEvidenceCard.styles";
-import { SourceEvidenceContent } from "./SourceEvidenceContent";
+import { SourceEvidenceDesign } from "./SourceEvidenceDesign";
 
 export interface SourceEvidenceCardProps {
   source: SourceItem;
@@ -51,42 +51,7 @@ export function SourceEvidenceCard({
         </div>
       </div>
 
-      {source.columns ? (
-        <div {...stylex.props(styles.metadata)}>
-          {source.columns.drug_name && (
-            <div>
-              <span {...stylex.props(styles.metaLabel)}>併用薬: </span>
-              <span>
-                <HighlightText text={source.columns.drug_name} words={highlightWords} />
-              </span>
-            </div>
-          )}
-          {source.columns.clinical_symptoms_and_measures && (
-            <div>
-              <span {...stylex.props(styles.metaLabel)}>臨床症状・措置: </span>
-              <span>
-                <HighlightText
-                  text={source.columns.clinical_symptoms_and_measures}
-                  words={highlightWords}
-                />
-              </span>
-            </div>
-          )}
-          {source.columns.mechanism_and_risk_factors && (
-            <div>
-              <span {...stylex.props(styles.metaLabel)}>機序・危険因子: </span>
-              <span>
-                <HighlightText
-                  text={source.columns.mechanism_and_risk_factors}
-                  words={highlightWords}
-                />
-              </span>
-            </div>
-          )}
-        </div>
-      ) : (
-        <SourceEvidenceContent content={source.excerpt} highlightWords={highlightWords} />
-      )}
+      <SourceEvidenceDesign source={source} highlightWords={highlightWords} />
 
       <div {...stylex.props(styles.footer)}>
         <div>改訂: {formatRevision(source.document_revision)}</div>

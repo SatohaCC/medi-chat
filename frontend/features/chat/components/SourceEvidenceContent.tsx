@@ -27,6 +27,45 @@ interface HastNode {
   children?: HastNode[];
 }
 
+// PMDA HTML may place its header row inside tbody. Preserve its cells and spans,
+// while exposing actual th rows as a semantic table header.
+function tableHeaderPlugin() {
+  function visit(node: HastNode) {
+    if (!node.children) return;
+    if (
+      node.tagName === "table" &&
+      !node.children.some((child) => child.tagName === "thead")
+    ) {
+      const bodyIndex = node.children.findIndex((child) => child.tagName === "tbody");
+      const body = node.children[bodyIndex];
+      if (body?.children) {
+        const rows: HastNode[] = [];
+        while (body.children.length) {
+          const row = body.children[0];
+          const cells = row.children?.filter((child) => child.type === "element") ?? [];
+          if (
+            row.tagName !== "tr" ||
+            !cells.length ||
+            !cells.every((cell) => cell.tagName === "th")
+          )
+            break;
+          rows.push(body.children.shift() as HastNode);
+        }
+        if (rows.length) {
+          node.children.splice(bodyIndex, 0, {
+            type: "element",
+            tagName: "thead",
+            properties: {},
+            children: rows,
+          });
+        }
+      }
+    }
+    for (const child of node.children) visit(child);
+  }
+  return (tree: HastNode) => visit(tree);
+}
+
 function createHighlightPlugin(words: string[]) {
   const validWords = words.filter((w) => w.length > 0);
   if (!validWords.length) {
@@ -81,6 +120,7 @@ export function SourceEvidenceContent({
       ? [createHighlightPlugin(highlightWords)]
       : []),
     [rehypeSanitize, evidenceSchema],
+    tableHeaderPlugin,
   ];
 
   return (
