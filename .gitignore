@@ -44,6 +44,9 @@ graphify-out/
 *.log
 yj
 reference
+.agents/
+skills-lock.json
+
 
 # OS
 .DS_Store

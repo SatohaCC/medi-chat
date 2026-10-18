@@ -1,6 +1,0 @@
-interface:
-  display_name: "DDD & Onion Architecture"
-  short_description: "バックエンドのDDDとオニオンアーキテクチャの設計境界を確認する"
-  default_prompt: "$ddd-onion-bestpractices を使い、対象バックエンドの層責務・依存方向・DIP・UoWを確認してください。"
-policy:
-  allow_implicit_invocation: true
