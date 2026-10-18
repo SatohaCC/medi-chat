@@ -13,6 +13,7 @@ import {
   useMedicineEntries,
 } from "../../medicine-selection";
 import { useChatWebSocket } from "../hooks/useChatWebSocket";
+import { extractHighlightWords } from "../model/highlightWords";
 import { ChatHeader } from "./ChatHeader";
 import { ChatInputForm } from "./ChatInputForm";
 import { MessageList } from "./MessageList";
@@ -105,6 +106,20 @@ export function ChatScreen() {
       activeEvidenceMessage.sources.length > 0) ||
       Boolean(activeEvidenceMessage.jevResponse) ||
       activeEvidenceMessage.retrievalStatus === "complete");
+
+  const activeUserQuery = useMemo(() => {
+    if (openEvidenceIndex === null) return "";
+    for (let i = openEvidenceIndex - 1; i >= 0; i--) {
+      if (messages[i]?.role === "user") {
+        return messages[i].content;
+      }
+    }
+    return "";
+  }, [messages, openEvidenceIndex]);
+
+  const evidenceHighlightWords = useMemo(() => {
+    return extractHighlightWords(activeUserQuery);
+  }, [activeUserQuery]);
 
   const handleSendMessage = useCallback(
     (promptVal: PromptFieldValue) => {
@@ -275,6 +290,7 @@ export function ChatScreen() {
             activeTab={evidencePaneTab}
             onTabChange={setEvidencePaneTab}
             onClose={() => setOpenEvidenceIndex(null)}
+            highlightWords={evidenceHighlightWords}
           />
         )}
       </div>
