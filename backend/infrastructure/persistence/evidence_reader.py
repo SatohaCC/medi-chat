@@ -1,7 +1,8 @@
 """SQLAlchemyによる根拠読取りの境界。"""
 
-from sqlalchemy import Text, column, func, select, table, text
+from sqlalchemy import Text, column, func, or_, select, table, text
 from sqlalchemy.engine import Connection, Engine
+from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.sql.selectable import FromClause, Select
 
 from ...domain.retrieval.primitives import DetectionSource
@@ -12,7 +13,7 @@ from ...domain.shared.services import (
     normalize_search_text,
 )
 from ..evidence_mapping import build_evidence, is_scope_heading_only
-from ..index_payloads import registered_unit_text
+from ..index_payloads import registered_unit_text, unit_matches_sections
 from ..json_payloads import parse_json_object
 from ..package_insert_definitions.loader import get_package_insert_definitions
 from . import registration_schema, schema
@@ -24,6 +25,21 @@ _UNIT_FTS = table(
     column("document_key", Text),
     column("section_code", Text),
 )
+
+
+def _section_filter(
+    column: ColumnElement[str], criteria: SearchCriteria
+) -> ColumnElement[bool]:
+    requested = tuple(code.value for code in criteria.section_codes)
+    ancestors = {
+        ".".join(code.split(".")[:depth])
+        for code in requested
+        for depth in range(1, len(code.split(".")) + 1)
+    }
+    return or_(
+        column.in_(ancestors),
+        *(column.startswith(code + ".", autoescape=True) for code in requested),
+    )
 
 
 def _unit_document_select(unit_tables: FromClause) -> Select[str, str | None]:
@@ -44,14 +60,14 @@ def _read_evidence(
     source: DetectionSource,
     text_search_policy: TextSearchPolicy,
     requested_yj_codes: frozenset[str] = frozenset(),
+    requested_sections: tuple[str, ...] = (),
 ) -> list[Evidence]:
     evidence: list[Evidence] = []
     for row in connection.execute(statement).mappings():
         unit = parse_json_object(row["payload_json"])
-        if (
-            unit.get("schema_version") == "medi-chat.pmda-sections.v3"
-            and requested_yj_codes
-        ):
+        if not unit_matches_sections(unit, requested_sections):
+            continue
+        if requested_yj_codes:
             codes = unit.get("product_yj_codes")
             if not isinstance(codes, list) or not requested_yj_codes.intersection(
                 code for code in codes if isinstance(code, str)
@@ -64,7 +80,7 @@ def _read_evidence(
             if row["document_payload_json"] is not None
             else {}
         )
-        if unit.get("schema_version") == "medi-chat.pmda-sections.v3":
+        if unit.get("version_id") is not None:
             payload = connection.execute(
                 select(
                     registration_schema.registration_version_artifacts.c.document_payload_json
@@ -125,9 +141,7 @@ class SqlAlchemyEvidenceReader(EvidenceRepository):
                         _unit_document_select(schema.units)
                         .where(
                             schema.units.c.document_key.in_(chunk),
-                            schema.units.c.section_code.in_(
-                                tuple(code.value for code in criteria.section_codes)
-                            ),
+                            _section_filter(schema.units.c.section_code, criteria),
                         )
                         .order_by(
                             schema.units.c.section_code.collate("section_code_order"),
@@ -141,6 +155,7 @@ class SqlAlchemyEvidenceReader(EvidenceRepository):
                             criteria.source,
                             self._text_search_policy,
                             requested_yj_codes,
+                            tuple(code.value for code in criteria.section_codes),
                         )
                     )
             for keyword in criteria.keywords:
@@ -174,9 +189,7 @@ class SqlAlchemyEvidenceReader(EvidenceRepository):
                     statement = statement.where(document_key_column.in_(document_ids))
                 if criteria.section_codes:
                     statement = statement.where(
-                        section_code_column.in_(
-                            tuple(code.value for code in criteria.section_codes)
-                        )
+                        _section_filter(section_code_column, criteria)
                     )
                 evidence.extend(
                     _read_evidence(
@@ -185,6 +198,7 @@ class SqlAlchemyEvidenceReader(EvidenceRepository):
                         criteria.source,
                         self._text_search_policy,
                         requested_yj_codes,
+                        tuple(code.value for code in criteria.section_codes),
                     )
                 )
         return tuple(evidence)

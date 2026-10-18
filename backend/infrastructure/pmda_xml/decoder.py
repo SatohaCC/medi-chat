@@ -47,7 +47,7 @@ from .definition_settings import PmdaXmlSettings
 from .safe_parser import parse_source
 from .sections import make_section_index, reference_section_code
 from .units import _make_fragments, _scoped_products, context_labels
-from .xml_nodes import build_paths, tag_name, text_of
+from .xml_nodes import build_paths, direct_child, tag_name, text_of
 
 
 @dataclass(frozen=True)
@@ -137,11 +137,6 @@ def _blocks(
             )
             key = kind
         elif kind == "table_row":
-            columns = (
-                tuple(AttachmentText(text) for text in fragment["table_top_rows"][0])
-                if fragment["table_top_rows"]
-                else ()
-            )
             cells_list = []
             occupied: set[int] = set()
             previous = blocks[-1] if blocks else None
@@ -226,6 +221,7 @@ def _blocks(
             blocks.append(
                 AttachmentParagraph(
                     text=AttachmentText(fragment["text"]),
+                    is_heading=kind == "header",
                     context=context,
                     references=references,
                 )
@@ -338,7 +334,7 @@ class PmdaXmlDecoder:
         }
 
         for table in root.iter():
-            if tag_name(table) != "SimpTbl":
+            if tag_name(table) not in {"SimpTbl", "SimpleTable"}:
                 continue
             for row_index, row in enumerate(
                 child for child in table if tag_name(child) == "SimpTblRow"
@@ -395,6 +391,36 @@ class PmdaXmlDecoder:
                         )
                     )
                 cell_details[paths[table] + ":" + str(row_index)] = tuple(details)
+
+        def section_model(section: dict[str, Any]) -> AttachmentSection:
+            code = section["code"]
+            element = next(
+                element
+                for element, value in by_element.items()
+                if value["code"] == code
+            )
+            header = direct_child(element, "Header")
+            return AttachmentSection(
+                NumberedSectionCode(code),
+                AttachmentSectionTitle(section["title"]),
+                AttachmentBody(
+                    blocks=_blocks(
+                        grouped.get(code, []), cell_details, xml_settings=xml_settings
+                    ),
+                    text=AttachmentText(rows_by_code[code]["text"])
+                    if code in rows_by_code
+                    else None,
+                ),
+                header=AttachmentText(text_of(header, xml_settings=xml_settings))
+                if header is not None
+                else None,
+                children=tuple(
+                    section_model(child)
+                    for child in document["section_index"]
+                    if child["parent_code"] == code
+                ),
+            )
+
         try:
             model = AttachmentDocument(
                 document_id=DocumentId(validation["document_key"]),
@@ -429,21 +455,9 @@ class PmdaXmlDecoder:
                     for index, product in enumerate(meta["products"])
                 ),
                 sections=tuple(
-                    AttachmentSection(
-                        NumberedSectionCode(section["code"]),
-                        AttachmentSectionTitle(section["title"]),
-                        AttachmentBody(
-                            blocks=_blocks(
-                                grouped.get(section["code"], []),
-                                cell_details,
-                                xml_settings=xml_settings,
-                            ),
-                            text=AttachmentText(rows_by_code[section["code"]]["text"])
-                            if section["code"] in rows_by_code
-                            else None,
-                        ),
-                    )
+                    section_model(section)
                     for section in document["section_index"]
+                    if section["parent_code"] is None
                 ),
                 reference_targets=tuple(
                     AttachmentReferenceTarget(

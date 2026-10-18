@@ -1,4 +1,4 @@
-"""版固定active検索投影のv3保存境界。旧v2生成物を書き換えない。"""
+"""版固定active検索投影の現行保存境界。"""
 
 from ..index_payloads import encode_registered_units
 

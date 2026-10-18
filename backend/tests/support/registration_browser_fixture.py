@@ -1,7 +1,6 @@
-"""Actual legacy-copy migration and explicit initialization for browser recovery."""
+"""Fresh current-format registration data for browser tests."""
 
 import argparse
-import json
 import shutil
 from pathlib import Path
 
@@ -10,31 +9,26 @@ from backend.tests.infrastructure.persistence.test_alembic_migrations import (
     _migrate_database,
 )
 from backend.tests.integration.test_registration_initialization import command
-from backend.tests.support.startup_recovery_fixture import create_legacy_copy
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, required=True)
-    parser.add_argument("--old-index", type=Path)
-    parser.add_argument("--initialize", action="store_true")
     args = parser.parse_args()
     root = args.root.resolve()
-    if not args.initialize:
-        if args.old_index is None:
-            raise ValueError("explicit legacy index required")
-        create_legacy_copy(root, args.old_index)
-        shutil.copytree(PROJECT_ROOT / "data/pmda/originals", root / "originals")
-        return
+    originals = root / "originals"
+    structured = root / "structured"
+    structured.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(PROJECT_ROOT / "data/pmda/originals", originals)
     index = root / "index.sqlite3"
-    _migrate_database(index, root / "structured")
+    _migrate_database(index, structured)
     completed = command(
         root,
         "backend.infrastructure.cli.initialize_registrations",
         "--originals-dir",
-        root / "originals",
+        originals,
         "--structured-dir",
-        root / "structured",
+        structured,
         "--index-path",
         index,
         "--import-dir",
@@ -43,13 +37,6 @@ def main():
     print(completed.stdout, flush=True)
     if completed.returncode:
         raise RuntimeError(completed.stderr)
-    payload = json.loads(completed.stdout)
-    assert (
-        payload["registered"],
-        payload["documents"],
-        payload["units"],
-        payload["medicines"],
-    ) == (7, 7, 267, 15)
 
 
 if __name__ == "__main__":

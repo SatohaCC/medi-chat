@@ -39,7 +39,7 @@ def test_generated_section_is_one_sqlite_hit_with_table_and_original_revision(tm
     try:
         snapshot = FileIndexSourceReader(structured).read_snapshot()
         result = SqlAlchemyIndexWriter(engine).replace(snapshot)
-        assert result.unit_count == validation["search_unit_count"] == 40
+        assert result.unit_count == validation["search_unit_count"] == 22
         medicines = (
             ResolvedMedicine(
                 medicine=DomainMedicineMatch("", (), ("3339003F5020",), ()),
@@ -78,18 +78,18 @@ def test_generated_section_is_one_sqlite_hit_with_table_and_original_revision(tm
         whole, keyword, adverse = asyncio.run(read())
         assert len(whole) == 1
         payload = whole[0].to_dict()
-        assert payload["unit_id"] == source.stem + ":10.1"
+        assert payload["unit_id"] == source.stem + ":10"
         assert "リトナビル" in whole[0].excerpt
         assert "<table>" in whole[0].excerpt
-        assert whole[0].excerpt.count("<tr>") == 6
+        assert whole[0].excerpt.count("<tr>") == 15
         assert payload["document_revision"] == {
             "source_label": "今回",
             "year_month": "2025-11",
             "version": "第8版",
         }
-        assert source.stem + ":10.1" in {item.unit_id.value for item in keyword}
+        assert source.stem + ":10" in {item.unit_id.value for item in keyword}
         assert len(adverse) == 1
-        assert adverse[0].unit_id.value == source.stem + ":11.2"
+        assert adverse[0].unit_id.value == source.stem + ":11"
         assert adverse[0].excerpt.count("<table>") == 1
         assert adverse[0].excerpt.count("<tr>") == 34
         assert "精神神経系" in adverse[0].excerpt

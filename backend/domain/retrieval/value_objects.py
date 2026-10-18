@@ -137,6 +137,8 @@ class TextSearchPolicy:
 class SearchContentContext:
     product_codes: tuple[SearchUnitProductCode, ...] = ()
     labels: tuple[SearchUnitText, ...] = ()
+    section_code: SearchUnitSectionCode | None = None
+    section_title: SearchUnitText | None = None
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -165,6 +167,7 @@ class SearchTable:
 @dataclass(frozen=True, slots=True, kw_only=True)
 class SearchParagraph:
     text: SearchUnitText
+    is_heading: bool = False
     context: SearchContentContext
     references: tuple[SearchContentReference, ...] = ()
 

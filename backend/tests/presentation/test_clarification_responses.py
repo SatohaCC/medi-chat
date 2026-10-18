@@ -7,16 +7,9 @@ import unittest
 from pathlib import Path
 from typing import Any
 
-from backend.infrastructure.persistence.index_writer import SqlAlchemyIndexWriter
-from backend.infrastructure.persistence.sqlite_engine import create_sqlite_engine
-from backend.infrastructure.sources.file_index_source import FileIndexSourceReader
 from backend.main import create_app
-from backend.tests.infrastructure.persistence.test_alembic_migrations import (
-    _migrate_database,
-)
 from backend.tests.support.paths import PROJECT_ROOT
 from fastapi.testclient import TestClient
-from sqlalchemy.engine import URL
 
 REPO_ROOT = PROJECT_ROOT
 STRUCTURED_DIR = REPO_ROOT / "data" / "pmda" / "structured"
@@ -41,18 +34,6 @@ class ClarificationResponseTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.temp_dir = tempfile.TemporaryDirectory()
         cls.index_path = Path(cls.temp_dir.name) / "chat-search.sqlite3"
-        _migrate_database(cls.index_path, STRUCTURED_DIR)
-        engine = create_sqlite_engine(
-            URL.create("sqlite", database=cls.index_path.as_posix()).render_as_string(
-                hide_password=False
-            )
-        )
-        try:
-            SqlAlchemyIndexWriter(engine).replace(
-                FileIndexSourceReader(STRUCTURED_DIR).read_snapshot()
-            )
-        finally:
-            engine.dispose()
         from backend.tests.support.registration_runtime_fixtures import (
             register_existing_test_source,
         )

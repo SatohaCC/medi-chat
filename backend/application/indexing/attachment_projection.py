@@ -9,6 +9,7 @@ from ...domain.attachment.value_objects import (
     AttachmentContext,
     AttachmentParagraph,
     AttachmentReference,
+    AttachmentSection,
     AttachmentTableBlock,
 )
 from ...domain.medicine.identifiers import YjCode
@@ -65,6 +66,7 @@ def _block(block: AttachmentBlock) -> SearchContentBlock:
     if isinstance(block, AttachmentParagraph):
         return SearchParagraph(
             text=SearchUnitText(block.text.value),
+            is_heading=block.is_heading,
             context=context,
             references=references,
         )
@@ -124,9 +126,23 @@ def project_attachment(document: AttachmentDocument) -> tuple[SearchUnit, ...]:
     )
     units = []
     for section in document.sections:
-        if section.body is None or not section.body.blocks:
+        members = section.walk()
+        blocks = tuple(
+            replace(
+                projected,
+                context=replace(
+                    projected.context,
+                    section_code=SearchUnitSectionCode(member.code.value),
+                    section_title=SearchUnitText(member.title.value),
+                ),
+            )
+            for member in members
+            if member.body is not None
+            for block in member.body.blocks
+            for projected in (_block(block),)
+        )
+        if not blocks:
             continue
-        blocks = tuple(_block(block) for block in section.body.blocks)
         scoped_codes = {
             code for block in blocks for code in block.context.product_codes
         }
@@ -150,9 +166,22 @@ def project_attachment(document: AttachmentDocument) -> tuple[SearchUnit, ...]:
                 section_title=SearchUnitText(section.title.value),
                 kind=SearchUnitKind("section"),
                 text=SearchUnitText(
-                    section.body.text.value
-                    if section.body.text is not None
-                    else "\n\n".join(_text(block) for block in blocks)
+                    "\n\n".join(
+                        (
+                            f"{member.code.value} {member.title.value}\n\n"
+                            if member is not section
+                            else ""
+                        )
+                        + (
+                            member.body.text.value
+                            if member.body.text is not None
+                            else "\n\n".join(
+                                _text(_block(block)) for block in member.body.blocks
+                            )
+                        )
+                        for member in members
+                        if member.body is not None and member.body.blocks
+                    )
                 ),
                 source_url=SearchUnitUrl(document.source.pmda_url.value),
                 product_codes=product_codes,
@@ -176,12 +205,10 @@ def project_active_attachment(
         if target.context.product_codes
         and not any(code.value in active for code in target.context.product_codes)
     }
-    sections = []
-    for section in document.sections:
-        if section.body is None:
-            continue
+
+    def active_section(section: AttachmentSection) -> AttachmentSection:
         blocks = []
-        for block in section.body.blocks:
+        for block in section.body.blocks if section.body is not None else ():
             block = replace(
                 block,
                 references=tuple(
@@ -203,11 +230,15 @@ def project_active_attachment(
             blocks.append(
                 replace(block, context=replace(block.context, product_codes=codes))
             )
-        sections.append(
-            replace(
-                section, body=replace(section.body, blocks=tuple(blocks), text=None)
-            )
+        return replace(
+            section,
+            body=replace(section.body, blocks=tuple(blocks), text=None)
+            if section.body is not None
+            else None,
+            children=tuple(active_section(child) for child in section.children),
         )
+
+    sections = tuple(active_section(section) for section in document.sections)
     projected = project_attachment(replace(document, sections=tuple(sections)))
     return tuple(
         replace(
@@ -234,11 +265,21 @@ def _active_table(
             code.value in active for code in context.product_codes
         )
 
-    width = max(
-        (cell.column.value + cell.colspan.value for row in table.rows for cell in row),
-        default=0,
+    has_cell_scopes = any(
+        cell.context.product_codes for row in table.rows for cell in row
     )
-    allowed = set(range(width))
+    if not has_cell_scopes and not applies(block.context):
+        return None
+
+    # Remove a grid column only when no retained source cell occupies it.
+    # This uses explicit cell scopes without treating the first row as a heading.
+    allowed = {
+        column
+        for row in table.rows
+        for cell in row
+        if applies(cell.context)
+        for column in range(cell.column.value, cell.column.value + cell.colspan.value)
+    }
     retained_headings = list(range(len(table.columns)))
     if (
         table.column_contexts
@@ -316,6 +357,10 @@ def _active_table(
                 for cell in row
                 for code in cell.context.product_codes
                 if code.value in active
+            )
+            if has_cell_scopes
+            else tuple(
+                code for code in block.context.product_codes if code.value in active
             ),
         ),
         references=tuple(

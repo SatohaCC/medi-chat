@@ -147,7 +147,7 @@ async def test_tc19_all_entries_keep_injected_definition_without_reload(
                         ),
                     ),
                 )
-            assert {row.section["code"] for row in evidence} == {"27", "10.1"}
+            assert {row.section["code"] for row in evidence} == {"27", "10"}
             combined = "".join(row.excerpt for row in evidence)
             assert "追補の原文本文" in combined and "相手薬の原文" in combined
             assert all(
@@ -190,7 +190,7 @@ async def test_tc19_all_entries_keep_injected_definition_without_reload(
                             ),
                         ),
                     )
-                    assert {row.section["code"] for row in evidence} == {"27", "10.1"}
+                    assert {row.section["code"] for row in evidence} == {"27", "10"}
                     combined = "".join(row.excerpt for row in evidence)
                     assert "追補の原文本文" in combined
                     assert "相手薬の原文" in combined
@@ -210,14 +210,14 @@ async def test_tc19_all_entries_keep_injected_definition_without_reload(
         by_code = {row["section"]["code"]: row for row in rows}
         assert by_code["27"]["section"]["title"] == "追加項目の正式名称"
         assert "追補の原文本文" in by_code["27"]["text"]
-        assert "注入薬剤列" in by_code["10.1"]["text"]
-        assert "相手薬の原文" in by_code["10.1"]["text"]
+        assert "注入薬剤列" in by_code["10"]["text"]
+        assert "相手薬の原文" in by_code["10"]["text"]
         assert by_code["27"]["document_key"] == "000001_test"
-        assert by_code["10.1"]["document_key"] == "000001_test"
+        assert by_code["10"]["document_key"] == "000001_test"
         assert by_code["27"]["unit_id"] == "000001_test:27"
-        assert by_code["10.1"]["unit_id"] == "000001_test:10.1"
+        assert by_code["10"]["unit_id"] == "000001_test:10"
         assert by_code["27"]["kind"] == "section"
-        assert by_code["10.1"]["kind"] == "section"
+        assert by_code["10"]["kind"] == "section"
     finally:
         await workers.aclose()
 
@@ -241,14 +241,14 @@ def _saved_rows(store, document_id, digest, generation_id):
         for line in generation_file.read_text(encoding="utf-8").splitlines()
     ]
     by_code = {row["section"]["code"]: row for row in generation_rows}
-    assert set(by_code) == {"27", "10.1"}
+    assert set(by_code) == {"27", "10"}
     for code, row in by_code.items():
-        assert row["schema_version"] == "medi-chat.pmda-sections.v3"
+        assert row["schema_version"] == "medi-chat.pmda-sections.v4"
         assert row["document_key"] == document_id
         assert row["source_sha256"] == digest
         assert row["unit_id"] == f"{version_id}:{code}"
-    assert by_code["10.1"]["blocks"][0]["columns"][0] == "注入薬剤列"
-    assert by_code["10.1"]["blocks"][0]["rows"][0][0]["text"] == "相手薬の原文"
+    assert by_code["10"]["blocks"][0]["columns"][0] == "注入薬剤列"
+    assert by_code["10"]["blocks"][0]["rows"][0][0]["text"] == "相手薬の原文"
     return [
         json.loads(line)
         for line in (target / "search_units.jsonl")
@@ -334,8 +334,8 @@ async def test_tc21_injected_heading_policy_reaches_old_lease_and_new_request(
             old_rows = await old_snapshot.evidence_reader.search(criteria, target)
             assert [row.section["code"] for row in old_rows] == ["1", "2"]
             assert [row.excerpt for row in old_rows] == [
-                "<p>特別見出し</p>",
-                "<p>旧保持原文</p>",
+                '<h3 data-section-code="1">1 警告</h3><p>特別見出し</p>',
+                '<h3 data-section-code="2">2 禁忌</h3><p>旧保持原文</p>',
             ]
             assert [row.unit_id.value for row in old_rows] == [
                 f"000001_test:{hashlib.sha256(old).hexdigest()}:{code}"
@@ -346,8 +346,8 @@ async def test_tc21_injected_heading_policy_reaches_old_lease_and_new_request(
                 new_rows = await new_snapshot.evidence_reader.search(criteria, target)
                 assert [row.section["code"] for row in new_rows] == ["1", "2"]
                 assert [row.excerpt for row in new_rows] == [
-                    "<p>特別見出し</p>",
-                    "<p>新保持原文</p>",
+                    '<h3 data-section-code="1">1 警告</h3><p>特別見出し</p>',
+                    '<h3 data-section-code="2">2 禁忌</h3><p>新保持原文</p>',
                 ]
                 assert [row.unit_id.value for row in new_rows] == [
                     f"000001_test:{hashlib.sha256(new).hexdigest()}:{code}"
@@ -366,8 +366,8 @@ async def test_tc21_injected_heading_policy_reaches_old_lease_and_new_request(
             for _, kind, observed_policy, result in judgments
         )
         assert [row.excerpt for row in old_rows] == [
-            "<p>特別見出し</p>",
-            "<p>旧保持原文</p>",
+            '<h3 data-section-code="1">1 警告</h3><p>特別見出し</p>',
+            '<h3 data-section-code="2">2 禁忌</h3><p>旧保持原文</p>',
         ]
         with pytest.raises(RuntimeError, match="released"):
             await old_snapshot.evidence_reader.search(criteria, target)

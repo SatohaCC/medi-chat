@@ -684,7 +684,6 @@ def test_new_public_module_paths_are_importable_without_legacy_packages() -> Non
         "backend.infrastructure.llm.provider_factory",
         "backend.infrastructure.composition.index_verifier",
         "backend.infrastructure.cli.build_search_index",
-        "backend.infrastructure.cli.migrate_legacy_index",
     )
     for module in public_modules:
         importlib.import_module(module)
@@ -761,7 +760,6 @@ def test_legacy_facades_are_not_required(tmp_path: Path) -> None:
     for file_path in (
         BACKEND_ROOT / "main.py",
         BACKEND_ROOT / "infrastructure" / "cli" / "build_search_index.py",
-        BACKEND_ROOT / "infrastructure" / "cli" / "migrate_legacy_index.py",
     ):
         source = file_path.read_text(encoding="utf-8")
         tree = ast.parse(source, filename=str(file_path))
@@ -791,7 +789,6 @@ def test_legacy_facades_are_not_required(tmp_path: Path) -> None:
         engine.dispose()
 
     # v5 prepared index includes explicit initial registration, never startup DDL.
-    import json
 
     from backend.infrastructure.persistence.attachment_import_store import (
         FileAttachmentImportStore,
@@ -830,7 +827,6 @@ def test_legacy_facades_are_not_required(tmp_path: Path) -> None:
                 raw,
                 (original, document, units),
                 original,
-                json.loads(document.read_bytes()),
             ),
         ),
         initial=True,
@@ -1023,7 +1019,7 @@ import importlib, sys
 from pathlib import Path
 from backend.main import create_app
 from fastapi.testclient import TestClient
-for module in ("backend.presentation.chat_service", "backend.infrastructure.cli.build_search_index", "backend.infrastructure.cli.migrate_legacy_index"):
+for module in ("backend.presentation.chat_service", "backend.infrastructure.cli.build_search_index"):
     importlib.import_module(module)
 with TestClient(create_app(Path(sys.argv[1]), Path(sys.argv[2]))) as client:
     assert client.get("/api").json() == {"status": "ok"}

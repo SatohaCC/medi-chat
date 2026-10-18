@@ -3,6 +3,7 @@
 import asyncio
 import copy
 import json
+import re
 import sqlite3
 import time
 from contextlib import closing
@@ -41,6 +42,7 @@ from backend.tests.support.interaction_raw_oracle import (
     read_raw_oracle,
 )
 from backend.tests.support.paths import FIXTURES_ROOT
+from backend.tests.support.section_records import flatten_sections, major_unit_id
 
 FIXTURE = FIXTURES_ROOT / "interaction_oracle_v6.json"
 ORACLE = json.loads(FIXTURE.read_text(encoding="utf-8"))
@@ -108,7 +110,6 @@ def assert_source(source, document, code):
 
 
 def assert_public_source(source, document, code):
-    expected = document["sections"][code]
     assert set(source) == {
         "unit_id",
         "document_id",
@@ -124,29 +125,29 @@ def assert_public_source(source, document, code):
         "url",
         "retrieved_by",
     }
-    assert source["unit_id"] == expected["unit_id"]
+    assert source["unit_id"] == major_unit_id(document, code)
     assert source["document_id"] == document["document_id"]
     assert source["product_name"] == document["product_name"]
     assert source["generic_name"] == document["generic_name"]
     assert source["document_revision"] == document["revision"]
     assert source["product_yj_codes"] == [document["yj"]]
-    assert source["section"]["code"] == code
+    major = code.split(".", 1)[0]
+    assert source["section"]["code"] == major
     assert (
         source["section"]["title"]
         == {
             "10": "相互作用",
             "10.1": "併用禁忌",
             "10.2": "併用注意",
-            "16.7": "薬物相互作用",
-        }[code]
+            "16": "薬物動態",
+        }[major]
     )
-    parser = Cells()
-    parser.feed(source["excerpt"])
-    assert parser.rows == expected["rows"]
-    assert parser.paragraphs == expected["body"]
-    actual_refs = source["references"]
-    expected_refs = expected["references"]
-    assert actual_refs == expected_refs
+    for child_code in document["sections"]:
+        if child_code.split(".", 1)[0] != major:
+            continue
+        assert_original_section_excerpt(source["excerpt"], document, child_code)
+        for reference in document["sections"][child_code]["references"]:
+            assert reference in source["references"]
     assert (
         source["url"]
         == f"https://www.pmda.go.jp/PmdaSearch/iyakuDetail/{document['document_id']}"
@@ -155,21 +156,55 @@ def assert_public_source(source, document, code):
     assert source["columns"] is None
 
 
+def major_expectations(documents, codes=None):
+    return sorted(
+        [
+            (major_unit_id(doc, code), doc, code)
+            for doc in documents
+            for code in sorted({c.split(".", 1)[0] for c in (codes or doc["sections"])})
+        ],
+        key=lambda item: (int(item[2]), item[0]),
+    )
+
+
+def assert_original_section_excerpt(excerpt, document, code):
+    expected = document["sections"][code]
+    match = re.search(
+        r'<h3 data-section-code="'
+        + re.escape(code)
+        + r'">.*?</h3>(.*?)(?=<h3 data-section-code=|$)',
+        excerpt,
+        re.S,
+    )
+    assert match is not None, f"Missing original subsection {code}"
+    parser = Cells()
+    parser.feed(match.group(1))
+    assert parser.rows == expected["rows"]
+    body = expected["body"]
+    if code == "16.7":
+        body = [
+            text
+            for item in expected["items"]
+            for text in (
+                item["header"],
+                item["text"].removeprefix(item["header"] + "\n"),
+            )
+        ] + body[len(expected["items"]) :]
+    # Source Header nodes are now distinct paragraphs; repeated context labels
+    # remain presentation metadata and do not replace the original paragraphs.
+    assert [
+        p for p in parser.paragraphs if not (p.startswith("〈") and p.endswith("〉"))
+    ] == [p for p in body if not (p.startswith("〈") and p.endswith("〉"))]
+
+
 def assert_public_collection(sources, pair):
     documents = ORACLE if pair else ORACLE[:1]
-    expected = sorted(
-        [
-            (doc["sections"][code]["unit_id"], doc, code)
-            for doc in documents
-            for code in doc["sections"]
-        ],
-        key=lambda item: (tuple(int(part) for part in item[2].split(".")), item[0]),
-    )
+    expected = major_expectations(documents)
     assert [source["unit_id"] for source in sources] == [item[0] for item in expected]
     for source, (_, doc, code) in zip(sources, expected, strict=True):
         assert_public_source(source, doc, code)
         routes = ["logic", "jev"]
-        if pair and doc["document_id"] != DOCUMENTS[0][0] and code == "10.1":
+        if pair and doc["document_id"] != DOCUMENTS[0][0] and code == "10":
             routes.append("keyword")
         assert source["retrieved_by"] == routes
 
@@ -231,15 +266,29 @@ def assert_original_occurrences(actual, expected):
 
 
 def assert_owned_paragraph_blocks(blocks, expected, yj):
-    references = [item["references"] for item in expected["items"]] + [[]]
+    references = [
+        refs for item in expected["items"] for refs in ([], item["references"])
+    ] + [[]]
+    texts = [
+        text
+        for item in expected["items"]
+        for text in (item["header"], item["text"].removeprefix(item["header"] + "\n"))
+    ] + expected["body"][len(expected["items"]) :]
     assert blocks == [
         {
             "kind": "paragraph",
             "text": text,
-            "context": {"product_yj_codes": [yj], "labels": []},
+            "is_heading": index < len(texts) - 1 and index % 2 == 0,
+            "context": {
+                "product_yj_codes": [yj],
+                "labels": [expected["items"][index // 2]["header"]]
+                if index < len(texts) - 1
+                else [],
+                "section": {"code": "16.7", "title": "薬物相互作用"},
+            },
             "references": refs,
         }
-        for text, refs in zip(expected["body"], references, strict=True)
+        for index, (text, refs) in enumerate(zip(texts, references, strict=True))
     ]
 
 
@@ -257,7 +306,9 @@ def test_tc121_x16_7_all_ten_item_contexts_and_25_original_positions(
     assert (directory / "source.xml").read_bytes() == original.read_bytes()
     stored = json.loads((directory / "document.json").read_bytes())
     tree = next(
-        section["tree"] for section in stored["sections"] if section["code"] == "16.7"
+        section["tree"]
+        for section in flatten_sections(stored["sections"])
+        if section["code"] == "16.7"
     )
     positions = stored_reference_positions(tree)
     assert_original_occurrences(positions, expected["raw_reference_occurrences"])
@@ -266,16 +317,24 @@ def test_tc121_x16_7_all_ten_item_contexts_and_25_original_positions(
     ) as connection:
         payload = json.loads(
             connection.execute(
-                "SELECT payload_json FROM units WHERE unit_id=?", (expected["unit_id"],)
+                "SELECT payload_json FROM units WHERE unit_id=?",
+                (major_unit_id(document, "16"),),
             ).fetchone()[0]
         )
-    assert_owned_paragraph_blocks(payload["blocks"], expected, document["yj"])
-    assert payload["references"] == expected["references"]
+    blocks = [
+        block
+        for block in payload["blocks"]
+        if block["context"]["section"]["code"] == "16.7"
+    ]
+    assert_owned_paragraph_blocks(blocks, expected, document["yj"])
+    assert [ref for block in blocks for ref in block["references"]] == expected[
+        "references"
+    ]
     changed = copy.deepcopy(positions)
     changed[3]["owner_xml_id"] = "HDR_DrugAndDrugInteractions_3"
     with pytest.raises(AssertionError):
         assert_original_occurrences(changed, expected["raw_reference_occurrences"])
-    changed = copy.deepcopy(payload["blocks"])
+    changed = copy.deepcopy(blocks)
     changed[1]["references"], changed[2]["references"] = (
         changed[2]["references"],
         changed[1]["references"],
@@ -283,7 +342,7 @@ def test_tc121_x16_7_all_ten_item_contexts_and_25_original_positions(
     with pytest.raises(AssertionError):
         assert_owned_paragraph_blocks(changed, expected, document["yj"])
     with pytest.raises(AssertionError):
-        assert_owned_paragraph_blocks(payload["blocks"][-1:], expected, document["yj"])
+        assert_owned_paragraph_blocks(blocks[-1:], expected, document["yj"])
 
 
 @pytest.mark.asyncio
@@ -358,14 +417,7 @@ async def test_tc120_122_all_detector_collection_and_tc121_original_tables(
                 intent_policy=get_package_insert_definitions().intent_policy,
             )
         expected_docs = ORACLE if pair else ORACLE[:1]
-        expected = sorted(
-            [
-                (doc["sections"][code]["unit_id"], doc, code)
-                for doc in expected_docs
-                for code in doc["sections"]
-            ],
-            key=lambda item: (tuple(int(part) for part in item[2].split(".")), item[0]),
-        )
+        expected = major_expectations(expected_docs)
         assert [source.unit_id.value for source in result.sources] == [
             item[0] for item in expected
         ]
@@ -414,7 +466,7 @@ async def test_tc120_122_all_detector_collection_and_tc121_original_tables(
             if (
                 pair
                 and document is not ORACLE[0]
-                and code == "10.1"
+                and code == "10"
                 and profile != "empty_keyword"
             ):
                 by.add("keyword")
@@ -451,12 +503,7 @@ async def test_tc121_complete_six_tables_and_original_reference_destinations(
             )
         sources = sorted(sources, key=lambda source: source.unit_id.value)
         expected = sorted(
-            [
-                (doc["sections"][code]["unit_id"], doc, code)
-                for doc in ORACLE
-                for code in ("10.1", "10.2")
-            ],
-            key=lambda item: item[0],
+            major_expectations(ORACLE, ("10.1", "10.2")), key=lambda item: item[0]
         )
         assert [source.unit_id.value for source in sources] == [
             item[0] for item in expected
@@ -479,14 +526,7 @@ def assert_prompt_oracle(messages, documents, *, history=True):
     expected_conversation.append({"role": "user", "content": question})
     assert messages[1:] == expected_conversation
     blocks = messages[0]["content"].split("[根拠 ")[1:]
-    expected = sorted(
-        [
-            (doc["sections"][code]["unit_id"], doc, code)
-            for doc in documents
-            for code in doc["sections"]
-        ],
-        key=lambda item: (tuple(int(part) for part in item[2].split(".")), item[0]),
-    )
+    expected = major_expectations(documents)
     assert len(blocks) == len(expected)
     for number, (block, (unit_id, doc, code)) in enumerate(
         zip(blocks, expected, strict=True), 1
@@ -507,14 +547,15 @@ def assert_prompt_oracle(messages, documents, *, history=True):
             "10": "相互作用",
             "10.1": "併用禁忌",
             "10.2": "併用注意",
-            "16.7": "薬物相互作用",
+            "16": "薬物動態",
         }[code]
         assert f"- 項目: {code} {title}\n" in block
-        parser = Cells()
-        parser.feed(block)
-        assert parser.rows == doc["sections"][code]["rows"]
-        assert parser.paragraphs == doc["sections"][code]["body"]
-        for ref in doc["sections"][code]["references"]:
+        matching_codes = [c for c in doc["sections"] if c.split(".", 1)[0] == code]
+        for child_code in matching_codes:
+            assert_original_section_excerpt(block, doc, child_code)
+        for ref in [
+            ref for c in matching_codes for ref in doc["sections"][c]["references"]
+        ]:
             assert (
                 f"{ref['kind']}: 項目 {ref['target_section_code']} {ref['target_url']}"
                 in block

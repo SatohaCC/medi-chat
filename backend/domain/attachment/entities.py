@@ -40,16 +40,17 @@ class AttachmentDocument:
                 "an attachment cannot contain duplicate products"
             )
 
-        section_codes = {s.code for s in self.sections}
-        if len(section_codes) != len(self.sections):
+        sections = tuple(s for root in self.sections for s in root.walk())
+        section_codes = {s.code for s in sections}
+        if len(section_codes) != len(sections):
             raise AttachmentDomainError(
                 "an attachment cannot contain duplicate sections"
             )
 
-        if any(
-            s.parent_code and s.parent_code not in section_codes for s in self.sections
-        ):
+        if any(s.parent_code and s.parent_code not in section_codes for s in sections):
             raise AttachmentDomainError("section parent must exist in the document")
+        if any(section.parent_code is not None for section in self.sections):
+            raise AttachmentDomainError("document root sections must be major sections")
 
     @property
     def current_revision(self) -> AttachmentRevision | None:

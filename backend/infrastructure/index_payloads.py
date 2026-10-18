@@ -22,6 +22,7 @@ from ..domain.attachment.value_objects import AttachmentProductRevision
 from ..domain.foundation.json_types import JsonValue
 from ..domain.medicine.identifiers import YjCode
 from ..domain.retrieval.entities import SearchUnit
+from ..domain.retrieval.services import section_code_matches
 from ..domain.retrieval.value_objects import (
     SearchContentBlock,
     SearchContentReference,
@@ -31,6 +32,8 @@ from ..domain.retrieval.value_objects import (
 from ..domain.shared.services import normalize_search_text
 
 MAX_ARTIFACT_BYTES = 32 * 1024 * 1024
+SEARCH_SCHEMA_VERSION = "medi-chat.pmda-sections.v4"
+DOCUMENT_SCHEMA_VERSION = "medi-chat.pmda-prescription-xml.v2"
 
 
 def result_dict(result: ImportResult) -> dict[str, Any]:
@@ -107,11 +110,23 @@ def _block(block: SearchContentBlock) -> tuple[str, dict[str, Any]]:
     context = {
         "product_yj_codes": [code.value for code in block.context.product_codes],
         "labels": [label.value for label in block.context.labels],
+        "section": {
+            "code": block.context.section_code.value,
+            "title": block.context.section_title.value
+            if block.context.section_title
+            else "",
+        }
+        if block.context.section_code is not None
+        else None,
     }
     references = [_reference(reference) for reference in block.references]
     if isinstance(block, SearchParagraph):
         rendered = "<p>" + html.escape(block.text.value).replace("\n", "<br>") + "</p>"
-        payload = {"kind": "paragraph", "text": block.text.value}
+        payload = {
+            "kind": "paragraph",
+            "text": block.text.value,
+            "is_heading": block.is_heading,
+        }
     elif isinstance(block, SearchTableBlock):
         rows = []
         payload_rows = []
@@ -154,11 +169,7 @@ def _block(block: SearchContentBlock) -> tuple[str, dict[str, Any]]:
             "reference": block.reference.value,
             "description": block.description.value,
         }
-    labels = "".join(
-        "<p><strong>〈" + html.escape(label.value) + "〉</strong></p>"
-        for label in block.context.labels
-    )
-    return labels + rendered, {**payload, "context": context, "references": references}
+    return rendered, {**payload, "context": context, "references": references}
 
 
 def _render_registered_block(block: dict[str, JsonValue]) -> str:
@@ -171,9 +182,7 @@ def _render_registered_block(block: dict[str, JsonValue]) -> str:
             raise TypeError("Expected a JSON array of table rows")
         rows = [_objects(row) for row in raw_rows]
         header = ""
-        # Generic XML tables may already carry their heading cells in the first row.
-        first_row = [_string(cell["text"]) for cell in rows[0]] if rows else []
-        if columns and columns != first_row:
+        if columns:
             header = (
                 "<thead><tr>"
                 + "".join(
@@ -204,59 +213,127 @@ def _render_registered_block(block: dict[str, JsonValue]) -> str:
             + (escaped.replace("\n", "<br>") if kind == "paragraph" else escaped)
             + "</p>"
         )
+        if kind == "paragraph" and block.get("is_heading") is True:
+            rendered = "<p><strong>" + escaped.replace("\n", "<br>") + "</strong></p>"
     else:
         raise ValueError(f"Unknown registration block kind: {kind}")
-    context = _object(block.get("context") or {})
-    labels = "".join(
-        "<p><strong>〈" + html.escape(label) + "〉</strong></p>"
-        for label in _strings(context.get("labels") or [])
-    )
-    return labels + rendered
+    return rendered
 
 
 def registered_unit_text(unit: dict[str, JsonValue]) -> str:
-    """Restore source column headings for existing v3 units without rewriting storage."""
-    if unit.get("schema_version") == "medi-chat.pmda-sections.v3" and unit.get(
-        "blocks"
-    ):
-        return "".join(
-            _render_registered_block(block) for block in _objects(unit["blocks"])
+    """現在形式だけを読み取り、旧形式は再生成を要求する。"""
+    if unit.get("schema_version") != SEARCH_SCHEMA_VERSION:
+        raise ValueError(
+            "Unsupported search data format; regenerate from the original source"
         )
-    return _string(unit.get("text") or "")
+    if not isinstance(unit.get("blocks"), list):
+        raise ValueError("Current search data requires structured blocks")
+    return _string(unit["text"])
+
+
+def _render_unit_blocks(unit: dict[str, JsonValue]) -> str:
+    if unit.get("blocks"):
+        rendered = []
+        previous_code = None
+        previous_products = None
+        products = {
+            _string(product["yj_code"]): _string(product["brand_name"])
+            for product in _objects(unit.get("products") or [])
+        }
+        for block in _objects(unit["blocks"]):
+            context = _object(block.get("context") or {})
+            codes = tuple(
+                dict.fromkeys(_strings(context.get("product_yj_codes") or []))
+            )
+            if len(products) > 1 and codes != previous_products:
+                rendered.append(
+                    '<p data-product-scope="true">対象製品: '
+                    + " / ".join(
+                        html.escape(products[code] + " [YJ: " + code + "]")
+                        for code in codes
+                    )
+                    + "</p>"
+                )
+                previous_products = codes
+            section = _object(context.get("section") or {})
+            code = section.get("code")
+            if code is not None and code != previous_code:
+                # Standard numbered-section labels are separate from source Header nodes.
+                rendered.append(
+                    '<h3 data-section-code="'
+                    + html.escape(_string(code), quote=True)
+                    + '">'
+                    + html.escape(_string(code))
+                    + " "
+                    + html.escape(_string(section.get("title") or ""))
+                    + "</h3>"
+                )
+                previous_code = code
+            rendered.append(_render_registered_block(block))
+        return "".join(rendered)
+    return ""
+
+
+def unit_matches_sections(
+    unit: dict[str, JsonValue], requested: tuple[str, ...]
+) -> bool:
+    """現在形式の大項目内に実在する番号だけを照合する。"""
+    registered_unit_text(unit)
+    codes = [_string(_object(unit.get("section") or {}).get("code") or "")]
+    for block in _objects(unit.get("blocks") or []):
+        context = _object(block.get("context") or {})
+        section = _object(context.get("section") or {})
+        if isinstance(section.get("code"), str):
+            codes.append(_string(section["code"]))
+    return not requested or any(
+        section_code_matches(code, target) for code in codes for target in requested
+    )
 
 
 def encode_registered_units(
-    document: AttachmentDocument, units: tuple[SearchUnit, ...]
+    document: AttachmentDocument,
+    units: tuple[SearchUnit, ...],
+    *,
+    registered: bool = True,
 ) -> bytes:
     if document.source.sha256 is None:
         raise ValueError("registration source SHA required")
     rows = []
     for unit in units:
         blocks = [_block(block) for block in unit.blocks]
-        rows.append(
-            {
-                "schema_version": "medi-chat.pmda-sections.v3",
-                "document_key": document.document_id.value,
-                "source_sha256": document.source.sha256.value,
-                "version_id": f"{document.document_id.value}:{document.source.sha256.value}",
-                "unit_id": unit.unit_id.value,
-                "kind": unit.kind.value,
-                "section": {
-                    "code": unit.section_code.value,
-                    "title": unit.section_title.value if unit.section_title else "",
-                },
-                "product_yj_codes": [code.value for code in unit.product_codes],
-                "text": "".join(rendered for rendered, _ in blocks),
-                "blocks": [payload for _, payload in blocks],
-                "references": [
-                    reference
-                    for _, payload in blocks
-                    for reference in payload["references"]
-                ],
-                "source": {"pmda_url": document.source.pmda_url.value},
-                "revisions": [revision.to_dict() for revision in unit.revisions],
-            }
-        )
+        payload = {
+            "schema_version": SEARCH_SCHEMA_VERSION,
+            "document_key": document.document_id.value,
+            "source_sha256": document.source.sha256.value,
+            "version_id": f"{document.document_id.value}:{document.source.sha256.value}"
+            if registered
+            else None,
+            "unit_id": unit.unit_id.value,
+            "kind": unit.kind.value,
+            "section": {
+                "code": unit.section_code.value,
+                "title": unit.section_title.value if unit.section_title else "",
+            },
+            "product_yj_codes": [code.value for code in unit.product_codes],
+            "products": [
+                {
+                    "yj_code": product.product_code.value,
+                    "brand_name": product.brand_name.value,
+                }
+                for product in document.products
+            ],
+            "text": "".join(rendered for rendered, _ in blocks),
+            "blocks": [payload for _, payload in blocks],
+            "references": [
+                reference
+                for _, payload in blocks
+                for reference in payload["references"]
+            ],
+            "source": {"pmda_url": document.source.pmda_url.value},
+            "revisions": [revision.to_dict() for revision in unit.revisions],
+        }
+        payload["text"] = _render_unit_blocks(payload)
+        rows.append(payload)
     return "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows).encode(
         "utf-8"
     )
@@ -318,7 +395,10 @@ def build_index_document(
     document_id = f"{company}_{insert_no}"
     medicines: list[RegisteredMedicine] = []
     revisions = _objects(metadata.get("revisions") or [])
-    revision = revisions[-1] if revisions else {}
+    revision = next(
+        (revision for revision in revisions if revision.get("source_label") == "今回"),
+        revisions[0] if revisions else {},
+    )
     for product in _objects(metadata.get("products") or []):
         yj_code = product.get("yj_code")
         medicines.append(

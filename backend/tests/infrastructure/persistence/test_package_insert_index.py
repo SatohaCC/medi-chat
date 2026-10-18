@@ -33,7 +33,10 @@ from backend.tests.infrastructure.persistence.test_alembic_migrations import (
 from backend.tests.infrastructure.persistence.test_persistence_boundaries import (
     source_snapshot as source_snapshot,
 )
-from backend.tests.support.storage_fixtures import write_structured_document
+from backend.tests.support.storage_fixtures import (
+    make_search_payload,
+    write_structured_document,
+)
 from sqlalchemy import func, insert, select, text
 from sqlalchemy.engine import URL, Engine
 
@@ -189,12 +192,15 @@ def test_ソースが変わったときだけ索引を再構築する(
     units = structured / "test_001/search_units.jsonl"
     new_unit = {
         "unit_id": "added",
+        "product_yj_codes": ["1234567A0000"],
         "document_key": "test_001",
         "section": {"code": "11.1"},
         "text": "新しく追加された頭痛の記載",
     }
     with units.open("a", encoding="utf-8") as stream:
-        stream.write("\n" + json.dumps(new_unit, ensure_ascii=False))
+        stream.write(
+            "\n" + json.dumps(make_search_payload(new_unit), ensure_ascii=False)
+        )
     changed = source_reader.read_snapshot()
     assert changed.fingerprint != initial.fingerprint
     assert writer.replace(changed) == IndexBuildResult(1, 4)

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { SourceEvidenceCard } from "../components/SourceEvidenceCard";
-import { packageInsertMockData, realInteractionRows } from "./packageInsertData";
+import { packageInsertMockData, realInteractions } from "./packageInsertData";
 
 const meta: Meta<typeof SourceEvidenceCard> = {
   title: "Chat/SourceEvidenceCard",
@@ -130,15 +130,6 @@ export const Section11_AdverseReactions: Story = {
   },
 };
 
-// 12. 臨床検査結果に及ぼす影響
-export const Section12_EffectsOnLaboratoryTests: Story = {
-  name: "12. 臨床検査結果に及ぼす影響 (Lab Tests)",
-  args: {
-    source: packageInsertMockData.section12_lab_tests,
-    variant: "default",
-  },
-};
-
 // 13. 過量投与
 export const Section13_Overdosage: Story = {
   name: "13. 過量投与 (Overdosage)",
@@ -247,15 +238,6 @@ export const Section24_Inquiries: Story = {
   },
 };
 
-// 25. 保険給付上の注意
-export const Section25_InsuranceReimbursement: Story = {
-  name: "25. 保険給付上の注意 (Insurance)",
-  args: {
-    source: packageInsertMockData.section25_insurance,
-    variant: "default",
-  },
-};
-
 // 26. 製造販売業者等
 export const Section26_ManufacturerAndDistributor: Story = {
   name: "26. 製造販売業者等 (Manufacturer)",
@@ -284,41 +266,29 @@ export const CompactVariant: Story = {
   },
 };
 
-// 【実データ】メトグルコ × ヨード造影剤（併用注意）
-export const RealMetglucoInteractionContrastAgent: Story = {
-  name: "【実データ】メトグルコ × ヨード造影剤（併用注意）",
+// 現行DBの大項目10。子項目10.1・10.2と全行を保持する。
+export const RealMetglucoInteractions: Story = {
+  name: "【実データ】メトグルコ 相互作用10（10.1・10.2）",
   args: {
-    source: realInteractionRows.metgluco_contrast_agent,
+    source: realInteractions.metgluco,
     variant: "default",
-    highlightWords: ["乳酸アシドーシス", "一時的に中止"],
+    highlightWords: ["アルコール", "ヨード造影剤"],
   },
 };
 
-// 【実データ】メトグルコ × アルコール（併用禁忌）
-export const RealMetglucoInteractionAlcohol: Story = {
-  name: "【実データ】メトグルコ × アルコール（併用禁忌）",
+export const RealXareltoInteractions: Story = {
+  name: "【実データ】イグザレルト 相互作用10（10.1・10.2）",
   args: {
-    source: realInteractionRows.metgluco_alcohol,
-    variant: "default",
-    highlightWords: ["アルコール", "乳酸アシドーシス"],
-  },
-};
-
-// 【実データ】イグザレルト × イトラコナゾール等（併用禁忌）
-export const RealXareltoInteractionItraconazole: Story = {
-  name: "【実データ】イグザレルト × イトラコナゾール等（併用禁忌）",
-  args: {
-    source: realInteractionRows.xarelto_itraconazole,
+    source: realInteractions.xarelto,
     variant: "default",
     highlightWords: ["イトラコナゾール", "出血"],
   },
 };
 
-// 【実データ】カロナール × リチウム製剤（併用注意）
-export const RealCalonalInteractionWarfarin: Story = {
-  name: "【実データ】カロナール × リチウム製剤（併用注意）",
+export const RealCalonalInteractions: Story = {
+  name: "【実データ】カロナール 相互作用10（10.1・10.2）",
   args: {
-    source: realInteractionRows.calonal_warfarin,
+    source: realInteractions.calonal,
     variant: "default",
     highlightWords: ["リチウム", "中毒"],
   },

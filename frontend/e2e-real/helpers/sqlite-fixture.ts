@@ -25,16 +25,6 @@ function observe(root: string, mode: string, index: string, env: NodeJS.ProcessE
   return JSON.parse(result.stdout.trim().split("\n").at(-1) || "null");
 }
 
-export function restoreHistoricalManifest(
-  root: string,
-  directory: string,
-  env: NodeJS.ProcessEnv,
-) {
-  const index = join(directory, "historical-manifest.sqlite3");
-  observe(root, "restore", index, env);
-  return index;
-}
-
 export function logicalSnapshot(root: string, index: string): LogicalSnapshot {
   return observe(root, "snapshot", index, process.env);
 }

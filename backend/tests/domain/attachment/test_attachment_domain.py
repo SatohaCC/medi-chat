@@ -132,10 +132,14 @@ def _document() -> AttachmentDocument:
             ),
         ),
         sections=(
-            AttachmentSection(NumberedSectionCode("1"), AttachmentSectionTitle("警告")),
             AttachmentSection(
-                NumberedSectionCode("1.1"),
-                AttachmentSectionTitle("重要な警告"),
+                NumberedSectionCode("1"),
+                AttachmentSectionTitle("警告"),
+                children=(
+                    AttachmentSection(
+                        NumberedSectionCode("1.1"), AttachmentSectionTitle("重要な警告")
+                    ),
+                ),
             ),
         ),
     )
@@ -178,6 +182,23 @@ def test_optional_product_name_and_source_hash_are_absent() -> None:
     )
     assert product.english_name is None
     assert AttachmentSource(AttachmentUrl("https://example.test")).sha256 is None
+
+
+def test_nested_section_ownership_and_duplicate_numbers_are_enforced() -> None:
+    child = AttachmentSection(NumberedSectionCode("10.1"), AttachmentSectionTitle("子"))
+    major = AttachmentSection(
+        NumberedSectionCode("10"), AttachmentSectionTitle("親"), children=(child,)
+    )
+    assert major.walk() == (major, child)
+    assert replace(_document(), sections=(major,)).sections == (major,)
+    with pytest.raises(AttachmentDomainError, match="owning parent"):
+        AttachmentSection(
+            NumberedSectionCode("11"),
+            AttachmentSectionTitle("別の親"),
+            children=(child,),
+        )
+    with pytest.raises(AttachmentDomainError, match="duplicate sections"):
+        replace(_document(), sections=(major, child))
 
 
 def test_attachment_document_keeps_immutable_value_objects_and_invariants() -> None:
@@ -234,5 +255,9 @@ def test_document_requires_direct_parent_and_accepts_complete_hierarchy():
     )
     with pytest.raises(AttachmentDomainError, match="section parent must exist"):
         replace(_document(), sections=(root, child))
-    document = replace(_document(), sections=(child, root, parent))
-    assert document.sections == (child, root, parent)
+    with pytest.raises(AttachmentDomainError, match="major sections"):
+        replace(_document(), sections=(child, root, parent))
+    parent = replace(parent, children=(child,))
+    root = replace(root, children=(parent,))
+    document = replace(_document(), sections=(root,))
+    assert document.sections[0].walk() == (root, parent, child)

@@ -41,8 +41,8 @@ export const MultipleSectionsRetrieved: Story = {
   },
 };
 
-export const All26SectionsOverview: Story = {
-  name: "26全項目一覧プレビュー",
+export const AvailableSectionsOverview: Story = {
+  name: "原本に存在する24大項目の一覧（複数文書）",
   args: {
     sources: Object.values(packageInsertMockData),
     retrievalStatus: "complete",

@@ -28,12 +28,17 @@ class PackageInsertStoreTests(unittest.TestCase):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.root = Path(self.temp_dir.name)
         self.index_path = self.root / "test_index.sqlite3"
+        self.source_dir = self.root / "current-source"
+        from backend.infrastructure.pmda_xml.transform import transform
+
+        for original in sorted((REPO_ROOT / "data/pmda/originals").rglob("*.xml")):
+            transform(original, self.source_dir / original.stem)
 
     def tearDown(self) -> None:
         self.temp_dir.cleanup()
 
     def engine(self):
-        build_document_store(STRUCTURED_DIR, self.index_path)
+        build_document_store(self.source_dir, self.index_path)
         return create_sqlite_engine(
             URL.create("sqlite", database=self.index_path.as_posix()).render_as_string(
                 hide_password=False
@@ -100,7 +105,7 @@ class PackageInsertStoreTests(unittest.TestCase):
         engine = self.engine()
         try:
             medicines = asyncio.run(SqlAlchemyMedicineReader(engine).read_medicines())
-            original = FileIndexSourceReader(STRUCTURED_DIR).read_snapshot().medicines
+            original = FileIndexSourceReader(self.source_dir).read_snapshot().medicines
             self.assertTrue(
                 all(type(medicine) is RegisteredMedicine for medicine in medicines)
             )
@@ -118,7 +123,7 @@ class PackageInsertStoreTests(unittest.TestCase):
     def test_manifest_fingerprint_fast_path(self) -> None:
         structured = self.root / "structured"
         structured.mkdir()
-        sample = next(STRUCTURED_DIR.glob("*/document.json")).parent
+        sample = next(self.source_dir.glob("*/document.json")).parent
         shutil.copytree(sample, structured / sample.name)
         fingerprint = FileIndexSourceReader(structured).read_snapshot().fingerprint
         self.assertFalse(fingerprint.startswith("manifest:"))

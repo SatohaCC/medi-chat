@@ -1,5 +1,3 @@
-import json
-
 from ...application.attachment_import.import_errors import (
     ImportLimitExceeded,
     InvalidAttachment,
@@ -16,6 +14,7 @@ from ...domain.attachment.entities import AttachmentDocument
 from ...domain.retrieval.entities import SearchUnit
 from ..index_payloads import (
     MAX_ARTIFACT_BYTES,
+    encode_registered_units,
     json_bytes,
     result_dict,
     result_from_dict,
@@ -32,7 +31,7 @@ __all__ = [
 
 
 class PmdaArtifactEncoder:
-    transformer_version = "medi-chat.pmda-import.v1"
+    transformer_version = "medi-chat.pmda-import.v2"
 
     def encode(
         self,
@@ -45,27 +44,17 @@ class PmdaArtifactEncoder:
                 "invalid_source_information", "Source information is invalid"
             )
         info = source_info
-        templates = {row["section"]["code"]: row for row in info.rows}
-        rows = []
+        templates: dict[str, list[dict]] = {}
+        for row in info.rows:
+            templates.setdefault(row["section"]["code"].split(".", 1)[0], []).append(
+                row
+            )
         units_by_code = {unit.section_code.value: unit for unit in search_units}
         if units_by_code.keys() != templates.keys():
             raise InvalidAttachment(
                 "projection_mismatch", "Numbered body projection is incomplete"
             )
-        for template in info.rows:
-            unit = units_by_code[template["section"]["code"]]
-            rows.append(
-                {
-                    "unit_id": unit.unit_id.value,
-                    "document_key": unit.document_id.value,
-                    "kind": unit.kind.value,
-                    "section": template["section"],
-                    "product_yj_codes": [code.value for code in unit.product_codes],
-                    "text": unit.text.value,
-                    "source": template["source"],
-                    "references": template["references"],
-                }
-            )
+        content = encode_registered_units(document, search_units, registered=False)
         meta = info.document["document"]
         digest = info.document["source"]["sha256"]
         result = ImportResult(
@@ -73,7 +62,7 @@ class PmdaArtifactEncoder:
             source_sha256=digest,
             validation_status=info.validation["status"],
             section_count=len(document.sections),
-            search_unit_count=len(rows),
+            search_unit_count=len(search_units),
             products=tuple(
                 ImportedProduct(product["yj_code"], product["brand_name"])
                 for product in meta["products"]
@@ -96,9 +85,7 @@ class PmdaArtifactEncoder:
             ArtifactFile("document.json", json_bytes(info.document)),
             ArtifactFile(
                 "search_units.jsonl",
-                "".join(
-                    json.dumps(row, ensure_ascii=False) + "\n" for row in rows
-                ).encode("utf-8"),
+                content,
             ),
             ArtifactFile("validation.json", json_bytes(info.validation)),
             ArtifactFile(

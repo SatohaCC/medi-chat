@@ -70,7 +70,7 @@ class RejectLegacy(importlib.abc.MetaPathFinder):
         if any(fullname == name or fullname.startswith(name + ".") for name in self.forbidden):
             raise RuntimeError("Legacy dependency attempted: " + fullname)
 sys.meta_path.insert(0, RejectLegacy())
-for module in ("backend.presentation.chat_service", "backend.infrastructure.cli.build_search_index", "backend.infrastructure.cli.migrate_legacy_index", "backend.infrastructure.cli.structure_pmda_xml", "backend.infrastructure.cli.build_autocomplete_index"):
+for module in ("backend.presentation.chat_service", "backend.infrastructure.cli.build_search_index", "backend.infrastructure.cli.structure_pmda_xml", "backend.infrastructure.cli.build_autocomplete_index"):
     importlib.import_module(module)
 from backend.main import create_app
 from fastapi.testclient import TestClient

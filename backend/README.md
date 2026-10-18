@@ -29,11 +29,11 @@
 | `application/retrieval` | 質問とYJコードから医薬品を解決し、検索条件を生成して根拠を取得・統合する。WebSocketでは固定キーワード・形態素解析の各検出完了時にローカル根拠を累積配信し、Jev完了後に全検出条件の統合根拠で更新する。固定キーワードの配信は形態素解析を待たない。製品確認が必要な場合は先行配信しない。RESTと回答生成は全検出完了後の根拠を使う |
 | `application/indexing` | 索引構築のユースケース・入出力契約 |
 | `presentation` | Pydantic公開DTO、JSON変換、`AppChatService`（DTO変換アダプター）、REST/WSルーター、`dependencies.py`（全FastAPI `Depends` 関数の集約）。`domain` および `infrastructure` には一切依存しない |
-| `infrastructure` | SDK JSON解釈、JSON読取、Janome、SQLAlchemy Reader/Writer、Alembic runner、旧v3検証・移行、共通payload変換（`index_payloads.py`、`evidence_mapping.py`） |
+| `infrastructure` | SDK JSON解釈、JSON読取、Janome、SQLAlchemy Reader/Writer、Alembic runner、共通payload変換（`index_payloads.py`、`evidence_mapping.py`） |
 | `infrastructure/llm` | OpenAI/Gemini SDKと代替応答の実装 |
 | `infrastructure/composition` / `main.py` | `app_lifespan.py`（`create_app_lifespan`）で具象の生成・接続・準備済みDB検証・SDK/worker/engineの所有終了を集約し、`main.py`（`create_app`）はCORS・ルーター登録とlifespan委譲のみを担当する |
 | `config` | 接続設定と生成provider/modelの環境default供給 |
-| `infrastructure/cli` | `build_search_index`、`migrate_legacy_index`の公開module入口 |
+| `infrastructure/cli` | `build_search_index`、`initialize_registrations`の公開module入口 |
 | `infrastructure/package_insert_definitions` | 単一JSONのIO/検証と用途別組立、および各アダプター向け設定型（`definition_settings.py`）の所有。正式名称はattachment、検索規則・整形はretrieval、回答指示はApplicationが所有する |
 
 公開DTOの`ChatMessage`/`ChatResponse`/`ChatSource`/`MedicineMatch`は`presentation`に置き、REST JSON・WSイベント・OpenAPIの名前を維持します。applicationの同名モデルはフレームワーク非依存の入出力です。`IntentResult.candidates`が意図判定の業務契約で、`raw_response`は公開原本として保持します。applicationはSDKの`answers`/`choice`/`probabilities`を読まず、presentation mapperが入力DTOからApplication入力への変換と、Application結果から公開JSONへの変換を担当します。準備済みの回答はApplicationモデルのまま生成まで保持し、出力DTOから内部モデルへ復元しません。
@@ -186,13 +186,13 @@ backend/
 │   ├── sources/         # FileIndexSourceReader、MedicineCodeTableReader
 │   ├── llm/             # SDK provider / fallback
 │   ├── composition/     # app_lifespan(DI配線)、index verifier、persistence lifespan
-│   ├── cli/             # build_search_index、migrate_legacy_index、initialize_registrations
+│   ├── cli/             # build_search_index、initialize_registrations
 │   ├── evidence_mapping.py
 │   ├── index_payloads.py # XML非依存のJSON/検索単位payload変換
 │   └── json_payloads.py
 ├── config/              # database_settings、generation_settings
 ├── migrations/          # env.pyとversions
-└── tests/               # legacy_v3は未管理旧形式DBの生成専用Fixture
+└── tests/               # 現在形式の生成・保存・検索と未管理DB拒否を検証
 ```
 
 旧`backend.chat`/`retrieval`/`medicines`/`storage`/`jev`とcompositionの旧サービス再公開は削除しました。ドメインモデルも責務別の正本へ統一し、既知のリポジトリ内利用側は正本へ移行しています。公開起動点は`backend.main:app`/`create_app`、既存REST/WSルート、FastAPI DI関数、6つのCLI moduleです。リポジトリ外の旧Python import利用は確認対象外です。
@@ -218,7 +218,7 @@ uv run --project backend alembic -c backend/alembic.ini downgrade base
 ### 検索インデックスの構築
 
 登録済みactive集合を検証します。旧ディレクトリを走査して旧版を再登録しません。
-旧索引は利用中writerを停止し、整合backup・復元検査後に明示Alembicと初期登録を行ってください。
+旧索引は移行せず、原本から新しいDBとimport先へ再登録してください。
 起動時にschema作成や初期登録は行いません。まずコピー先で照合してください。
 
 ```bash
@@ -247,19 +247,9 @@ uv run --project backend python -m backend.infrastructure.cli.build_search_index
   --index-path data/pmda/structured/.chat-search.sqlite3
 ```
 
-### 未管理旧v3 SQLiteデータベースの移行
+### 添付文書データの再生成
 
-過去の自動構築スクリプト等で作成された未管理の旧v3データベースは、専用の移行コマンドで安全に別ファイルへ複製・検証・Alembic管理化します：
-
-```bash
-uv run --project backend python -m backend.infrastructure.cli.migrate_legacy_index \
-  --source-index data/pmda/structured/old-index.sqlite3 \
-  --output-index data/pmda/structured/.chat-search.sqlite3
-```
-- 元データベースの整合性を検証（PRAGMA integrity_check、JSONスキーマ、FTS5整合性）
-- SQLite Online Backup API を用いて安全に整合複製（WALコミット済みデータも完全に反映）
-- 複製先のみに対して Alembic stamp（`0001_v3_schema`）と upgrade を適用
-- 移行前後の全レコード数・代表検索結果・指紋の完全一致を自動検証
+旧形式のJSON・検索データ・旧SQLite索引は読み取り・移行対象にしません。原本を保持し、新しい出力先で現在の変換器による構造化、空DBへのAlembic upgrade、原本からの初期登録を行います。旧索引のstamp・互換読み取り・自動修復は提供しません。保存形式と検証条件は[変換規則](../docs/pmda-xml-conversion.md)を参照してください。
 
 ## ポートとアダプターの拡張手順
 

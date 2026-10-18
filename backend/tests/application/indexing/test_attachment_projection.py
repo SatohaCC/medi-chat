@@ -107,7 +107,7 @@ def test_original_body_and_revision_order_survive_projection():
     assert unit.revisions[0]["metadata"] == {"unknown": ["残す"]}
 
 
-def test_each_number_owns_one_unit_without_child_body_and_empty_parent():
+def test_major_number_owns_child_bodies_even_without_own_body():
     def section(code, text):
         return AttachmentSection(
             NumberedSectionCode(code),
@@ -122,20 +122,42 @@ def test_each_number_owns_one_unit_without_child_body_and_empty_parent():
     document = replace(
         _document(),
         sections=(
-            section("1", "親本文"),
-            section("1.1", "子本文"),
-            section("2", None),
-            section("2.1", "別の子"),
+            replace(section("1", "親本文"), children=(section("1.1", "子本文"),)),
+            replace(section("2", None), children=(section("2.1", "別の子"),)),
         ),
     )
     units = project_attachment(document)
     assert [unit.unit_id.value for unit in units] == [
         "doc-001:1",
-        "doc-001:1.1",
-        "doc-001:2.1",
+        "doc-001:2",
     ]
-    assert [unit.text.value for unit in units] == ["親本文", "子本文", "別の子"]
-    assert len(document.sections) == 4
+    assert units[0].text.value == "親本文\n\n1.1 項目\n\n子本文"
+    assert units[1].text.value == "2.1 項目\n\n別の子"
+    assert len(document.sections) == 2
+
+
+def test_source_independent_nested_sections_keep_heading_presence_and_child_ownership():
+    child = AttachmentSection(
+        NumberedSectionCode("10.1"),
+        AttachmentSectionTitle("併用禁忌"),
+        AttachmentBody(blocks=(AttachmentParagraph(text=AttachmentText("本文")),)),
+        header=None,
+    )
+    major = AttachmentSection(
+        NumberedSectionCode("10"),
+        AttachmentSectionTitle("相互作用"),
+        children=(child,),
+    )
+    document = replace(_document(), sections=(major,))
+    (unit,) = project_attachment(document)
+    assert unit.section_code.value == "10"
+    block = unit.blocks[0]
+    assert isinstance(block, SearchParagraph)
+    assert block.context.section_code is not None
+    assert block.context.section_code.value == "10.1"
+    assert not block.is_heading
+    assert document.sections[0].header is None
+    assert document.sections[0].children == (child,)
 
 
 def test_tables_keep_columns_spans_newlines_and_references_in_one_unit():
@@ -175,7 +197,7 @@ def test_tables_keep_columns_spans_newlines_and_references_in_one_unit():
         ),
     )
     body = AttachmentBody(blocks=(AttachmentTableBlock(table=table),))
-    sections = tuple(
+    children = tuple(
         AttachmentSection(
             NumberedSectionCode(code),
             AttachmentSectionTitle("表"),
@@ -183,10 +205,14 @@ def test_tables_keep_columns_spans_newlines_and_references_in_one_unit():
         )
         for code in ("10", "10.1", "10.2", "11", "11.2")
     )
+    sections = (
+        replace(children[0], children=(children[1], children[2])),
+        replace(children[3], children=(children[4],)),
+    )
     units = project_attachment(replace(_document(), sections=sections))
-    assert [unit.section_code.value for unit in units] == ["10.1", "10.2", "11.2"]
+    assert [unit.section_code.value for unit in units] == ["10", "11"]
+    assert [len(unit.blocks) for unit in units] == [2, 1]
     for unit in units:
-        assert len(unit.blocks) == 1
         block = unit.blocks[0]
         assert isinstance(block, SearchTableBlock)
         snapshot = block.table

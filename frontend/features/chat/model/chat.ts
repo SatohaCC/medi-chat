@@ -4,6 +4,7 @@ export interface SourceReference {
   kind?: string;
   target_section_code?: string | null;
   target_url?: string | null;
+  target_xml_id?: string | null;
 }
 
 export type DetectionSource = "logic" | "jev" | "keyword";

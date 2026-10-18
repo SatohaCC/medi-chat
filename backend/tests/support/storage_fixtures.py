@@ -18,6 +18,28 @@ class BuiltIndex:
     index_stats: dict[str, int]
 
 
+def make_search_payload(value):
+    """合成テスト用の現在形式を、指定した本文と所属から作る。"""
+    return {
+        **value,
+        "schema_version": "medi-chat.pmda-sections.v4",
+        "version_id": None,
+        "blocks": [
+            {
+                "kind": "paragraph",
+                "text": value["text"],
+                "is_heading": False,
+                "context": {
+                    "product_yj_codes": value.get("product_yj_codes", []),
+                    "labels": [],
+                    "section": value.get("section", {}),
+                },
+                "references": [],
+            }
+        ],
+    }
+
+
 def build_document_store(structured_dir: Path, index_path: Path) -> BuiltIndex:
     from backend.tests.infrastructure.persistence.test_alembic_migrations import (
         _migrate_database,
@@ -43,6 +65,7 @@ def write_structured_document(root: Path, unit_count: int = 3) -> Path:
     document_dir = structured_dir / "test_001"
     document_dir.mkdir(parents=True)
     document = {
+        "schema_version": "medi-chat.pmda-prescription-xml.v2",
         "document": {
             "company_identifier": "test",
             "package_insert_no": "001",
@@ -53,12 +76,27 @@ def write_structured_document(root: Path, unit_count: int = 3) -> Path:
     }
     units = [
         {
+            "schema_version": "medi-chat.pmda-sections.v4",
+            "version_id": None,
             "unit_id": f"test_001:{index:03d}",
             "document_key": "test_001",
             "product_yj_codes": ["1234567A0000"],
             "section": {"code": "11.1", "title": "重大な副作用"},
             "kind": "text",
             "text": f"頭痛に注意してください。記載{index}",
+            "blocks": [
+                {
+                    "kind": "paragraph",
+                    "text": f"頭痛に注意してください。記載{index}",
+                    "is_heading": False,
+                    "context": {
+                        "product_yj_codes": ["1234567A0000"],
+                        "labels": [],
+                        "section": {"code": "11.1", "title": "重大な副作用"},
+                    },
+                    "references": [],
+                }
+            ],
         }
         for index in range(unit_count)
     ]

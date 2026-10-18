@@ -22,7 +22,12 @@ from ...application.attachment_import.import_errors import (
 )
 from ...application.attachment_import.import_models import ArtifactBundle, ImportResult
 from ...domain.attachment.identifiers import DocumentId
-from ..index_payloads import MAX_ARTIFACT_BYTES, result_from_dict
+from ..index_payloads import (
+    DOCUMENT_SCHEMA_VERSION,
+    MAX_ARTIFACT_BYTES,
+    registered_unit_text,
+    result_from_dict,
+)
 
 
 class FileAttachmentImportStore:
@@ -70,6 +75,13 @@ class FileAttachmentImportStore:
                     raise ValueError("artifact content differs")
             if integrity["source.xml"] != source_sha256:
                 raise ValueError("source hash differs")
+            document = json.loads((target / "document.json").read_bytes())
+            if document.get("schema_version") != DOCUMENT_SCHEMA_VERSION:
+                raise ValueError(
+                    "Unsupported document format; regenerate from original sources"
+                )
+            for line in (target / "search_units.jsonl").read_bytes().splitlines():
+                registered_unit_text(json.loads(line))
             result = result_from_dict(json.loads((target / "result.json").read_bytes()))
             if (
                 result.document_id != document_id.value

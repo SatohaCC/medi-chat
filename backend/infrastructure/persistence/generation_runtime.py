@@ -30,7 +30,11 @@ from ...domain.retrieval.repositories import EvidenceSearchTarget
 from ...domain.retrieval.value_objects import Evidence, SearchCriteria, TextSearchPolicy
 from ...domain.shared.services import normalize_match_text, normalize_search_text
 from ..evidence_mapping import build_evidence, is_scope_heading_only
-from ..index_payloads import build_index_unit, encode_registered_units
+from ..index_payloads import (
+    build_index_unit,
+    encode_registered_units,
+    unit_matches_sections,
+)
 from ..json_payloads import parse_json_object
 from ..package_insert_definitions.definition_settings import PmdaXmlSettings
 from ..package_insert_definitions.loader import get_package_insert_definitions
@@ -155,8 +159,7 @@ class _SnapshotReader:
         sections = {code.value for code in criteria.section_codes}
 
         def in_sections(unit: dict[str, JsonValue]) -> bool:
-            section = unit.get("section")
-            return isinstance(section, dict) and section.get("code") in sections
+            return unit_matches_sections(unit, tuple(sections))
 
         if sections:
             selected.extend(
