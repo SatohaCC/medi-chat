@@ -29,6 +29,7 @@ from backend.tests.application.retrieval.test_product_identity_retrieval import 
 )
 from backend.tests.integration.test_registration_publisher import publish, source
 from backend.tests.integration.test_registration_publisher import publisher as publisher
+from backend.tests.support.paths import PROJECT_ROOT
 
 X = "111111111111"
 A = "222222222222"
@@ -293,6 +294,7 @@ async def test_tc135_identity_and_materialize_stay_old_across_os_publish(
                 *[str(x) for x in paths],
             ],
             capture_output=True,
+            cwd=PROJECT_ROOT,
             timeout=60,
         )
         assert result.returncode == 0, result.stderr.decode(errors="replace")

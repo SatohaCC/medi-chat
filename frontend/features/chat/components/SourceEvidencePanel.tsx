@@ -54,8 +54,7 @@ export function SourceEvidencePanel({
     const matchesSection =
       selectedSection === "all" || (s.section?.code || "other") === selectedSection;
     const drugName = s.product_name || s.generic_name || "その他";
-    const matchesMedicine =
-      selectedMedicine === "all" || drugName === selectedMedicine;
+    const matchesMedicine = selectedMedicine === "all" || drugName === selectedMedicine;
     return matchesSection && matchesMedicine;
   });
 
@@ -139,23 +138,24 @@ export function SourceEvidencePanel({
 
         {currentTab === "sources" && (
           <>
-            {jevResponse?.qualifying_intents && jevResponse.qualifying_intents.length > 1 && (
-              <div {...stylex.props(styles.multipleNotice)}>
-                <div {...stylex.props(styles.multipleTitle)}>
-                  <span {...stylex.props(styles.multipleTitleGroup)}>
-                    <Zap size={13} color="#0265dc" strokeWidth={2} />
-                    マルチセクション取得（閾値20%以上）
-                  </span>
+            {jevResponse?.qualifying_intents &&
+              jevResponse.qualifying_intents.length > 1 && (
+                <div {...stylex.props(styles.multipleNotice)}>
+                  <div {...stylex.props(styles.multipleTitle)}>
+                    <span {...stylex.props(styles.multipleTitleGroup)}>
+                      <Zap size={13} color="#0265dc" strokeWidth={2} />
+                      マルチセクション取得（閾値20%以上）
+                    </span>
+                  </div>
+                  <div>
+                    確率20%以上の全候補項目（
+                    {jevResponse.qualifying_intents
+                      .map((k) => JEV_INTENT_META[k]?.label || k)
+                      .join("・")}
+                    ）のセクションを網羅して取得し、LLMに提供しています。
+                  </div>
                 </div>
-                <div>
-                  確率20%以上の全候補項目（
-                  {jevResponse.qualifying_intents
-                    .map((k) => JEV_INTENT_META[k]?.label || k)
-                    .join("・")}
-                  ）のセクションを網羅して取得し、LLMに提供しています。
-                </div>
-              </div>
-            )}
+              )}
 
             <SourceEvidenceSectionFilters
               sectionGroups={sectionGroups}

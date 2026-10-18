@@ -5,6 +5,7 @@ from typing import Annotated
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 YJCode = Annotated[str, StringConstraints(pattern=r"^[0-9A-Z]{12}$")]
+MAX_PRODUCT_YJ_CODES = 50
 
 
 class MedicineMatch(BaseModel):

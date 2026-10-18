@@ -31,6 +31,7 @@ from backend.tests.application.indexing.test_active_attachment_projection import
 from backend.tests.infrastructure.persistence.test_alembic_migrations import (
     _migrate_database,
 )
+from backend.tests.support.paths import PROJECT_ROOT
 
 
 def source(body, codes=("111111111111",), *, doc="test", revised_at="2026-10"):
@@ -463,6 +464,7 @@ def test_tc100_101_real_process_publish_uses_revision_dates_and_keeps_other_yj(
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 env=env,
+                cwd=PROJECT_ROOT,
                 text=True,
                 encoding="utf-8",
                 errors="replace",

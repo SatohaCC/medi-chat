@@ -45,15 +45,18 @@ const render = (overrides = {}, highlightWords) =>
     }),
   );
 
+test("product labels never highlight medicine names while clinical headings still highlight", () => {
+  const html = render({}, ["対象製品", "併用禁忌"]);
+  assert.ok(html.includes("対象製品"));
+  assert.doesNotMatch(html, /<mark[^>]*>対象製品<\/mark>/);
+  assert.match(html, /<mark[^>]*>併用禁忌<\/mark>/);
+});
+
 test("interaction design preserves source columns, notes and provenance without clinical inference", () => {
   const html = render();
   assert.match(html, /data-evidence-design="InteractionEvidence"/);
   assert.match(html, /<thead><tr>/);
-  for (const label of [
-    "薬剤名等",
-    "臨床症状・措置方法",
-    "機序・危険因子",
-  ]) {
+  for (const label of ["薬剤名等", "臨床症状・措置方法", "機序・危険因子"]) {
     assert.ok(html.includes(label));
   }
   assert.equal((html.match(/scope="col"/g) ?? []).length, 3);

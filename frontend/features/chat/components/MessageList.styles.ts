@@ -2,6 +2,7 @@ import * as stylex from "@stylexjs/stylex";
 
 export const styles = stylex.create({
   root: {
+    containerType: "size",
     flex: "1",
     minHeight: "0",
     overflowY: "auto",
@@ -20,8 +21,9 @@ export const styles = stylex.create({
     gap: "18px",
     minHeight: "100%",
   },
-  withBottomPadding: {
-    paddingBottom: "70vh",
+  bottomSpacer: {
+    height: "100cqh",
+    flexShrink: 0,
   },
   welcomeContainer: {
     display: "flex",
@@ -70,7 +72,10 @@ export const styles = stylex.create({
   },
   suggestionGrid: {
     display: "grid",
-    gridTemplateColumns: { default: "repeat(2, 1fr)", "@media (max-width: 640px)": "1fr" },
+    gridTemplateColumns: {
+      default: "repeat(2, 1fr)",
+      "@media (max-width: 640px)": "1fr",
+    },
     gap: "12px",
     width: "100%",
     maxWidth: "760px",

@@ -4,6 +4,7 @@ const baseURL = "http://127.0.0.1:3100";
 
 export default defineConfig({
   testDir: "./e2e",
+  outputDir: "./test-results/mock",
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: 0,

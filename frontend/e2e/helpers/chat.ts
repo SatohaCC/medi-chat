@@ -64,7 +64,9 @@ export async function openChat(page: Page, options: { candidates?: boolean } = {
   });
   await page.goto("/");
   await expect(page.getByText("connected", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "テスト医薬品A", exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "テスト医薬品A", exact: true }),
+  ).toBeVisible();
   return {
     requests,
     input: page.getByRole("textbox", { name: "質問を入力" }),

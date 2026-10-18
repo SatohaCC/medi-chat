@@ -1,5 +1,5 @@
+import { aiLogo, PixelLoader } from "@react-spectrum/ai/loader";
 import * as stylex from "@stylexjs/stylex";
-import { PixelLoader, aiLogo } from "@react-spectrum/ai/loader";
 import { AlertTriangle, Bot, FileText, Zap } from "lucide-react";
 import type { Message } from "../model/chat";
 import { AssistantMarkdown } from "./AssistantMarkdown";
@@ -28,8 +28,7 @@ export function MessageItem({
     message.retrievalStatus === "complete" ||
     message.retrievalStatus === "jev_searching";
   const hasJev = Boolean(message.jevResponse);
-  const hasEvidence =
-    message.role === "assistant" && (hasSources || hasJev);
+  const hasEvidence = message.role === "assistant" && (hasSources || hasJev);
 
   return (
     <div

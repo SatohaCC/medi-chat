@@ -23,6 +23,7 @@ from backend.tests.application.indexing.test_active_attachment_projection import
 )
 from backend.tests.integration.test_registration_publisher import publish, source
 from backend.tests.integration.test_registration_publisher import publisher as publisher
+from backend.tests.support.paths import PROJECT_ROOT
 
 
 def test_tc094_doc_id_only_does_not_leak_old_b_into_requested_new_a(publisher):
@@ -160,6 +161,7 @@ def test_tc099_115_real_live_owner_survives_recovery_dead_owner_reaped(
             str(release),
         ],
         env=env,
+        cwd=PROJECT_ROOT,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )

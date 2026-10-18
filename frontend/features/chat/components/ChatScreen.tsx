@@ -5,11 +5,11 @@ import * as stylex from "@stylexjs/stylex";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { styles as layout } from "../../../shared/ui/PageLayout.styles";
 import {
-  type SelectedMedicineItem,
   buildPayloadContent,
   computeTargetMedicines,
   extractMentionsFromSegments,
   resolvePostSendState,
+  type SelectedMedicineItem,
   useMedicineEntries,
 } from "../../medicine-selection";
 import { useChatWebSocket } from "../hooks/useChatWebSocket";
@@ -36,7 +36,9 @@ export function ChatScreen() {
   }, [entries]);
 
   const [baseline, setBaseline] = useState<SelectedMedicineItem[]>([defaultBaseline]);
-  const [persistentAdditional, setPersistentAdditional] = useState<SelectedMedicineItem[]>([]);
+  const [persistentAdditional, setPersistentAdditional] = useState<
+    SelectedMedicineItem[]
+  >([]);
   const [prompt, setPrompt] = useState<PromptFieldValue>(() => new PromptFieldValue([]));
   const [inputKey, setInputKey] = useState(0);
 
@@ -117,9 +119,19 @@ export function ChatScreen() {
     return "";
   }, [messages, openEvidenceIndex]);
 
+  const activeEvidenceSources = activeEvidenceMessage?.sources;
   const evidenceHighlightWords = useMemo(() => {
-    return extractHighlightWords(activeUserQuery);
-  }, [activeUserQuery]);
+    const medicineNames = [
+      ...entries.flatMap((entry) => [entry.n, entry.g]),
+      ...baseline.map((medicine) => medicine.name),
+      ...persistentAdditional.map((medicine) => medicine.name),
+      ...(activeEvidenceSources ?? []).flatMap((source) => [
+        source.product_name,
+        source.generic_name,
+      ]),
+    ];
+    return extractHighlightWords(activeUserQuery, medicineNames);
+  }, [activeUserQuery, entries, baseline, persistentAdditional, activeEvidenceSources]);
 
   const handleSendMessage = useCallback(
     (promptVal: PromptFieldValue) => {
@@ -190,8 +202,16 @@ export function ChatScreen() {
         const remaining = prompt.segments.filter((seg) => {
           if (seg.type === "token") {
             const val = seg.value;
-            if (val && typeof val === "object" && "type" in val && val.type === "custom") {
-              const data = "data" in val && val.data && typeof val.data === "object" ? (val.data as { yj_code?: string }) : undefined;
+            if (
+              val &&
+              typeof val === "object" &&
+              "type" in val &&
+              val.type === "custom"
+            ) {
+              const data =
+                "data" in val && val.data && typeof val.data === "object"
+                  ? (val.data as { yj_code?: string })
+                  : undefined;
               return data?.yj_code !== yjCode;
             }
           }
@@ -212,7 +232,10 @@ export function ChatScreen() {
       if (seg.type === "token") {
         const val = seg.value;
         if (val && typeof val === "object" && "type" in val && val.type === "custom") {
-          const data = "data" in val && val.data && typeof val.data === "object" ? (val.data as { yj_code?: string }) : undefined;
+          const data =
+            "data" in val && val.data && typeof val.data === "object"
+              ? (val.data as { yj_code?: string })
+              : undefined;
           return data?.yj_code ? baselineYjSet.has(data.yj_code) : false;
         }
       }
@@ -255,7 +278,11 @@ export function ChatScreen() {
           />
 
           {missingSelectedYjCodes.length > 0 && (
-            <p role="alert" aria-label="選択YJの消失" {...stylex.props(layout.missingAlert)}>
+            <p
+              role="alert"
+              aria-label="選択YJの消失"
+              {...stylex.props(layout.missingAlert)}
+            >
               選択したYJコードが現在の候補にありません:{" "}
               {missingSelectedYjCodes.join(", ")}
               。別の薬へ自動変更していません。

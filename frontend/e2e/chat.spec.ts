@@ -1,6 +1,5 @@
 import { expect, test } from "@playwright/test";
 import type { SourceItem } from "../features/chat/model/chat";
-import { zeroSelectionBundle } from "./harness/bundle";
 import { openChat } from "./helpers/chat";
 import { visualSource } from "./helpers/presentation";
 
@@ -47,27 +46,17 @@ for (const operation of ["pointer", "Enter", "Space", "input Enter"] as const) {
 test("SX-R07 / SX-06: 実formとhookで薬剤0の送信禁止と復帰を観測する", async ({
   page,
 }) => {
-  const bundle = await zeroSelectionBundle();
-  await page.route("**/zero-selection-harness", (route) =>
-    route.fulfill({
-      contentType: "text/html",
-      body: '<!doctype html><html lang="ja"><body><div id="root"></div><script src="/zero-selection-harness.js"></script></body></html>',
-    }),
-  );
-  await page.route("**/zero-selection-harness.js", (route) =>
-    route.fulfill({
-      contentType: "application/javascript",
-      body: bundle,
-    }),
-  );
   const chat = await openChat(page);
-  await page.goto("/zero-selection-harness");
-  await expect(page.getByText("connected", { exact: true })).toBeVisible();
+  await page
+    .getByTestId("tier-1-prescription")
+    .getByRole("button", { name: "全解除", exact: true })
+    .click();
   await chat.input.fill("確認する質問");
   await expect(chat.send).toBeDisabled();
   await chat.input.press("Enter");
   expect(chat.requests).toHaveLength(0);
-  await page.getByRole("button", { name: "選択を復帰" }).click();
+  await page.getByRole("button", { name: "処方薬を追加", exact: true }).click();
+  await page.getByRole("option", { name: /^テスト医薬品A/ }).click();
   await expect(chat.send).toBeEnabled();
   await chat.input.press("Enter");
   await expect.poll(() => chat.requests.length).toBe(1);
@@ -99,7 +88,7 @@ test("空白の質問を送れず、回答中は追加入力・二重送信を�
   await chat.input.fill("テスト質問");
   await chat.send.click();
   await expect.poll(() => chat.requests.length).toBe(1);
-  await expect(chat.input).toHaveValue("");
+  await expect(chat.input).toHaveText("");
   await expect(chat.input).toBeDisabled();
   await expect(chat.send).toBeDisabled();
   chat.respond({ type: "text_delta", content: "テスト回答です。" });
@@ -117,7 +106,8 @@ test("薬剤・モデルを指定して質問し、回答と根拠を表示し�
   page,
 }) => {
   const chat = await openChat(page);
-  await page.getByRole("button", { name: "テスト医薬品B" }).click();
+  await page.getByRole("button", { name: "処方薬を追加", exact: true }).click();
+  await page.getByRole("option", { name: /^テスト医薬品B/ }).click();
   await page.getByRole("button", { name: "回答モデル" }).click();
   await page.getByRole("option", { name: "Google (Gemini 3.8 Flash)" }).click();
   await chat.input.fill("  根拠を確認したい  ");
@@ -178,7 +168,6 @@ test("サーバーエラーを表示し、エラー回答を履歴に含めず�
   await chat.send.click();
   await expect.poll(() => chat.requests.length).toBe(2);
   expect(chat.requests[1].messages).toEqual([
-    { role: "user", content: "最初の質問" },
     { role: "user", content: "再送信する質問" },
   ]);
   chat.respond({ type: "text_delta", content: "回復後のテスト回答です。" });
@@ -302,4 +291,30 @@ test("チャット送信時に、送信したユーザー質問が画面上部�
       return Math.abs(userBox.y - mainBox.y);
     })
     .toBeLessThan(60);
+});
+
+test("26th question and a long preceding answer do not block later requests", async ({
+  page,
+}) => {
+  const chat = await openChat(page);
+  for (let i = 0; i < 26; i++) {
+    await chat.input.fill(`テスト質問${i}`);
+    await chat.send.click();
+    await expect.poll(() => chat.requests.length).toBe(i + 1);
+    chat.respond({
+      type: "text_delta",
+      content: i === 0 ? "長".repeat(4001) : `テスト回答${i}`,
+    });
+    chat.respond({ type: "text_done" });
+    await expect(chat.input).toBeEnabled();
+  }
+  const latest = chat.requests[chat.requests.length - 1];
+  expect(latest.messages.length).toBeLessThanOrEqual(50);
+  expect(latest.messages.at(-1)).toEqual({ role: "user", content: "テスト質問25" });
+  expect(latest.messages.every((m) => Array.from(m.content).length <= 4000)).toBe(true);
+  await expect(page.locator('[data-message-role="user"]')).toHaveCount(26);
+  await expect(page.locator('[data-message-role="assistant"]')).toHaveCount(26);
+  await expect(page.locator('[data-message-role="assistant"]').first()).toContainText(
+    "長".repeat(4001),
+  );
 });

@@ -6,10 +6,13 @@ import { visualImport, visualJev, visualSource } from "./helpers/presentation";
 
 // Development chrome is outside the application visual oracle.
 test.beforeEach(async ({ page }) => {
+  // Remote Spectrum fonts may load or time out between screenshots.
+  await page.route("https://use.typekit.net/**", (route) => route.abort());
   await page.addInitScript(() => {
     const hideDevelopmentChrome = () => {
       const style = document.createElement("style");
-      style.textContent = "nextjs-portal { display: none !important; }";
+      style.textContent =
+        "nextjs-portal { display: none !important; } * { --s2-font-family-sans: system-ui; } *, *::before, *::after { transition: none !important; }";
       document.head.append(style);
     };
     document.addEventListener("DOMContentLoaded", hideDevelopmentChrome, { once: true });

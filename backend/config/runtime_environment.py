@@ -2,15 +2,38 @@
 
 import os
 
-from dotenv import load_dotenv
+from dotenv import dotenv_values
+from dotenv.variables import parse_variables
 
 from ..project_paths import BACKEND_DIR, PROJECT_ROOT
 
 
 def load_runtime_environment() -> None:
-    load_dotenv(BACKEND_DIR / ".env.local", override=True)
-    load_dotenv(PROJECT_ROOT / ".env.local", override=True)
-    load_dotenv(BACKEND_DIR / ".env")
-    load_dotenv(PROJECT_ROOT / ".env")
+    if os.environ.get("PYTHON_DOTENV_DISABLED", "").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }:
+        return
+    values: dict[str, str | None] = {}
+    for path in (
+        PROJECT_ROOT / ".env",
+        BACKEND_DIR / ".env",
+        BACKEND_DIR / ".env.local",
+        PROJECT_ROOT / ".env.local",
+    ):
+        for name, value in dotenv_values(path, interpolate=False).items():
+            environment = {**values, **os.environ}
+            values[name] = (
+                None
+                if value is None
+                else "".join(
+                    atom.resolve(environment) for atom in parse_variables(value)
+                )
+            )
+    for name, value in values.items():
+        if value is not None:
+            os.environ.setdefault(name, value)
     if os.environ.get("GEMINI_API_KEY") and "GOOGLE_API_KEY" in os.environ:
         del os.environ["GOOGLE_API_KEY"]

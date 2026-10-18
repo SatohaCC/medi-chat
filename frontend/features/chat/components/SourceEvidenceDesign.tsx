@@ -10,8 +10,8 @@ import {
   buildSourceEvidenceSpec,
   type EvidenceDesign,
 } from "../model/sourceEvidenceSpec";
-import { HighlightText } from "./HighlightText";
 import { ExpandableEvidenceContent } from "./ExpandableEvidenceContent";
+import { HighlightText } from "./HighlightText";
 import { SourceEvidenceContent } from "./SourceEvidenceContent";
 import { styles } from "./SourceEvidenceDesign.styles";
 
@@ -25,10 +25,16 @@ const catalog = defineCatalog(schema, {
   components: {
     WarningEvidence: { props: evidenceProps, description: "添文の警告" },
     ContraindicationEvidence: { props: evidenceProps, description: "添文の禁忌" },
-    CompositionPropertyEvidence: { props: evidenceProps, description: "添文の組成・性状" },
+    CompositionPropertyEvidence: {
+      props: evidenceProps,
+      description: "添文の組成・性状",
+    },
     DosageEvidence: { props: evidenceProps, description: "添文の用法・用量" },
     PrecautionEvidence: { props: evidenceProps, description: "添文の注意事項" },
-    SpecificPopulationEvidence: { props: evidenceProps, description: "添文の特定背景患者" },
+    SpecificPopulationEvidence: {
+      props: evidenceProps,
+      description: "添文の特定背景患者",
+    },
     InteractionEvidence: { props: evidenceProps, description: "添文の相互作用" },
     AdverseReactionEvidence: { props: evidenceProps, description: "添文の副作用" },
     OverdosageEvidence: { props: evidenceProps, description: "添文の過量投与" },
@@ -36,7 +42,10 @@ const catalog = defineCatalog(schema, {
     ClinicalStudiesEvidence: { props: evidenceProps, description: "添文の臨床成績" },
     PharmacologyEvidence: { props: evidenceProps, description: "添文の薬効薬理" },
     PhysicochemicalEvidence: { props: evidenceProps, description: "添文の理化学的知見" },
-    HandlingPackagingEvidence: { props: evidenceProps, description: "添文の取扱い・包装" },
+    HandlingPackagingEvidence: {
+      props: evidenceProps,
+      description: "添文の取扱い・包装",
+    },
     ReferenceEvidence: { props: evidenceProps, description: "添文の主要文献" },
     TextEvidence: { props: evidenceProps, description: "添文の記載" },
   },
@@ -149,9 +158,7 @@ function EvidenceBody({
 
 const { registry } = defineRegistry(catalog, {
   components: {
-    WarningEvidence: ({ props }) => (
-      <EvidenceBody {...props} design="WarningEvidence" />
-    ),
+    WarningEvidence: ({ props }) => <EvidenceBody {...props} design="WarningEvidence" />,
     ContraindicationEvidence: ({ props }) => (
       <EvidenceBody {...props} design="ContraindicationEvidence" />
     ),

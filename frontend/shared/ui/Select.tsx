@@ -1,5 +1,6 @@
 "use client";
 import * as stylex from "@stylexjs/stylex";
+import { ChevronDown } from "lucide-react";
 import {
   Select as AriaSelect,
   Button,
@@ -8,7 +9,6 @@ import {
   Popover,
   SelectValue,
 } from "react-aria-components";
-import { ChevronDown } from "lucide-react";
 import { styles } from "./Select.styles";
 export interface SelectProps {
   value: string;

@@ -104,9 +104,7 @@ export function ExpandableEvidenceContent({
 
   // Always expanded (e.g. Warning / Contraindication) bypasses clamping and accordion
   if (alwaysExpanded) {
-    return (
-      <SourceEvidenceContent content={content} highlightWords={highlightWords} />
-    );
+    return <SourceEvidenceContent content={content} highlightWords={highlightWords} />;
   }
 
   const handleToggle = () => {
@@ -127,10 +125,7 @@ export function ExpandableEvidenceContent({
             containerRef.current.scrollTop = 0;
           }
         }}
-        {...stylex.props(
-          styles.wrapper,
-          showClamping ? styles.clamped : styles.expanded,
-        )}
+        {...stylex.props(styles.wrapper, showClamping ? styles.clamped : styles.expanded)}
       >
         <SourceEvidenceContent content={content} highlightWords={highlightWords} />
         {showClamping && <div {...stylex.props(styles.fadeOverlay)} aria-hidden="true" />}
@@ -142,10 +137,7 @@ export function ExpandableEvidenceContent({
             type="button"
             onClick={handleToggle}
             aria-expanded={isExpanded}
-            {...stylex.props(
-              styles.toggleButton,
-              isExpanded && styles.collapseButton,
-            )}
+            {...stylex.props(styles.toggleButton, isExpanded && styles.collapseButton)}
           >
             {isExpanded ? (
               <>
@@ -157,9 +149,7 @@ export function ExpandableEvidenceContent({
                 <ChevronDown size={13} strokeWidth={2} />
                 <span>続きを読む</span>
                 {hasKeywordMatch && (
-                  <span {...stylex.props(styles.keywordBadge)}>
-                    キーワード該当あり
-                  </span>
+                  <span {...stylex.props(styles.keywordBadge)}>キーワード該当あり</span>
                 )}
               </>
             )}

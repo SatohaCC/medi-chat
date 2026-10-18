@@ -29,13 +29,16 @@ export function logicalSnapshot(root: string, index: string): LogicalSnapshot {
   return observe(root, "snapshot", index, process.env);
 }
 
-export function assertImportSemantic(root: string, index: string) {
+export function assertCurrentImport(root: string, index: string, directory: string) {
   const result = spawnSync(
     pythonBinary(root),
     [
-      join(root, "frontend/scripts/semantic-compare.py"),
-      "compare",
-      join(root, "frontend/e2e-real/fixtures/import-semantic-oracle.json"),
+      join(root, "frontend/scripts/current-import-check.py"),
+      join(
+        root,
+        "data/pmda/originals/イグザレルト錠２．５ｍｇ/630004_3339003F5020_1_08.xml",
+      ),
+      directory,
       index,
     ],
     {

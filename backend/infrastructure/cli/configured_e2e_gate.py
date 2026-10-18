@@ -56,6 +56,7 @@ def run_gate(
     environment = dict(os.environ)
     environment["MEDI_CHAT_STRUCTURED_DIR"] = str(settings.structured_dir)
     environment["MEDI_CHAT_INDEX_PATH"] = str(settings.index_path)
+    environment["MEDI_CHAT_DATABASE_URL"] = settings.database_url
     with tempfile.TemporaryDirectory(prefix="medi-chat-configured-smoke-") as temporary:
         environment["MEDI_CHAT_IMPORT_DIR"] = str(Path(temporary) / "imports")
         with tempfile.TemporaryFile(mode="w+b") as log:
@@ -104,7 +105,7 @@ def run_gate(
                                 "pid": process.pid,
                                 "port": port,
                             }
-                    except (URLError, TimeoutError, ConnectionError):
+                    except URLError, TimeoutError, ConnectionError:
                         pass
                     time.sleep(0.1)
                 raise RuntimeError("Configured OS health timed out")

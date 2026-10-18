@@ -227,7 +227,7 @@ class ChatApiRouteTests(unittest.TestCase):
         self.assertIn("10.1 併用禁忌", payload["answer"])
         self.assertIn("10.2 併用注意", payload["answer"])
 
-    def test_unmatched_counterpart_proceeds_with_available_medicine(self) -> None:
+    def test_unmatched_counterpart_requires_clarification(self) -> None:
         response = self.client.post(
             "/api/chat",
             json={
@@ -238,9 +238,9 @@ class ChatApiRouteTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertFalse(payload["needs_clarification"])
-        self.assertEqual(payload["retrieval_strategy"], "three_detectors")
-        self.assertIn("10", [s["section"]["code"] for s in payload["sources"]])
+        self.assertTrue(payload["needs_clarification"])
+        self.assertEqual(payload["retrieval_strategy"], "unresolved_counterpart")
+        self.assertEqual(payload["sources"], [])
         self.assertEqual(payload["resolved_medicines"][0]["yj_codes"], ["3339003F5020"])
 
     def test_adverse_event_question_filters_to_adverse_event_sections(self) -> None:

@@ -13,15 +13,19 @@ const render = (props) =>
   renderToStaticMarkup(createElement(ExpandableEvidenceContent, props));
 
 test("alwaysExpanded=true renders full content without toggle buttons", () => {
-  const content = "1. 警告\n\n本剤の投与は、緊急時に十分対応できる医療施設において実施すること。";
+  const content =
+    "1. 警告\n\n本剤の投与は、緊急時に十分対応できる医療施設において実施すること。";
   const html = render({ content, alwaysExpanded: true });
-  assert.ok(html.includes("本剤の投与は、緊急時に十分対応できる医療施設において実施すること。"));
+  assert.ok(
+    html.includes("本剤の投与は、緊急時に十分対応できる医療施設において実施すること。"),
+  );
   assert.ok(!html.includes("続きを読む"));
   assert.ok(!html.includes("折りたたむ"));
 });
 
 test("expandable content preserves all text and highlights matching words", () => {
-  const content = "用法及び用量\n\n通常、成人にはリバーロキサバンとして15mgを1日1回食後に経口投与する。";
+  const content =
+    "用法及び用量\n\n通常、成人にはリバーロキサバンとして15mgを1日1回食後に経口投与する。";
   const html = render({
     content,
     highlightWords: ["リバーロキサバン", "15mg"],

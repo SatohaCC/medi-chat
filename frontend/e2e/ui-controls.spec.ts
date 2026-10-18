@@ -19,11 +19,11 @@ test("SX-20/22: keyboard medicine selection and model agree with WS payload", as
   page,
 }) => {
   const chat = await openChat(page);
-  const b = page.getByRole("button", { name: "テスト医薬品B", exact: true });
+  await page.getByRole("button", { name: "処方薬を追加", exact: true }).click();
+  const b = page.getByRole("option", { name: /^テスト医薬品B/ });
   await b.focus();
   await b.press("Space");
-  await expect(b).toHaveAttribute("aria-pressed", "true");
-  await expect(b).toBeFocused();
+  await expect(page.getByTestId("tier-1-prescription")).toContainText("テスト医薬品B");
   const model = page.getByRole("button", { name: "回答モデル" });
   await model.focus();
   await model.press("ArrowDown");
@@ -41,55 +41,41 @@ test("SX-20/22: keyboard medicine selection and model agree with WS payload", as
   expect(chat.requests[0].product_yj_codes).toEqual(["3339003F5020", "1141007F1063"]);
   expect(chat.requests[0].model).toBe("gpt-5.6-luna");
 });
-test("SX-21: independent disclosure and tabs for two answers", async ({
+test("SX-21: switches the shared evidence pane between answers and preserves accessible inspector tabs", async ({
   page,
-}, testInfo) => {
+}) => {
   const chat = await openChat(page);
   await answer(page, chat);
   await answer(page, chat);
-  const inspectors = page.locator('[data-disclosure="jev"]');
-  await expect(inspectors).toHaveCount(2);
-  const first = inspectors.nth(0),
-    second = inspectors.nth(1);
-  await expect(first.getByRole("tablist")).not.toBeVisible();
-  const summary = first.locator("[data-disclosure-trigger]");
-  await summary.focus();
-  await summary.press("Enter");
-  await expect(first.getByRole("tablist")).toBeVisible();
-  await expect(summary).toBeFocused();
-  await first.getByRole("tab", { name: "生レスポンス", exact: false }).focus();
-  await first.getByRole("tab", { name: "生レスポンス", exact: false }).press("Space");
-  await expect(first.getByRole("tabpanel")).toContainText('"visual-request"');
-  await expect(second.getByRole("tablist")).not.toBeVisible();
-  await second.locator("[data-disclosure-trigger]").click();
+  const toggles = page.locator("[data-jev-toggle]");
+  await expect(toggles).toHaveCount(2);
+  await toggles.first().focus();
+  await toggles.first().press("Enter");
+  const pane = page.getByRole("complementary", { name: "添付文書の根拠引用" });
+  await expect(pane).toHaveCount(1);
+  const raw = pane.getByRole("tab", { name: "生レスポンス", exact: false });
+  await raw.focus();
+  await raw.press("Space");
+  await expect(pane.getByRole("tabpanel")).toContainText('"visual-request"');
+  const controls = await raw.getAttribute("aria-controls");
+  expect(controls).toBeTruthy();
+  await expect(page.locator(`[id="${controls}"]`)).toHaveAttribute(
+    "aria-labelledby",
+    (await raw.getAttribute("id")) ?? "",
+  );
+  await toggles.last().click();
   await expect(
-    second.getByRole("tab", { name: "判定サマリー", exact: false }),
+    pane.getByRole("tab", { name: "判定サマリー", exact: false }),
   ).toHaveAttribute("aria-selected", "true");
-  const ids = await page
-    .locator('[role="tab"]')
-    .evaluateAll((nodes) => nodes.map((node) => node.id));
-  expect(new Set(ids).size).toBe(ids.length);
-  for (const tab of await page.getByRole("tab").all()) {
-    if ((await tab.getAttribute("aria-selected")) !== "true") continue;
-    const controls = await tab.getAttribute("aria-controls");
-    expect(controls).toBeTruthy();
-    const panel = page.locator(`[id="${controls}"]`);
-    await expect(panel).toHaveCount(1);
-    await expect(panel).toHaveAttribute(
-      "aria-labelledby",
-      (await tab.getAttribute("id")) ?? "",
-    );
-  }
-  await testInfo.attach("tab-ids", {
-    body: JSON.stringify(ids),
-    contentType: "application/json",
-  });
+  await expect(toggles.first()).toHaveAttribute("aria-pressed", "false");
+  await expect(toggles.last()).toHaveAttribute("aria-pressed", "true");
 });
+
 test("SX-24: all probabilities and raw JSON retain exact values", async ({ page }) => {
   const chat = await openChat(page);
   await answer(page, chat);
-  const inspector = page.locator('[data-disclosure="jev"]');
-  await inspector.locator("[data-disclosure-trigger]").click();
+  await page.locator("[data-jev-toggle]").click();
+  const inspector = page.getByRole("complementary", { name: "添付文書の根拠引用" });
   await expect(inspector.getByText("確信度: 50%", { exact: true })).toBeVisible();
   await expect(inspector.locator("[data-probability-row]")).toHaveCount(8);
   await inspector.getByRole("button", { name: "全9件を表示" }).click();
@@ -125,8 +111,8 @@ for (const confidence of [0, 1]) {
     chat.respond({ type: "jev_response", data: response });
     chat.respond({ type: "text_delta", content: "固定された回答" });
     chat.respond({ type: "text_done" });
-    const inspector = page.locator('[data-disclosure="jev"]');
-    await inspector.locator("[data-disclosure-trigger]").click();
+    await page.locator("[data-jev-toggle]").click();
+    const inspector = page.getByRole("complementary", { name: "添付文書の根拠引用" });
     await expect(inspector).toContainText(`確信度: ${confidence * 100}%`);
     await expect(inspector).toContainText("unknown-intent");
     await expect(inspector).toContainText("Jevエラー: 固定Jevエラー");

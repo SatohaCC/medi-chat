@@ -15,26 +15,17 @@ const python = resolve(
 const sources: SourceItem[] = process.env.MEDI_CHAT_EVIDENCE_FIXTURE
   ? JSON.parse(readFileSync(process.env.MEDI_CHAT_EVIDENCE_FIXTURE, "utf8"))
   : JSON.parse(
-      execFileSync(
-        python,
-        [
-          "-c",
-          [
-            "import json",
-            "from backend.tests.infrastructure.persistence.test_registered_table_headers import CASES, historical_evidence",
-            "print(json.dumps([historical_evidence(*case) for case in CASES],ensure_ascii=False))",
-          ].join(";"),
-        ],
-        {
-          cwd: projectRoot,
-          encoding: "utf8",
-          env: { ...process.env, PYTHONIOENCODING: "utf-8", PYTHON_DOTENV_DISABLED: "1" },
-        },
-      ),
+      execFileSync(python, ["-m", "backend.tests.support.registered_evidence_fixture"], {
+        cwd: projectRoot,
+        encoding: "utf8",
+        env: { ...process.env, PYTHONIOENCODING: "utf-8", PYTHON_DOTENV_DISABLED: "1" },
+      }),
     );
 
 for (const width of [1280, 390]) {
-  test(`登録v3の併用禁忌に列名と本文が表示される (${width}px)`, async ({ page }) => {
+  test(`現行登録形式の併用禁忌に列名と本文が表示される (${width}px)`, async ({
+    page,
+  }) => {
     await page.setViewportSize({ width, height: 1000 });
     const chat = await openChat(page);
     await chat.input.fill("併用禁忌の記載を確認");
@@ -48,9 +39,11 @@ for (const width of [1280, 390]) {
     await expect(cards).toHaveCount(2);
     for (let index = 0; index < 2; index++) {
       for (const title of ["薬剤名", "臨床症状・措置方法", "機序・危険因子"]) {
-        await expect(
-          cards.nth(index).getByRole("columnheader", { name: new RegExp(`^${title}`) }),
-        ).toBeVisible();
+        const headings = cards
+          .nth(index)
+          .getByRole("columnheader", { name: new RegExp(`^${title}`) });
+        expect(await headings.count()).toBeGreaterThan(0);
+        for (const heading of await headings.all()) await expect(heading).toBeVisible();
       }
     }
     await expect(

@@ -44,6 +44,12 @@ def test_tc092_xml_mixed_row_does_not_apply_first_child_scope_to_b_and_common():
         and "共通値" in unit.text.value
     )
     assert unit.text.value.count("同じ本文") == 1
+    assert [
+        code.value
+        for block in unit.blocks
+        if isinstance(block, SearchTableBlock)
+        for code in block.context.product_codes
+    ] == ["222222222222"]
     (table,) = [
         block.table for block in unit.blocks if isinstance(block, SearchTableBlock)
     ]

@@ -1,6 +1,15 @@
 import { execFileSync } from "node:child_process";
 import { createServer } from "node:net";
 
+export function hasPortListener(output, port) {
+  return output.split(/\r?\n/).some((line) => {
+    const fields = line.trim().split(/\s+/);
+    return (
+      fields[0] === "TCP" && fields[1]?.endsWith(`:${port}`) && fields[3] === "LISTENING"
+    );
+  });
+}
+
 export async function ensurePortAvailable(port) {
   const probe = createServer();
   await new Promise((done, reject) => {
@@ -23,19 +32,11 @@ export async function ensureOwnedRestartPortAvailable(
     }
     if (!Number.isSafeInteger(value) || value < 1 || value > 65535)
       throw new Error("Invalid dedicated port");
-    const output = execFileSync(
-      "powershell.exe",
-      [
-        "-NoProfile",
-        "-NonInteractive",
-        "-Command",
-        `$ErrorActionPreference='Stop'; $connections = @(Get-NetTCPConnection -State Listen -LocalPort ${value} -ErrorAction SilentlyContinue); if ($connections.Count -gt 0) { 'occupied' } else { 'available' }`,
-      ],
-      { encoding: "utf8", timeout: 10000 },
-    );
-    if (!["occupied", "available"].includes(output.trim()))
-      throw new Error("Cannot verify dedicated restart port");
-    return output.trim() === "occupied";
+    const output = execFileSync("netstat.exe", ["-ano", "-p", "tcp"], {
+      encoding: "utf8",
+      timeout: 10000,
+    });
+    return hasPortListener(output, value);
   },
 ) {
   if (await observeListeners(port))

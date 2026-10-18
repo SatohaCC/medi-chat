@@ -76,8 +76,8 @@ test("TC137 real browser three confirmations and normal single/pair without API 
   async function ask(question: string) {
     questions.push(question);
     const start = frames.length;
-    await page.getByPlaceholder("確認したい内容を入力", { exact: false }).fill(question);
-    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await page.getByRole("textbox", { name: "質問を入力" }).fill(question);
+    await page.getByRole("button", { name: "送信", exact: true }).click();
     await expect
       .poll(
         () => frames.slice(start).filter((frame) => frame.type === "text_done").length,
@@ -124,26 +124,33 @@ test("TC137 real browser three confirmations and normal single/pair without API 
       expect(metrics()).toEqual({ factory_calls: 0, stream_calls: 0, questions });
     }
     const single = await ask("イグザレルトの飲み合わせ");
-    const singleSources = single.find((frame) => frame.type === "sources")?.sources;
+    const singleSources = single.findLast((frame) => frame.type === "sources")?.sources;
     expect(Array.isArray(singleSources)).toBe(true);
-    expect(singleSources).toHaveLength(4);
-    await page.getByRole("button", { name: /^イトリゾールカプセル/ }).click();
-    await page.getByRole("button", { name: /^イトラコナゾールカプセル/ }).click();
+    expect(singleSources).toHaveLength(2);
+    for (const name of [/^イトリゾールカプセル/, /^イトラコナゾールカプセル/]) {
+      await page.getByRole("button", { name: "処方薬を追加", exact: true }).click();
+      await page.getByRole("option", { name }).first().click();
+    }
     const pair = await ask("イグザレルトとイトラコナゾールの飲み合わせ");
-    expect(pair.find((frame) => frame.type === "sources")?.sources).toHaveLength(10);
+    expect(sent.at(-1)?.product_yj_codes).toEqual([
+      "3339003F5020",
+      "6290004M1029",
+      "6290004M1070",
+    ]);
+    expect(pair.findLast((frame) => frame.type === "sources")?.sources).toHaveLength(4);
     const sourceFile = join(isolated, "normal-sources.json");
     writeFileSync(
       sourceFile,
       JSON.stringify({
         single: singleSources,
-        pair: pair.find((frame) => frame.type === "sources")?.sources,
+        pair: pair.findLast((frame) => frame.type === "sources")?.sources,
       }),
     );
     const oracle = spawnSync(
       python,
       [
         "-c",
-        "import json,sys; from backend.tests.integration.test_interaction_xml_oracle import ORACLE,assert_public_source; observed=json.load(open(sys.argv[1],encoding='utf8')); expected=sorted([(d,c) for d in ORACLE for c in d['sections']],key=lambda x:(tuple(map(int,x[1].split('.'))),x[0]['sections'][x[1]]['unit_id'])); assert [s['unit_id'] for s in observed['single']]==[d['sections'][c]['unit_id'] for d,c in expected if d==ORACLE[0]]; assert [s['unit_id'] for s in observed['pair']]==[d['sections'][c]['unit_id'] for d,c in expected]; [assert_public_source(s,d,c) for s,(d,c) in zip(observed['pair'],expected,strict=True)]; [assert_public_source(s,ORACLE[0],c) for s,c in zip(observed['single'],ORACLE[0]['sections'],strict=True)]; print('original XML fixed oracle: all single/pair IDs, full body, tables, references and metadata match')",
+        "import json,sys; from backend.tests.integration.test_interaction_xml_oracle import ORACLE,assert_public_source,major_expectations; observed=json.load(open(sys.argv[1],encoding='utf8')); expected=major_expectations(ORACLE); single=major_expectations(ORACLE[:1]); assert [s['unit_id'] for s in observed['single']]==[item[0] for item in single]; assert [s['unit_id'] for s in observed['pair']]==[item[0] for item in expected]; [assert_public_source(s,d,c) for s,(_,d,c) in zip(observed['pair'],expected,strict=True)]; [assert_public_source(s,d,c) for s,(_,d,c) in zip(observed['single'],single,strict=True)]; print('original XML fixed oracle: all single/pair IDs, full body, tables, references and metadata match')",
         sourceFile,
       ],
       { cwd: root, env: environment, encoding: "utf8" },
@@ -159,14 +166,17 @@ test("TC137 real browser three confirmations and normal single/pair without API 
     const panels = page.getByRole("complementary", { name: "添付文書の根拠引用" });
     await expect(panels).toHaveCount(1);
     const cards = panels.last().locator("[data-evidence-card]");
-    await expect(cards).toHaveCount(10);
-    const originalOracle: { sections: Record<string, { unit_id: string }> }[] =
-      JSON.parse(
-        readFileSync(
-          join(root, "backend/tests/fixtures/interaction_oracle_v6.json"),
-          "utf8",
-        ),
-      );
+    await expect(cards).toHaveCount(4);
+    const originalOracle: {
+      document_id: string;
+      sha256: string;
+      sections: Record<string, { unit_id: string }>;
+    }[] = JSON.parse(
+      readFileSync(
+        join(root, "backend/tests/fixtures/interaction_oracle_v6.json"),
+        "utf8",
+      ),
+    );
     expect(
       (
         await cards.evaluateAll((elements) =>
@@ -176,7 +186,9 @@ test("TC137 real browser three confirmations and normal single/pair without API 
     ).toEqual(
       originalOracle
         .flatMap((document) =>
-          Object.values(document.sections).map((section) => section.unit_id),
+          [
+            ...new Set(Object.keys(document.sections).map((code) => code.split(".")[0])),
+          ].map((code) => `${document.document_id}:${document.sha256}:${code}`),
         )
         .sort(),
     );

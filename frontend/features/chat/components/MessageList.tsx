@@ -1,9 +1,9 @@
 import * as stylex from "@stylexjs/stylex";
-import {AlertTriangle, FileText, Lightbulb, Pill, Users, Zap} from "lucide-react";
-import type {SelectedMedicineItem} from "../../medicine-selection";
-import type {Message} from "../model/chat";
-import {MessageItem} from "./MessageItem";
-import {styles} from "./MessageList.styles";
+import { AlertTriangle, FileText, Lightbulb, Pill, Users, Zap } from "lucide-react";
+import type { SelectedMedicineItem } from "../../medicine-selection";
+import type { Message } from "../model/chat";
+import { MessageItem } from "./MessageItem";
+import { styles } from "./MessageList.styles";
 
 interface MessageListProps {
   messages: Message[];
@@ -29,10 +29,7 @@ export function MessageList({
   const currentDrugName = baseline[0]?.name ?? "対象薬";
 
   return (
-    <main
-      ref={containerRef}
-      {...stylex.props(styles.root, messages.length > 0 && styles.withBottomPadding)}
-    >
+    <main ref={containerRef} {...stylex.props(styles.root)}>
       <div {...stylex.props(styles.inner)}>
         {messages.length === 0 ? (
           <div {...stylex.props(styles.welcomeContainer)}>
@@ -60,7 +57,9 @@ export function MessageList({
                   <span {...stylex.props(styles.suggestionCardIcon)}>
                     <Zap size={15} color="#0265dc" strokeWidth={2.2} />
                   </span>
-                  <span {...stylex.props(styles.suggestionCardTitle)}>相互作用の確認</span>
+                  <span {...stylex.props(styles.suggestionCardTitle)}>
+                    相互作用の確認
+                  </span>
                 </div>
                 <p {...stylex.props(styles.suggestionCardDesc)}>
                   {currentDrugName}との併用禁忌・注意薬および機序・危険因子
@@ -80,7 +79,9 @@ export function MessageList({
                   <span {...stylex.props(styles.suggestionCardIcon)}>
                     <Users size={15} color="#0891b2" strokeWidth={2.2} />
                   </span>
-                  <span {...stylex.props(styles.suggestionCardTitle)}>特定背景患者の注意</span>
+                  <span {...stylex.props(styles.suggestionCardTitle)}>
+                    特定背景患者の注意
+                  </span>
                 </div>
                 <p {...stylex.props(styles.suggestionCardDesc)}>
                   腎・肝機能障害患者や高齢者に対する用量調節基準
@@ -120,7 +121,9 @@ export function MessageList({
                   <span {...stylex.props(styles.suggestionCardIcon)}>
                     <Pill size={15} color="#0d8253" strokeWidth={2.2} />
                   </span>
-                  <span {...stylex.props(styles.suggestionCardTitle)}>用法・用量の詳細</span>
+                  <span {...stylex.props(styles.suggestionCardTitle)}>
+                    用法・用量の詳細
+                  </span>
                 </div>
                 <p {...stylex.props(styles.suggestionCardDesc)}>
                   用法及び用量と投与タイミング、飲み忘れ時の対応
@@ -128,8 +131,12 @@ export function MessageList({
               </button>
             </div>
 
-              <p {...stylex.props(styles.welcomeSubtitle)}>
-              <Lightbulb size={13} color="#0265dc" style={{ display: "inline", verticalAlign: "middle", marginRight: 6 }} />
+            <p {...stylex.props(styles.welcomeSubtitle)}>
+              <Lightbulb
+                size={13}
+                color="#0265dc"
+                style={{ display: "inline", verticalAlign: "middle", marginRight: 6 }}
+              />
               下の入力欄で <strong>@</strong> を入力すると、薬品名を選択して質問できます
             </p>
           </div>
@@ -149,6 +156,9 @@ export function MessageList({
               }
             />
           ))
+        )}
+        {messages.length > 0 && (
+          <div aria-hidden="true" {...stylex.props(styles.bottomSpacer)} />
         )}
       </div>
     </main>

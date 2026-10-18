@@ -48,11 +48,7 @@ for (const width of [1280, 390]) {
       evidence.locator('[data-evidence-design="InteractionEvidence"]'),
     ).toBeVisible();
     await expect(evidence.getByText("原文の相手薬", { exact: true })).toBeVisible();
-    for (const name of [
-      "薬剤名等",
-      "臨床症状・措置方法",
-      "機序・危険因子",
-    ]) {
+    for (const name of ["薬剤名等", "臨床症状・措置方法", "機序・危険因子"]) {
       await expect(
         evidence.getByRole("columnheader", { name, exact: true }),
       ).toBeVisible();

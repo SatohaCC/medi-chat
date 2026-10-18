@@ -41,6 +41,9 @@ export const styles = stylex.create({
     alignItems: "center",
     flexWrap: "wrap",
     gap: "6px",
+    maxHeight: "144px",
+    maxWidth: "100%",
+    overflowY: "auto",
   },
   chip: {
     display: "inline-flex",
