@@ -1,51 +1,59 @@
-import * as stylex from "@stylexjs/stylex";
-import type React from "react";
-import { Button } from "../../../shared/ui/Button";
-import type { MedicineEntry } from "../../medicine-selection";
-import { MedicineAutocompleteInput } from "../../medicine-selection";
-import type { ConnectionStatus } from "../model/chat";
-import { styles } from "./ChatInputForm.styles";
+"use client";
 
-interface ChatInputFormProps {
-  input: string;
-  onChangeInput: (value: string) => void;
-  onSubmit: (e?: React.FormEvent) => void;
-  onSelectMedicine: (medicine: MedicineEntry) => void;
-  selectedYjCodes: string[];
+import type { PromptFieldValue } from "@react-spectrum/ai";
+import type { MedicineEntry, SelectedMedicineItem } from "../../medicine-selection";
+import { MedicinePromptDock } from "../../medicine-selection";
+import type { ConnectionStatus } from "../model/chat";
+
+export interface ChatInputFormProps {
+  baseline: SelectedMedicineItem[];
+  onAddBaseline?: (medicine: SelectedMedicineItem) => void;
+  onRemoveBaseline: (yjCode: string) => void;
+  onClearBaseline: () => void;
+  additional: SelectedMedicineItem[];
+  onRemoveAdditional: (yjCode: string) => void;
+  onClearAdditional: () => void;
+  prompt: PromptFieldValue;
+  onChangePrompt: (prompt: PromptFieldValue) => void;
+  onSubmit: (prompt: PromptFieldValue) => void;
+  medicineEntries: MedicineEntry[];
   status: ConnectionStatus;
   isStreaming: boolean;
+  canSend: boolean;
 }
 
 export function ChatInputForm({
-  input,
-  onChangeInput,
+  baseline,
+  onAddBaseline,
+  onRemoveBaseline,
+  onClearBaseline,
+  additional,
+  onRemoveAdditional,
+  onClearAdditional,
+  prompt,
+  onChangePrompt,
   onSubmit,
-  onSelectMedicine,
-  selectedYjCodes,
+  medicineEntries,
   status,
   isStreaming,
+  canSend,
 }: ChatInputFormProps) {
-  const isSendDisabled =
-    !input.trim() ||
-    selectedYjCodes.length === 0 ||
-    status !== "connected" ||
-    isStreaming;
-
   return (
-    <form {...stylex.props(styles.form)} onSubmit={onSubmit}>
-      <div {...stylex.props(styles.inputSlot)}>
-        <MedicineAutocompleteInput
-          value={input}
-          onChange={onChangeInput}
-          onSubmit={onSubmit}
-          onSelectMedicine={onSelectMedicine}
-          placeholder="確認したい内容を入力 (例: 禁忌、飲み合わせ、用法・用量)..."
-          disabled={status !== "connected" || isStreaming}
-        />
-      </div>
-      <Button type="submit" disabled={isSendDisabled}>
-        Send
-      </Button>
-    </form>
+    <MedicinePromptDock
+      baseline={baseline}
+      onAddBaseline={onAddBaseline}
+      onRemoveBaseline={onRemoveBaseline}
+      onClearBaseline={onClearBaseline}
+      additional={additional}
+      onRemoveAdditional={onRemoveAdditional}
+      onClearAdditional={onClearAdditional}
+      prompt={prompt}
+      onChangePrompt={onChangePrompt}
+      onSubmit={onSubmit}
+      medicineEntries={medicineEntries}
+      disabled={status !== "connected"}
+      isStreaming={isStreaming}
+      canSend={canSend}
+    />
   );
 }

@@ -8,7 +8,8 @@ interface MessageListProps {
   isStreaming: boolean;
   containerRef?: React.RefObject<HTMLElement | null>;
   openEvidenceIndex?: number | null;
-  onToggleEvidence?: (index: number) => void;
+  evidencePaneTab?: "sources" | "jev";
+  onToggleEvidence?: (index: number, tab: "sources" | "jev") => void;
 }
 
 export function MessageList({
@@ -16,6 +17,7 @@ export function MessageList({
   isStreaming,
   containerRef,
   openEvidenceIndex = null,
+  evidencePaneTab = "sources",
   onToggleEvidence,
 }: MessageListProps) {
   return (
@@ -35,7 +37,12 @@ export function MessageList({
           isStreaming={isStreaming}
           isLast={i === messages.length - 1}
           isEvidenceOpen={openEvidenceIndex === i}
-          onToggleEvidence={onToggleEvidence ? () => onToggleEvidence(i) : undefined}
+          activeEvidenceTab={openEvidenceIndex === i ? evidencePaneTab : undefined}
+          onToggleEvidence={
+            onToggleEvidence
+              ? (tab: "sources" | "jev") => onToggleEvidence(i, tab)
+              : undefined
+          }
         />
       ))}
     </main>

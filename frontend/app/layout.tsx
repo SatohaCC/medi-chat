@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { S2ClientProvider } from "@/shared/providers/S2ClientProvider";
 
 export const metadata: Metadata = {
   title: "薬剤師向け 添付文書検索",
@@ -13,7 +14,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body>{children}</body>
+      <body>
+        <S2ClientProvider>{children}</S2ClientProvider>
+      </body>
     </html>
   );
 }

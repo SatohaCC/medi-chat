@@ -10,7 +10,7 @@ export const styles = stylex.create({
     borderBottomWidth: "1px",
     borderBottomStyle: "solid",
     borderBottomColor: "var(--border)",
-    backgroundColor: "var(--bg)",
+    backgroundColor: "var(--assistant-bg)",
     flexShrink: 0,
     gap: "16px",
     flexWrap: "wrap",
@@ -47,7 +47,7 @@ export const styles = stylex.create({
     color: { default: "var(--muted)", ":hover": "var(--fg)" },
     backgroundColor: {
       default: "transparent",
-      ":hover": "rgba(255, 255, 255, 0.05)",
+      ":hover": "rgba(0, 0, 0, 0.04)",
     },
     borderRadius: "6px",
     textDecoration: "none",
@@ -55,12 +55,12 @@ export const styles = stylex.create({
     whiteSpace: "nowrap",
     outlineWidth: { default: null, ":focus-visible": "2px" },
     outlineStyle: { default: null, ":focus-visible": "solid" },
-    outlineColor: { default: null, ":focus-visible": "#60a5fa" },
+    outlineColor: { default: null, ":focus-visible": "#0265dc" },
     outlineOffset: { default: null, ":focus-visible": "2px" },
   },
   activeNavLink: {
-    color: "#60a5fa",
-    backgroundColor: "rgba(96, 165, 250, 0.12)",
+    color: "#0265dc",
+    backgroundColor: "rgba(2, 101, 220, 0.08)",
     fontWeight: 600,
   },
   rightSection: {

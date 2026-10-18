@@ -21,6 +21,8 @@
   "dependencies": {
     "@json-render/core": "^0.21.1",
     "@json-render/react": "^0.21.1",
+    "@react-spectrum/ai": "0.5.2",
+    "@react-spectrum/s2": "1.8.2",
     "@stylexjs/stylex": "0.19.1",
     "lucide-react": "^1.48.0",
     "next": "16.3.6",

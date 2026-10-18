@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { type MedicineEntry, searchMedicines } from "../model/medicineAutocomplete";
-import { useActiveMedicines } from "./useActiveMedicines";
+import { useMedicineEntries } from "./useMedicineEntries";
 
 interface UseMedicineAutocompleteOptions {
   value: string;
@@ -15,8 +15,7 @@ export function useMedicineAutocomplete({
   onSubmit,
   onSelectMedicine,
 }: UseMedicineAutocompleteOptions) {
-  const { items: activeItems } = useActiveMedicines();
-  const [dictionaryEntries, setDictionaryEntries] = useState<MedicineEntry[]>([]);
+  const { entries } = useMedicineEntries();
   const [isOpen, setIsOpen] = useState(false);
   const [suggestions, setSuggestions] = useState<MedicineEntry[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -26,70 +25,6 @@ export function useMedicineAutocomplete({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const justAcceptedRef = useRef(false);
-
-  // Load full medicines dictionary from /data/medicines.json on mount
-  useEffect(() => {
-    let cancelled = false;
-    async function loadDictionary() {
-      try {
-        const res = await fetch("/data/medicines.json");
-        if (!res.ok) return;
-        const data = (await res.json()) as MedicineEntry[];
-        if (!cancelled && Array.isArray(data)) {
-          const validEntries = data.filter(
-            (item) => typeof item.y === "string" && item.y.trim().length > 0,
-          );
-          setDictionaryEntries(validEntries);
-        }
-      } catch {
-        // Ignore dictionary fetch errors and fall back to activeItems
-      }
-    }
-    void loadDictionary();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const entries = useMemo(() => {
-    if (dictionaryEntries.length === 0) return activeItems;
-    if (activeItems.length === 0) return dictionaryEntries;
-
-    const dictByYj = new Map<string, MedicineEntry>();
-    for (const item of dictionaryEntries) {
-      if (item.y && !dictByYj.has(item.y)) {
-        dictByYj.set(item.y, item);
-      }
-    }
-
-    const activeYjs = new Set<string>();
-    const merged: MedicineEntry[] = [];
-
-    for (const active of activeItems) {
-      activeYjs.add(active.y);
-      const dict = dictByYj.get(active.y);
-      if (dict) {
-        merged.push({
-          n: active.n || dict.n,
-          k: active.k || dict.k,
-          h: active.h || dict.h,
-          y: active.y,
-          g: active.g || dict.g,
-          c: active.c && active.c !== "他" ? active.c : dict.c || active.c,
-        });
-      } else {
-        merged.push(active);
-      }
-    }
-
-    for (const item of dictionaryEntries) {
-      if (item.y && !activeYjs.has(item.y)) {
-        merged.push(item);
-      }
-    }
-
-    return merged;
-  }, [activeItems, dictionaryEntries]);
 
   // Update suggestions based on text at cursor
   const updateSuggestions = useCallback(

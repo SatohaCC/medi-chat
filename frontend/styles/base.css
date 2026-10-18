@@ -11,3 +11,7 @@ body {
   color: var(--fg);
   height: 100vh;
 }
+
+[data-testid="medicine-prompt-field"] p {
+  display: none;
+}

@@ -1,7 +1,7 @@
 import * as stylex from "@stylexjs/stylex";
 import type { Message } from "../model/chat";
 import { AssistantMarkdown } from "./AssistantMarkdown";
-import { JevResponseInspector } from "./JevResponseInspector";
+import { JEV_INTENT_META } from "./JevResponseInspector";
 import { styles } from "./MessageItem.styles";
 
 interface MessageItemProps {
@@ -9,7 +9,8 @@ interface MessageItemProps {
   isStreaming: boolean;
   isLast: boolean;
   isEvidenceOpen?: boolean;
-  onToggleEvidence?: () => void;
+  activeEvidenceTab?: "sources" | "jev";
+  onToggleEvidence?: (tab: "sources" | "jev") => void;
 }
 
 export function MessageItem({
@@ -17,13 +18,16 @@ export function MessageItem({
   isStreaming,
   isLast,
   isEvidenceOpen = false,
+  activeEvidenceTab = "sources",
   onToggleEvidence,
 }: MessageItemProps) {
+  const hasSources =
+    (Array.isArray(message.sources) && message.sources.length > 0) ||
+    message.retrievalStatus === "complete" ||
+    message.retrievalStatus === "jev_searching";
+  const hasJev = Boolean(message.jevResponse);
   const hasEvidence =
-    message.role === "assistant" &&
-    ((Array.isArray(message.sources) && message.sources.length > 0) ||
-      Boolean(message.jevResponse) ||
-      message.retrievalStatus === "complete");
+    message.role === "assistant" && (hasSources || hasJev);
 
   return (
     <div
@@ -82,27 +86,65 @@ export function MessageItem({
           </div>
         )}
 
-        {message.jevResponse && <JevResponseInspector response={message.jevResponse} />}
-
         {hasEvidence && onToggleEvidence && (
           <div {...stylex.props(styles.evidenceActionRow)}>
-            <button
-              type="button"
-              onClick={onToggleEvidence}
-              aria-pressed={isEvidenceOpen}
-              data-evidence-toggle="true"
-              {...stylex.props(
-                styles.evidenceToggleButton,
-                isEvidenceOpen && styles.evidenceToggleButtonActive,
-              )}
-            >
-              <span>
-                📄 {isEvidenceOpen ? "添付文書の根拠を閉じる" : "添付文書の根拠を表示"}
-              </span>
-              <span {...stylex.props(styles.evidenceCountBadge)}>
-                {message.sources?.length ?? 0}件
-              </span>
-            </button>
+            {hasSources && (
+              <button
+                type="button"
+                onClick={() => onToggleEvidence("sources")}
+                aria-pressed={isEvidenceOpen && activeEvidenceTab === "sources"}
+                data-evidence-toggle="true"
+                {...stylex.props(
+                  styles.evidenceToggleButton,
+                  isEvidenceOpen &&
+                    activeEvidenceTab === "sources" &&
+                    styles.evidenceToggleButtonActive,
+                )}
+              >
+                <span>
+                  📄{" "}
+                  {isEvidenceOpen && activeEvidenceTab === "sources"
+                    ? "添付文書の根拠を閉じる"
+                    : "添付文書の根拠を表示"}
+                </span>
+                <span {...stylex.props(styles.evidenceCountBadge)}>
+                  {message.sources?.length ?? 0}件
+                </span>
+              </button>
+            )}
+
+            {hasJev && message.jevResponse && (
+              <button
+                type="button"
+                onClick={() => onToggleEvidence("jev")}
+                aria-pressed={isEvidenceOpen && activeEvidenceTab === "jev"}
+                data-jev-toggle="true"
+                {...stylex.props(
+                  styles.jevToggleButton,
+                  isEvidenceOpen &&
+                    activeEvidenceTab === "jev" &&
+                    styles.jevToggleButtonActive,
+                )}
+              >
+                <span>
+                  ⚡{" "}
+                  {isEvidenceOpen && activeEvidenceTab === "jev"
+                    ? "Jevレスポンスを閉じる"
+                    : "Jevレスポンス確認"}
+                </span>
+                {message.jevResponse.answers?.intent?.choice && (
+                  <span {...stylex.props(styles.jevBadge)}>
+                    {JEV_INTENT_META[message.jevResponse.answers.intent.choice]?.label ||
+                      message.jevResponse.answers.intent.choice}
+                    {message.jevResponse.answers.intent.confidence !== undefined
+                      ? ` (${Math.round(
+                          message.jevResponse.answers.intent.confidence * 100,
+                        )}%)`
+                      : ""}
+                  </span>
+                )}
+              </button>
+            )}
           </div>
         )}
 

@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import type { RetrievalStatus, SourceItem } from "../model/chat";
 import type { JevResponseData } from "../model/jev";
-import { JEV_INTENT_META } from "./JevResponseInspector";
+import { JEV_INTENT_META, JevResponseInspector } from "./JevResponseInspector";
 import { SourceEvidenceCard } from "./SourceEvidenceCard";
 import { styles } from "./SourceEvidencePanel.styles";
 import {
@@ -17,6 +17,8 @@ interface SourceEvidencePanelProps {
   sources: SourceItem[];
   retrievalStatus?: RetrievalStatus;
   jevResponse?: JevResponseData | null;
+  activeTab?: "sources" | "jev";
+  onTabChange?: (tab: "sources" | "jev") => void;
   onClose?: () => void;
 }
 
@@ -24,6 +26,8 @@ export function SourceEvidencePanel({
   sources,
   retrievalStatus,
   jevResponse,
+  activeTab = "sources",
+  onTabChange,
   onClose,
 }: SourceEvidencePanelProps) {
   const [selectedSection, setSelectedSection] = useState<string>("all");
@@ -45,59 +49,58 @@ export function SourceEvidencePanel({
       ? sources
       : sources.filter((s) => (s.section?.code || "other") === selectedSection);
 
+  const hasJev = Boolean(jevResponse);
+  const currentTab = hasJev ? activeTab : "sources";
+
   return (
     <aside {...stylex.props(styles.panel)} aria-label="添付文書の根拠引用">
       <div {...stylex.props(styles.headerBar)}>
-        <div {...stylex.props(styles.headerTitleGroup)}>
-          <span>
-            📄{" "}
-            {retrievalStatus === "complete"
-              ? `統合根拠（${countSummary}）`
-              : retrievalStatus === "jev_searching"
-                ? `ロジック検索根拠（ロジック：${totalCount}件、Jev：取得中...）`
-                : `ロジック検索根拠（${totalCount}件）`}
-          </span>
-          {retrievalStatus === "jev_searching" && (
-            <span {...stylex.props(styles.searchingBadge)}>⚡ Jev判定と統合中...</span>
-          )}
-          {retrievalStatus === "complete" && (
-            <span {...stylex.props(styles.completeBadge)}>✓ Jev統合完了</span>
-          )}
-          {jevResponse?.answers?.intent?.choice && (
-            <span
+        {hasJev ? (
+          <div {...stylex.props(styles.tabGroup)} role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={currentTab === "sources"}
+              onClick={() => onTabChange?.("sources")}
               {...stylex.props(
-                styles.intentBadge(
-                  jevResponse.qualifying_intents &&
-                    jevResponse.qualifying_intents.length > 1
-                    ? "#67e8f9"
-                    : "#c084fc",
-                  jevResponse.qualifying_intents &&
-                    jevResponse.qualifying_intents.length > 1
-                    ? "rgba(6, 182, 212, 0.15)"
-                    : "rgba(168, 85, 247, 0.15)",
-                  jevResponse.qualifying_intents &&
-                    jevResponse.qualifying_intents.length > 1
-                    ? "rgba(6, 182, 212, 0.35)"
-                    : "rgba(168, 85, 247, 0.3)",
-                ),
+                styles.tabButton,
+                currentTab === "sources" && styles.tabButtonActiveSources,
               )}
             >
-              ⚡ Jev:{" "}
-              {jevResponse.qualifying_intents && jevResponse.qualifying_intents.length > 1
-                ? `マルチ (${jevResponse.qualifying_intents
-                    .map((k) => JEV_INTENT_META[k]?.label || k)
-                    .join(" + ")})`
-                : `${
-                    JEV_INTENT_META[jevResponse.answers.intent.choice]?.label ||
-                    jevResponse.answers.intent.choice
-                  }${
-                    jevResponse.answers.intent.confidence !== undefined
-                      ? ` (${Math.round(jevResponse.answers.intent.confidence * 100)}%)`
-                      : ""
-                  }`}
+              📄 添付文書の根拠 ({totalCount}件)
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={currentTab === "jev"}
+              onClick={() => onTabChange?.("jev")}
+              {...stylex.props(
+                styles.tabButton,
+                currentTab === "jev" && styles.tabButtonActiveJev,
+              )}
+            >
+              ⚡ Jev判定インスペクター
+            </button>
+          </div>
+        ) : (
+          <div {...stylex.props(styles.headerTitleGroup)}>
+            <span>
+              📄{" "}
+              {retrievalStatus === "complete"
+                ? `統合根拠（${countSummary}）`
+                : retrievalStatus === "jev_searching"
+                  ? `ロジック検索根拠（ロジック：${totalCount}件、Jev：取得中...）`
+                  : `ロジック検索根拠（${totalCount}件）`}
             </span>
-          )}
-        </div>
+            {retrievalStatus === "jev_searching" && (
+              <span {...stylex.props(styles.searchingBadge)}>⚡ Jev判定と統合中...</span>
+            )}
+            {retrievalStatus === "complete" && (
+              <span {...stylex.props(styles.completeBadge)}>✓ Jev統合完了</span>
+            )}
+          </div>
+        )}
+
         {onClose && (
           <button
             type="button"
@@ -111,38 +114,46 @@ export function SourceEvidencePanel({
       </div>
 
       <div {...stylex.props(styles.content)}>
-        {jevResponse?.qualifying_intents && jevResponse.qualifying_intents.length > 1 && (
-          <div {...stylex.props(styles.multipleNotice)}>
-            <div {...stylex.props(styles.multipleTitle)}>
-              <span>⚡ マルチセクション取得（閾値20%以上）</span>
-            </div>
-            <div>
-              確率20%以上の全候補項目（
-              {jevResponse.qualifying_intents
-                .map((k) => JEV_INTENT_META[k]?.label || k)
-                .join("・")}
-              ）のセクションを網羅して取得し、LLMに提供しています。
-            </div>
-          </div>
+        {currentTab === "jev" && jevResponse && (
+          <JevResponseInspector response={jevResponse} standalone />
         )}
 
-        <SourceEvidenceSectionFilters
-          sectionGroups={sectionGroups}
-          totalCount={totalCount}
-          selectedSection={selectedSection}
-          onSelectSection={setSelectedSection}
-          variant="dashedBorder"
-        />
+        {currentTab === "sources" && (
+          <>
+            {jevResponse?.qualifying_intents && jevResponse.qualifying_intents.length > 1 && (
+              <div {...stylex.props(styles.multipleNotice)}>
+                <div {...stylex.props(styles.multipleTitle)}>
+                  <span>⚡ マルチセクション取得（閾値20%以上）</span>
+                </div>
+                <div>
+                  確率20%以上の全候補項目（
+                  {jevResponse.qualifying_intents
+                    .map((k) => JEV_INTENT_META[k]?.label || k)
+                    .join("・")}
+                  ）のセクションを網羅して取得し、LLMに提供しています。
+                </div>
+              </div>
+            )}
 
-        {displayedSources.length === 0 && (
-          <div {...stylex.props(styles.empty)}>
-            該当する添付文書の根拠記載は見つかりませんでした（0件）
-          </div>
+            <SourceEvidenceSectionFilters
+              sectionGroups={sectionGroups}
+              totalCount={totalCount}
+              selectedSection={selectedSection}
+              onSelectSection={setSelectedSection}
+              variant="dashedBorder"
+            />
+
+            {displayedSources.length === 0 && (
+              <div {...stylex.props(styles.empty)}>
+                該当する添付文書の根拠記載は見つかりませんでした（0件）
+              </div>
+            )}
+
+            {displayedSources.map((s) => (
+              <SourceEvidenceCard key={s.unit_id} source={s} variant="compact" />
+            ))}
+          </>
         )}
-
-        {displayedSources.map((s) => (
-          <SourceEvidenceCard key={s.unit_id} source={s} variant="compact" />
-        ))}
       </div>
     </aside>
   );

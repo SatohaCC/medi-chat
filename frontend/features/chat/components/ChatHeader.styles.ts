@@ -11,6 +11,7 @@ export const styles = stylex.create({
     borderBottomWidth: "1px",
     borderBottomStyle: "solid",
     borderBottomColor: "var(--border)",
+    backgroundColor: "var(--assistant-bg)",
   },
   title: { fontSize: "18px", fontWeight: 600 },
   status: {

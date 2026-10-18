@@ -24,7 +24,7 @@ export const styles = stylex.create({
     fontSize: "14px",
   },
   link: {
-    color: "#93c5fd",
+    color: "#0265dc",
     textDecoration: "underline",
   },
   title: {
