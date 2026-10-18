@@ -26,7 +26,14 @@ const rokiEntry = {
   c: "内用",
 };
 
-async function setupMedicineChat(page: Page) {
+async function setupMedicineChat(
+  page: Page,
+  options?: {
+    staticMedicines?: unknown[];
+    activeMedicines?: unknown[];
+    autocompleteItems?: unknown[];
+  },
+) {
   const requests: ChatRequest[] = [];
   let socket: WebSocketRoute | undefined;
 
@@ -34,7 +41,7 @@ async function setupMedicineChat(page: Page) {
     route.fulfill({
       json: {
         generation_id: "test-gen",
-        items: [
+        items: options?.activeMedicines ?? [
           {
             generic_name: "リバーロキサバン錠",
             brand_names: ["イグザレルト錠15mg"],
@@ -54,13 +61,15 @@ async function setupMedicineChat(page: Page) {
     }),
   );
 
-  await page.route("**/data/medicines.json", (route) => route.fulfill({ json: [] }));
+  await page.route("**/data/medicines.json", (route) =>
+    route.fulfill({ json: options?.staticMedicines ?? [] }),
+  );
 
   await page.route("**/api/medicines/autocomplete", (route) =>
     route.fulfill({
       json: {
         generation_id: "test-gen",
-        items: [igzEntry, rokiEntry],
+        items: options?.autocompleteItems ?? [igzEntry, rokiEntry],
       },
     }),
   );
@@ -244,5 +253,56 @@ test.describe("Unit 3 & Unit 4: Medicine Mention E2E Tests", () => {
   test("TC-A01: prompt input has aria-label='質問を入力'", async ({ page }) => {
     const chat = await setupMedicineChat(page);
     await expect(chat.input).toHaveAttribute("aria-label", "質問を入力");
+  });
+
+  // TC-D01: /data/medicines.json の静的辞書にある薬も @ 補完候補に表示される
+  test("TC-D01: static dictionary medicines in /data/medicines.json are available in @ mention completion even if absent from active catalog", async ({
+    page,
+  }) => {
+    const mucostaEntry = {
+      n: "ムコスタ錠100mg",
+      k: "ムコスタジョウ100MG",
+      h: "むこすたじょう100mg",
+      y: "2329007F1023",
+      g: "レバミピド錠",
+      c: "内用",
+    };
+
+    const chat = await setupMedicineChat(page, {
+      staticMedicines: [mucostaEntry],
+    });
+    await chat.input.focus();
+    await page.keyboard.type("@ムコ");
+
+    const option = page.getByRole("menuitem", { name: /ムコスタ/ });
+    await expect(option).toBeVisible();
+    await option.click();
+
+    // Verify token was inserted into dock
+    await expect(chat.tier2).toContainText("ムコスタ錠100mg");
+  });
+
+  // TC-W01: 選択中 baseline の YJ がカタログから消失した場合に警告を表示する
+  test("TC-W01: surfaces role='alert' aria-label='選択YJの消失' when baseline YJ code is absent from active catalog", async ({
+    page,
+  }) => {
+    const chat = await setupMedicineChat(page, {
+      activeMedicines: [
+        {
+          generic_name: "ロキソプロフェンナトリウム水和物錠",
+          brand_names: ["ロキソニン錠60mg"],
+          yj_codes: ["1141007F1063"],
+          document_ids: ["doc-roki"],
+          matched_aliases: [],
+        },
+      ],
+      autocompleteItems: [rokiEntry],
+    });
+
+    const alert = page.getByRole("alert", { name: "選択YJの消失" });
+    await expect(alert).toBeVisible();
+    await expect(alert).toContainText("3339003F5020");
+    await expect(alert).toContainText("自動変更していません");
+    await expect(chat.tier1).toContainText("イグザレルト錠15mg");
   });
 });

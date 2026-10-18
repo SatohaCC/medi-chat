@@ -23,4 +23,18 @@ export const styles = stylex.create({
     display: "flex",
     flexDirection: "column",
   },
+  missingAlert: {
+    marginBlock: "6px",
+    marginInline: "16px",
+    paddingBlock: "8px",
+    paddingInline: "12px",
+    borderRadius: "8px",
+    backgroundColor: "rgba(245, 158, 11, 0.12)",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "rgba(245, 158, 11, 0.35)",
+    fontSize: "12px",
+    color: "#92400e",
+    lineHeight: 1.4,
+  },
 });

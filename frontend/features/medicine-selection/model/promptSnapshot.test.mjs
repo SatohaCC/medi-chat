@@ -202,3 +202,36 @@ describe("promptSnapshot model", () => {
     assert.deepEqual(mentions, []);
   });
 });
+
+describe("mergeMedicineEntries", () => {
+  // TC-D01: static dictionary is preserved and merged with active medicines
+  it("TC-D01: merges static dictionary entries with active catalog items without dropping un-imported medicines", async () => {
+    const { mergeMedicineEntries } = await import("./medicineEntries.ts");
+    const active = [
+      { n: "イグザレルト錠15mg (Active)", k: "イグザレルト", h: "いぐざれると", y: "3339003F5020", g: "リバーロキサバン錠", c: "内用" },
+    ];
+    const staticDict = [
+      { n: "イグザレルト錠15mg", k: "イグザレルト", h: "いぐざれると", y: "3339003F5020", g: "リバーロキサバン錠", c: "内用" },
+      { n: "ロキソニン錠60mg", k: "ロキソニン", h: "ろきそにん", y: "1141007F1063", g: "ロキソプロフェンナトリウム水和物錠", c: "内用" },
+    ];
+
+    const merged = mergeMedicineEntries(active, staticDict);
+    assert.equal(merged.length, 2);
+    // Active entry details override static entry for the same YJ
+    const igz = merged.find((m) => m.y === "3339003F5020");
+    assert.equal(igz?.n, "イグザレルト錠15mg (Active)");
+    // Static-only entry is preserved
+    const roki = merged.find((m) => m.y === "1141007F1063");
+    assert.equal(roki?.n, "ロキソニン錠60mg");
+  });
+
+  it("TC-D02: falls back to static dictionary when active catalog is empty", async () => {
+    const { mergeMedicineEntries } = await import("./medicineEntries.ts");
+    const staticDict = [
+      { n: "ロキソニン錠60mg", k: "ロキソニン", h: "ろきそにん", y: "1141007F1063", g: "ロキソプロフェンナトリウム水和物錠", c: "内用" },
+    ];
+    const merged = mergeMedicineEntries([], staticDict);
+    assert.equal(merged.length, 1);
+    assert.equal(merged[0].y, "1141007F1063");
+  });
+});

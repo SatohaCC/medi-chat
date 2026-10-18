@@ -10,7 +10,7 @@ import {
   computeTargetMedicines,
   extractMentionsFromSegments,
   resolvePostSendState,
-  useActiveMedicines,
+  useMedicineEntries,
 } from "../../medicine-selection";
 import { useChatWebSocket } from "../hooks/useChatWebSocket";
 import { ChatHeader } from "./ChatHeader";
@@ -23,29 +23,29 @@ export function ChatScreen() {
   const [openEvidenceIndex, setOpenEvidenceIndex] = useState<number | null>(null);
   const messageListRef = useRef<HTMLElement | null>(null);
 
-  const activeMedicines = useActiveMedicines();
+  const { entries, activeMedicines } = useMedicineEntries();
 
   // Baseline prescription: default 3339003F5020 (イグザレルト錠15mg)
   const defaultBaseline = useMemo<SelectedMedicineItem>(() => {
-    const match = activeMedicines.items.find((item) => item.y === "3339003F5020");
+    const match = entries.find((item) => item.y === "3339003F5020");
     return {
       yj_code: "3339003F5020",
       name: match ? match.n : "イグザレルト錠15mg",
     };
-  }, [activeMedicines.items]);
+  }, [entries]);
 
   const [baseline, setBaseline] = useState<SelectedMedicineItem[]>([defaultBaseline]);
   const [persistentAdditional, setPersistentAdditional] = useState<SelectedMedicineItem[]>([]);
   const [prompt, setPrompt] = useState<PromptFieldValue>(() => new PromptFieldValue([]));
   const [inputKey, setInputKey] = useState(0);
 
-  // Sync default baseline name once activeMedicines catalog loads
+  // Sync default baseline name once catalog loads
   useEffect(() => {
-    if (activeMedicines.items.length > 0) {
+    if (entries.length > 0) {
       setBaseline((prev) =>
         prev.map((item) => {
           if (item.yj_code === "3339003F5020" && item.name === "イグザレルト錠15mg") {
-            const match = activeMedicines.items.find((m) => m.y === item.yj_code);
+            const match = entries.find((m) => m.y === item.yj_code);
             if (match && match.n !== item.name) {
               return { ...item, name: match.n };
             }
@@ -54,7 +54,18 @@ export function ChatScreen() {
         }),
       );
     }
+  }, [entries]);
+
+  const availableActiveYjCodes = useMemo(() => {
+    return new Set(activeMedicines.items.map((entry) => entry.y));
   }, [activeMedicines.items]);
+
+  const missingSelectedYjCodes = useMemo(() => {
+    if (activeMedicines.status !== "ready") return [];
+    return baseline
+      .map((b) => b.yj_code)
+      .filter((code) => !availableActiveYjCodes.has(code));
+  }, [activeMedicines.status, baseline, availableActiveYjCodes]);
 
   const mentions = useMemo(() => {
     return extractMentionsFromSegments(prompt.segments);
@@ -215,6 +226,14 @@ export function ChatScreen() {
             onToggleEvidence={handleToggleEvidence}
           />
 
+          {missingSelectedYjCodes.length > 0 && (
+            <p role="alert" aria-label="選択YJの消失" {...stylex.props(layout.missingAlert)}>
+              選択したYJコードが現在の候補にありません:{" "}
+              {missingSelectedYjCodes.join(", ")}
+              。別の薬へ自動変更していません。
+            </p>
+          )}
+
           <ChatInputForm
             key={inputKey}
             baseline={baseline}
@@ -226,7 +245,7 @@ export function ChatScreen() {
             prompt={prompt}
             onChangePrompt={handleChangePrompt}
             onSubmit={handleSendMessage}
-            medicineEntries={activeMedicines.items}
+            medicineEntries={entries}
             status={status}
             isStreaming={isStreaming}
             canSend={targetState.canSend}
