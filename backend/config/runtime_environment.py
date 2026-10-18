@@ -3,6 +3,7 @@
 import os
 
 from dotenv import dotenv_values
+from dotenv.variables import parse_variables
 
 from ..project_paths import BACKEND_DIR, PROJECT_ROOT
 
@@ -15,14 +16,22 @@ def load_runtime_environment() -> None:
         "on",
     }:
         return
-    values = {}
+    values: dict[str, str | None] = {}
     for path in (
         PROJECT_ROOT / ".env",
         BACKEND_DIR / ".env",
         BACKEND_DIR / ".env.local",
         PROJECT_ROOT / ".env.local",
     ):
-        values.update(dotenv_values(path))
+        for name, value in dotenv_values(path, interpolate=False).items():
+            environment = {**values, **os.environ}
+            values[name] = (
+                None
+                if value is None
+                else "".join(
+                    atom.resolve(environment) for atom in parse_variables(value)
+                )
+            )
     for name, value in values.items():
         if value is not None:
             os.environ.setdefault(name, value)
