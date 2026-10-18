@@ -228,240 +228,228 @@ export function JevResponseInspector({
       value={activeTab}
       onValueChange={(value) => setActiveTab(value as "summary" | "raw")}
       label="Jevインスペクター表示切替"
-          items={[
-            {
-              id: "summary",
-              title: "📊 判定サマリー & 確率分布",
-              content: (
-                <div {...stylex.props(styles.summaryPanel)}>
-                  {choice && (
-                    <div {...stylex.props(styles.chosenIntent)}>
-                      <div {...stylex.props(styles.intentHeading)}>
-                        判定項目 (Intent):
-                      </div>
-                      <div {...stylex.props(styles.choiceRow)}>
-                        <span {...stylex.props(styles.choiceLabel)}>
-                          {meta?.label || choice}
-                        </span>
-                        <span {...stylex.props(styles.choiceCode)}>({choice})</span>
-                        {confidence !== undefined && confidence >= 0.2 && (
-                          <span {...stylex.props(styles.targetBadge)}>[対象]</span>
-                        )}
-                      </div>
-                      {meta?.desc && (
-                        <div {...stylex.props(styles.intentDescription)}>{meta.desc}</div>
-                      )}
-                    </div>
+      items={[
+        {
+          id: "summary",
+          title: "📊 判定サマリー & 確率分布",
+          content: (
+            <div {...stylex.props(styles.summaryPanel)}>
+              {choice && (
+                <div {...stylex.props(styles.chosenIntent)}>
+                  <div {...stylex.props(styles.intentHeading)}>判定項目 (Intent):</div>
+                  <div {...stylex.props(styles.choiceRow)}>
+                    <span {...stylex.props(styles.choiceLabel)}>
+                      {meta?.label || choice}
+                    </span>
+                    <span {...stylex.props(styles.choiceCode)}>({choice})</span>
+                    {confidence !== undefined && confidence >= 0.2 && (
+                      <span {...stylex.props(styles.targetBadge)}>[対象]</span>
+                    )}
+                  </div>
+                  {meta?.desc && (
+                    <div {...stylex.props(styles.intentDescription)}>{meta.desc}</div>
                   )}
+                </div>
+              )}
 
-                  {confidence !== undefined && (
-                    <div {...stylex.props(styles.confidenceBlock)}>
-                      <div {...stylex.props(styles.confidenceHeading)}>
-                        <span {...stylex.props(styles.mutedLabel)}>
-                          確信度 (Confidence):
-                        </span>
-                        <span {...stylex.props(styles.confidenceValue)}>
-                          {(confidence * 100).toFixed(1)}% ({confidence.toFixed(2)})
-                        </span>
-                      </div>
-                      <div
-                        {...stylex.props(styles.probContainer)}
-                        data-probability-track="true"
+              {confidence !== undefined && (
+                <div {...stylex.props(styles.confidenceBlock)}>
+                  <div {...stylex.props(styles.confidenceHeading)}>
+                    <span {...stylex.props(styles.mutedLabel)}>確信度 (Confidence):</span>
+                    <span {...stylex.props(styles.confidenceValue)}>
+                      {(confidence * 100).toFixed(1)}% ({confidence.toFixed(2)})
+                    </span>
+                  </div>
+                  <div
+                    {...stylex.props(styles.probContainer)}
+                    data-probability-track="true"
+                  >
+                    <div
+                      data-confidence-meter="true"
+                      {...stylex.props(
+                        styles.probBar,
+                        styles.confidenceWidth(
+                          `${Math.min(Math.max(confidence * 100, 0), 100)}%`,
+                        ),
+                      )}
+                      data-probability-bar="true"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {response.qualifying_intents && response.qualifying_intents.length > 1 && (
+                <div {...stylex.props(styles.multipleBlock)}>
+                  <div {...stylex.props(styles.multipleHeading)}>
+                    <span {...stylex.props(styles.multipleTitle)}>
+                      <span>⚡ マルチセクション取得（閾値20%以上）</span>
+                    </span>
+                    <span {...stylex.props(styles.modeLabel)}>
+                      {response.qualifying_intents.length}項目を統合取得
+                    </span>
+                  </div>
+                  <div {...stylex.props(styles.multipleDescription)}>
+                    確率20%以上の複数セクションを検出し、添付文書の該当箇所を網羅して検索・引用しました:
+                  </div>
+                  <div {...stylex.props(styles.qualifyingItems)}>
+                    {response.qualifying_intents.map((intentKey) => {
+                      const prob = probabilities?.[intentKey];
+                      const probPct =
+                        prob !== undefined ? `${(prob * 100).toFixed(1)}%` : null;
+                      const itemMeta = JEV_INTENT_META[intentKey];
+                      return (
+                        <div key={intentKey} {...stylex.props(styles.qualifyingItem)}>
+                          <span {...stylex.props(styles.qualifyingName)}>
+                            {itemMeta?.label || intentKey}
+                          </span>
+                          {probPct && (
+                            <span {...stylex.props(styles.qualifyingPercentage)}>
+                              {probPct}
+                            </span>
+                          )}
+                          <span {...stylex.props(styles.qualifyingBadge)}>[対象]</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {allSortedProbabilities.length > 0 && (
+                <div {...stylex.props(styles.probabilityList)}>
+                  <div {...stylex.props(styles.probabilityHeading)}>
+                    <span>
+                      候補項目と確率分布 (
+                      {showAllProbabilities
+                        ? `全${allSortedProbabilities.length}項目`
+                        : `上位${displayedProbabilities.length}項目`}
+                      ):
+                    </span>
+                    {allSortedProbabilities.length > 8 && (
+                      <Button
+                        variant="text"
+                        onActivate={() => setShowAllProbabilities((prev) => !prev)}
                       >
-                        <div
-                          data-confidence-meter="true"
+                        {showAllProbabilities
+                          ? "上位8件に戻す"
+                          : `全${allSortedProbabilities.length}件を表示`}
+                      </Button>
+                    )}
+                  </div>
+                  {displayedProbabilities.map(([key, prob]) => {
+                    const probPct = (prob * 100).toFixed(1);
+                    const itemMeta = JEV_INTENT_META[key];
+                    const isWinner = key === choice;
+                    const isQualifying =
+                      (response.qualifying_intents?.includes(key) ?? false) ||
+                      prob >= 0.2;
+                    return (
+                      <div
+                        key={key}
+                        {...stylex.props(styles.probRow)}
+                        data-probability-row="true"
+                      >
+                        <span
                           {...stylex.props(
-                            styles.probBar,
-                            styles.confidenceWidth(
-                              `${Math.min(Math.max(confidence * 100, 0), 100)}%`,
+                            styles.probabilityItemLabel(
+                              isWinner
+                                ? "#4c1d95"
+                                : isQualifying
+                                  ? "#0e7490"
+                                  : "var(--fg)",
+                              isWinner || isQualifying ? 600 : 400,
                             ),
                           )}
-                          data-probability-bar="true"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {response.qualifying_intents &&
-                    response.qualifying_intents.length > 1 && (
-                      <div {...stylex.props(styles.multipleBlock)}>
-                        <div {...stylex.props(styles.multipleHeading)}>
-                          <span {...stylex.props(styles.multipleTitle)}>
-                            <span>⚡ マルチセクション取得（閾値20%以上）</span>
-                          </span>
-                          <span {...stylex.props(styles.modeLabel)}>
-                            {response.qualifying_intents.length}項目を統合取得
-                          </span>
-                        </div>
-                        <div {...stylex.props(styles.multipleDescription)}>
-                          確率20%以上の複数セクションを検出し、添付文書の該当箇所を網羅して検索・引用しました:
-                        </div>
-                        <div {...stylex.props(styles.qualifyingItems)}>
-                          {response.qualifying_intents.map((intentKey) => {
-                            const prob = probabilities?.[intentKey];
-                            const probPct =
-                              prob !== undefined ? `${(prob * 100).toFixed(1)}%` : null;
-                            const itemMeta = JEV_INTENT_META[intentKey];
-                            return (
-                              <div
-                                key={intentKey}
-                                {...stylex.props(styles.qualifyingItem)}
-                              >
-                                <span {...stylex.props(styles.qualifyingName)}>
-                                  {itemMeta?.label || intentKey}
-                                </span>
-                                {probPct && (
-                                  <span {...stylex.props(styles.qualifyingPercentage)}>
-                                    {probPct}
-                                  </span>
-                                )}
-                                <span {...stylex.props(styles.qualifyingBadge)}>
-                                  [対象]
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                  {allSortedProbabilities.length > 0 && (
-                    <div {...stylex.props(styles.probabilityList)}>
-                      <div {...stylex.props(styles.probabilityHeading)}>
-                        <span>
-                          候補項目と確率分布 (
-                          {showAllProbabilities
-                            ? `全${allSortedProbabilities.length}項目`
-                            : `上位${displayedProbabilities.length}項目`}
-                          ):
+                          title={itemMeta?.label || key}
+                        >
+                          {itemMeta?.label || key}
+                          {isQualifying && (
+                            <span
+                              {...stylex.props(
+                                styles.probabilityBadge(
+                                  isWinner ? "#5b21b6" : "#0e7490",
+                                  isWinner
+                                    ? "rgba(124, 58, 237, 0.08)"
+                                    : "rgba(14, 116, 144, 0.08)",
+                                  isWinner
+                                    ? "rgba(124, 58, 237, 0.25)"
+                                    : "rgba(14, 116, 144, 0.25)",
+                                ),
+                              )}
+                            >
+                              [対象]
+                            </span>
+                          )}
                         </span>
-                        {allSortedProbabilities.length > 8 && (
-                          <Button
-                            variant="text"
-                            onActivate={() => setShowAllProbabilities((prev) => !prev)}
-                          >
-                            {showAllProbabilities
-                              ? "上位8件に戻す"
-                              : `全${allSortedProbabilities.length}件を表示`}
-                          </Button>
-                        )}
-                      </div>
-                      {displayedProbabilities.map(([key, prob]) => {
-                        const probPct = (prob * 100).toFixed(1);
-                        const itemMeta = JEV_INTENT_META[key];
-                        const isWinner = key === choice;
-                        const isQualifying =
-                          (response.qualifying_intents?.includes(key) ?? false) ||
-                          prob >= 0.2;
-                        return (
+                        <div
+                          {...stylex.props(styles.probContainer)}
+                          data-probability-track="true"
+                        >
                           <div
-                            key={key}
-                            {...stylex.props(styles.probRow)}
-                            data-probability-row="true"
-                          >
-                            <span
-                              {...stylex.props(
-                                styles.probabilityItemLabel(
-                                  isWinner
-                                    ? "#4c1d95"
-                                    : isQualifying
-                                      ? "#0e7490"
-                                      : "var(--fg)",
-                                  isWinner || isQualifying ? 600 : 400,
-                                ),
-                              )}
-                              title={itemMeta?.label || key}
-                            >
-                              {itemMeta?.label || key}
-                              {isQualifying && (
-                                <span
-                                  {...stylex.props(
-                                    styles.probabilityBadge(
-                                      isWinner ? "#5b21b6" : "#0e7490",
-                                      isWinner
-                                        ? "rgba(124, 58, 237, 0.08)"
-                                        : "rgba(14, 116, 144, 0.08)",
-                                      isWinner
-                                        ? "rgba(124, 58, 237, 0.25)"
-                                        : "rgba(14, 116, 144, 0.25)",
-                                    ),
-                                  )}
-                                >
-                                  [対象]
-                                </span>
-                              )}
-                            </span>
-                            <div
-                              {...stylex.props(styles.probContainer)}
-                              data-probability-track="true"
-                            >
-                              <div
-                                {...stylex.props(
-                                  styles.probBar,
-                                  styles.probabilityBarValue(
-                                    `${Math.min(Math.max(prob * 100, 0), 100)}%`,
-                                    isWinner
-                                      ? "linear-gradient(90deg, #7c3aed, #0284c7)"
-                                      : isQualifying
-                                        ? "linear-gradient(90deg, #0e7490, #0284c7)"
-                                        : "none",
-                                  ),
-                                )}
-                                data-probability-bar="true"
-                              />
-                            </div>
-                            <span
-                              {...stylex.props(
-                                styles.probabilityPercentage(
-                                  isWinner
-                                    ? "#047857"
-                                    : isQualifying
-                                      ? "#0e7490"
-                                      : "var(--muted)",
-                                  isWinner || isQualifying ? 600 : 400,
-                                ),
-                              )}
-                            >
-                              {probPct}%
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  <div {...stylex.props(styles.meta, styles.metaBorder)}>
-                    {response.model && <div>モデル: {response.model}</div>}
-                    {response.request_id && (
-                      <div>リクエストID: {response.request_id}</div>
-                    )}
-                    {response.usage && (
-                      <div>
-                        トークン: 入力 {response.usage.input_tokens ?? 0} / 出力{" "}
-                        {response.usage.output_tokens ?? 0}
+                            {...stylex.props(
+                              styles.probBar,
+                              styles.probabilityBarValue(
+                                `${Math.min(Math.max(prob * 100, 0), 100)}%`,
+                                isWinner
+                                  ? "linear-gradient(90deg, #7c3aed, #0284c7)"
+                                  : isQualifying
+                                    ? "linear-gradient(90deg, #0e7490, #0284c7)"
+                                    : "none",
+                              ),
+                            )}
+                            data-probability-bar="true"
+                          />
+                        </div>
+                        <span
+                          {...stylex.props(
+                            styles.probabilityPercentage(
+                              isWinner
+                                ? "#047857"
+                                : isQualifying
+                                  ? "#0e7490"
+                                  : "var(--muted)",
+                              isWinner || isQualifying ? 600 : 400,
+                            ),
+                          )}
+                        >
+                          {probPct}%
+                        </span>
                       </div>
-                    )}
-                  </div>
+                    );
+                  })}
                 </div>
-              ),
-            },
-            {
-              id: "raw",
-              title: "📄 生レスポンス (JSON)",
-              content: (
-                <div {...stylex.props(styles.rawContainer)}>
-                  <div {...stylex.props(styles.rawHeader)}>
-                    <span>Jev API 生レスポンス (JSON)</span>
-                    <CopyJsonButton data={response} />
+              )}
+
+              <div {...stylex.props(styles.meta, styles.metaBorder)}>
+                {response.model && <div>モデル: {response.model}</div>}
+                {response.request_id && <div>リクエストID: {response.request_id}</div>}
+                {response.usage && (
+                  <div>
+                    トークン: 入力 {response.usage.input_tokens ?? 0} / 出力{" "}
+                    {response.usage.output_tokens ?? 0}
                   </div>
-                  <pre {...stylex.props(styles.rawCode)}>
-                    <code>{JSON.stringify(response, null, 2)}</code>
-                  </pre>
-                </div>
-              ),
-            },
-          ]}
-        />
+                )}
+              </div>
+            </div>
+          ),
+        },
+        {
+          id: "raw",
+          title: "📄 生レスポンス (JSON)",
+          content: (
+            <div {...stylex.props(styles.rawContainer)}>
+              <div {...stylex.props(styles.rawHeader)}>
+                <span>Jev API 生レスポンス (JSON)</span>
+                <CopyJsonButton data={response} />
+              </div>
+              <pre {...stylex.props(styles.rawCode)}>
+                <code>{JSON.stringify(response, null, 2)}</code>
+              </pre>
+            </div>
+          ),
+        },
+      ]}
+    />
   );
 
   if (standalone) {

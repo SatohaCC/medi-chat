@@ -1,3 +1,5 @@
+export const MAX_TARGET_MEDICINES = 50;
+
 export interface SelectedMedicineItem {
   yj_code: string;
   name: string;
@@ -126,7 +128,7 @@ export function computeTargetMedicines({
 
   const baselineYjSet = new Set(deduplicatedBaseline.map((b) => b.yj_code));
   const additional = target.filter((item) => !baselineYjSet.has(item.yj_code));
-  const canSend = target.length > 0;
+  const canSend = target.length > 0 && target.length <= MAX_TARGET_MEDICINES;
 
   return {
     target,

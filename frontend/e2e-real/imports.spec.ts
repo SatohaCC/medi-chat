@@ -10,7 +10,7 @@ import {
   ensurePortAvailable,
 } from "../scripts/owned-server.mjs";
 import {
-  assertImportSemantic,
+  assertCurrentImport,
   logicalSnapshot,
   pythonBinary,
 } from "./helpers/sqlite-fixture";
@@ -124,13 +124,7 @@ test("real browser upload, resend, process restart GET and active registration",
         "data/pmda/originals/イグザレルト錠２．５ｍｇ/630004_3339003F5020_1_08.xml",
       ),
     );
-    const expectedUnits = readFileSync(
-      join(root, "data/pmda/structured/630004_3339003F5020_1_08/search_units.jsonl"),
-      "utf8",
-    )
-      .trim()
-      .split("\n")
-      .map((line) => JSON.parse(line));
+
     await page.goto("/imports");
     await page.getByLabel("XMLファイル").setInputFiles({
       name: "630004_3339003F5020_1_08.xml",
@@ -225,7 +219,11 @@ test("real browser upload, resend, process restart GET and active registration",
       .split("\n")
       .map((line) => JSON.parse(line));
     expect(units).toHaveLength(result.search_unit_count);
-    expect(units).toEqual(expectedUnits);
+    expect(assertCurrentImport(root, index, version)).toEqual({
+      sections: 22,
+      source_tree: "passed",
+      stored_index: "passed",
+    });
     expect(readdirSync(version)).toContain("document.json");
     await stop();
     await start();
@@ -241,10 +239,6 @@ test("real browser upload, resend, process restart GET and active registration",
     expect(
       medicinesAfter.items.flatMap((item: { yj_codes: string[] }) => item.yj_codes),
     ).toContain("3339003F5020");
-    expect(assertImportSemantic(root, index)).toEqual({
-      sections: 40,
-      semantic: "passed",
-    });
     await testInfo.attach("real-state", {
       body: JSON.stringify({
         isolated,

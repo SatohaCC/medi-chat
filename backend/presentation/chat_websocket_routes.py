@@ -13,7 +13,7 @@ from .chat_models import ChatMessage
 from .chat_service import AppChatService as ChatService
 from .dependencies import get_chat_service
 from .evidence_models import ChatSource
-from .medicine_models import YJCode
+from .medicine_models import MAX_PRODUCT_YJ_CODES, YJCode
 
 ALLOWED_PROVIDER_NAMES: set[str] = {"openai", "gemini"}
 
@@ -28,7 +28,9 @@ class WebSocketChatRequest(BaseModel):
     """WebSocket 経由で受信するチャットリクエストペイロード"""
 
     type: Literal["message"] = "message"
-    product_yj_codes: list[YJCode] = Field(min_length=1, max_length=8)
+    product_yj_codes: list[YJCode] = Field(
+        min_length=1, max_length=MAX_PRODUCT_YJ_CODES
+    )
     messages: list[ChatMessage] = Field(min_length=1, max_length=50)
     provider: str | None = Field(default=None, max_length=50)
     model: str | None = Field(default=None, max_length=100)

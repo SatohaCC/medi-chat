@@ -109,4 +109,3 @@ def test_structure_cli_register_preserves_separately_located_initial_original(
         ],
     )
     assert structure_main() == 0
-

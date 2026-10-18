@@ -15,6 +15,7 @@ from backend import main as application_entrypoint
 from backend.config import database_settings
 from backend.config.database_settings import DatabaseSettings
 from backend.infrastructure.cli import build_search_index as index_entrypoint
+from backend.infrastructure.composition import app_lifespan
 from backend.migrations import migration_runner
 from backend.tests.support.paths import BACKEND_ROOT
 from sqlalchemy.engine import make_url
@@ -45,7 +46,7 @@ def _run_database_entrypoint(
     # exercised by the startup/crash suites, so keep the existing readiness spy.
     if entrypoint in {"application", "cli"}:
         monkeypatch.setattr(
-            application_entrypoint if entrypoint == "application" else index_entrypoint,
+            app_lifespan if entrypoint == "application" else index_entrypoint,
             "recover_sqlite_journal",
             lambda selected: None,
         )
@@ -201,9 +202,7 @@ def test_database_selection_is_shared_by_all_entrypoints(
         monkeypatch.setattr(
             module, "resolve_database_settings", recording_resolver, raising=False
         )
-    monkeypatch.setattr(
-        application_entrypoint, "verify_index_readiness", stop_app, raising=False
-    )
+    monkeypatch.setattr(app_lifespan, "verify_index_readiness", stop_app)
     monkeypatch.setattr(
         index_entrypoint, "verify_schema_readiness", stop_database, raising=False
     )
@@ -298,9 +297,7 @@ def test_conflicting_url_and_path_are_rejected_before_connect(
     def stop_migrations(settings: DatabaseSettings) -> None:
         stop_database(settings.index_path)
 
-    monkeypatch.setattr(
-        application_entrypoint, "verify_index_readiness", stop_app, raising=False
-    )
+    monkeypatch.setattr(app_lifespan, "verify_index_readiness", stop_app)
     monkeypatch.setattr(
         index_entrypoint, "verify_schema_readiness", stop_database, raising=False
     )
@@ -394,9 +391,7 @@ def test_supported_database_locations_are_normalized(
     def stop_migrations(settings: DatabaseSettings) -> None:
         stop_database(settings.index_path)
 
-    monkeypatch.setattr(
-        application_entrypoint, "verify_index_readiness", stop_app, raising=False
-    )
+    monkeypatch.setattr(app_lifespan, "verify_index_readiness", stop_app)
     monkeypatch.setattr(
         index_entrypoint, "verify_schema_readiness", stop_database, raising=False
     )
@@ -537,9 +532,7 @@ def test_structured_directory_resolution_is_shared(
         consumed.append((settings.structured_dir, settings.index_path))
         raise StopBeforeDatabase
 
-    monkeypatch.setattr(
-        application_entrypoint, "verify_index_readiness", stop_app, raising=False
-    )
+    monkeypatch.setattr(app_lifespan, "verify_index_readiness", stop_app)
     monkeypatch.setattr(
         index_entrypoint, "verify_schema_readiness", stop_cli, raising=False
     )

@@ -348,11 +348,13 @@ def _active_table(
         context=replace(
             block.context,
             product_codes=tuple(
-                type(code)(code.value)
-                for row in rows
-                for cell in row
-                for code in cell.context.product_codes
-                if code.value in active
+                dict.fromkeys(
+                    type(code)(code.value)
+                    for row in rows
+                    for cell in row
+                    for code in cell.context.product_codes
+                    if code.value in active
+                )
             )
             if has_cell_scopes
             else tuple(

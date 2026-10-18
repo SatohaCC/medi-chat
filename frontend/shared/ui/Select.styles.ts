@@ -29,7 +29,8 @@ export const styles = stylex.create({
     cursor: "pointer",
     whiteSpace: "nowrap",
     boxShadow: "0 1px 2px rgba(0, 0, 0, 0.03)",
-    transition: "border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease",
+    transition:
+      "border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease",
     outlineWidth: { default: null, ":focus-visible": "2px" },
     outlineStyle: { default: null, ":focus-visible": "solid" },
     outlineColor: { default: null, ":focus-visible": "#0265dc" },

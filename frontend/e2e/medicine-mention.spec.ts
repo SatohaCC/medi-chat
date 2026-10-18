@@ -1,4 +1,4 @@
-import { expect, test, type Page, type WebSocketRoute } from "@playwright/test";
+import { expect, type Page, test, type WebSocketRoute } from "@playwright/test";
 
 interface ChatRequest {
   type: string;
@@ -114,7 +114,9 @@ async function setupMedicineChat(
 
 test.describe("Unit 3 & Unit 4: Medicine Mention E2E Tests", () => {
   // TC-U01: 初期表示で直上1段目に対象処方箋、2段目は「なし」
-  test("TC-U01: initial view shows prescription in tier 1, and tier 2 is empty", async ({ page }) => {
+  test("TC-U01: initial view shows prescription in tier 1, and tier 2 is empty", async ({
+    page,
+  }) => {
     const chat = await setupMedicineChat(page);
     await expect(chat.tier1).toContainText("対象処方箋:");
     await expect(chat.tier1).toContainText("イグザレルト錠15mg");
@@ -123,7 +125,9 @@ test.describe("Unit 3 & Unit 4: Medicine Mention E2E Tests", () => {
   });
 
   // TC-U02: @ロキ で候補メニューが展開し、ロキソニンがサジェストされる
-  test("TC-U02: typing @ロキ opens completion popover with suggestions", async ({ page }) => {
+  test("TC-U02: typing @ロキ opens completion popover with suggestions", async ({
+    page,
+  }) => {
     const chat = await setupMedicineChat(page);
     await chat.input.focus();
     await page.keyboard.type("@ロキ");
@@ -133,7 +137,9 @@ test.describe("Unit 3 & Unit 4: Medicine Mention E2E Tests", () => {
   });
 
   // TC-U03: 候補選択でトークン化され、直上2段目に追加薬が即座に表示される
-  test("TC-U03: selecting completion tokenizes and reflects in tier 2 immediately", async ({ page }) => {
+  test("TC-U03: selecting completion tokenizes and reflects in tier 2 immediately", async ({
+    page,
+  }) => {
     const chat = await setupMedicineChat(page);
     await chat.input.focus();
     await page.keyboard.type("@ロキ");
@@ -146,7 +152,9 @@ test.describe("Unit 3 & Unit 4: Medicine Mention E2E Tests", () => {
   });
 
   // TC-U04: 直上2段目の [×] をクリックすると入力欄内のトークンが消去される
-  test("TC-U04: clicking remove on tier 2 chip removes token from draft input", async ({ page }) => {
+  test("TC-U04: clicking remove on tier 2 chip removes token from draft input", async ({
+    page,
+  }) => {
     const chat = await setupMedicineChat(page);
     await chat.input.focus();
     await page.keyboard.type("@ロキ");
@@ -164,9 +172,10 @@ test.describe("Unit 3 & Unit 4: Medicine Mention E2E Tests", () => {
     await expect(chat.tier2).toContainText("なし");
   });
 
-
   // TC-S01: 処方箋 A の状態で @B を含んだ質問を送信 -> payload=[A, B]、送信後も A は残る
-  test("TC-S01: sending question with mention sends target [A, B] and preserves baseline A", async ({ page }) => {
+  test("TC-S01: sending question with mention sends target [A, B] and preserves baseline A", async ({
+    page,
+  }) => {
     const chat = await setupMedicineChat(page);
     await chat.input.focus();
     await page.keyboard.type("併用について ");
@@ -187,7 +196,9 @@ test.describe("Unit 3 & Unit 4: Medicine Mention E2E Tests", () => {
   });
 
   // TC-S02: 送信完了後、薬名を省略して質問を送信 -> 継続追加薬 C を引き継ぎ [A, B] を送出
-  test("TC-S02: follow-up question without mentions preserves additional drug C in payload", async ({ page }) => {
+  test("TC-S02: follow-up question without mentions preserves additional drug C in payload", async ({
+    page,
+  }) => {
     const chat = await setupMedicineChat(page);
 
     // Turn 1
@@ -224,10 +235,7 @@ test.describe("Unit 3 & Unit 4: Medicine Mention E2E Tests", () => {
     await page.keyboard.type("質問テキスト");
 
     // Click twice rapidly
-    await Promise.all([
-      chat.send.click(),
-      chat.send.click().catch(() => {}),
-    ]);
+    await Promise.all([chat.send.click(), chat.send.click().catch(() => {})]);
 
     await expect.poll(() => chat.requests.length).toBe(1);
     expect(chat.requests).toHaveLength(1);
@@ -329,7 +337,6 @@ test.describe("Unit 3 & Unit 4: Medicine Mention E2E Tests", () => {
     );
   });
 
-
   // TC-K01: 同一 YJ コードを持つ複数医薬品（先発/後発など）のサジェスト展開時に key 重複エラーが発生しない
   test("TC-K01: medicines sharing identical YJ code render with unique keys in completions without console error", async ({
     page,
@@ -378,4 +385,50 @@ test.describe("Unit 3 & Unit 4: Medicine Mention E2E Tests", () => {
     );
     expect(keyErrors).toHaveLength(0);
   });
+});
+
+test("50 targets are sent intact; 51 targets are blocked with an explanation", async ({
+  page,
+}) => {
+  const added = Array.from({ length: 50 }, (_, i) => ({
+    n: `テスト追加薬${String(i + 1).padStart(2, "0")}`,
+    k: "テスト",
+    h: "てすと",
+    y: String(i + 1).padStart(12, "0"),
+    g: "テスト成分",
+    c: "内用",
+  }));
+  const chat = await setupMedicineChat(page, { autocompleteItems: [igzEntry, ...added] });
+  async function add(index: number) {
+    await page.getByRole("button", { name: "処方薬を追加", exact: true }).click();
+    await page.getByRole("searchbox", { name: "処方薬検索" }).fill(added[index].n);
+    await page.getByRole("option", { name: new RegExp(`^${added[index].n}`) }).click();
+  }
+  for (let i = 0; i < 49; i++) await add(i);
+  await chat.input.fill("50薬剤のテスト質問");
+  await chat.send.click();
+  await expect.poll(() => chat.requests.length).toBe(1);
+  expect(chat.requests[0].product_yj_codes).toEqual([
+    igzEntry.y,
+    ...added.slice(0, 49).map((m) => m.y),
+  ]);
+  chat.respond({ type: "text_delta", content: "テスト回答" });
+  chat.respond({ type: "text_done" });
+  await expect(chat.input).toBeEnabled();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await chat.input.fill("50薬剤の追加質問");
+  await expect(chat.send).toBeEnabled();
+  await expect(chat.send).toBeInViewport();
+  await page.screenshot({
+    path: "../tmp/target-medicines-50-mobile.png",
+    fullPage: true,
+  });
+  await add(49);
+  await chat.input.fill("51薬剤の質問");
+  await expect(
+    page.getByRole("alert").filter({ hasText: "対象薬は最大50件" }),
+  ).toBeVisible();
+  await expect(chat.send).toBeDisabled();
+  await chat.input.press("Enter");
+  expect(chat.requests).toHaveLength(1);
 });

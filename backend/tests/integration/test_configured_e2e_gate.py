@@ -37,6 +37,8 @@ def test_normal_runtime_loading_and_gate_resolve_same_absolute_paths_from_other_
     normal = resolve_database_settings()
     assert selected_settings() == normal
     assert normal.structured_dir.is_absolute() and normal.index_path.is_absolute()
+    # Do not reload developer defaults into the deliberately isolated cases below.
+    monkeypatch.setenv("PYTHON_DOTENV_DISABLED", "1")
     for environ in [
         {"MEDI_CHAT_STRUCTURED_DIR": "data/pmda/structured"},
         {"MEDI_CHAT_INDEX_PATH": "tmp/explicit.sqlite3"},

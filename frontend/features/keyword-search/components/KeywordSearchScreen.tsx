@@ -78,109 +78,111 @@ export function KeywordSearchScreen() {
           </div>
         </div>
 
-      <form {...stylex.props(styles.searchForm)} onSubmit={handleSearch}>
-        <input
-          {...stylex.props(styles.searchInput)}
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="検索キーワードを入力（例: 悪心、併用禁忌、腎機能など）"
-          disabled={isSearching}
-          aria-label="検索キーワード"
-        />
-        <Button type="submit" disabled={!query.trim() || isSearching}>
-          {isSearching ? "検索中…" : "検索"}
-        </Button>
-      </form>
-
-      <div {...stylex.props(styles.filterSection)}>
-        <div {...stylex.props(styles.headerRow)}>
-          <span {...stylex.props(styles.filterHeading)}>
-            対象医薬品:{" "}
-            {selectedYjCodes.length === 0
-              ? "すべての医薬品（絞り込みなし）"
-              : `${selectedYjCodes.length}製品を選択中`}
-          </span>
-          <Button
-            variant="text"
-            onActivate={() => setShowMedicineFilter((prev) => !prev)}
-          >
-            {showMedicineFilter ? "▲ 医薬品選択を閉じる" : "▼ 医薬品で絞り込む"}
+        <form {...stylex.props(styles.searchForm)} onSubmit={handleSearch}>
+          <input
+            {...stylex.props(styles.searchInput)}
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="検索キーワードを入力（例: 悪心、併用禁忌、腎機能など）"
+            disabled={isSearching}
+            aria-label="検索キーワード"
+          />
+          <Button type="submit" disabled={!query.trim() || isSearching}>
+            {isSearching ? "検索中…" : "検索"}
           </Button>
-        </div>
+        </form>
 
-        {showMedicineFilter && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {activeMedicines.groups.flatMap((med) =>
-                med.yj_codes.map((code, idx) => {
-                  const isSelected = selectedYjCodes.includes(code);
-                  const name = med.brand_names[idx] ?? med.generic_name;
-                  return (
-                    <ToggleButton
-                      key={code}
-                      selected={isSelected}
-                      onSelectedChange={() => toggleYjCode(code)}
-                    >
-                      {name}
-                    </ToggleButton>
-                  );
-                }),
+        <div {...stylex.props(styles.filterSection)}>
+          <div {...stylex.props(styles.headerRow)}>
+            <span {...stylex.props(styles.filterHeading)}>
+              対象医薬品:{" "}
+              {selectedYjCodes.length === 0
+                ? "すべての医薬品（絞り込みなし）"
+                : `${selectedYjCodes.length}製品を選択中`}
+            </span>
+            <Button
+              variant="text"
+              onActivate={() => setShowMedicineFilter((prev) => !prev)}
+            >
+              {showMedicineFilter ? "▲ 医薬品選択を閉じる" : "▼ 医薬品で絞り込む"}
+            </Button>
+          </div>
+
+          {showMedicineFilter && (
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}
+            >
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {activeMedicines.groups.flatMap((med) =>
+                  med.yj_codes.map((code, idx) => {
+                    const isSelected = selectedYjCodes.includes(code);
+                    const name = med.brand_names[idx] ?? med.generic_name;
+                    return (
+                      <ToggleButton
+                        key={code}
+                        selected={isSelected}
+                        onSelectedChange={() => toggleYjCode(code)}
+                      >
+                        {name}
+                      </ToggleButton>
+                    );
+                  }),
+                )}
+              </div>
+              {selectedYjCodes.length > 0 && (
+                <div>
+                  <Button variant="text" onActivate={() => setSelectedYjCodes([])}>
+                    すべての医薬品を対象に戻す（選択解除）
+                  </Button>
+                </div>
               )}
             </div>
-            {selectedYjCodes.length > 0 && (
-              <div>
-                <Button variant="text" onActivate={() => setSelectedYjCodes([])}>
-                  すべての医薬品を対象に戻す（選択解除）
-                </Button>
-              </div>
-            )}
+          )}
+        </div>
+
+        {error && (
+          <div role="alert" {...stylex.props(styles.errorText)}>
+            {error}
           </div>
         )}
-      </div>
 
-      {error && (
-        <div role="alert" {...stylex.props(styles.errorText)}>
-          {error}
-        </div>
-      )}
-
-      {results !== null && (
-        <section
-          aria-label="検索結果"
-          style={{ display: "flex", flexDirection: "column", gap: 12 }}
-        >
-          <div {...stylex.props(styles.resultSummaryBar)}>
-            <span {...stylex.props(styles.resultSummaryText)}>
-              📄 「{searchedQuery}」の検索結果（合計：{sources.length}件）
-            </span>
-          </div>
-
-          <SourceEvidenceSectionFilters
-            sectionGroups={sectionGroups}
-            totalCount={sources.length}
-            selectedSection={selectedSection}
-            onSelectSection={setSelectedSection}
-          />
-
-          {displayedSources.length === 0 ? (
-            <div {...stylex.props(styles.empty)}>
-              該当する添付文書の根拠記載は見つかりませんでした（0件）
+        {results !== null && (
+          <section
+            aria-label="検索結果"
+            style={{ display: "flex", flexDirection: "column", gap: 12 }}
+          >
+            <div {...stylex.props(styles.resultSummaryBar)}>
+              <span {...stylex.props(styles.resultSummaryText)}>
+                📄 「{searchedQuery}」の検索結果（合計：{sources.length}件）
+              </span>
             </div>
-          ) : (
-            <div {...stylex.props(styles.resultsList)}>
-              {displayedSources.map((s) => (
-                <SourceEvidenceCard
-                  key={s.unit_id}
-                  source={s}
-                  highlightWords={searchWords}
-                />
-              ))}
-            </div>
-          )}
-        </section>
-      )}
-    </main>
-  </div>
-);
+
+            <SourceEvidenceSectionFilters
+              sectionGroups={sectionGroups}
+              totalCount={sources.length}
+              selectedSection={selectedSection}
+              onSelectSection={setSelectedSection}
+            />
+
+            {displayedSources.length === 0 ? (
+              <div {...stylex.props(styles.empty)}>
+                該当する添付文書の根拠記載は見つかりませんでした（0件）
+              </div>
+            ) : (
+              <div {...stylex.props(styles.resultsList)}>
+                {displayedSources.map((s) => (
+                  <SourceEvidenceCard
+                    key={s.unit_id}
+                    source={s}
+                    highlightWords={searchWords}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+      </main>
+    </div>
+  );
 }

@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { MAX_MESSAGE_LENGTH } from "../../../shared/api/chatLimits";
 import { wsBaseUrl } from "../../../shared/api/endpoints";
+import { MAX_TARGET_MEDICINES } from "../../medicine-selection/model/promptSnapshot";
 import { type ChatWebSocketConnection, connectChatWebSocket } from "../api/chatWebSocket";
 import type { ConnectionStatus, Message, WsServerMessage } from "../model/chat";
+import { buildRequestHistory } from "../model/requestHistory";
 
 export interface SendRequest {
   content: string;
@@ -10,7 +13,15 @@ export interface SendRequest {
 
 export type SendResult =
   | { ok: true }
-  | { ok: false; reason: "not_connected" | "empty_target" | "busy" };
+  | {
+      ok: false;
+      reason:
+        | "not_connected"
+        | "empty_target"
+        | "busy"
+        | "too_many_targets"
+        | "message_too_long";
+    };
 
 interface UseChatWebSocketOptions {
   selectedModel: string;
@@ -46,9 +57,7 @@ function markLatestExchangeInterrupted(messages: Message[]): Message[] {
   return next;
 }
 
-export function useChatWebSocket({
-  selectedModel,
-}: UseChatWebSocketOptions) {
+export function useChatWebSocket({ selectedModel }: UseChatWebSocketOptions) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [status, setStatus] = useState<ConnectionStatus>("disconnected");
@@ -154,6 +163,12 @@ export function useChatWebSocket({
       if (!content || request.productYjCodes.length === 0) {
         return { ok: false, reason: "empty_target" };
       }
+      if (request.productYjCodes.length > MAX_TARGET_MEDICINES) {
+        return { ok: false, reason: "too_many_targets" };
+      }
+      if (Array.from(content).length > MAX_MESSAGE_LENGTH) {
+        return { ok: false, reason: "message_too_long" };
+      }
       if (status !== "connected" || !connectionRef.current) {
         return { ok: false, reason: "not_connected" };
       }
@@ -161,10 +176,7 @@ export function useChatWebSocket({
         return { ok: false, reason: "busy" };
       }
 
-      const allMessages: Message[] = [
-        ...messages.filter((m) => !m.isError && !m.isInterrupted),
-        { role: "user", content },
-      ];
+      const requestMessages = buildRequestHistory(messages, content);
 
       const [provider, model] = selectedModel.split(":");
 
@@ -174,10 +186,7 @@ export function useChatWebSocket({
           provider,
           model,
           product_yj_codes: [...request.productYjCodes],
-          messages: allMessages.map(({ role, content: msgContent }) => ({
-            role,
-            content: msgContent,
-          })),
+          messages: requestMessages,
         }),
       );
       if (!sent) {
@@ -185,7 +194,11 @@ export function useChatWebSocket({
       }
 
       activeRequestRef.current = true;
-      setMessages([...allMessages, { role: "assistant", content: "" }]);
+      setMessages([
+        ...messages,
+        { role: "user", content },
+        { role: "assistant", content: "" },
+      ]);
       setIsStreaming(true);
       return { ok: true };
     },

@@ -133,6 +133,3 @@ class SearchDetectorTests(unittest.TestCase):
             self.assertEqual(keywords, ("下痢",))
             self.assertNotIn("イトラコナゾール", keywords)
             self.assertNotIn("SW", keywords)
-
-
-

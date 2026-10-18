@@ -1,6 +1,7 @@
 """Dedicated real HTTP server with isolated prepared SQLite and import storage."""
 
 import argparse
+import os
 from pathlib import Path
 
 import uvicorn
@@ -32,6 +33,7 @@ def main() -> None:
     args = parser.parse_args()
     args.root.mkdir(parents=True, exist_ok=True)
     structured, index = prepare_root(args.root)
+    os.environ["MEDI_CHAT_ORIGINALS_DIR"] = str(args.root / "originals")
     uvicorn.run(
         create_app(structured, index, import_directory=args.root / "imports"),
         host="127.0.0.1",

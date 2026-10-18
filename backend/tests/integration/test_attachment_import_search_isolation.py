@@ -27,7 +27,8 @@ def hashes(root):
 
 
 @pytest.mark.asyncio
-async def test_http_import_and_restart_preserve_search_snapshot(tmp_path):
+async def test_http_import_and_restart_preserve_search_snapshot(tmp_path, monkeypatch):
+    monkeypatch.setenv("MEDI_CHAT_ORIGINALS_DIR", str(tmp_path / "originals"))
     structured, index = prepare_root(tmp_path)
     before = hashes(structured)
     index_hash = hashlib.sha256(index.read_bytes()).hexdigest()

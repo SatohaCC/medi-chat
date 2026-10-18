@@ -49,11 +49,7 @@ test("interaction design preserves source columns, notes and provenance without 
   const html = render();
   assert.match(html, /data-evidence-design="InteractionEvidence"/);
   assert.match(html, /<thead><tr>/);
-  for (const label of [
-    "薬剤名等",
-    "臨床症状・措置方法",
-    "機序・危険因子",
-  ]) {
+  for (const label of ["薬剤名等", "臨床症状・措置方法", "機序・危険因子"]) {
     assert.ok(html.includes(label));
   }
   assert.equal((html.match(/scope="col"/g) ?? []).length, 3);

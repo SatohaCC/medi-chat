@@ -94,7 +94,7 @@ export function SourceEvidenceSectionFilters({
           >
             すべて ({totalCount})
           </Button>
-          {medicineGroups!.map((g) => {
+          {medicineGroups?.map((g) => {
             const isSelected = selectedMedicine === g.name;
             return (
               <Button

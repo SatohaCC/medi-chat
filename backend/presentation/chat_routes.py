@@ -10,14 +10,16 @@ from pydantic import BaseModel, Field, field_validator
 from .chat_models import ChatMessage, ChatResponse
 from .chat_service import AppChatService as ChatService
 from .dependencies import get_chat_service
-from .medicine_models import YJCode
+from .medicine_models import MAX_PRODUCT_YJ_CODES, YJCode
 
 
 class ChatRequest(BaseModel):
     """REST API 経由で受信するチャット同期リクエストモデル"""
 
     message: str = Field(min_length=1, max_length=2000)
-    product_yj_codes: list[YJCode] = Field(min_length=1, max_length=8)
+    product_yj_codes: list[YJCode] = Field(
+        min_length=1, max_length=MAX_PRODUCT_YJ_CODES
+    )
     provider: str | None = None
     model: str | None = None
 

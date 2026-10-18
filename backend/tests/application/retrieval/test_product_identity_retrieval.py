@@ -136,13 +136,13 @@ async def test_tc124_126_real_catalog_early_stop(message, codes, strategy, progr
             "イグザレルトと未知薬の併用は可能ですか",
             [X, "999999999999"],
             [X],
-            "three_detectors",
+            "unresolved_counterpart",
         ),
         (
             "イグザレルトと未知薬の併用は可能ですか",
             [X],
             [X],
-            "three_detectors",
+            "unresolved_counterpart",
         ),
         (
             "アマリールの効能。イグザレルトと未知薬の併用",
@@ -160,7 +160,7 @@ async def test_tc124_126_real_catalog_early_stop(message, codes, strategy, progr
             "イグザレルトとイトラコナゾールの併用。イグザレルトと未知薬の併用",
             [X],
             [X],
-            "pair_yj_codes_required",
+            "unresolved_counterpart",
         ),
         (
             "イグザレルトとイトラコナゾールの併用",

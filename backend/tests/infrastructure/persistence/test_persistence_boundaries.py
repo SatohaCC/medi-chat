@@ -154,6 +154,74 @@ def _private_memory_fts_ddl(tree: ast.AST) -> set[ast.Call]:
                     re.I,
                 ):
                     allowed.add(call)
+    # Cached private connections outlive a single search. Check every helper
+    # call against the local :memory: allocation instead of requiring `with`.
+    for owner in ast.walk(tree):
+        if not isinstance(owner, ast.ClassDef):
+            continue
+        helpers = {n.name: n for n in owner.body if isinstance(n, ast.FunctionDef)}
+        for name, helper in helpers.items():
+            if name != "_build_fts":
+                continue
+            calls = []
+            safe = True
+            for method in helpers.values():
+                for call in ast.walk(method):
+                    if not (
+                        isinstance(call, ast.Call)
+                        and isinstance(call.func, ast.Attribute)
+                        and isinstance(call.func.value, ast.Name)
+                        and call.func.value.id == "self"
+                        and call.func.attr == name
+                    ):
+                        continue
+                    calls.append(call)
+                    if not call.args or not isinstance(call.args[0], ast.Name):
+                        safe = False
+                        continue
+                    binding = call.args[0].id
+                    assignments = [
+                        n
+                        for n in ast.walk(method)
+                        if isinstance(n, ast.Assign)
+                        and n.lineno < call.lineno
+                        and any(
+                            isinstance(t, ast.Name) and t.id == binding
+                            for t in n.targets
+                        )
+                    ]
+                    allocation = (
+                        max(assignments, key=lambda n: n.lineno).value
+                        if assignments
+                        else None
+                    )
+                    safe &= bool(
+                        isinstance(allocation, ast.Call)
+                        and isinstance(allocation.func, ast.Attribute)
+                        and isinstance(allocation.func.value, ast.Name)
+                        and allocation.func.value.id == "sqlite3"
+                        and allocation.func.attr == "connect"
+                        and allocation.args
+                        and isinstance(allocation.args[0], ast.Constant)
+                        and allocation.args[0].value == ":memory:"
+                    )
+            if calls and safe:
+                allowed.update(
+                    n
+                    for n in ast.walk(helper)
+                    if isinstance(n, ast.Call)
+                    and isinstance(n.func, ast.Attribute)
+                    and isinstance(n.func.value, ast.Name)
+                    and n.func.value.id == "connection"
+                    and n.func.attr == "execute"
+                    and n.args
+                    and isinstance(n.args[0], ast.Constant)
+                    and re.match(
+                        r"\s*CREATE VIRTUAL TABLE \w+ USING fts5\(",
+                        str(n.args[0].value),
+                        re.I,
+                    )
+                )
     return allowed
 
 
@@ -208,9 +276,7 @@ def test_private_fts_ddl_exemption_requires_memory_connection(monkeypatch):
     content = path.read_text(encoding="utf-8")
     assert len(_private_memory_fts_ddl(ast.parse(content))) == 1
     persisted = ast.parse(
-        content.replace(
-            'sqlite3.connect(":memory:")', 'sqlite3.connect("index.sqlite3")'
-        )
+        content.replace('sqlite3.connect(":memory:"', 'sqlite3.connect("index.sqlite3"')
     )
     assert _private_memory_fts_ddl(persisted) == set()
     assert any(
@@ -225,7 +291,7 @@ def test_private_fts_ddl_exemption_requires_memory_connection(monkeypatch):
         value = original_read(self, *args, **kwargs)
         return (
             value.replace(
-                'sqlite3.connect(":memory:")', 'sqlite3.connect("index.sqlite3")'
+                'sqlite3.connect(":memory:"', 'sqlite3.connect("index.sqlite3"'
             )
             if self == path
             else value

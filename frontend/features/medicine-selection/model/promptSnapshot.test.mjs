@@ -208,11 +208,32 @@ describe("mergeMedicineEntries", () => {
   it("TC-D01: merges static dictionary entries with active catalog items without dropping un-imported medicines", async () => {
     const { mergeMedicineEntries } = await import("./medicineEntries.ts");
     const active = [
-      { n: "イグザレルト錠15mg (Active)", k: "イグザレルト", h: "いぐざれると", y: "3339003F5020", g: "リバーロキサバン錠", c: "内用" },
+      {
+        n: "イグザレルト錠15mg (Active)",
+        k: "イグザレルト",
+        h: "いぐざれると",
+        y: "3339003F5020",
+        g: "リバーロキサバン錠",
+        c: "内用",
+      },
     ];
     const staticDict = [
-      { n: "イグザレルト錠15mg", k: "イグザレルト", h: "いぐざれると", y: "3339003F5020", g: "リバーロキサバン錠", c: "内用" },
-      { n: "ロキソニン錠60mg", k: "ロキソニン", h: "ろきそにん", y: "1141007F1063", g: "ロキソプロフェンナトリウム水和物錠", c: "内用" },
+      {
+        n: "イグザレルト錠15mg",
+        k: "イグザレルト",
+        h: "いぐざれると",
+        y: "3339003F5020",
+        g: "リバーロキサバン錠",
+        c: "内用",
+      },
+      {
+        n: "ロキソニン錠60mg",
+        k: "ロキソニン",
+        h: "ろきそにん",
+        y: "1141007F1063",
+        g: "ロキソプロフェンナトリウム水和物錠",
+        c: "内用",
+      },
     ];
 
     const merged = mergeMedicineEntries(active, staticDict);
@@ -228,10 +249,33 @@ describe("mergeMedicineEntries", () => {
   it("TC-D02: falls back to static dictionary when active catalog is empty", async () => {
     const { mergeMedicineEntries } = await import("./medicineEntries.ts");
     const staticDict = [
-      { n: "ロキソニン錠60mg", k: "ロキソニン", h: "ろきそにん", y: "1141007F1063", g: "ロキソプロフェンナトリウム水和物錠", c: "内用" },
+      {
+        n: "ロキソニン錠60mg",
+        k: "ロキソニン",
+        h: "ろきそにん",
+        y: "1141007F1063",
+        g: "ロキソプロフェンナトリウム水和物錠",
+        c: "内用",
+      },
     ];
     const merged = mergeMedicineEntries([], staticDict);
     assert.equal(merged.length, 1);
     assert.equal(merged[0].y, "1141007F1063");
   });
 });
+
+for (const count of [0, 1, 9, 50, 51]) {
+  it(`supports up to 50 targets without dropping any selected medicine (${count})`, () => {
+    const baseline = Array.from({ length: count }, (_, i) => ({
+      yj_code: String(i).padStart(12, "0"),
+      name: `テスト薬${i}`,
+    }));
+    const result = computeTargetMedicines({
+      baseline,
+      persistentAdditional: [],
+      mentions: [],
+    });
+    assert.equal(result.canSend, count > 0 && count <= 50);
+    assert.deepEqual(result.target, baseline);
+  });
+}

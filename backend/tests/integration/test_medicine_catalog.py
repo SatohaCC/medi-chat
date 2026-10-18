@@ -236,4 +236,3 @@ def test_aliases_for_yj_codes_includes_raw_names_and_brackets(tmp_path: Path) ->
     aliases = catalog.aliases_for_yj_codes(["6179001F1025"])
     assert "イトラコナゾールカプセル50mg「SW」" in aliases
     assert "SW" in aliases
-

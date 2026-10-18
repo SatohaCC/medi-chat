@@ -122,4 +122,3 @@ export const WithSearchHighlightWords: Story = {
     onClose: () => alert("Close panel clicked"),
   },
 };
-
