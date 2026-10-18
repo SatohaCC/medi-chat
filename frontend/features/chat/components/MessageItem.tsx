@@ -71,7 +71,9 @@ export function MessageItem({
                 }}
               >
                 <AssistantMarkdown content={message.content} />
-                {isStreaming && isLast && <span {...stylex.props(styles.cursor)} />}
+                {isStreaming && isLast && (
+                  <span {...stylex.props(styles.cursor)} data-stream-cursor="true" />
+                )}
               </div>
             )}
           </>
@@ -167,10 +169,6 @@ export function MessageItem({
               </button>
             )}
           </div>
-        )}
-
-        {message.role === "assistant" && isStreaming && isLast && (
-          <span {...stylex.props(styles.cursor)} data-stream-cursor="true" />
         )}
       </div>
     </div>
