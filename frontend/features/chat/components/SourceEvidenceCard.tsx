@@ -32,9 +32,7 @@ export function SourceEvidenceCard({
               words={highlightWords}
             />
           </span>
-          <span {...stylex.props(styles.productLabel)}>
-            <HighlightText text={source.product_name} words={highlightWords} />
-          </span>
+          <span {...stylex.props(styles.productLabel)}>{source.product_name}</span>
         </div>
         <div {...stylex.props(styles.badgeGroup)}>
           {source.retrieved_by?.map((method) => {

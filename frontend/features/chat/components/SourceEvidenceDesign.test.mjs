@@ -45,6 +45,13 @@ const render = (overrides = {}, highlightWords) =>
     }),
   );
 
+test("product labels never highlight medicine names while clinical headings still highlight", () => {
+  const html = render({}, ["対象製品", "併用禁忌"]);
+  assert.ok(html.includes("対象製品"));
+  assert.doesNotMatch(html, /<mark[^>]*>対象製品<\/mark>/);
+  assert.match(html, /<mark[^>]*>併用禁忌<\/mark>/);
+});
+
 test("interaction design preserves source columns, notes and provenance without clinical inference", () => {
   const html = render();
   assert.match(html, /data-evidence-design="InteractionEvidence"/);

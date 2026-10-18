@@ -119,9 +119,19 @@ export function ChatScreen() {
     return "";
   }, [messages, openEvidenceIndex]);
 
+  const activeEvidenceSources = activeEvidenceMessage?.sources;
   const evidenceHighlightWords = useMemo(() => {
-    return extractHighlightWords(activeUserQuery);
-  }, [activeUserQuery]);
+    const medicineNames = [
+      ...entries.flatMap((entry) => [entry.n, entry.g]),
+      ...baseline.map((medicine) => medicine.name),
+      ...persistentAdditional.map((medicine) => medicine.name),
+      ...(activeEvidenceSources ?? []).flatMap((source) => [
+        source.product_name,
+        source.generic_name,
+      ]),
+    ];
+    return extractHighlightWords(activeUserQuery, medicineNames);
+  }, [activeUserQuery, entries, baseline, persistentAdditional, activeEvidenceSources]);
 
   const handleSendMessage = useCallback(
     (promptVal: PromptFieldValue) => {

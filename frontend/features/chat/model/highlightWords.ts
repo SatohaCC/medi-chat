@@ -35,12 +35,15 @@ const SCRIPT_CHUNKS_PATTERN =
 /**
  * Extracts searchable keywords from a query string or user message for highlighting in evidence cards.
  * Strips token mention prefixes (@/＠), tokenizes Japanese sentences and punctuation,
- * extracts base medicine names and compounds, and sorts terms longest-first.
+ * excludes known medicine names when provided, and sorts terms longest-first.
  */
-export function extractHighlightWords(query?: string | null): string[] {
+export function extractHighlightWords(
+  query?: string | null,
+  medicineNames: readonly string[] = [],
+): string[] {
   if (!query) return [];
   const words = new Set<string>();
-  const cleaned = query.replace(/[@＠]/g, " ");
+  const cleaned = query.normalize("NFKC").replace(/[@＠]/g, " ");
 
   // Delimit initially by whitespace and major punctuation / brackets
   const chunks = cleaned.split(/[\s　、。！？!?,/／~〜()（）「」『』:：]+/);
@@ -85,5 +88,12 @@ export function extractHighlightWords(query?: string | null): string[] {
   }
 
   // Always sort longest first to prevent shorter terms from prematurely consuming overlapping longer terms
-  return Array.from(words).sort((a, b) => b.length - a.length);
+  const excluded = new Set(
+    medicineNames.flatMap((name) =>
+      extractHighlightWords(name).map((word) => word.toLowerCase()),
+    ),
+  );
+  return Array.from(words)
+    .filter((word) => !excluded.has(word.toLowerCase()))
+    .sort((a, b) => b.length - a.length);
 }

@@ -46,3 +46,18 @@ test("extractHighlightWords handles null, undefined, empty string", () => {
   assert.deepEqual(extractHighlightWords(""), []);
   assert.deepEqual(extractHighlightWords("   "), []);
 });
+
+test("medicine names and dosage fragments are excluded while clinical terms remain", () => {
+  const result = extractHighlightWords(
+    "イグザレルト錠２．５ｍｇとリバーロキサバンの併用禁忌・出血について教えてください",
+    ["イグザレルト錠2.5mg", "リバーロキサバン"],
+  );
+  assert.deepEqual(result, ["併用禁忌", "出血"]);
+});
+
+test("base medicine names are excluded even when the query omits the dosage form", () => {
+  assert.deepEqual(
+    extractHighlightWords("@イグザレルトと納豆の併用注意", ["イグザレルト錠15mg"]),
+    ["併用注意", "納豆"],
+  );
+});
