@@ -3,7 +3,8 @@
   "version": "0.2.0",
   "private": true,
   "scripts": {
-    "dev": "uv run --locked uvicorn --app-dir .. backend.main:app --port 8000 --reload",
+    "dev": "node ../scripts/dev-backend.mjs",
+    "dev:raw": "uv run --locked uvicorn --app-dir .. backend.main:app --port 8000 --reload",
     "dev:backend": "pnpm run dev",
     "test": "uv run --locked pytest",
     "test:backend": "pnpm run test",
