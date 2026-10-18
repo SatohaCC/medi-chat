@@ -1,13 +1,13 @@
 :root {
-  --bg: #0a0a0a;
-  --fg: #ededed;
-  --muted: #888;
-  --border: #222;
-  --user-bg: #2563eb;
-  --user-fg: #fff;
-  --assistant-bg: #1a1a1a;
-  --error: #ef4444;
-  --action-hover-bg: #1d4ed8;
+  --bg: #f8f8f8;
+  --fg: #1e1e1e;
+  --muted: #6e6e6e;
+  --border: #e1e1e1;
+  --user-bg: #0265dc;
+  --user-fg: #ffffff;
+  --assistant-bg: #ffffff;
+  --error: #d31510;
+  --action-hover-bg: #0054b6;
   --control-padding-block: 10px;
   --control-padding-inline: 20px;
   --control-radius: 8px;

@@ -29,6 +29,7 @@ export const styles = stylex.create({
     borderRadius: 6,
     minWidth: "var(--trigger-width)",
     zIndex: 100,
+    boxShadow: "0 4px 16px rgba(0, 0, 0, 0.08)",
   },
   list: { outline: "none", padding: 4 },
   option: {
@@ -38,6 +39,6 @@ export const styles = stylex.create({
     cursor: "pointer",
     outline: "none",
   },
-  focused: { backgroundColor: "#1d4ed8", color: "white" },
+  focused: { backgroundColor: "#0265dc", color: "white" },
   disabled: { opacity: 0.5 },
 });

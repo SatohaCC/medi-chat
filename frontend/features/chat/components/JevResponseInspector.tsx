@@ -171,7 +171,13 @@ function CopyJsonButton({ data }: { data: unknown }) {
   );
 }
 
-export function JevResponseInspector({ response }: { response: JevResponseData }) {
+export function JevResponseInspector({
+  response,
+  standalone = false,
+}: {
+  response: JevResponseData;
+  standalone?: boolean;
+}) {
   const [activeTab, setActiveTab] = useState<"summary" | "raw">("summary");
   const [showAllProbabilities, setShowAllProbabilities] = useState(false);
 
@@ -189,49 +195,39 @@ export function JevResponseInspector({ response }: { response: JevResponseData }
     ? allSortedProbabilities
     : allSortedProbabilities.slice(0, 8);
 
-  return (
-    <Disclosure
-      variant="jev"
-      title={
-        <>
-          <div {...stylex.props(styles.titleRow)}>
-            <span>⚡ Jev レスポンス確認</span>
-            {choice && (
-              <span {...stylex.props(styles.intentBadge)}>
-                {meta ? `${meta.label} (${choice})` : choice}
-              </span>
-            )}
-            {response.qualifying_intents && response.qualifying_intents.length > 1 && (
-              <span {...stylex.props(styles.multipleIntents)}>
-                マルチ取得:{" "}
-                {response.qualifying_intents
-                  .map((k) => JEV_INTENT_META[k]?.label || k)
-                  .join(" ＋ ")}
-              </span>
-            )}
-            {confidence !== undefined && (
-              <span {...stylex.props(styles.confidencePill)}>
-                確信度: {Math.round(confidence * 100)}%
-              </span>
-            )}
-            {response.model && (
-              <span {...stylex.props(styles.modelLabel)}>{response.model}</span>
-            )}
-            {response.error && <span {...stylex.props(styles.errorBadge)}>⚠️ エラー</span>}
-          </div>
-          <span {...stylex.props(styles.expandHint)}>クリックで展開</span>
-        </>
-      }
-    >
-      <div {...stylex.props(styles.body)}>
-        {response.error && (
-          <div {...stylex.props(styles.errorBody)}>Jevエラー: {response.error}</div>
-        )}
+  const headerBadges = (
+    <div {...stylex.props(styles.titleRow)}>
+      <span>⚡ Jev レスポンス確認</span>
+      {choice && (
+        <span {...stylex.props(styles.intentBadge)}>
+          {meta ? `${meta.label} (${choice})` : choice}
+        </span>
+      )}
+      {response.qualifying_intents && response.qualifying_intents.length > 1 && (
+        <span {...stylex.props(styles.multipleIntents)}>
+          マルチ取得:{" "}
+          {response.qualifying_intents
+            .map((k) => JEV_INTENT_META[k]?.label || k)
+            .join(" ＋ ")}
+        </span>
+      )}
+      {confidence !== undefined && (
+        <span {...stylex.props(styles.confidencePill)}>
+          確信度: {Math.round(confidence * 100)}%
+        </span>
+      )}
+      {response.model && (
+        <span {...stylex.props(styles.modelLabel)}>{response.model}</span>
+      )}
+      {response.error && <span {...stylex.props(styles.errorBadge)}>⚠️ エラー</span>}
+    </div>
+  );
 
-        <Tabs
-          value={activeTab}
-          onValueChange={(value) => setActiveTab(value as "summary" | "raw")}
-          label="Jevインスペクター表示切替"
+  const tabsContent = (
+    <Tabs
+      value={activeTab}
+      onValueChange={(value) => setActiveTab(value as "summary" | "raw")}
+      label="Jevインスペクター表示切替"
           items={[
             {
               id: "summary",
@@ -367,10 +363,10 @@ export function JevResponseInspector({ response }: { response: JevResponseData }
                               {...stylex.props(
                                 styles.probabilityItemLabel(
                                   isWinner
-                                    ? "#e9d5ff"
+                                    ? "#4c1d95"
                                     : isQualifying
-                                      ? "#67e8f9"
-                                      : "#cbd5e1",
+                                      ? "#0e7490"
+                                      : "var(--fg)",
                                   isWinner || isQualifying ? 600 : 400,
                                 ),
                               )}
@@ -381,13 +377,13 @@ export function JevResponseInspector({ response }: { response: JevResponseData }
                                 <span
                                   {...stylex.props(
                                     styles.probabilityBadge(
-                                      isWinner ? "#c084fc" : "#38bdf8",
+                                      isWinner ? "#5b21b6" : "#0e7490",
                                       isWinner
-                                        ? "rgba(168, 85, 247, 0.18)"
-                                        : "rgba(6, 182, 212, 0.18)",
+                                        ? "rgba(124, 58, 237, 0.08)"
+                                        : "rgba(14, 116, 144, 0.08)",
                                       isWinner
-                                        ? "rgba(168, 85, 247, 0.4)"
-                                        : "rgba(6, 182, 212, 0.4)",
+                                        ? "rgba(124, 58, 237, 0.25)"
+                                        : "rgba(14, 116, 144, 0.25)",
                                     ),
                                   )}
                                 >
@@ -405,9 +401,9 @@ export function JevResponseInspector({ response }: { response: JevResponseData }
                                   styles.probabilityBarValue(
                                     `${Math.min(Math.max(prob * 100, 0), 100)}%`,
                                     isWinner
-                                      ? "linear-gradient(90deg, #a855f7, #38bdf8)"
+                                      ? "linear-gradient(90deg, #7c3aed, #0284c7)"
                                       : isQualifying
-                                        ? "linear-gradient(90deg, #06b6d4, #38bdf8)"
+                                        ? "linear-gradient(90deg, #0e7490, #0284c7)"
                                         : "none",
                                   ),
                                 )}
@@ -418,9 +414,9 @@ export function JevResponseInspector({ response }: { response: JevResponseData }
                               {...stylex.props(
                                 styles.probabilityPercentage(
                                   isWinner
-                                    ? "#34d399"
+                                    ? "#047857"
                                     : isQualifying
-                                      ? "#38bdf8"
+                                      ? "#0e7490"
                                       : "var(--muted)",
                                   isWinner || isQualifying ? 600 : 400,
                                 ),
@@ -466,6 +462,37 @@ export function JevResponseInspector({ response }: { response: JevResponseData }
             },
           ]}
         />
+  );
+
+  if (standalone) {
+    return (
+      <div {...stylex.props(styles.standaloneWrapper)}>
+        <div {...stylex.props(styles.standaloneHeader)}>{headerBadges}</div>
+        <div {...stylex.props(styles.body, styles.standaloneBody)}>
+          {response.error && (
+            <div {...stylex.props(styles.errorBody)}>Jevエラー: {response.error}</div>
+          )}
+          {tabsContent}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Disclosure
+      variant="jev"
+      title={
+        <>
+          {headerBadges}
+          <span {...stylex.props(styles.expandHint)}>クリックで展開</span>
+        </>
+      }
+    >
+      <div {...stylex.props(styles.body)}>
+        {response.error && (
+          <div {...stylex.props(styles.errorBody)}>Jevエラー: {response.error}</div>
+        )}
+        {tabsContent}
       </div>
     </Disclosure>
   );

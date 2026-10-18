@@ -45,11 +45,12 @@
     vertical-align: top;
   }
   .markdown-content th {
-    background: #252525;
+    background: #f4f4f5;
+    color: var(--fg);
     font-weight: 600;
   }
   .markdown-content a {
-    color: #93c5fd;
+    color: #0265dc;
     text-decoration: underline;
     text-underline-offset: 2px;
   }
@@ -62,7 +63,9 @@
     overflow-x: auto;
     padding: 10px;
     border-radius: 6px;
-    background: #111;
+    background: #f4f4f5;
+    border: 1px solid var(--border);
+    color: var(--fg);
   }
   .markdown-content code {
     overflow-wrap: anywhere;
@@ -72,8 +75,8 @@
   }
   .source-evidence-content h3 {
     padding-bottom: 6px;
-    border-bottom: 1px solid #334155;
-    color: #bfdbfe;
+    border-bottom: 1px solid var(--border);
+    color: #0265dc;
   }
   .source-evidence-content table {
     display: table;
@@ -86,7 +89,7 @@
   .source-evidence-content td {
     min-width: 100px;
     padding: 10px 12px;
-    border-color: #334155;
+    border-color: var(--border);
     white-space: pre-wrap;
     line-height: 1.7;
   }
@@ -102,14 +105,14 @@
   .source-evidence-content table:not(:has(thead)) > tr:first-child > td,
   .source-evidence-content table:not(:has(thead)) > tbody > tr:first-child > th,
   .source-evidence-content table:not(:has(thead)) > tbody > tr:first-child > td {
-    background: #243044;
-    color: #e2e8f0;
+    background: #f4f4f5;
+    color: var(--fg);
     font-weight: 600;
   }
   mark.search-highlight,
   .search-highlight {
-    background-color: rgba(234, 179, 8, 0.35);
-    color: #fef08a;
+    background-color: rgba(234, 179, 8, 0.2);
+    color: #854d0e;
     border-radius: 3px;
     padding: 1px 3px;
     font-weight: 600;

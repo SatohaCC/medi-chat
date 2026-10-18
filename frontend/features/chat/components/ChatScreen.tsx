@@ -1,9 +1,17 @@
 "use client";
+
+import { PromptFieldValue } from "@react-spectrum/ai";
 import * as stylex from "@stylexjs/stylex";
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { styles as layout } from "../../../shared/ui/PageLayout.styles";
-import type { MedicineEntry } from "../../medicine-selection";
-import { MedicineSelector, useMedicineCatalog } from "../../medicine-selection";
+import {
+  type SelectedMedicineItem,
+  buildPayloadContent,
+  computeTargetMedicines,
+  extractMentionsFromSegments,
+  resolvePostSendState,
+  useActiveMedicines,
+} from "../../medicine-selection";
 import { useChatWebSocket } from "../hooks/useChatWebSocket";
 import { ChatHeader } from "./ChatHeader";
 import { ChatInputForm } from "./ChatInputForm";
@@ -15,29 +23,68 @@ export function ChatScreen() {
   const [openEvidenceIndex, setOpenEvidenceIndex] = useState<number | null>(null);
   const messageListRef = useRef<HTMLElement | null>(null);
 
-  const {
-    selectedYjCodes,
-    missingSelectedYjCodes,
-    medicineOptions,
-    medicineCatalogStatus,
-    customMedicines,
-    toggleYjCode,
-    handleSelectMedicineFromAutocomplete,
-  } = useMedicineCatalog("3339003F5020");
+  const activeMedicines = useActiveMedicines();
 
-  const { messages, input, setInput, isStreaming, status, sendMessage } =
-    useChatWebSocket({
-      selectedModel,
-      selectedYjCodes,
+  // Baseline prescription: default 3339003F5020 (イグザレルト錠15mg)
+  const defaultBaseline = useMemo<SelectedMedicineItem>(() => {
+    const match = activeMedicines.items.find((item) => item.y === "3339003F5020");
+    return {
+      yj_code: "3339003F5020",
+      name: match ? match.n : "イグザレルト錠15mg",
+    };
+  }, [activeMedicines.items]);
+
+  const [baseline, setBaseline] = useState<SelectedMedicineItem[]>([defaultBaseline]);
+  const [persistentAdditional, setPersistentAdditional] = useState<SelectedMedicineItem[]>([]);
+  const [prompt, setPrompt] = useState<PromptFieldValue>(() => new PromptFieldValue([]));
+  const [inputKey, setInputKey] = useState(0);
+
+  // Sync default baseline name once activeMedicines catalog loads
+  useEffect(() => {
+    if (activeMedicines.items.length > 0) {
+      setBaseline((prev) =>
+        prev.map((item) => {
+          if (item.yj_code === "3339003F5020" && item.name === "イグザレルト錠15mg") {
+            const match = activeMedicines.items.find((m) => m.y === item.yj_code);
+            if (match && match.n !== item.name) {
+              return { ...item, name: match.n };
+            }
+          }
+          return item;
+        }),
+      );
+    }
+  }, [activeMedicines.items]);
+
+  const mentions = useMemo(() => {
+    return extractMentionsFromSegments(prompt.segments);
+  }, [prompt]);
+
+  const targetState = useMemo(() => {
+    return computeTargetMedicines({
+      baseline,
+      persistentAdditional,
+      mentions,
     });
+  }, [baseline, persistentAdditional, mentions]);
 
-  const handleSelectMedicine = (medicine: MedicineEntry) => {
-    handleSelectMedicineFromAutocomplete(medicine, input);
-  };
+  const { messages, isStreaming, status, sendMessage } = useChatWebSocket({
+    selectedModel,
+  });
 
-  const handleToggleEvidence = (index: number) => {
-    setOpenEvidenceIndex((prev) => (prev === index ? null : index));
-  };
+  const [evidencePaneTab, setEvidencePaneTab] = useState<"sources" | "jev">("sources");
+
+  const handleToggleEvidence = useCallback(
+    (index: number, tab: "sources" | "jev" = "sources") => {
+      if (openEvidenceIndex === index && evidencePaneTab === tab) {
+        setOpenEvidenceIndex(null);
+      } else {
+        setOpenEvidenceIndex(index);
+        setEvidencePaneTab(tab);
+      }
+    },
+    [openEvidenceIndex, evidencePaneTab],
+  );
 
   const activeEvidenceMessage =
     openEvidenceIndex !== null ? messages[openEvidenceIndex] : undefined;
@@ -48,36 +95,106 @@ export function ChatScreen() {
       Boolean(activeEvidenceMessage.jevResponse) ||
       activeEvidenceMessage.retrievalStatus === "complete");
 
-  const handleSendMessage = (e?: React.FormEvent) => {
-    if (!input.trim() || selectedYjCodes.length === 0 || isStreaming) {
-      sendMessage(e);
-      return;
-    }
-    sendMessage(e);
-    requestAnimationFrame(() => {
-      const container = messageListRef.current;
-      if (!container) return;
-      const userMessages = container.querySelectorAll<HTMLElement>(
-        '[data-message-role="user"]',
-      );
-      const latestUserMessage = userMessages[userMessages.length - 1];
-      if (latestUserMessage) {
-        const prefersReducedMotion =
-          typeof window !== "undefined" &&
-          window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        const containerRect = container.getBoundingClientRect();
-        const messageRect = latestUserMessage.getBoundingClientRect();
-        const targetScrollTop = Math.max(
-          0,
-          container.scrollTop + (messageRect.top - containerRect.top) - 20,
-        );
-        container.scrollTo({
-          top: targetScrollTop,
-          behavior: prefersReducedMotion ? "auto" : "smooth",
+  const handleSendMessage = useCallback(
+    (promptVal: PromptFieldValue) => {
+      const content = buildPayloadContent(promptVal).trim();
+      if (!content || !targetState.canSend || isStreaming) {
+        return;
+      }
+
+      const result = sendMessage({
+        content,
+        productYjCodes: targetState.target.map((m) => m.yj_code),
+      });
+
+      if (result.ok) {
+        const postState = resolvePostSendState(targetState);
+        setPersistentAdditional(postState.persistentAdditional);
+        setPrompt(new PromptFieldValue([]));
+        setInputKey((prev) => prev + 1);
+
+        requestAnimationFrame(() => {
+          const container = messageListRef.current;
+          if (!container) return;
+          const userMessages = container.querySelectorAll<HTMLElement>(
+            '[data-message-role="user"]',
+          );
+          const latestUserMessage = userMessages[userMessages.length - 1];
+          if (latestUserMessage) {
+            const prefersReducedMotion =
+              typeof window !== "undefined" &&
+              window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            const containerRect = container.getBoundingClientRect();
+            const messageRect = latestUserMessage.getBoundingClientRect();
+            const targetScrollTop = Math.max(
+              0,
+              container.scrollTop + (messageRect.top - containerRect.top) - 20,
+            );
+            container.scrollTo({
+              top: targetScrollTop,
+              behavior: prefersReducedMotion ? "auto" : "smooth",
+            });
+          }
         });
       }
+    },
+    [targetState, isStreaming, sendMessage],
+  );
+
+  const handleRemoveBaseline = useCallback((yjCode: string) => {
+    setBaseline((prev) => prev.filter((m) => m.yj_code !== yjCode));
+    setPersistentAdditional([]);
+  }, []);
+
+  const handleClearBaseline = useCallback(() => {
+    setBaseline([]);
+    setPersistentAdditional([]);
+  }, []);
+
+  const handleRemoveAdditional = useCallback(
+    (yjCode: string) => {
+      if (mentions.some((m) => m.yj_code === yjCode)) {
+        const remaining = prompt.segments.filter((seg) => {
+          if (seg.type === "token") {
+            const val = seg.value;
+            if (val && typeof val === "object" && "type" in val && val.type === "custom") {
+              const data = "data" in val && val.data && typeof val.data === "object" ? (val.data as { yj_code?: string }) : undefined;
+              return data?.yj_code !== yjCode;
+            }
+          }
+          return true;
+        });
+        setPrompt(new PromptFieldValue(remaining));
+      } else {
+        setPersistentAdditional((prev) => prev.filter((m) => m.yj_code !== yjCode));
+      }
+    },
+    [mentions, prompt],
+  );
+
+  const handleClearAdditional = useCallback(() => {
+    setPersistentAdditional([]);
+    const baselineYjSet = new Set(baseline.map((b) => b.yj_code));
+    const remaining = prompt.segments.filter((seg) => {
+      if (seg.type === "token") {
+        const val = seg.value;
+        if (val && typeof val === "object" && "type" in val && val.type === "custom") {
+          const data = "data" in val && val.data && typeof val.data === "object" ? (val.data as { yj_code?: string }) : undefined;
+          return data?.yj_code ? baselineYjSet.has(data.yj_code) : false;
+        }
+      }
+      return true;
     });
-  };
+    setPrompt(new PromptFieldValue(remaining));
+  }, [baseline, prompt]);
+
+  const handleChangePrompt = useCallback((nextPrompt: PromptFieldValue) => {
+    const newMentions = extractMentionsFromSegments(nextPrompt.segments);
+    if (newMentions.length > 0) {
+      setPersistentAdditional([]);
+    }
+    setPrompt(nextPrompt);
+  }, []);
 
   return (
     <div {...stylex.props(layout.root)} data-screen="chat">
@@ -94,32 +211,25 @@ export function ChatScreen() {
             isStreaming={isStreaming}
             containerRef={messageListRef}
             openEvidenceIndex={openEvidenceIndex}
+            evidencePaneTab={evidencePaneTab}
             onToggleEvidence={handleToggleEvidence}
           />
 
-          {missingSelectedYjCodes.length > 0 && (
-            <p role="alert" aria-label="選択YJの消失">
-              選択したYJコードが現在の候補にありません:{" "}
-              {missingSelectedYjCodes.join(", ")}
-              。別の薬へ自動変更していません。
-            </p>
-          )}
-          <MedicineSelector
-            medicineOptions={medicineOptions}
-            medicineCatalogStatus={medicineCatalogStatus}
-            selectedYjCodes={selectedYjCodes}
-            customMedicines={customMedicines}
-            onToggleYjCode={toggleYjCode}
-          />
-
           <ChatInputForm
-            input={input}
-            onChangeInput={setInput}
+            key={inputKey}
+            baseline={baseline}
+            onRemoveBaseline={handleRemoveBaseline}
+            onClearBaseline={handleClearBaseline}
+            additional={targetState.additional}
+            onRemoveAdditional={handleRemoveAdditional}
+            onClearAdditional={handleClearAdditional}
+            prompt={prompt}
+            onChangePrompt={handleChangePrompt}
             onSubmit={handleSendMessage}
-            onSelectMedicine={handleSelectMedicine}
-            selectedYjCodes={selectedYjCodes}
+            medicineEntries={activeMedicines.items}
             status={status}
             isStreaming={isStreaming}
+            canSend={targetState.canSend}
           />
         </div>
 
@@ -129,6 +239,8 @@ export function ChatScreen() {
             sources={activeEvidenceMessage.sources || []}
             retrievalStatus={activeEvidenceMessage.retrievalStatus}
             jevResponse={activeEvidenceMessage.jevResponse}
+            activeTab={evidencePaneTab}
+            onTabChange={setEvidencePaneTab}
             onClose={() => setOpenEvidenceIndex(null)}
           />
         )}

@@ -41,6 +41,30 @@ export const MultipleSectionsRetrieved: Story = {
   },
 };
 
+export const JevInspectorActive: Story = {
+  name: "Jev判定インスペクター表示時（右列タブ展開）",
+  args: {
+    sources: [packageInsertMockData.section10_interactions],
+    retrievalStatus: "complete",
+    activeTab: "jev",
+    jevResponse: {
+      answers: {
+        intent: {
+          choice: "interaction",
+          confidence: 0.98,
+          probabilities: {
+            interaction: 0.98,
+            dosage: 0.01,
+            adverse_events: 0.005,
+          },
+        },
+      },
+      model: "jev-classifier-v1",
+    },
+    onClose: () => alert("Close panel clicked"),
+  },
+};
+
 export const AvailableSectionsOverview: Story = {
   name: "原本に存在する24大項目の一覧（複数文書）",
   args: {

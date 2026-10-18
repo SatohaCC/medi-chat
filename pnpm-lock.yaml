@@ -22,6 +22,12 @@ importers:
       '@json-render/react':
         specifier: ^0.21.1
         version: 0.21.1(react@19.2.8)(zod@4.6.7)
+      '@react-spectrum/ai':
+        specifier: 0.5.2
+        version: 0.5.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@react-spectrum/s2':
+        specifier: 1.8.2
+        version: 1.8.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@stylexjs/stylex':
         specifier: 0.19.1
         version: 0.19.1
@@ -1034,10 +1040,26 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@parcel/macros@2.16.4':
+    resolution: {integrity: sha512-Uijt2AYhsMtxnRlwxQwYgZ7TTZVgi0mfk0EKh83NoCEJjrwArJRLNBv/xP6e/5KuTEDSNr/vqqcPk0BgmBvTKw==}
+    engines: {node: '>= 16.0.0', parcel: ^2.16.4}
+
   '@playwright/test@1.64.0':
     resolution: {integrity: sha512-oTN9FNYuN6bqQMwiho6jJKLCG2/QOYCixGXuCjRmzOq23eODeukuY2XiAVoVpAECbuezMt1MHQjAiQxK8F+Y+g==}
     engines: {node: '>=20'}
     hasBin: true
+
+  '@react-spectrum/ai@0.5.2':
+    resolution: {integrity: sha512-SrDTvKbNZiby8PZqzELLM9aD1BjnC2oBHt0ACvjZ1s+tzyO8RT3hVPbaoWXIHXsTkfh/h1tmI6t40aXKdD2IuA==}
+    peerDependencies:
+      react: ^19.0.0-rc.1
+      react-dom: ^19.0.0-rc.1
+
+  '@react-spectrum/s2@1.8.2':
+    resolution: {integrity: sha512-mr136V8BTUxGKd1lLK4PAf9CMuo4Ak5+Sj9LIUDjcExWzylC7vnUU7CigVM2Gl0Yg5iSDmegyfDWhlqzA7/eOw==}
+    peerDependencies:
+      react: ^19.0.0-rc.1
+      react-dom: ^19.0.0-rc.1
 
   '@react-types/shared@3.37.0':
     resolution: {integrity: sha512-VNlZuifu4tHdxWPfHvoMfKsHA9kVTCGkduv5vKVTdinm8wHFJNhyVB5RzIMiRFj0q3RKoCbP68u2zaoBSiFueg==}
@@ -3465,9 +3487,35 @@ snapshots:
   '@oxc-resolver/binding-win32-x64-msvc@11.21.2':
     optional: true
 
+  '@parcel/macros@2.16.4': {}
+
   '@playwright/test@1.64.0':
     dependencies:
       playwright: 1.64.0
+
+  '@react-spectrum/ai@0.5.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+    dependencies:
+      '@internationalized/date': 3.12.4
+      '@internationalized/number': 3.6.9
+      '@react-spectrum/s2': 1.8.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@react-types/shared': 3.37.0(react@19.2.8)
+      react: 19.2.8
+      react-aria: 3.53.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react-aria-components: 1.22.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react-dom: 19.2.8(react@19.2.8)
+      react-stately: 3.51.0(react@19.2.8)
+
+  '@react-spectrum/s2@1.8.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+    dependencies:
+      '@internationalized/date': 3.12.4
+      '@internationalized/number': 3.6.9
+      '@parcel/macros': 2.16.4
+      '@react-types/shared': 3.37.0(react@19.2.8)
+      react: 19.2.8
+      react-aria: 3.53.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react-aria-components: 1.22.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react-dom: 19.2.8(react@19.2.8)
+      react-stately: 3.51.0(react@19.2.8)
 
   '@react-types/shared@3.37.0(react@19.2.8)':
     dependencies:

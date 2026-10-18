@@ -3,9 +3,18 @@ import { wsBaseUrl } from "../../../shared/api/endpoints";
 import { type ChatWebSocketConnection, connectChatWebSocket } from "../api/chatWebSocket";
 import type { ConnectionStatus, Message, WsServerMessage } from "../model/chat";
 
+export interface SendRequest {
+  content: string;
+  productYjCodes: readonly string[];
+}
+
+export type SendResult =
+  | { ok: true }
+  | { ok: false; reason: "not_connected" | "empty_target" | "busy" };
+
 interface UseChatWebSocketOptions {
   selectedModel: string;
-  selectedYjCodes: string[];
+  selectedYjCodes?: string[];
 }
 
 /**
@@ -39,10 +48,8 @@ function markLatestExchangeInterrupted(messages: Message[]): Message[] {
 
 export function useChatWebSocket({
   selectedModel,
-  selectedYjCodes,
 }: UseChatWebSocketOptions) {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [status, setStatus] = useState<ConnectionStatus>("disconnected");
 
@@ -141,16 +148,17 @@ export function useChatWebSocket({
     };
   }, [handleServerMessage, handleStatusChange]);
 
-  // User action event handler (triggered on form submit, NOT an effect)
   const sendMessage = useCallback(
-    (e?: React.FormEvent) => {
-      if (e) {
-        e.preventDefault();
+    (request: SendRequest): SendResult => {
+      const content = request.content.trim();
+      if (!content || request.productYjCodes.length === 0) {
+        return { ok: false, reason: "empty_target" };
       }
-
-      const content = input.trim();
-      if (!content || selectedYjCodes.length === 0 || isStreaming) {
-        return;
+      if (status !== "connected" || !connectionRef.current) {
+        return { ok: false, reason: "not_connected" };
+      }
+      if (isStreaming || activeRequestRef.current) {
+        return { ok: false, reason: "busy" };
       }
 
       const allMessages: Message[] = [
@@ -160,33 +168,33 @@ export function useChatWebSocket({
 
       const [provider, model] = selectedModel.split(":");
 
-      const sent = connectionRef.current?.send(
+      const sent = connectionRef.current.send(
         JSON.stringify({
           type: "message",
           provider,
           model,
-          product_yj_codes: selectedYjCodes,
+          product_yj_codes: [...request.productYjCodes],
           messages: allMessages.map(({ role, content: msgContent }) => ({
             role,
             content: msgContent,
           })),
         }),
       );
-      if (!sent) return;
+      if (!sent) {
+        return { ok: false, reason: "not_connected" };
+      }
 
       activeRequestRef.current = true;
       setMessages([...allMessages, { role: "assistant", content: "" }]);
-      setInput("");
       setIsStreaming(true);
+      return { ok: true };
     },
-    [input, isStreaming, messages, selectedModel, selectedYjCodes],
+    [isStreaming, messages, selectedModel, status],
   );
 
   return {
     messages,
     setMessages,
-    input,
-    setInput,
     isStreaming,
     status,
     sendMessage,
