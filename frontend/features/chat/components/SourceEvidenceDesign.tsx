@@ -11,6 +11,7 @@ import {
   type EvidenceDesign,
 } from "../model/sourceEvidenceSpec";
 import { HighlightText } from "./HighlightText";
+import { ExpandableEvidenceContent } from "./ExpandableEvidenceContent";
 import { SourceEvidenceContent } from "./SourceEvidenceContent";
 import { styles } from "./SourceEvidenceDesign.styles";
 
@@ -95,6 +96,8 @@ function EvidenceBody({
   design: EvidenceDesign;
   highlightWords?: string[];
 }) {
+  const isAlwaysExpanded =
+    design === "WarningEvidence" || design === "ContraindicationEvidence";
   const entries = Object.entries(columns).filter(([, value]) => value.trim());
   return (
     <section
@@ -134,7 +137,11 @@ function EvidenceBody({
           )}
         </>
       ) : (
-        <SourceEvidenceContent content={content} highlightWords={highlightWords} />
+        <ExpandableEvidenceContent
+          content={content}
+          highlightWords={highlightWords}
+          alwaysExpanded={isAlwaysExpanded}
+        />
       )}
     </section>
   );

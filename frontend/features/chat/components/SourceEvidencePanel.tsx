@@ -22,6 +22,7 @@ interface SourceEvidencePanelProps {
   activeTab?: "sources" | "jev";
   onTabChange?: (tab: "sources" | "jev") => void;
   onClose?: () => void;
+  highlightWords?: string[];
 }
 
 export function SourceEvidencePanel({
@@ -31,6 +32,7 @@ export function SourceEvidencePanel({
   activeTab = "sources",
   onTabChange,
   onClose,
+  highlightWords,
 }: SourceEvidencePanelProps) {
   const [selectedSection, setSelectedSection] = useState<string>("all");
   const [selectedMedicine, setSelectedMedicine] = useState<string>("all");
@@ -173,7 +175,12 @@ export function SourceEvidencePanel({
             )}
 
             {displayedSources.map((s) => (
-              <SourceEvidenceCard key={s.unit_id} source={s} variant="compact" />
+              <SourceEvidenceCard
+                key={s.unit_id}
+                source={s}
+                variant="compact"
+                highlightWords={highlightWords}
+              />
             ))}
           </>
         )}

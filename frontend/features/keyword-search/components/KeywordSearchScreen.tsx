@@ -7,6 +7,7 @@ import { Button } from "../../../shared/ui/Button";
 import { styles as layout } from "../../../shared/ui/PageLayout.styles";
 import { ToggleButton } from "../../../shared/ui/ToggleButton";
 import {
+  extractHighlightWords,
   extractSectionGroups,
   SourceEvidenceCard,
   SourceEvidenceSectionFilters,
@@ -54,11 +55,7 @@ export function KeywordSearchScreen() {
     }
   };
 
-  const searchWords = searchedQuery
-    .split(/[\s　]+/)
-    .map((w) => w.trim())
-    .filter(Boolean)
-    .sort((a, b) => b.length - a.length);
+  const searchWords = extractHighlightWords(searchedQuery);
 
   const sources = results ?? [];
   const sectionGroups = extractSectionGroups(sources);

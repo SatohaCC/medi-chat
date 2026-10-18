@@ -112,3 +112,14 @@ export const RealCalonalAllSections: Story = {
     onClose: () => alert("Close panel clicked"),
   },
 };
+
+export const WithSearchHighlightWords: Story = {
+  name: "キーワードハイライト＆続きを読む表示（メトグルコ実データ）",
+  args: {
+    sources: realMetglucoEvidence,
+    retrievalStatus: "complete",
+    highlightWords: ["乳酸アシドーシス", "腎機能障害", "定期的に"],
+    onClose: () => alert("Close panel clicked"),
+  },
+};
+
