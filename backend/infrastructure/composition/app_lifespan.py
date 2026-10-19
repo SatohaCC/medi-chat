@@ -21,6 +21,7 @@ from ..persistence.postgres_engine import create_postgres_engine
 from ..persistence.postgres_readiness import verify_postgres_readiness
 from ..persistence.postgres_registration import PostgresRegistrationPublisher
 from ..persistence.postgres_runtime import PostgresRuntime
+from ..persistence.postgres_upload import PostgresUploadStore
 from ..persistence.read_workers import ReadWorkers
 from ..pmda_xml.artifact_mapping import PmdaArtifactEncoder
 from ..pmda_xml.decoder import PmdaXmlDecoder
@@ -89,7 +90,9 @@ def create_app_lifespan(
                 decoder = PmdaXmlDecoder(xml_settings=definitions.xml_settings)
                 publisher = PostgresRegistrationPublisher(engine, encoder=encoder)
                 import_service = AttachmentImportService(
-                    decoder=decoder, publisher=publisher
+                    decoder=decoder,
+                    publisher=publisher,
+                    upload_store=PostgresUploadStore(engine),
                 )
                 application.state.attachment_import_service = import_service
             yield

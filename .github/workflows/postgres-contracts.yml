@@ -67,6 +67,8 @@ jobs:
           tests/infrastructure/persistence/test_postgres_fixture_ownership.py
           tests/integration/test_postgres_browser_fixture.py
           tests/integration/test_import_history.py
+          tests/integration/test_postgres_upload.py
+          tests/integration/test_upload_http.py
           tests/integration/test_postgres_readiness.py
           tests/integration/test_postgres_snapshot.py
           tests/integration/test_postgres_process_failure.py

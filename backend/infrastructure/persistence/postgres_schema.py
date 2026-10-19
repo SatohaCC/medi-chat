@@ -5,6 +5,7 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     Column,
+    DateTime,
     ForeignKey,
     Index,
     Integer,
@@ -16,6 +17,33 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 
 metadata = MetaData()
+uploads = Table(
+    "attachment_uploads",
+    metadata,
+    Column("upload_id", Text, primary_key=True),
+    Column("filename", Text, nullable=False),
+    Column("byte_size", Integer, nullable=False),
+    Column("source_sha256", Text, nullable=False),
+    Column("expires_at", DateTime(timezone=True), nullable=False, index=True),
+    Column("document_id", Text, nullable=True),
+    CheckConstraint("byte_size BETWEEN 1 AND 10485760", name="upload_size_limit"),
+)
+upload_parts = Table(
+    "attachment_upload_parts",
+    metadata,
+    Column(
+        "upload_id",
+        Text,
+        ForeignKey("attachment_uploads.upload_id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    Column("part_index", Integer, primary_key=True),
+    Column("content", LargeBinary, nullable=False),
+    CheckConstraint("part_index BETWEEN 0 AND 3", name="upload_part_index"),
+    CheckConstraint(
+        "octet_length(content) BETWEEN 1 AND 3145728", name="upload_part_size"
+    ),
+)
 receipts = Table(
     "registration_receipts",
     metadata,

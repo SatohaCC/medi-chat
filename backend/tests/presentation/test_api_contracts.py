@@ -33,6 +33,13 @@ async def test_rest_and_openapi_contracts_match_baseline(
     expected_openapi = reference_data["schema"]
     app = pg_api()
     actual_openapi = deepcopy(app.openapi())
+    for path in (
+        "/api/attachment-imports/uploads",
+        "/api/attachment-imports/uploads/{upload_id}/parts/{index}",
+        "/api/attachment-imports/uploads/{upload_id}/complete",
+    ):
+        assert "post" in actual_openapi["paths"].pop(path)
+    del actual_openapi["components"]["schemas"]["UploadResponse"]
     # The history list is an explicit additive API, covered with real PG in
     # test_import_history.py. Keep the frozen pre-existing contracts exact.
     history_get = actual_openapi["paths"]["/api/attachment-imports"].pop("get")
