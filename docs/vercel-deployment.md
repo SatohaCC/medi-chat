@@ -4,9 +4,31 @@
 
 ローカルはDockerのPostgreSQL、デプロイ先はVercel Marketplace経由のNeon PostgreSQLを使用する。原本XML・図・構造・検索投影・アップロード中の分割データをPostgreSQLへ保存し、BlobやFunctionのローカルディスクを要求しない。
 
+## リポジトリのデプロイ構成
+
+ルートの`vercel.json`でVercel Services（Beta）を宣言する。VercelでGitリポジトリをImportするときは、Root Directoryをリポジトリ直下（`.`）にする。Dashboard側に単一アプリ向けのBuild CommandやOutput Directoryを上書き設定しない。
+
+| Service | 基準ディレクトリ | 起動入口／framework |
+| --- | --- | --- |
+| backend | `.` | FastAPI、`backend.main:app` |
+| frontend | `frontend` | Next.js |
+
+`/api`・`/api/*`・`/health`・`/ws/chat`をバックエンド、それ以外をフロントエンドへ振り分ける。パスは維持される。WebSocketの`/api/ws`もこの経路を使う。ブラウザからは同じドメインへ接続するので、デプロイ時の`NEXT_PUBLIC_API_URL`・`NEXT_PUBLIC_WS_URL`は未設定にする。
+
+Pythonはルートの`.python-version`で3.14を指定する。`requirements.txt`はVercelが基準ディレクトリから読めるruntime依存ファイルで、`backend/uv.lock`から生成する。開発依存は含めず、手編集しない。
+
+```powershell
+pnpm vercel:requirements        # Python依存を変更したときに再生成
+pnpm vercel:requirements:check  # CIでもuv.lockとの一致を確認
+```
+
+Python Functionの最大実行時間は300秒。`functions.excludeFiles`と`.vercelignore`でテスト・原本・作業記録・ローカル環境ファイル・frontendの資源をPython bundleから除外する。添付文書定義JSONなどbackendのruntime資源は保持する。
+
+新しいPythonアプリはframework preset、Next.jsとの同居はServicesを使うのが公式案内の構成であるため、旧方式の`api/*.py`へコードを移動しない。Application/Domain/Infrastructureの配置と通常の`backend.main:app`起動を維持する。
+
 ## クラウド接続設定
 
-バックエンドだけに次の環境変数を設定する。資格情報をGit、フロントエンドの`NEXT_PUBLIC_*`、ビルドログへ含めない。
+バックエンドが使用する次の環境変数をVercelプロジェクトへ設定する。資格情報をGit、フロントエンドの`NEXT_PUBLIC_*`、ビルドログへ含めない。
 
 ```dotenv
 MEDI_CHAT_DATABASE_HOSTS=ep-YOUR-ENDPOINT.YOUR-REGION.aws.neon.tech
@@ -14,6 +36,8 @@ MEDI_CHAT_DATABASE_URL=postgresql+psycopg://APP_ROLE:PASSWORD@ep-YOUR-ENDPOINT.Y
 PYTHON_DOTENV_DISABLED=1
 ALLOWED_ORIGINS=https://YOUR-FRONTEND.vercel.app
 ```
+
+`VERCEL=1`の環境では、Vercelが設定する`VERCEL_URL`・`VERCEL_BRANCH_URL`・`VERCEL_PROJECT_PRODUCTION_URL`を許可Originへ追加する。PreviewごとのURLを手入力する必要はない。独自ドメインは`ALLOWED_ORIGINS`へ明示する。任意の`*.vercel.app`全体は許可しない。Servicesは環境変数を共有するため、秘密情報には`NEXT_PUBLIC_`を付けない。
 
 Neonが発行する接続文字列のホストを許可リストへ明示する。TLSとchannel bindingを必須とし、URL内の`host`や`options`による接続先の上書きを拒否する。証明書検証方式を使う場合は`sslmode=verify-full&sslrootcert=system`も利用できる。ローカル接続と専用テストDBの既存の制限は維持する。
 
@@ -41,7 +65,7 @@ pnpm --filter backend db:migrate
 ## デプロイ時に残る作業
 
 1. Vercel MarketplaceでNeonを作成し、ProductionとPreviewのDBを分離する。
-2. Next.jsとFastAPIのプロジェクト配置・エントリーポイントを設定し、`NEXT_PUBLIC_API_URL`・`NEXT_PUBLIC_WS_URL`・`ALLOWED_ORIGINS`を対応させる。
+2. GitリポジトリをRoot Directory `.`でImportする。ルートのServices設定を使い、DB接続情報・独自ドメインのOriginを設定する。
 3. APIキーをバックエンドの環境変数へ設定。Functionの実行時間・メモリ・Fluid computeと公開範囲を設定する。
 4. 実Neonでmigration・初期登録後、Previewで10MiBアップロード、インスタンスをまたぐ再送、検索、WebSocket切断・再接続、接続数と時間を検証する。
 
@@ -54,3 +78,8 @@ pnpm --filter backend db:migrate
 - [FastAPI on Vercel](https://vercel.com/docs/frameworks/backend/fastapi)
 - [WebSockets](https://vercel.com/docs/functions/websockets)
 - [Neonの接続文字列](https://neon.com/docs/reference/cli-connection-string)
+- [Python runtime](https://vercel.com/docs/functions/runtimes/python)
+- [Python Functions in /api](https://vercel.com/docs/functions/runtimes/python/api-directory)
+- [Python version](https://vercel.com/docs/functions/runtimes/python/python-version)
+- [Services](https://vercel.com/docs/services)
+- [Servicesの設定](https://vercel.com/docs/services/config-reference)

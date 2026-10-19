@@ -175,6 +175,8 @@ pnpm test:data     # データ作成ツール（PMDA XMLパーサー）
 
 単一/バッチXML変換、図の厳格検証、補完辞書生成とパス移行は[data/pmdaの作業案内](data/pmda/README.md)を参照してください。Python環境はbackendのuv.lockとPython 3.14へ統一し、pnpmのPython環境管理は無効化しています。
 
+Vercelにはリポジトリ直下の`vercel.json`でNext.jsとFastAPIを同じプロジェクトへデプロイします。Root Directory・Neon・環境変数の設定は[デプロイ手順](docs/vercel-deployment.md)を参照してください。
+
 原XMLを確認用JSONへoffline変換する場合（公開検索は更新しません）：
 
 ```bash
