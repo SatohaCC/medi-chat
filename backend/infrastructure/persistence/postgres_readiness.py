@@ -18,7 +18,7 @@ def verify_postgres_readiness(engine: Engine, *, projections: bool = True) -> No
                 .scalars()
                 .all()
             )
-            if revision != ["pg_20261019_03"]:
+            if revision != ["pg_20261019_04"]:
                 raise RuntimeError(
                     "schema_not_ready: run explicit PostgreSQL migrations"
                 )

@@ -1,6 +1,21 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 from ..application.attachment_import.import_models import ImportPage, ImportResult
+from ..application.attachment_import.upload_models import CHUNK_BYTES, MAX_SOURCE_BYTES
+
+
+class UploadRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    filename: str = Field(min_length=1, max_length=255)
+    byte_size: int = Field(ge=1, le=MAX_SOURCE_BYTES)
+    source_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
+class UploadResponse(BaseModel):
+    upload_id: str
+    chunk_bytes: int = CHUNK_BYTES
+    expires_in_seconds: int = 3600
 
 
 class ImportedProductResponse(BaseModel):

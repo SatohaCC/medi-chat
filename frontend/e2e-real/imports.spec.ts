@@ -261,6 +261,44 @@ test("real browser upload, resend, process restart GET and active registration",
     expect(currentB.total_count).toBe(1);
     expect(currentB.items[0].unit_id).toContain(newerB.result.source_sha256);
     writeFileSync(join(evidence, "real-version-sequence.json"), JSON.stringify({ old, newerA, newerB, replay, retained: await retained.json(), oldB, currentB }, null, 2));
+    // Exercise the browser's large-file path against the real backend + DB.
+    const largeBase = xmlVersion("2027-01", ["999999999999"], "テスト大容量警告");
+    const large = Buffer.concat([
+      largeBase.subarray(0, largeBase.length - Buffer.byteLength("</PackIns>")),
+      Buffer.from("<!--"),
+      Buffer.alloc(10 * 1024 * 1024 - largeBase.length - 7, 120),
+      Buffer.from("--></PackIns>"),
+    ]);
+    expect(large.length).toBe(10 * 1024 * 1024);
+    const deliveredParts: number[] = [];
+    page.on("response", (incoming) => {
+      if (incoming.url().includes("/parts/") && incoming.status() === 204)
+        deliveredParts.push(Number(new URL(incoming.url()).pathname.split("/").at(-1)));
+    });
+    await page
+      .getByLabel("XMLファイル")
+      .setInputFiles({
+        name: "テスト10MiB.xml",
+        mimeType: "application/xml",
+        buffer: large,
+      });
+    const largePending = page.waitForResponse((outgoing) =>
+      outgoing.url().endsWith("/complete"),
+    );
+    await page.getByRole("button", { name: "取り込む", exact: true }).click();
+    const largeResponse = await largePending;
+    expect(largeResponse.status(), await largeResponse.text()).toBe(201);
+    expect((await largeResponse.json()).source_sha256).toBe(hash(large));
+    expect(deliveredParts).toEqual([0, 1, 2, 3]);
+    await expect(
+      page.getByText("登録済み／検索に反映済み", { exact: true }),
+    ).toBeVisible();
+    const largeSearch = await (
+      await request.get(
+        "http://127.0.0.1:3211/api/search?q=テスト大容量警告&yj_codes=999999999999",
+      )
+    ).json();
+    expect(largeSearch.total_count).toBe(1);
     await testInfo.attach("real-state", {
       body: JSON.stringify({
         isolated,

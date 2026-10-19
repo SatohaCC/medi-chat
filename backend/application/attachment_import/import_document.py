@@ -3,6 +3,7 @@ import threading
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import suppress
+from dataclasses import replace
 from typing import TypeVar
 
 from .import_contracts import (
@@ -11,6 +12,8 @@ from .import_contracts import (
 )
 from .import_errors import ImportCancelled
 from .import_models import ImportPage, ImportResult
+from .upload_contracts import UploadStore
+from .upload_models import UploadSpec
 
 T = TypeVar("T")
 
@@ -21,9 +24,11 @@ class AttachmentImportService:
         *,
         decoder: AttachmentDecoder,
         publisher: AttachmentRegistrationPublisher,
+        upload_store: UploadStore | None = None,
     ) -> None:
         self.decoder = decoder
         self.publisher = publisher
+        self.upload_store = upload_store
         self._executor = ThreadPoolExecutor(
             max_workers=2, thread_name_prefix="attachment-import"
         )
@@ -75,6 +80,38 @@ class AttachmentImportService:
             lambda: self.publisher.read_result(document_id, source_sha256),
             threading.Event(),
         )
+
+    def _uploads(self) -> UploadStore:
+        if self.upload_store is None:
+            raise RuntimeError("Upload storage is not configured")
+        return self.upload_store
+
+    async def start_upload(self, spec: UploadSpec) -> str:
+        return await self._run(lambda: self._uploads().create(spec), threading.Event())
+
+    async def upload_part(self, upload_id: str, index: int, content: bytes) -> None:
+        await self._run(
+            lambda: self._uploads().put(upload_id, index, content), threading.Event()
+        )
+
+    async def finish_upload(self, upload_id: str) -> ImportResult:
+        uploaded = await self._run(
+            lambda: self._uploads().read(upload_id), threading.Event()
+        )
+        if uploaded.document_id is not None:
+            result = await self.read_result(
+                uploaded.document_id, uploaded.spec.source_sha256
+            )
+            return replace(result, reused=True)
+        assert uploaded.source is not None
+        result = await self.import_document(
+            uploaded.source, original_filename=uploaded.spec.filename
+        )
+        await self._run(
+            lambda: self._uploads().complete(upload_id, result.document_id),
+            threading.Event(),
+        )
+        return result
 
     async def aclose(self) -> None:
         with self._lock:

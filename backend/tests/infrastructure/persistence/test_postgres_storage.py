@@ -13,6 +13,42 @@ def test_pg004_explicit_local_postgres_settings() -> None:
     )
 
 
+def test_cloud_database_requires_host_allowlist_and_tls(monkeypatch):
+    host = "ep-test.example.neon.tech"
+    base = f"postgresql://test:secret@{host}/test"
+    tls = "?sslmode=require&channel_binding=require"
+    with pytest.raises(ValueError):
+        resolve_postgres_database_settings(database_url=base + tls, environ={})
+    env = {"MEDI_CHAT_DATABASE_HOSTS": host}
+    assert (
+        "sslmode=require"
+        in resolve_postgres_database_settings(
+            database_url=base + tls, environ=env
+        ).database_url
+    )
+    for query in (
+        "",
+        "?sslmode=disable",
+        "?sslmode=require",
+        tls + "&host=evil.example",
+        tls + "&options=-csearch_path=evil",
+    ):
+        with pytest.raises(ValueError):
+            resolve_postgres_database_settings(database_url=base + query, environ=env)
+    monkeypatch.setenv("MEDI_CHAT_DATABASE_HOSTS", host)
+    from backend.infrastructure.persistence.postgres_engine import (
+        create_postgres_engine,
+    )
+
+    engine = create_postgres_engine(base + tls)
+    try:
+        assert (
+            engine.url.host == host and engine.url.query["channel_binding"] == "require"
+        )
+    finally:
+        engine.dispose()
+
+
 @pytest.mark.parametrize(
     "url",
     [

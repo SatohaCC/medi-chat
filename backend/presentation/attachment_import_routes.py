@@ -2,6 +2,7 @@ from typing import Annotated
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from pydantic import ValidationError
 from starlette.datastructures import UploadFile
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -16,11 +17,14 @@ from ..application.attachment_import.import_errors import (
     InvalidAttachment,
     UnsupportedAttachment,
 )
+from ..application.attachment_import.upload_models import CHUNK_BYTES, UploadSpec
 from .attachment_import_models import (
     AttachmentImportResponse,
     ImportConflictResponse,
     ImportErrorResponse,
     ImportListResponse,
+    UploadRequest,
+    UploadResponse,
 )
 from .dependencies import get_import_service
 
@@ -63,6 +67,85 @@ def import_error(exc: AttachmentImportError) -> HTTPException:
         }
         result = HTTPException(statuses[type(exc)], detail=detail)
     return result
+
+
+async def bounded_body(request: Request, limit: int) -> bytes:
+    body = bytearray()
+    async for chunk in request.stream():
+        if len(body) + len(chunk) > limit:
+            raise error(413, "request_too_large", "受信データが上限を超えています。")
+        body.extend(chunk)
+    return bytes(body)
+
+
+@router.post(
+    "/uploads",
+    response_model=UploadResponse,
+    status_code=201,
+    openapi_extra={
+        "requestBody": {
+            "required": True,
+            "content": {
+                "application/json": {"schema": UploadRequest.model_json_schema()},
+            },
+        }
+    },
+)
+async def start_upload(request: Request, service: ImportService) -> UploadResponse:
+    raw = await bounded_body(request, 4096)
+    try:
+        data = UploadRequest.model_validate_json(raw)
+        spec = UploadSpec(data.filename, data.byte_size, data.source_sha256)
+        upload_id = await service.start_upload(spec)
+    except ValidationError, ValueError:
+        raise error(422, "invalid_upload", "XMLのファイル情報が不正です。") from None
+    except AttachmentImportError as exc:
+        raise import_error(exc) from None
+    return UploadResponse(upload_id=upload_id)
+
+
+@router.post(
+    "/uploads/{upload_id}/parts/{index}",
+    status_code=204,
+    openapi_extra={
+        "requestBody": {
+            "required": True,
+            "content": {
+                "application/octet-stream": {
+                    "schema": {"type": "string", "format": "binary"}
+                },
+            },
+        }
+    },
+)
+async def upload_part(
+    upload_id: str, index: int, request: Request, service: ImportService
+) -> Response:
+    content = await bounded_body(request, CHUNK_BYTES)
+    try:
+        await service.upload_part(upload_id, index, content)
+    except AttachmentImportError as exc:
+        raise import_error(exc) from None
+    return Response(status_code=204)
+
+
+@router.post(
+    "/uploads/{upload_id}/complete",
+    response_model=AttachmentImportResponse,
+    status_code=201,
+)
+async def finish_upload(
+    upload_id: str, response: Response, service: ImportService
+) -> AttachmentImportResponse:
+    try:
+        result = await service.finish_upload(upload_id)
+    except AttachmentImportError as exc:
+        raise import_error(exc) from None
+    response.status_code = 200 if result.reused else 201
+    response.headers["Location"] = (
+        f"/api/attachment-imports/{quote(result.document_id, safe='')}/{result.source_sha256}"
+    )
+    return AttachmentImportResponse.from_result(result)
 
 
 @router.post(

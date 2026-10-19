@@ -16,7 +16,11 @@ def create_postgres_engine(database_url: str, *, schema: str = "public") -> Engi
         database_url=database_url,
         environ={
             key: os.environ[key]
-            for key in ("CI", "MEDI_CHAT_TEST_DATABASE_HOSTS")
+            for key in (
+                "CI",
+                "MEDI_CHAT_TEST_DATABASE_HOSTS",
+                "MEDI_CHAT_DATABASE_HOSTS",
+            )
             if key in os.environ
         },
     )
