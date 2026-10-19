@@ -49,6 +49,7 @@ jobs:
           python-version: "3.14"
       - run: pnpm install --frozen-lockfile
       - run: uv sync --project backend --locked
+      - run: pnpm vercel:requirements:check
       - name: Initialize this job's disposable service with separated roles
         env:
           POSTGRES_USER: postgres

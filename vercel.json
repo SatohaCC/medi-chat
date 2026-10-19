@@ -1,0 +1,30 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "backend": {
+      "root": ".",
+      "framework": "fastapi",
+      "runtime": "python",
+      "entrypoint": "backend.main:app",
+      "functions": {
+        "backend/main.py": {
+          "maxDuration": 300,
+          "excludeFiles": "{frontend/**,backend/tests/**,**/.venv/**,backend/migrations/**,data/**,docs/**,scripts/**,for-llm/**,node_modules/**,.git/**,.agents/**,.codex/**,tmp/**,**/__pycache__/**}"
+        }
+      }
+    },
+    "frontend": {
+      "root": "frontend",
+      "framework": "nextjs",
+      "installCommand": "pnpm install --frozen-lockfile",
+      "buildCommand": "pnpm build"
+    }
+  },
+  "rewrites": [
+    { "source": "/api", "destination": { "service": "backend" } },
+    { "source": "/api/(.*)", "destination": { "service": "backend" } },
+    { "source": "/health", "destination": { "service": "backend" } },
+    { "source": "/ws/chat", "destination": { "service": "backend" } },
+    { "source": "/(.*)", "destination": { "service": "frontend" } }
+  ]
+}

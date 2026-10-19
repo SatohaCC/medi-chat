@@ -2,8 +2,11 @@
   "name": "medi-chat",
   "version": "0.2.0",
   "private": true,
+  "packageManager": "pnpm@12.6.0",
   "description": "PMDA package inserts search and AI real-time streaming chat system.",
   "scripts": {
+    "vercel:requirements": "node scripts/export-vercel-requirements.mjs",
+    "vercel:requirements:check": "node scripts/export-vercel-requirements.mjs --check",
     "test:e2e": "pnpm --filter frontend test:e2e",
     "dev": "pnpm --parallel --filter frontend --filter backend dev",
     "dev:frontend": "pnpm --filter frontend dev",

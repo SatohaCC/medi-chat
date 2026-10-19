@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config.database_settings import resolve_postgres_database_settings
+from .config.origin_settings import read_allowed_origins
 from .config.runtime_environment import load_runtime_environment
 from .infrastructure.composition.app_lifespan import create_app_lifespan
 from .infrastructure.intent.jev_classifier import JevIntentClassifier
@@ -70,14 +71,7 @@ def create_app(
     )
 
     # Next.js フロントエンド向けの CORS 設定
-    allowed_origins = [
-        origin.strip()
-        for origin in os.environ.get(
-            "ALLOWED_ORIGINS",
-            "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001",
-        ).split(",")
-        if origin.strip()
-    ]
+    allowed_origins = read_allowed_origins()
     application.add_middleware(
         CORSMiddleware,
         allow_origins=allowed_origins,
