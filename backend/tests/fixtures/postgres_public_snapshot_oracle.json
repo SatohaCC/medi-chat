@@ -1,0 +1,1143 @@
+{
+  "source_sha256": "a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76",
+  "criteria": [
+    {
+      "source": "keyword",
+      "sections": [],
+      "keywords": [
+        "漢"
+      ],
+      "expected": []
+    },
+    {
+      "source": "keyword",
+      "sections": [],
+      "keywords": [
+        "注意"
+      ],
+      "expected": [
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:1",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "1",
+            "title": "警告"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"1\">1 警告</h3><p>注意事項</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        },
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:2",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "2",
+            "title": "禁忌"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"2\">2 禁忌</h3><p>注意事項注意事項注意事項</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        },
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:8",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "8",
+            "title": "重要な基本的注意"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"8\">8 重要な基本的注意</h3><p>注意事項 ＡＢＣ１２３ café Café under_score 東京 大阪</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        },
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:15",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "15",
+            "title": "その他の注意"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"15\">15 その他の注意</h3><p>注意事項。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        },
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:14",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "14",
+            "title": "適用上の注意"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"14\">14 適用上の注意</h3><p>別の記載</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        }
+      ]
+    },
+    {
+      "source": "keyword",
+      "sections": [],
+      "keywords": [
+        "注意事"
+      ],
+      "expected": [
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:2",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "2",
+            "title": "禁忌"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"2\">2 禁忌</h3><p>注意事項注意事項注意事項</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        },
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:1",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "1",
+            "title": "警告"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"1\">1 警告</h3><p>注意事項</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        },
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:8",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "8",
+            "title": "重要な基本的注意"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"8\">8 重要な基本的注意</h3><p>注意事項 ＡＢＣ１２３ café Café under_score 東京 大阪</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        },
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:15",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "15",
+            "title": "その他の注意"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"15\">15 その他の注意</h3><p>注意事項。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        }
+      ]
+    },
+    {
+      "source": "keyword",
+      "sections": [],
+      "keywords": [
+        "注意事項"
+      ],
+      "expected": [
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:2",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "2",
+            "title": "禁忌"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"2\">2 禁忌</h3><p>注意事項注意事項注意事項</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        },
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:1",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "1",
+            "title": "警告"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"1\">1 警告</h3><p>注意事項</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        },
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:8",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "8",
+            "title": "重要な基本的注意"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"8\">8 重要な基本的注意</h3><p>注意事項 ＡＢＣ１２３ café Café under_score 東京 大阪</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        },
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:15",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "15",
+            "title": "その他の注意"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"15\">15 その他の注意</h3><p>注意事項。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        }
+      ]
+    },
+    {
+      "source": "keyword",
+      "sections": [],
+      "keywords": [
+        "AB"
+      ],
+      "expected": []
+    },
+    {
+      "source": "keyword",
+      "sections": [],
+      "keywords": [
+        "abc"
+      ],
+      "expected": [
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:8",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "8",
+            "title": "重要な基本的注意"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"8\">8 重要な基本的注意</h3><p>注意事項 ＡＢＣ１２３ café Café under_score 東京 大阪</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        }
+      ]
+    },
+    {
+      "source": "keyword",
+      "sections": [],
+      "keywords": [
+        "123"
+      ],
+      "expected": [
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:8",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "8",
+            "title": "重要な基本的注意"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"8\">8 重要な基本的注意</h3><p>注意事項 ＡＢＣ１２３ café Café under_score 東京 大阪</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        }
+      ]
+    },
+    {
+      "source": "keyword",
+      "sections": [],
+      "keywords": [
+        "café"
+      ],
+      "expected": [
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:8",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "8",
+            "title": "重要な基本的注意"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"8\">8 重要な基本的注意</h3><p>注意事項 ＡＢＣ１２３ café Café under_score 東京 大阪</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        }
+      ]
+    },
+    {
+      "source": "keyword",
+      "sections": [],
+      "keywords": [
+        "cafe"
+      ],
+      "expected": []
+    },
+    {
+      "source": "keyword",
+      "sections": [],
+      "keywords": [
+        "under_s"
+      ],
+      "expected": [
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:8",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "8",
+            "title": "重要な基本的注意"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"8\">8 重要な基本的注意</h3><p>注意事項 ＡＢＣ１２３ café Café under_score 東京 大阪</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        }
+      ]
+    },
+    {
+      "source": "keyword",
+      "sections": [],
+      "keywords": [
+        "東京 大"
+      ],
+      "expected": [
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:8",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "8",
+            "title": "重要な基本的注意"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"8\">8 重要な基本的注意</h3><p>注意事項 ＡＢＣ１２３ café Café under_score 東京 大阪</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        }
+      ]
+    },
+    {
+      "source": "keyword",
+      "sections": [],
+      "keywords": [
+        "\"注意事項\""
+      ],
+      "expected": [
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:2",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "2",
+            "title": "禁忌"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"2\">2 禁忌</h3><p>注意事項注意事項注意事項</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        },
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:1",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "1",
+            "title": "警告"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"1\">1 警告</h3><p>注意事項</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        },
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:8",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "8",
+            "title": "重要な基本的注意"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"8\">8 重要な基本的注意</h3><p>注意事項 ＡＢＣ１２３ café Café under_score 東京 大阪</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        },
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:15",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "15",
+            "title": "その他の注意"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"15\">15 その他の注意</h3><p>注意事項。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        }
+      ]
+    },
+    {
+      "source": "keyword",
+      "sections": [],
+      "keywords": [
+        "source"
+      ],
+      "expected": []
+    },
+    {
+      "source": "keyword",
+      "sections": [],
+      "keywords": [
+        "so"
+      ],
+      "expected": [
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:1",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "1",
+            "title": "警告"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"1\">1 警告</h3><p>注意事項</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        },
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:2",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "2",
+            "title": "禁忌"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"2\">2 禁忌</h3><p>注意事項注意事項注意事項</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        },
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:8",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "8",
+            "title": "重要な基本的注意"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"8\">8 重要な基本的注意</h3><p>注意事項 ＡＢＣ１２３ café Café under_score 東京 大阪</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        },
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:15",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "15",
+            "title": "その他の注意"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"15\">15 その他の注意</h3><p>注意事項。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        },
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:14",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "14",
+            "title": "適用上の注意"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"14\">14 適用上の注意</h3><p>別の記載</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        }
+      ]
+    },
+    {
+      "source": "keyword",
+      "sections": [],
+      "keywords": [
+        "product_yj_codes"
+      ],
+      "expected": []
+    },
+    {
+      "source": "keyword",
+      "sections": [],
+      "keywords": [
+        "\"\""
+      ],
+      "expected": []
+    },
+    {
+      "source": "jev",
+      "sections": [
+        "8"
+      ],
+      "keywords": [
+        "注意事項"
+      ],
+      "expected": [
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:8",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "8",
+            "title": "重要な基本的注意"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"8\">8 重要な基本的注意</h3><p>注意事項 ＡＢＣ１２３ café Café under_score 東京 大阪</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "jev"
+          ]
+        }
+      ]
+    },
+    {
+      "source": "logic",
+      "sections": [
+        "1",
+        "2"
+      ],
+      "keywords": [],
+      "expected": [
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:1",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "1",
+            "title": "警告"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"1\">1 警告</h3><p>注意事項</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "logic"
+          ]
+        },
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:2",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "2",
+            "title": "禁忌"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"2\">2 禁忌</h3><p>注意事項注意事項注意事項</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "logic"
+          ]
+        }
+      ]
+    },
+    {
+      "source": "keyword",
+      "sections": [],
+      "keywords": [
+        "注意事項",
+        "注意事"
+      ],
+      "expected": [
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:2",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "2",
+            "title": "禁忌"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"2\">2 禁忌</h3><p>注意事項注意事項注意事項</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        },
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:1",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "1",
+            "title": "警告"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"1\">1 警告</h3><p>注意事項</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        },
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:8",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "8",
+            "title": "重要な基本的注意"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"8\">8 重要な基本的注意</h3><p>注意事項 ＡＢＣ１２３ café Café under_score 東京 大阪</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        },
+        {
+          "unit_id": "000001_test:a77c5dc3dbfe9b6c36de79099e30897afa1e84228ad17ab23b8e8659265acf76:15",
+          "document_id": "000001_test",
+          "product_name": "製品A",
+          "generic_name": "テスト一般名",
+          "product_yj_codes": [
+            "111111111111"
+          ],
+          "document_revision": {
+            "source_label": "今回",
+            "version": "1",
+            "year_month": "2026-10"
+          },
+          "section": {
+            "code": "15",
+            "title": "その他の注意"
+          },
+          "kind": "section",
+          "excerpt": "<h3 data-section-code=\"15\">15 その他の注意</h3><p>注意事項。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。関係のない長い説明です。</p>",
+          "columns": null,
+          "references": [],
+          "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+          "retrieved_by": [
+            "keyword"
+          ]
+        }
+      ]
+    }
+  ],
+  "medicines": [
+    {
+      "yj_code": "222222222222",
+      "brand_name": "製品A",
+      "generic_name": "",
+      "english_name": "",
+      "pmda_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_other",
+      "revision": {
+        "source_label": "今回",
+        "version": "1",
+        "year_month": "2026-10"
+      }
+    },
+    {
+      "yj_code": "111111111111",
+      "brand_name": "製品A",
+      "generic_name": "テスト一般名",
+      "english_name": "",
+      "pmda_url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+      "revision": {
+        "source_label": "今回",
+        "version": "1",
+        "year_month": "2026-10"
+      }
+    }
+  ],
+  "mixed_source_sha256": "e69270450c6ab3442d0834d4f56271f45998642b034e71007d79703e49fbdd9d",
+  "products": {
+    "111111111111": [
+      {
+        "unit_id": "000001_test:e69270450c6ab3442d0834d4f56271f45998642b034e71007d79703e49fbdd9d:1",
+        "document_id": "000001_test",
+        "product_name": "製品A",
+        "generic_name": "",
+        "product_yj_codes": [
+          "111111111111"
+        ],
+        "document_revision": {
+          "source_label": "今回",
+          "version": "1",
+          "year_month": "2026-10"
+        },
+        "section": {
+          "code": "1",
+          "title": "警告"
+        },
+        "kind": "section",
+        "excerpt": "<p data-product-scope=\"true\">対象製品: 製品A [YJ: 111111111111]</p><h3 data-section-code=\"1\">1 警告</h3><p>同じ本文</p><p><strong>A専用</strong></p><p>同じ本文</p><table><tbody><tr><td rowspan=\"1\" colspan=\"1\">A列</td><td rowspan=\"1\" colspan=\"2\">共通列</td></tr><tr><td rowspan=\"1\" colspan=\"1\">A値</td><td rowspan=\"2\" colspan=\"2\">共通値</td></tr><tr><td rowspan=\"1\" colspan=\"1\">A次</td></tr></tbody></table>",
+        "columns": null,
+        "references": [],
+        "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+        "retrieved_by": [
+          "logic"
+        ]
+      }
+    ],
+    "222222222222": [
+      {
+        "unit_id": "000001_test:e69270450c6ab3442d0834d4f56271f45998642b034e71007d79703e49fbdd9d:1",
+        "document_id": "000001_test",
+        "product_name": "製品B",
+        "generic_name": "",
+        "product_yj_codes": [
+          "222222222222"
+        ],
+        "document_revision": {
+          "source_label": "今回",
+          "version": "1",
+          "year_month": "2026-10"
+        },
+        "section": {
+          "code": "1",
+          "title": "警告"
+        },
+        "kind": "section",
+        "excerpt": "<p data-product-scope=\"true\">対象製品: 製品B [YJ: 222222222222]</p><h3 data-section-code=\"1\">1 警告</h3><p>同じ本文</p><table><tbody><tr><td rowspan=\"1\" colspan=\"1\">B列</td><td rowspan=\"1\" colspan=\"2\">共通列</td></tr><tr><td rowspan=\"1\" colspan=\"1\">B値</td><td rowspan=\"2\" colspan=\"2\">共通値</td></tr><tr><td rowspan=\"1\" colspan=\"1\">B次</td></tr></tbody></table>",
+        "columns": null,
+        "references": [],
+        "url": "https://www.pmda.go.jp/PmdaSearch/iyakuDetail/000001_test",
+        "retrieved_by": [
+          "logic"
+        ]
+      }
+    ]
+  }
+}

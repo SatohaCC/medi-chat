@@ -1,70 +1,58 @@
-"""大項目データの実保存・再起動・SQLite/世代検索を検証する。"""
-
-import json
+"""大項目データの実保存・再起動・PostgreSQL snapshot検索を検証する。"""
 
 import pytest
 from backend.application.medicine.product_catalog import MedicineCatalog
-from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.retrieval.primitives import (
     DetectionSource,
     SearchKeyword,
     SearchSectionCode,
 )
 from backend.domain.retrieval.value_objects import SearchCriteria
-from backend.infrastructure.persistence.attachment_import_store import (
-    FileAttachmentImportStore,
-)
-from backend.infrastructure.persistence.evidence_reader import SqlAlchemyEvidenceReader
-from backend.infrastructure.persistence.generation_runtime import GenerationRuntime
+from backend.infrastructure.persistence import postgres_schema as schema
+from backend.infrastructure.persistence.postgres_engine import create_postgres_engine
+from backend.infrastructure.persistence.postgres_runtime import PostgresRuntime
 from backend.infrastructure.persistence.read_workers import ReadWorkers
-from backend.infrastructure.persistence.registration_publisher import (
-    SqliteRegistrationPublisher,
-)
-from backend.infrastructure.persistence.sqlite_engine import create_sqlite_engine
 from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
-from backend.tests.infrastructure.persistence.test_alembic_migrations import (
-    _migrate_database,
+from backend.tests.integration.test_postgres_registration import (
+    pg_publisher as pg_publisher,
 )
 from backend.tests.support.attachment_import_fixtures import xml_source
+from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
+from sqlalchemy import select
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("requested", ["10", "10.1", "10.2"])
 async def test_saved_major_section_keeps_children_after_restart_and_search(
-    tmp_path, requested
+    pg_engines, pg_publisher, requested
 ):
     source = xml_source(
         "<Interactions><ContraIndicatedCombinations><Detail><Lang>禁忌の対象薬剤</Lang>"
         "</Detail></ContraIndicatedCombinations><PrecautionsForCombinations><Detail>"
         "<Lang>注意の対象薬剤</Lang></Detail></PrecautionsForCombinations></Interactions>"
     )
-    index = tmp_path / "index.sqlite3"
-    _migrate_database(index, tmp_path)
-    store = FileAttachmentImportStore(tmp_path / "imports")
-    publisher = SqliteRegistrationPublisher(index, store)
-    result = publisher.publish(PmdaXmlDecoder().decode(source), source)
-    directory = store._target(DocumentId(result.document_id), result.source_sha256)
-    assert (directory / "source.xml").read_bytes() == source
-    saved = json.loads((directory / "document.json").read_bytes())
+    result = pg_publisher.publish(PmdaXmlDecoder().decode(source), source)
+    with pg_engines[0].connect() as connection:
+        stored = connection.execute(select(schema.versions)).mappings().one()
+    assert stored["source"] == source
+    saved = stored["structure"]["document"]
     assert [section["code"] for section in saved["sections"]] == ["10"]
     assert [child["code"] for child in saved["sections"][0]["children"]] == [
         "10.1",
         "10.2",
     ]
     assert result.section_count == result.search_unit_count == 1
-    # Recreate the readers and publisher from persisted files, with no reused decoder/model.
-    publisher = SqliteRegistrationPublisher(
-        index, FileAttachmentImportStore(tmp_path / "imports")
-    )
+    # New engine/runtime restore only persisted Domain structure, no reused decoder.
     workers = ReadWorkers()
-    runtime = GenerationRuntime(publisher, workers=workers)
-    engine = create_sqlite_engine(f"sqlite:///{index.as_posix()}")
-    sql_reader = SqlAlchemyEvidenceReader(engine, workers=workers)
+    engine = create_postgres_engine(
+        pg_engines[1].url.render_as_string(hide_password=False), schema=pg_engines[2]
+    )
+    runtime = PostgresRuntime(engine, workers=workers)
     try:
         async with runtime.acquire() as snapshot:
             catalog = MedicineCatalog(await snapshot.medicine_reader.read_medicines())
             medicines = tuple(catalog.resolve_medicines("", ["111111111111"]))
-            for reader in (snapshot.evidence_reader, sql_reader):
+            for reader in (snapshot.evidence_reader,):
                 for keywords in ((), (SearchKeyword("対象薬剤"),)):
                     evidence = await reader.search(
                         SearchCriteria(

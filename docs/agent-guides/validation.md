@@ -14,7 +14,7 @@ pnpm-workspaceの`python.enabled=false`でpnpmの別Python環境管理を停止�
 | backendformat確認 | `pnpm --filter backend exec ruff format --check .` |
 | Python型検査（Pyright） | `pnpm typecheck:python` |
 
-`pnpm typecheck:python`はルートのpyrightconfigを使いbackendを対象にする。各Pythonパッケージの`typecheck`はmypyであり、別の検証として扱う。
+`pnpm typecheck:python`はルートのpyrightconfigによるPyrightとbackendのmypyを順に実行する。どちらか片方だけの成功を全体成功として扱わない。
 カタログだけの検証は`python -c "from backend.infrastructure.package_insert_definitions.loader import get_package_insert_definitions; get_package_insert_definitions()"`。実行環境を確認し、これだけで検索・プロンプト・XML経路が検証できたと扱わない。
 
 ## frontend
@@ -29,10 +29,10 @@ pnpm-workspaceの`python.enabled=false`でpnpmの別Python環境管理を停止�
 | チャット画面（Playwright / Chromium） | 初回は`pnpm --filter frontend exec playwright install chromium`、実行は`pnpm test:e2e` |
 
 ルート`pnpm test`はbackend（旧data_toolsテスト移行済み）であり、frontendのNodeテストを含まない。ブラウザ・実サーバー接続も別に確認する。
-`pnpm test:e2e`は通常devのdotenvと設定解決を保持し、configured検索索引のread-only readiness→実`backend.main:app` OS health（3212）→モックChromium→実接続Chromiumの順に検証する。どの必須層の非0も全体非0とし、未準備/staleをfresh fixture成功で代替しない。configured要求はhealthだけで、索引の自動更新・LLM質問・Web保存をしない。占有portは拒否し、試験所有processだけを終了する。
+`pnpm test:e2e`は通常devのdotenvと設定解決を保持し、configured PostgreSQLのread-only readiness→実`backend.main:app` OS health（3212）→モックChromium→実接続Chromiumの順に検証する。どの必須層の非0も全体非0とし、未準備/staleをfresh fixture成功で代替しない。configured要求はhealthだけで、DBの自動更新・LLM質問・Web保存をしない。占有portは拒否し、試験所有processだけを終了する。
 モック層はチャット画面とイベントを検証する。実接続層は一時DB・実backendを使い、外部LLM/検出SDKの固定ダブルは実通信として扱わない。
 
-明示的な単独実行は`pnpm --filter frontend test:e2e:mock`/`test:e2e:real`。実接続は専用Next/backendと一時SQLite/import rootを使い、APIをinterceptせず、登録・同YJ置換・一部旧版保持・参照0旧ファイル削除・同原本再送の非復活・OS再起動後GET/候補/検索の維持を検証する。更新対象の一時DBと、変更してはいけない運用DB/原物/backupを区別する。現行形式のfixtureは空DBへのAlembicと原本からの登録で作成し、旧索引の移行・stamp・互換読み取りを行わない。実接続試験では外部LLM keysを空・dotenv無効にし、configured smokeへ漏らさない。Next試験出力は`.next-e2e-mock`/`.next-e2e-real`（必要時buildは`.next-e2e-build`）で通常`.next`と分離する。
+明示的な単独実行は`pnpm --filter frontend test:e2e:mock`/`test:e2e:real`。実接続は専用Next/backendと専用test DBの所有UUID schemaを使い、APIをinterceptせず、登録・同YJ置換・一部旧版保持・参照0旧payload削除・同原本再送の非復活・OS再起動後GET/候補/検索の維持を検証する。更新対象の一時DBと、変更してはいけない運用DB/原物/backupを区別する。現行形式のfixtureは空DBへのAlembicと原本からの登録で作成し、旧索引の移行・stamp・互換読み取りを行わない。実接続試験では外部LLM keysを空・dotenv無効にし、configured smokeへ漏らさない。Next試験出力は`.next-e2e-mock`/`.next-e2e-real`（必要時buildは`.next-e2e-build`）で通常`.next`と分離する。
 
 ## 原本XML・添付文書の検証規則（内容・文脈保持と許容される表示形式差）
 

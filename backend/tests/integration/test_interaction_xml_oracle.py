@@ -4,10 +4,9 @@ import asyncio
 import copy
 import json
 import re
-import sqlite3
 import time
-from contextlib import closing
 from html.parser import HTMLParser
+from xml.etree import ElementTree as ET
 
 import pytest
 from backend.application.chat.answer_question import answer_question
@@ -15,7 +14,6 @@ from backend.application.chat.chat_models import ChatMessage
 from backend.application.medicine.product_catalog import MedicineCatalog
 from backend.application.retrieval.intent_contracts import IntentResult
 from backend.application.retrieval.retrieve_evidence import retrieve_evidence
-from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.retrieval.primitives import (
     DetectionSource,
     IntentName,
@@ -26,42 +24,35 @@ from backend.domain.retrieval.value_objects import IntentCandidate, SearchCriter
 from backend.infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,
 )
-from backend.infrastructure.persistence.generation_runtime import GenerationRuntime
+from backend.infrastructure.persistence import postgres_schema as schema
+from backend.infrastructure.persistence.postgres_runtime import PostgresRuntime
 from backend.infrastructure.persistence.read_workers import ReadWorkers
-from backend.tests.infrastructure.persistence.test_alembic_migrations import (
-    _migrate_database,
+from backend.tests.integration.test_postgres_registration import (
+    pg_publisher as pg_publisher,
 )
-from backend.tests.integration.test_registration_publisher import (
-    FileAttachmentImportStore,
-    SqliteRegistrationPublisher,
-    publish,
-)
+from backend.tests.integration.test_postgres_registration import publish
 from backend.tests.support.interaction_raw_oracle import (
     DOCUMENTS,
     ROOT,
     read_raw_oracle,
 )
 from backend.tests.support.paths import FIXTURES_ROOT
-from backend.tests.support.section_records import flatten_sections, major_unit_id
+from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
+from backend.tests.support.section_records import major_unit_id
+from sqlalchemy import select
 
 FIXTURE = FIXTURES_ROOT / "interaction_oracle_v6.json"
 ORACLE = json.loads(FIXTURE.read_text(encoding="utf-8"))
 
 
-@pytest.fixture(scope="module")
-def registered_publisher(tmp_path_factory):
-    root = tmp_path_factory.mktemp("interaction-oracle")
-    index = root / "copy.sqlite3"
-    _migrate_database(index, root)
-    publisher = SqliteRegistrationPublisher(
-        index, FileAttachmentImportStore(root / "imports")
-    )
+@pytest.fixture
+def registered_publisher(pg_publisher):
     for doc, _, _ in DOCUMENTS:
         publish(
-            publisher,
+            pg_publisher,
             next((ROOT / "data/pmda/originals").glob(f"*/{doc}.xml")).read_bytes(),
         )
-    return publisher
+    return pg_publisher
 
 
 class Cells(HTMLParser):
@@ -297,30 +288,38 @@ def test_tc121_x16_7_all_ten_item_contexts_and_25_original_positions(
 ):
     document = ORACLE[0]
     expected = document["sections"]["16.7"]
-    directory = registered_publisher.store._target(
-        DocumentId(document["document_id"]), document["sha256"]
-    )
     original = next(
         (ROOT / "data/pmda/originals").glob(f"*/{document['document_id']}.xml")
     )
-    assert (directory / "source.xml").read_bytes() == original.read_bytes()
-    stored = json.loads((directory / "document.json").read_bytes())
-    tree = next(
-        section["tree"]
-        for section in flatten_sections(stored["sections"])
-        if section["code"] == "16.7"
+    with registered_publisher.engine.connect() as connection:
+        stored_source = connection.execute(
+            select(schema.versions.c.source).where(
+                schema.versions.c.version_id
+                == f"{document['document_id']}:{document['sha256']}"
+            )
+        ).scalar_one()
+        payload = connection.execute(
+            select(schema.units.c.payload).where(
+                schema.units.c.unit_id == major_unit_id(document, "16")
+            )
+        ).scalar_one()
+    assert bytes(stored_source) == original.read_bytes()
+    root = ET.fromstring(bytes(stored_source))
+
+    def xml_tree(node):
+        return {
+            "tag": node.tag.rsplit("}", 1)[-1],
+            "attributes": dict(node.attrib),
+            "children": [xml_tree(child) for child in node],
+        }
+
+    subtree = next(
+        node
+        for node in root.iter()
+        if node.tag.rsplit("}", 1)[-1] == "DrugAndDrugInteractions"
     )
-    positions = stored_reference_positions(tree)
+    positions = stored_reference_positions(xml_tree(subtree))
     assert_original_occurrences(positions, expected["raw_reference_occurrences"])
-    with closing(
-        sqlite3.connect(registered_publisher.index_path.as_uri() + "?mode=ro", uri=True)
-    ) as connection:
-        payload = json.loads(
-            connection.execute(
-                "SELECT payload_json FROM units WHERE unit_id=?",
-                (major_unit_id(document, "16"),),
-            ).fetchone()[0]
-        )
     blocks = [
         block
         for block in payload["blocks"]
@@ -374,7 +373,7 @@ async def test_tc120_122_all_detector_collection_and_tc121_original_tables(
             return () if profile == "empty_keyword" else ("158",)
 
     workers = ReadWorkers()
-    runtime = GenerationRuntime(registered_publisher, workers=workers)
+    runtime = PostgresRuntime(registered_publisher.engine, workers=workers)
     message = "イグザレルト錠2.5mgの飲み合わせ"
     if pair:
         message = (
@@ -484,7 +483,7 @@ async def test_tc121_complete_six_tables_and_original_reference_destinations(
     registered_publisher,
 ):
     workers = ReadWorkers()
-    runtime = GenerationRuntime(registered_publisher, workers=workers)
+    runtime = PostgresRuntime(registered_publisher.engine, workers=workers)
     try:
         async with runtime.acquire() as snapshot:
             catalog = MedicineCatalog(await snapshot.medicine_reader.read_medicines())
@@ -589,7 +588,7 @@ async def test_tc123_all_evidence_reaches_recording_provider_and_conversation(
             yield "送信観測のみ"
 
     workers = ReadWorkers()
-    runtime = GenerationRuntime(registered_publisher, workers=workers)
+    runtime = PostgresRuntime(registered_publisher.engine, workers=workers)
     provider = Provider()
     question = (
         "イグザレルト錠2.5mgとイトラコナゾールの飲み合わせを教えて"

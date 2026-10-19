@@ -1,22 +1,44 @@
-"""改訂年月による公開先選択を実SQLiteと原本XMLで検証する。"""
+"""改訂年月による公開先選択を実PostgreSQLと原本XMLで検証する。"""
 
 import hashlib
+import json
 
 import pytest
 from backend.application.attachment_import.import_errors import (
     ImportConflict,
     InvalidAttachment,
 )
-from backend.application.indexing.index_errors import IndexSourceError
-from backend.infrastructure.persistence.registration_publisher import RegistrationInput
-from backend.infrastructure.persistence.registration_reader import (
-    read_registered_snapshot,
+from backend.infrastructure.persistence import postgres_schema as schema
+from backend.infrastructure.persistence.postgres_registration import (
+    PostgresRegistrationInput as RegistrationInput,
 )
+from backend.infrastructure.persistence.postgres_runtime import PostgresRuntime
+from backend.infrastructure.persistence.read_workers import ReadWorkers
 from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
-from backend.tests.integration.test_registration_publisher import publish, rows, source
-from backend.tests.integration.test_registration_publisher import publisher as publisher
+from backend.tests.integration.test_postgres_registration import pg_publisher, publish
 from backend.tests.presentation.test_registration_http import client as client
 from backend.tests.presentation.test_registration_http import post
+from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
+from backend.tests.support.registration_oracles import source
+from sqlalchemy import select, text
+
+publisher = pg_publisher
+
+
+def rows(publisher, statement):
+    with publisher.engine.connect() as connection:
+        return connection.execute(text(statement)).all()
+
+
+async def medicines(publisher):
+    workers = ReadWorkers()
+    try:
+        async with PostgresRuntime(
+            publisher.engine, workers=workers
+        ).acquire() as snapshot:
+            return await snapshot.medicine_reader.read_medicines()
+    finally:
+        await workers.aclose()
 
 
 def document(month, text, codes=("111111111111",), *, doc="test"):
@@ -30,12 +52,17 @@ def test_latest_revision_is_independent_of_upload_order(publisher, newest_first)
     first, last = (newer, older) if newest_first else (older, newer)
     first_result = publish(publisher, first)
     result = publish(publisher, last)
-    snapshot = read_registered_snapshot(publisher.index_path)
-    assert snapshot is not None
-    assert all(
-        isinstance(unit.payload["text"], str) and "新本文" in unit.payload["text"]
-        for unit in snapshot.units
-    )
+    with publisher.engine.connect() as connection:
+        units = (
+            connection.execute(
+                select(schema.units.c.payload_json).where(
+                    schema.units.c.version_id.in_(select(schema.active.c.version_id))
+                )
+            )
+            .scalars()
+            .all()
+        )
+    assert units and all("新本文" in json.loads(unit)["text"] for unit in units)
     assert rows(
         publisher,
         "SELECT source_sha256 FROM registration_receipts WHERE version_id IN (SELECT version_id FROM active_registrations)",
@@ -47,10 +74,11 @@ def test_latest_revision_is_independent_of_upload_order(publisher, newest_first)
     repeated = publish(publisher, newer)
     assert repeated.reused and repeated.active_yj_codes == ("111111111111",)
     assert repeated.generation_id == result.generation_id
-    publisher.recover()
+    publisher.cleanup()
 
 
-def test_each_yj_selects_its_own_latest_revision(publisher):
+@pytest.mark.asyncio
+async def test_each_yj_selects_its_own_latest_revision(publisher):
     publish(publisher, document("2026-06", "X最新版", doc="x"))
     publish(publisher, document("2025-01", "Y旧版", ("222222222222",), doc="y"))
     incoming = publish(
@@ -65,9 +93,8 @@ def test_each_yj_selects_its_own_latest_revision(publisher):
     )
     assert active[0][1].startswith("000001_x:")
     assert active[1][1] == f"{incoming.document_id}:{incoming.source_sha256}"
-    snapshot = read_registered_snapshot(publisher.index_path)
-    assert snapshot is not None
-    assert {m.yj_code.value for m in snapshot.medicines if m.yj_code is not None} == {
+    products = await medicines(publisher)
+    assert {m.yj_code.value for m in products if m.yj_code is not None} == {
         "111111111111",
         "222222222222",
     }
@@ -99,7 +126,9 @@ def test_missing_revision_is_rejected_before_any_registration(publisher):
         publish(publisher, value)
     assert failure.value.code == "missing_revision"
     assert rows(publisher, "SELECT COUNT(*) FROM registration_receipts") == [(0,)]
-    assert rows(publisher, "SELECT COUNT(*) FROM registration_state") == [(0,)]
+    assert rows(
+        publisher, "SELECT generation_id, sequence FROM registration_state"
+    ) == [(None, 0)]
 
 
 @pytest.mark.parametrize("reverse", [False, True])
@@ -145,28 +174,6 @@ def test_batch_receipts_keep_input_order_with_obsolete_ambiguity_and_retries(pub
     assert [r.registration_sequence for r in repeated] == [1, 2, 3]
     assert all(r.reused for r in repeated)
     assert rows(publisher, "SELECT COUNT(*) FROM registration_receipts") == [(3,)]
-
-
-def test_legacy_registration_order_is_not_silently_republished(publisher):
-    old = publish(publisher, document("2025-01", "旧版"))
-    newer = publish(publisher, document("2026-01", "新版"))
-    # Simulate an existing index whose active pointer was chosen by upload order.
-    import sqlite3
-
-    with sqlite3.connect(publisher.index_path) as connection:
-        connection.execute(
-            "UPDATE active_registrations SET version_id = ?",
-            (f"{old.document_id}:{old.source_sha256}",),
-        )
-    with pytest.raises(IndexSourceError, match="revision_policy_migration_required"):
-        read_registered_snapshot(publisher.index_path)
-    with pytest.raises(ImportConflict) as failure:
-        publisher.recover()
-    assert failure.value.code == "revision_policy_migration_required"
-    assert rows(publisher, "SELECT version_id FROM active_registrations") == [
-        (f"{old.document_id}:{old.source_sha256}",)
-    ]
-    assert newer.source_sha256 != old.source_sha256
 
 
 @pytest.mark.asyncio

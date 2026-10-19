@@ -6,6 +6,7 @@ import { Button } from "../../../shared/ui/Button";
 import { styles as layout } from "../../../shared/ui/PageLayout.styles";
 import { useAttachmentImport } from "../hooks/useAttachmentImport";
 import { styles } from "./ImportScreen.styles";
+import { ImportHistory } from "./ImportHistory";
 
 export function ImportScreen() {
   const { file, setFile, sending, result, setResult, error, setError, submit } =
@@ -140,6 +141,7 @@ export function ImportScreen() {
             )}
           </section>
         )}
+        <ImportHistory />
       </main>
     </div>
   );

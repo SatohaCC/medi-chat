@@ -29,10 +29,11 @@ pnpm --filter frontend exec playwright install chromium
 pnpm test:e2e
 ```
 
-`pnpm test:e2e` はconfigured索引のread-only readinessと実OS health（3212）、
+`pnpm test:e2e` はconfigured PostgreSQLのread-only readinessと実OS health（3212）、
 モックChromium（Next 3100）、実接続Chromium（Next 3110 / backend 3211）を
 順に検証します。いずれかの必須層が失敗すると全体が非0になります。
-実接続層は試験所有の一時SQLite・原本copyと固定外部SDKを使います。
+実接続層は専用`medi_chat_test`内の試験所有UUIDschemaと固定外部SDKを使います。
+owner/app接続を`TEST_DATABASE_URL`/`TEST_RUNTIME_DATABASE_URL`へ明示してください。
 運用データを書き換えず、実LLM通信は検証しません。
 単独実行は `pnpm --filter frontend test:e2e:mock` / `test:e2e:real` です。
 モック層の医薬品RESTとチャットWebSocketはPlaywright doubleであり、

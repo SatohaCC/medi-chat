@@ -10,10 +10,8 @@ from pathlib import Path
 
 import pytest
 from backend.tests.support.paths import PROJECT_ROOT
-from backend.tests.support.storage_fixtures import (
-    build_document_store,
-    write_structured_document,
-)
+from backend.tests.support.postgres_fixtures import pg_api as pg_api
+from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
 
 ROOT = PROJECT_ROOT
 
@@ -22,8 +20,7 @@ def process(
     code: list[str],
     cwd: Path,
     *,
-    structured: Path | None = None,
-    index: Path | None = None,
+    schema: str | None = None,
 ):
     environment = dict(os.environ)
     environment.update(
@@ -35,42 +32,42 @@ def process(
         GEMINI_API_KEY="",
         GOOGLE_API_KEY="",
     )
-    if structured is not None:
-        environment["MEDI_CHAT_STRUCTURED_DIR"] = str(structured)
-    if index is not None:
-        environment["MEDI_CHAT_INDEX_PATH"] = str(index)
-        environment["MEDI_CHAT_IMPORT_DIR"] = str(index.parent / "imports")
-        environment.pop("MEDI_CHAT_DATABASE_URL", None)
+    for key in (
+        "MEDI_CHAT_STRUCTURED_DIR",
+        "MEDI_CHAT_INDEX_PATH",
+        "MEDI_CHAT_IMPORT_DIR",
+        "MEDI_CHAT_IMPORT_ROOT",
+    ):
+        environment.pop(key, None)
+    if schema is not None:
+        environment["MEDI_CHAT_DATABASE_URL"] = os.environ["TEST_RUNTIME_DATABASE_URL"]
+        environment["MEDI_CHAT_DATABASE_SCHEMA"] = schema
+    environment["PYTHONUTF8"] = "1"
     return subprocess.run(
         [sys.executable, *code],
         cwd=cwd,
         env=environment,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         timeout=60,
     )
 
 
 def test_canonical_modules_and_existing_api_work_with_legacy_imports_forbidden(
     tmp_path,
+    pg_api,
+    pg_engines,
 ):
-    structured = write_structured_document(tmp_path)
-    index = tmp_path / "isolated.sqlite3"
-    build_document_store(structured, index)
-    from backend.tests.support.registration_runtime_fixtures import (
-        register_synthetic_prepared_index,
-    )
-
-    register_synthetic_prepared_index(structured, index)
     code = """
 import importlib, importlib.abc, sys
 class RejectLegacy(importlib.abc.MetaPathFinder):
-    forbidden = ("package_inserts", "data_tools", "backend.chat", "backend.retrieval", "backend.medicines", "backend.storage", "backend.jev")
+    forbidden = ("package_inserts", "data_tools", "backend.chat", "backend.retrieval", "backend.medicines", "backend.storage", "backend.jev", "backend.infrastructure.persistence.sqlite_engine", "backend.infrastructure.persistence.registration_publisher", "backend.infrastructure.persistence.attachment_import_store", "backend.infrastructure.persistence.evidence_reader", "backend.infrastructure.persistence.medicine_reader", "backend.infrastructure.persistence.generation_runtime", "backend.infrastructure.sources.file_index_source")
     def find_spec(self, fullname, path=None, target=None):
         if any(fullname == name or fullname.startswith(name + ".") for name in self.forbidden):
             raise RuntimeError("Legacy dependency attempted: " + fullname)
 sys.meta_path.insert(0, RejectLegacy())
-for module in ("backend.presentation.chat_service", "backend.infrastructure.cli.build_search_index", "backend.infrastructure.cli.structure_pmda_xml", "backend.infrastructure.cli.build_autocomplete_index"):
+for module in ("backend.presentation.chat_service", "backend.infrastructure.cli.manage_postgres", "backend.infrastructure.cli.structure_pmda_xml", "backend.infrastructure.cli.build_autocomplete_index"):
     importlib.import_module(module)
 from backend.main import create_app
 from fastapi.testclient import TestClient
@@ -86,7 +83,7 @@ with TestClient(create_app()) as client:
 assert not any(any(name == old or name.startswith(old + ".") for old in RejectLegacy.forbidden) for name in sys.modules)
 print("canonical independent API passed")
 """
-    result = process(["-c", code], tmp_path, structured=structured, index=index)
+    result = process(["-c", code], tmp_path, schema=pg_engines[2])
     assert result.returncode == 0, result.stdout + result.stderr
     assert "canonical independent API passed" in result.stdout
 
@@ -118,32 +115,26 @@ def test_xml_module_entrypoint_is_strict_in_single_and_batch_modes(
     assert bool(list(output.rglob("document.json"))) is not missing
 
 
-def test_index_module_entrypoint_uses_explicit_temporary_database(tmp_path):
-    structured = write_structured_document(tmp_path)
-    index = tmp_path / "built.sqlite3"
-    from backend.tests.infrastructure.persistence.test_alembic_migrations import (
-        _migrate_database,
-    )
-
-    _migrate_database(index, structured)
-    from backend.tests.support.registration_runtime_fixtures import (
-        register_synthetic_prepared_index,
-    )
-
-    register_synthetic_prepared_index(structured, index)
+def test_index_module_entrypoint_uses_explicit_postgres_schema(
+    tmp_path, pg_api, pg_engines
+):
     result = process(
         [
             "-m",
-            "backend.infrastructure.cli.build_search_index",
-            "--structured-dir",
-            str(structured),
-            "--index-path",
-            str(index),
+            "backend.infrastructure.cli.manage_postgres",
+            "--database-env",
+            "TEST_RUNTIME_DATABASE_URL",
+            "--schema",
+            pg_engines[2],
+            "rebuild",
+            "--confirm-schema",
+            pg_engines[2],
         ],
         tmp_path,
+        schema=pg_engines[2],
     )
     assert result.returncode == 0, result.stdout + result.stderr
-    assert index.is_file()
+    assert json.loads(result.stdout)["retained_versions"] == 1
 
 
 def test_autocomplete_module_keeps_cp932_active_rows_and_compact_contract(tmp_path):

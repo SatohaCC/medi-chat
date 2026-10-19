@@ -32,6 +32,24 @@ class ImportedRevision:
 
 
 @dataclass(frozen=True, slots=True)
+class ImportSummary:
+    document_id: str
+    source_sha256: str
+    filename: str | None
+    registration_sequence: int
+    revised_at: str
+    products: tuple[ImportedProduct, ...]
+    active_yj_codes: tuple[str, ...]
+    artifacts_deleted: bool
+
+
+@dataclass(frozen=True, slots=True)
+class ImportPage:
+    items: tuple[ImportSummary, ...]
+    total_count: int
+
+
+@dataclass(frozen=True, slots=True)
 class ImportResult:
     document_id: str
     source_sha256: str

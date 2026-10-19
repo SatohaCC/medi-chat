@@ -2,8 +2,6 @@
 
 from dataclasses import dataclass
 
-from backend.application.medicine.product_models import RegisteredMedicine
-
 from ...domain.foundation.json_types import JsonValue
 
 
@@ -22,17 +20,3 @@ class IndexUnit:
     payload: dict[str, JsonValue]
     query_text: str
     drug_name: str
-
-
-@dataclass(frozen=True)
-class SourceSnapshot:
-    documents: tuple[IndexDocument, ...]
-    medicines: tuple[RegisteredMedicine, ...]
-    units: tuple[IndexUnit, ...]
-    fingerprint: str
-
-
-@dataclass(frozen=True)
-class IndexBuildResult:
-    document_count: int
-    unit_count: int

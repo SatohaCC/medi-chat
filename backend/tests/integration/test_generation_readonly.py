@@ -1,202 +1,91 @@
-import socket
-import subprocess
+"""PG-021/035/048: healthy or cleanup-pending startup is strictly read-only."""
 
+import httpx
 import pytest
 from backend.application.attachment_import.import_errors import ImportCancelled
-from backend.config.database_settings import resolve_database_settings
-from backend.infrastructure.cli.configured_e2e_gate import run_gate
+from backend.infrastructure.persistence import postgres_schema as schema
 from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
-from backend.tests.integration.test_registration_publisher import publish, source
-from backend.tests.integration.test_registration_publisher import publisher as publisher
-from backend.tests.support.generation_os_server import main_server
+from backend.tests.integration.test_postgres_registration import (
+    pg_publisher as pg_publisher,
+)
+from backend.tests.integration.test_postgres_registration import publish
+from backend.tests.support.postgres_fixtures import pg_api as pg_api
+from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
+from backend.tests.support.postgres_observations import digest
+from backend.tests.support.registration_oracles import source
+from sqlalchemy import event, select
+from sqlalchemy.engine import Engine
 
 
-def test_tc118_healthy_os_health_does_not_write_database_or_registered_files(publisher):
-    publish(publisher, source("health不変本文"))
-    structured = publisher.store.root.parent / "structured"
-    structured.mkdir()
-    with main_server(publisher.index_path, publisher.store.root, structured) as (
-        client,
-        process,
-        _,
-    ):
-        assert process.poll() is None
-        before = publisher.index_path.read_bytes()
-        wal = publisher.index_path.with_name(publisher.index_path.name + "-wal")
-        wal_before = wal.read_bytes() if wal.exists() else None
-        files = {
-            path: path.read_bytes()
-            for path in publisher.store.root.rglob("*")
-            if path.is_file() and ".locks" not in path.parts
-        }
-        for _ in range(3):
-            assert client.get("/health").status_code == 200
-        assert publisher.index_path.read_bytes() == before
-        assert (wal.read_bytes() if wal.exists() else None) == wal_before
-        assert {path: path.read_bytes() for path in files} == files
-
-
-def test_tc118_configured_gate_rejects_cleanup_before_starting_main(
-    publisher, monkeypatch
+@pytest.mark.asyncio
+async def test_tc118_healthy_os_health_does_not_write_database_or_registered_files(
+    pg_api, pg_engines
 ):
-    publish(publisher, source("旧本文cleanup待ち"))
+    app = pg_api()
+    before = digest(pg_engines[0])
+    async with (
+        app.router.lifespan_context(app),
+        httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://test"
+        ) as client,
+    ):
+        for _ in range(3):
+            assert (await client.get("/health")).status_code == 200
+    assert digest(pg_engines[0]) == before
+
+
+@pytest.mark.asyncio
+async def test_pg021_pending_startup_has_no_cleanup_writes_then_explicit_maintenance_converges(
+    pg_api, pg_engines, pg_publisher
+):
+    publish(pg_publisher, source("テスト旧payload"))
     cancelled = False
 
-    def fault(phase):
+    def observe(point):
         nonlocal cancelled
-        if phase == "after_commit":
+        if point == "after_commit":
             cancelled = True
 
     def check():
         if cancelled:
             raise ImportCancelled()
 
-    publisher.fault = fault
-    value = source("新公開本文", revised_at="2026-11")
-    result = publisher.publish(
-        PmdaXmlDecoder().decode(value), value, check_cancel=check
-    )
+    pg_publisher.fault = observe
+    raw = source("テスト保留中の新版", revised_at="2026-11")
+    result = pg_publisher.publish(PmdaXmlDecoder().decode(raw), raw, check_cancel=check)
     assert result.status == "registered_cleanup_pending"
-    structured = publisher.store.root.parent / "structured"
-    structured.mkdir()
-    before = publisher.index_path.read_bytes()
-    files = {
-        path: path.read_bytes()
-        for path in publisher.store.root.rglob("*")
-        if path.is_file()
-    }
+    before = digest(pg_engines[0])
+    statements = []
 
-    def forbidden_spawn(*args, **kwargs):
-        raise AssertionError("configured gate started main before recovery rejection")
+    def trace(connection, cursor, statement, parameters, context, executemany):
+        statements.append(statement.lstrip().lower())
 
-    monkeypatch.setattr(subprocess, "Popen", forbidden_spawn)
-    with pytest.raises(RuntimeError, match="explicit.*recovery"):
-        run_gate(
-            resolve_database_settings(
-                index_path=publisher.index_path, structured_dir=structured
+    event.listen(Engine, "before_cursor_execute", trace)
+    try:
+        app = pg_api()
+        async with (
+            app.router.lifespan_context(app),
+            httpx.AsyncClient(
+                transport=httpx.ASGITransport(app=app), base_url="http://test"
+            ) as client,
+        ):
+            assert (await client.get("/health")).status_code == 200
+            saved = await client.get(
+                f"/api/attachment-imports/{result.document_id}/{result.source_sha256}"
             )
-        )
-    assert publisher.index_path.read_bytes() == before
-    assert {path: path.read_bytes() for path in files} == files
-
-
-def test_tc118_configured_uv_smoke_preserves_healthy_prepared_copy(
-    publisher, monkeypatch
-):
-    published = publish(publisher, source("configured health本文"))
-    structured = publisher.store.root.parent / "structured"
-    structured.mkdir()
-    monkeypatch.setenv("MEDI_CHAT_IMPORT_DIR", str(publisher.store.root))
-    before = publisher.index_path.read_bytes()
-    files = {
-        path: path.read_bytes()
-        for path in publisher.store.root.rglob("*")
-        if path.is_file()
-    }
-    with socket.socket() as reservation:
-        reservation.bind(("127.0.0.1", 0))
-        port = reservation.getsockname()[1]
-    observed = run_gate(
-        resolve_database_settings(
-            index_path=publisher.index_path, structured_dir=structured
-        ),
-        port=port,
+            assert saved.json()["status"] == "registered_cleanup_pending"
+    finally:
+        event.remove(Engine, "before_cursor_execute", trace)
+    assert not any(
+        value.startswith(("insert", "update", "delete", "create", "drop", "alter"))
+        for value in statements
     )
-    assert observed["os_health"] == {
-        "status": "ok",
-        "document_count": 1,
-        "unit_count": 1,
-        "generation_id": published.generation_id,
-    }
-    assert publisher.index_path.read_bytes() == before
-    assert {path: path.read_bytes() for path in files} == files
-
-
-def test_tc118_startup_race_refuses_recovery_without_changing_originals(
-    publisher, monkeypatch
-):
-    publish(publisher, source("競合前本文"))
-    structured = publisher.store.root.parent / "structured"
-    structured.mkdir()
-    monkeypatch.setenv("MEDI_CHAT_IMPORT_DIR", str(publisher.store.root))
-    original_spawn = subprocess.Popen
-    observed = {}
-
-    def racing_spawn(*args, **kwargs):
-        cancelled = False
-
-        def fault(phase):
-            nonlocal cancelled
-            if phase == "after_commit":
-                cancelled = True
-
-        def check():
-            if cancelled:
-                raise ImportCancelled()
-
-        publisher.fault = fault
-        value = source("競合後公開本文", revised_at="2026-11")
-        result = publisher.publish(
-            PmdaXmlDecoder().decode(value), value, check_cancel=check
-        )
-        assert result.status == "registered_cleanup_pending"
-        observed["database"] = publisher.index_path.read_bytes()
-        observed["files"] = {
-            path: path.read_bytes()
-            for path in publisher.store.root.rglob("*")
-            if path.is_file()
-        }
-        return original_spawn(*args, **kwargs)
-
-    monkeypatch.setattr(subprocess, "Popen", racing_spawn)
-    with socket.socket() as reservation:
-        reservation.bind(("127.0.0.1", 0))
-        port = reservation.getsockname()[1]
-    with pytest.raises(RuntimeError, match="explicit.*recovery"):
-        run_gate(
-            resolve_database_settings(
-                index_path=publisher.index_path, structured_dir=structured
-            ),
-            port=port,
-        )
-    assert publisher.index_path.read_bytes() == observed["database"]
-    assert {path: path.read_bytes() for path in observed["files"]} == observed["files"]
-
-
-def test_tc102_startup_retries_io_pending_without_changing_receipt(
-    publisher, monkeypatch
-):
-    from pathlib import Path
-
-    from backend.domain.attachment.identifiers import DocumentId
-
-    first = publish(publisher, source("startup cleanup旧本文"))
-    old_path = (
-        publisher.store._target(DocumentId(first.document_id), first.source_sha256)
-        / "source.xml"
-    )
-    original_unlink = Path.unlink
-
-    def fail_one(path, *args, **kwargs):
-        if path == old_path:
-            raise PermissionError("controlled startup cleanup failure")
-        return original_unlink(path, *args, **kwargs)
-
-    with monkeypatch.context() as patch:
-        patch.setattr(Path, "unlink", fail_one)
-        final = publish(publisher, source("startup現在本文", revised_at="2026-11"))
-        assert final.status == "registered_cleanup_pending"
-    assert old_path.is_file()
-    structured = publisher.store.root.parent / "structured"
-    structured.mkdir()
-    with main_server(publisher.index_path, publisher.store.root, structured) as (
-        client,
-        _,
-        _,
-    ):
-        assert client.get("/health").json()["generation_id"] == final.generation_id
-        assert not old_path.exists()
-        result = publisher.read_result(final.document_id, final.source_sha256)
-        assert result.status == "registered"
-        assert result.registration_sequence == final.registration_sequence
-        assert result.generation_id == final.generation_id
+    assert digest(pg_engines[0]) == before
+    pg_publisher.fault = lambda _: None
+    pg_publisher.cleanup()
+    after = pg_publisher.read_result(result.document_id, result.source_sha256)
+    assert after.status == "registered"
+    assert after.registration_sequence == result.registration_sequence
+    assert after.generation_id == result.generation_id
+    with pg_engines[0].connect() as connection:
+        assert len(connection.execute(select(schema.versions.c.version_id)).all()) == 2

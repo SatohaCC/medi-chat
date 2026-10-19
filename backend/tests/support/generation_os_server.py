@@ -5,23 +5,32 @@ import socket
 import subprocess
 import sys
 import time
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from pathlib import Path
 
 import httpx
+import psutil
 from backend.tests.support.paths import PROJECT_ROOT
+from backend.tests.support.postgres_fixtures import validate_test_database_url
 
 
 @contextmanager
-def main_server(index: Path, imports: Path, structured: Path):
+def main_server(schema: str, root: Path, *, performance: bool = False):
+    validate_test_database_url(os.environ["TEST_RUNTIME_DATABASE_URL"], runtime=True)
     environment = os.environ.copy()
     environment.update(
         PYTHON_DOTENV_DISABLED="1",
-        MEDI_CHAT_INDEX_PATH=str(index),
-        MEDI_CHAT_STRUCTURED_DIR=str(structured),
-        MEDI_CHAT_IMPORT_DIR=str(imports),
+        MEDI_CHAT_DATABASE_URL=os.environ["TEST_RUNTIME_DATABASE_URL"],
+        PG_WORKER_SCHEMA=schema,
     )
-    environment.pop("MEDI_CHAT_DATABASE_URL", None)
+    if performance:
+        environment["PG_PERF_DIRECTORY"] = str(root)
+    for key in (
+        "MEDI_CHAT_INDEX_PATH",
+        "MEDI_CHAT_STRUCTURED_DIR",
+        "MEDI_CHAT_IMPORT_DIR",
+    ):
+        environment.pop(key, None)
     for key in (
         "OPENAI_API_KEY",
         "GEMINI_API_KEY",
@@ -33,14 +42,19 @@ def main_server(index: Path, imports: Path, structured: Path):
     with socket.socket() as reservation:
         reservation.bind(("127.0.0.1", 0))
         port = reservation.getsockname()[1]
-    log_path = index.parent / f"owned-main-{port}.log"
+    log_path = root / f"owned-main-{port}.log"
     with log_path.open("w", encoding="utf-8") as log:
         process = subprocess.Popen(
             [
                 sys.executable,
                 "-m",
                 "uvicorn",
-                "backend.main:app",
+                (
+                    "backend.tests.support.postgres_performance_server:create_server"
+                    if performance
+                    else "backend.tests.support.postgres_application_server:create_server"
+                ),
+                "--factory",
                 "--host",
                 "127.0.0.1",
                 "--port",
@@ -72,6 +86,17 @@ def main_server(index: Path, imports: Path, structured: Path):
                     )
                 yield client, process, log_path
         finally:
+            # Windows venv python.exe can be a launcher owning the real interpreter.
+            # Capture only this child's descendants before stopping that launcher.
+            try:
+                descendants = psutil.Process(process.pid).children(recursive=True)
+            except psutil.NoSuchProcess:
+                descendants = []
+            for descendant in reversed(descendants):
+                with suppress(psutil.NoSuchProcess):
+                    descendant.terminate()
             if process.poll() is None:
                 process.terminate()
             process.wait(timeout=15)
+            _, alive = psutil.wait_procs(descendants, timeout=15)
+            assert not alive, "Owned interpreter descendants must exit"

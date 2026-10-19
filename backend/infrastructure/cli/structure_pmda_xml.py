@@ -11,14 +11,13 @@ import argparse
 import datetime
 import hashlib
 import json
+import os
 import re
-import sqlite3
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from ...project_paths import PROJECT_ROOT, resolve_project_path
-from ..package_insert_definitions.loader import get_package_insert_definitions
 from ..pmda_xml.transform import transform
 from ..pmda_xml.xml_nodes import relative_path
 
@@ -49,8 +48,8 @@ def main() -> int:
         action="store_true",
         help="Register through the common publisher; not an offline output conversion",
     )
-    arg_parser.add_argument("--index-path", type=Path, default=None)
-    arg_parser.add_argument("--import-dir", type=Path, default=None)
+    arg_parser.add_argument("--database-env", default=None)
+    arg_parser.add_argument("--schema", default="public")
     args = arg_parser.parse_args()
     if args.register:
         return _register(args)
@@ -78,7 +77,6 @@ def main() -> int:
                 else base_output_dir / xml_file.stem
             )
             try:
-                _guard_managed_output(target_dir, args.index_path, args.import_dir)
                 res = transform(xml_file, target_dir)
                 results.append(
                     {
@@ -124,7 +122,6 @@ def main() -> int:
             PROJECT_ROOT / "data/pmda/structured" / f"{match.group(1)}_{match.group(2)}"
         )
     try:
-        _guard_managed_output(args.output_dir, args.index_path, args.import_dir)
         result = transform(args.xml, args.output_dir)
     except (ET.ParseError, OSError, ValueError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
@@ -139,56 +136,14 @@ def main() -> int:
     return 0
 
 
-def _guard_managed_output(
-    target: Path, index_path: Path | None, import_dir: Path | None
-) -> None:
-    from ...config.database_settings import resolve_database_settings
-    from ...config.import_settings import resolve_import_directory
-
-    resolved = resolve_project_path(target)
-    root = (
-        resolve_project_path(import_dir) if import_dir else resolve_import_directory()
-    )
-    if resolved.is_relative_to(root):
-        raise ValueError("Offline conversion cannot overwrite managed import artifacts")
-    index = resolve_database_settings(index_path=index_path).index_path
-    if not index.is_file():
-        return
-    with sqlite3.connect(index.as_uri() + "?mode=ro", uri=True) as connection:
-        if not connection.execute(
-            "SELECT name FROM sqlite_master WHERE name='registration_owned_files'"
-        ).fetchone():
-            return
-        owned = [
-            Path(row[0])
-            for row in connection.execute(
-                "SELECT file_id FROM registration_owned_files"
-            )
-        ]
-    for name in (
-        "document.json",
-        "search_units.jsonl",
-        "validation.json",
-        "manifest.json",
-    ):
-        if resolved / name in owned:
-            raise ValueError(
-                "Offline conversion cannot overwrite managed registration artifacts"
-            )
-
-
 def _register(args: argparse.Namespace) -> int:
+    from sqlalchemy.exc import SQLAlchemyError
+
     from ...application.attachment_import.import_errors import AttachmentImportError
-    from ...config.database_settings import resolve_database_settings
-    from ...config.import_settings import (
-        resolve_import_directory,
-        resolve_original_directory,
-    )
-    from ..composition.index_verifier import verify_schema_readiness
-    from ..persistence.attachment_import_store import FileAttachmentImportStore
-    from ..persistence.registration_publisher import SqliteRegistrationPublisher
-    from ..pmda_xml.decoder import PmdaXmlDecoder
-    from ..pmda_xml.safe_parser import parse_source
+    from ..persistence.postgres_engine import create_postgres_engine
+    from ..persistence.postgres_registration import PostgresRegistrationPublisher
+    from ..pmda_xml.artifact_mapping import PmdaArtifactEncoder
+    from .manage_postgres import load_inputs, load_single_input
 
     if args.output_dir is not None:
         print(
@@ -196,84 +151,58 @@ def _register(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
         return 1
-    settings = resolve_database_settings(index_path=args.index_path)
+    if not args.database_env or not os.environ.get(args.database_env):
+        print(
+            "ERROR: --register requires an explicit --database-env target",
+            file=sys.stderr,
+        )
+        return 1
+    engine = None
     try:
-        verify_schema_readiness(settings.index_path)
-        with sqlite3.connect(
-            settings.index_path.as_uri() + "?mode=ro", uri=True
-        ) as connection:
-            if not connection.execute(
-                "SELECT generation_id FROM registration_state"
-            ).fetchone():
-                raise ValueError(
-                    "initial_registration_required: run initialize_registrations first"
-                )
-        paths = (
-            sorted(resolve_project_path(args.source_dir).rglob("*.xml"))
+        inputs = (
+            load_inputs(args.source_dir)
             if args.source_dir is not None
-            else [resolve_project_path(args.xml)]
+            else (load_single_input(args.xml),)
             if args.xml is not None
-            else []
+            else ()
         )
-        if not paths:
+        if not inputs:
             raise ValueError("No original XML files selected")
-        xml_settings = get_package_insert_definitions().xml_settings
-        publisher = SqliteRegistrationPublisher(
-            settings.index_path,
-            FileAttachmentImportStore(
-                resolve_project_path(args.import_dir)
-                if args.import_dir is not None
-                else resolve_import_directory()
-            ),
-            xml_settings=xml_settings,
-            allowed_roots=(
-                settings.structured_dir,
-                resolve_original_directory(),
-            ),
+        engine = create_postgres_engine(
+            os.environ[args.database_env], schema=args.schema
         )
-        results = []
-        for path in paths:
-            source = path.read_bytes()
-            root, _ = parse_source(source)
-            assets = {}
-            for element in root.iter():
-                filename = element.attrib.get("gfname")
-                if not filename:
-                    continue
-                figure = path.parent / filename
-                if (
-                    ".." in Path(filename).parts
-                    or Path(filename).is_absolute()
-                    or figure.is_symlink()
-                    or not figure.resolve().is_relative_to(path.parent)
-                ):
-                    raise ValueError("Unsafe strict figure reference")
-                if figure.is_file():
-                    assets[filename] = figure.read_bytes()
-            decoded = PmdaXmlDecoder(
-                xml_settings=xml_settings,
-                assets=assets,
-                strict_assets=True,
-                source_filename=path.as_posix(),
-            ).decode(source)
-            result = publisher.publish(decoded, source)
-            results.append(
+        publisher = PostgresRegistrationPublisher(engine, encoder=PmdaArtifactEncoder())
+        results = publisher.publish_inputs(inputs)
+        print(
+            json.dumps(
                 {
-                    "document_id": result.document_id,
-                    "status": result.status,
-                    "reused": result.reused,
-                    "registration_sequence": result.registration_sequence,
-                    "generation_id": result.generation_id,
-                }
+                    "registered": [
+                        {
+                            "document_id": result.document_id,
+                            "status": result.status,
+                            "reused": result.reused,
+                            "registration_sequence": result.registration_sequence,
+                            "generation_id": result.generation_id,
+                        }
+                        for result in results
+                    ]
+                },
+                ensure_ascii=False,
             )
-        print(json.dumps({"registered": results}, ensure_ascii=False))
+        )
         return 0
     except AttachmentImportError as error:
         print(f"ERROR: {error.phase}/{error.code}: {error.message}", file=sys.stderr)
         return 1
-    except (RuntimeError, ValueError, OSError, sqlite3.DatabaseError) as error:
-        print(f"ERROR: {error}", file=sys.stderr)
+    except ValueError, OSError, SQLAlchemyError:
+        print(
+            "ERROR: PostgreSQL registration refused; verify the explicit target and source inventory",
+            file=sys.stderr,
+        )
         return 1
+    finally:
+        if engine is not None:
+            engine.dispose()
 
 
 if __name__ == "__main__":

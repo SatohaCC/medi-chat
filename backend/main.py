@@ -10,7 +10,7 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .config.database_settings import resolve_database_settings
+from .config.database_settings import resolve_postgres_database_settings
 from .config.runtime_environment import load_runtime_environment
 from .infrastructure.composition.app_lifespan import create_app_lifespan
 from .infrastructure.intent.jev_classifier import JevIntentClassifier
@@ -20,9 +20,6 @@ from .infrastructure.morphology.janome_keyword_extractor import (
 from .infrastructure.morphology.keyword_extraction import get_janome_tokenizer
 from .infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,
-)
-from .infrastructure.persistence.registration_publisher import (
-    SqliteRegistrationPublisher,
 )
 from .presentation.chat_service import AppChatService
 
@@ -41,24 +38,27 @@ def create_app(
     database_url: str | None = None,
     import_directory: Path | None = None,
     _readonly_probe: bool = False,
+    _database_schema: str | None = None,
 ) -> FastAPI:
     """FastAPI アプリケーションインスタンスを生成・設定する"""
     definitions = get_package_insert_definitions()
-    settings = resolve_database_settings(
-        structured_dir=structured_dir,
-        index_path=index_path,
-        database_url=database_url,
-    )
+    if (
+        structured_dir is not None
+        or index_path is not None
+        or import_directory is not None
+    ):
+        raise ValueError("Legacy runtime file settings are not supported")
+    settings = resolve_postgres_database_settings(database_url=database_url)
     lifespan = create_app_lifespan(
         definitions=definitions,
         settings=settings,
         chat_service_factory=AppChatService,
         llm_provider_factory=llm_provider_factory,
-        import_directory=import_directory,
         readonly_probe=_readonly_probe,
         intent_classifier_cls=JevIntentClassifier,
         keyword_extractor_cls=JanomeKeywordExtractor,
-        publisher_cls=SqliteRegistrationPublisher,
+        database_schema=_database_schema
+        or os.environ.get("MEDI_CHAT_DATABASE_SCHEMA", "public"),
         janome_initializer=get_janome_tokenizer,
     )
 

@@ -1,83 +1,56 @@
 """アプリ・CLI・Alembicで共有するDB設定の契約。"""
 
-import logging
 import os
 from collections.abc import Mapping
-from dataclasses import dataclass
-from pathlib import Path
+from dataclasses import dataclass, field
 
-from sqlalchemy.engine import URL, make_url
-
-from ..project_paths import PROJECT_ROOT, resolve_project_path
-
-logger = logging.getLogger(__name__)
+from sqlalchemy.engine import make_url
+from sqlalchemy.exc import ArgumentError
 
 
 @dataclass(frozen=True)
-class DatabaseSettings:
-    """解決済みの構造化データ・索引パスと接続URL。"""
-
-    structured_dir: Path
-    index_path: Path
-    database_url: str
+class PostgresDatabaseSettings:
+    database_url: str = field(repr=False)
 
 
-def resolve_database_settings(
-    *,
-    structured_dir: Path | None = None,
-    index_path: Path | None = None,
-    database_url: str | None = None,
-    environ: Mapping[str, str] | None = None,
-) -> DatabaseSettings:
-    """明示指定、環境設定、構造化データ配下の既定値の順で解決する。"""
+def resolve_postgres_database_settings(
+    *, database_url: str | None = None, environ: Mapping[str, str] | None = None
+) -> PostgresDatabaseSettings:
     environment = os.environ if environ is None else environ
-    source_dir = _resolve_structured_dir(structured_dir, environment)
-    if index_path is None and database_url is None:
-        environment_path = environment.get("MEDI_CHAT_INDEX_PATH")
-        index_path = Path(environment_path) if environment_path is not None else None
-        database_url = environment.get("MEDI_CHAT_DATABASE_URL")
-
-    url_path = None
-    if database_url is not None:
-        parsed_url = make_url(database_url)
-        backend_name = parsed_url.get_backend_name()
-        if backend_name != "sqlite":
-            raise ValueError(
-                f"Unsupported database backend {backend_name}: only SQLite is supported"
-            )
-        url_path = resolve_project_path(Path(parsed_url.database or ""))
-    if index_path is not None:
-        database_path = resolve_project_path(index_path)
-        if url_path is not None and url_path != database_path:
-            raise ValueError(
-                f"Conflicting database URL and index path: {url_path} != {database_path}"
-            )
-    elif url_path is not None:
-        database_path = url_path
-    else:
-        database_path = source_dir / ".chat-search.sqlite3"
-
-    resolved_url = URL.create("sqlite", database=database_path.as_posix())
-    settings = DatabaseSettings(
-        structured_dir=source_dir,
-        index_path=database_path,
-        database_url=resolved_url.render_as_string(hide_password=False),
+    if any(
+        key in environment
+        for key in (
+            "MEDI_CHAT_INDEX_PATH",
+            "MEDI_CHAT_IMPORT_ROOT",
+            "MEDI_CHAT_IMPORT_DIR",
+            "MEDI_CHAT_STRUCTURED_DIR",
+        )
+    ):
+        raise ValueError("Legacy runtime file settings are not supported")
+    value = database_url or environment.get("MEDI_CHAT_DATABASE_URL")
+    if not value:
+        raise ValueError("An explicit PostgreSQL database URL is required")
+    try:
+        url = make_url(value)
+    except ArgumentError, ValueError:
+        raise ValueError("Invalid PostgreSQL database configuration") from None
+    allowed = {"localhost", "127.0.0.1", "::1"}
+    if environment.get("CI", "").lower() in {"true", "1"}:
+        allowed.update(
+            host.strip()
+            for host in environment.get("MEDI_CHAT_TEST_DATABASE_HOSTS", "").split(",")
+            if host.strip()
+        )
+    if (
+        url.drivername not in {"postgresql", "postgresql+psycopg"}
+        or url.host not in allowed
+        or not url.database
+        or not url.username
+        or url.query
+    ):
+        raise ValueError(
+            "PostgreSQL requires a named database and an allowed host without URL options"
+        )
+    return PostgresDatabaseSettings(
+        url.set(drivername="postgresql+psycopg").render_as_string(hide_password=False)
     )
-    logger.info("Selected SQLite index: %s", settings.index_path)
-    return settings
-
-
-def _resolve_structured_dir(
-    structured_dir: Path | None, environ: Mapping[str, str]
-) -> Path:
-    if structured_dir is not None:
-        return resolve_project_path(structured_dir)
-    environment_dir = environ.get("MEDI_CHAT_STRUCTURED_DIR")
-    if environment_dir is not None:
-        return resolve_project_path(Path(environment_dir))
-    candidates = [
-        PROJECT_ROOT / "data" / "pmda" / "structured",
-        PROJECT_ROOT / "structured",
-    ]
-    default_dir = next((path for path in candidates if path.exists()), candidates[0])
-    return default_dir.resolve()

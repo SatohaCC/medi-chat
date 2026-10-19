@@ -20,8 +20,12 @@
     "typecheck:frontend": "pnpm --filter frontend typecheck",
     "typecheck:python": "pyright && pnpm --filter backend typecheck",
     "build": "pnpm --filter frontend build",
-    "build:data": "pnpm --filter backend build-data && pnpm --filter backend build-index",
-    "build:index": "pnpm --filter backend build-index"
+    "build:data": "pnpm --filter backend build-data",
+    "db:migrate": "pnpm --filter backend db:migrate",
+    "db:initialize": "pnpm --filter backend db:initialize",
+    "db:rebuild": "pnpm --filter backend db:rebuild",
+    "db:maintenance": "pnpm --filter backend db:maintenance",
+    "db:export": "pnpm --filter backend db:export"
   },
   "devDependencies": {
     "pyright": "^1.1.414"

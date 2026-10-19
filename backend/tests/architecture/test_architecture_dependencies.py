@@ -308,15 +308,7 @@ def _allowed_module(module: str, *, caller: str) -> bool:
             if target_pkg in {"sources", "llm", "intent", "morphology"}:
                 return False
             if target_pkg == "pmda_xml":
-                return (
-                    caller
-                    in {
-                        "backend.infrastructure.persistence.generation_runtime",
-                        "backend.infrastructure.persistence.registration_publisher",
-                    }
-                    and len(module_parts) >= 4
-                    and module_parts[3] in {"decoder", "artifact_mapping"}
-                )
+                return False
         if caller_pkg in EXTERNAL_ADAPTER_PACKAGES:
             if target_pkg in {"persistence", "sources"}:
                 return False
@@ -683,8 +675,8 @@ def test_new_public_module_paths_are_importable_without_legacy_packages() -> Non
         "backend.presentation.chat_service",
         "backend.presentation.chat_routes",
         "backend.infrastructure.llm.provider_factory",
-        "backend.infrastructure.composition.index_verifier",
-        "backend.infrastructure.cli.build_search_index",
+        "backend.infrastructure.persistence.postgres_readiness",
+        "backend.infrastructure.cli.manage_postgres",
     )
     for module in public_modules:
         importlib.import_module(module)
@@ -744,23 +736,12 @@ def test_dependency_check_detects_forbidden_imports(
         assert violations == [path.as_posix() + expected_diagnostic]
 
 
-def test_legacy_facades_are_not_required(tmp_path: Path) -> None:
-    """旧配置facade（backend.storage等）に依存せず、公開入口が正常動作することを検証する。"""
-    from backend.infrastructure.persistence.index_writer import SqlAlchemyIndexWriter
-    from backend.infrastructure.persistence.sqlite_engine import create_sqlite_engine
-    from backend.infrastructure.sources.file_index_source import FileIndexSourceReader
-    from backend.main import create_app
-    from backend.tests.infrastructure.persistence.test_alembic_migrations import (
-        _migrate_database,
-    )
-    from backend.tests.support.storage_fixtures import write_structured_document
-    from fastapi.testclient import TestClient
-    from sqlalchemy.engine import URL
-
+def test_legacy_facades_are_not_required() -> None:
+    """Old facade imports are absent; actual PG API smoke lives in integration."""
     # 1. backend.main および CLI 入口が backend.storage を参照していないこと
     for file_path in (
         BACKEND_ROOT / "main.py",
-        BACKEND_ROOT / "infrastructure" / "cli" / "build_search_index.py",
+        BACKEND_ROOT / "infrastructure" / "cli" / "manage_postgres.py",
     ):
         source = file_path.read_text(encoding="utf-8")
         tree = ast.parse(source, filename=str(file_path))
@@ -772,98 +753,6 @@ def test_legacy_facades_are_not_required(tmp_path: Path) -> None:
                 module = node.module or ""
                 assert "backend.storage" not in module
                 assert not (node.level == 1 and module.startswith("storage"))
-
-    # 2. Smoke: 準備済み索引で backend.main:create_app が正常起動し各公開入口が応答すること
-    structured = write_structured_document(tmp_path)
-    index_path = tmp_path / "smoke.sqlite3"
-    _migrate_database(index_path, structured)
-    engine = create_sqlite_engine(
-        URL.create("sqlite", database=index_path.as_posix()).render_as_string(
-            hide_password=False
-        )
-    )
-    try:
-        SqlAlchemyIndexWriter(engine).replace(
-            FileIndexSourceReader(structured).read_snapshot()
-        )
-    finally:
-        engine.dispose()
-
-    # v5 prepared index includes explicit initial registration, never startup DDL.
-
-    from backend.infrastructure.persistence.attachment_import_store import (
-        FileAttachmentImportStore,
-    )
-    from backend.infrastructure.persistence.registration_publisher import (
-        RegistrationInput,
-        SqliteRegistrationPublisher,
-    )
-    from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
-    from backend.tests.support.attachment_import_fixtures import xml_source
-
-    raw = xml_source(
-        "<AdverseEvents><Detail><Lang>頭痛に注意してください。記載0 記載1 記載2</Lang></Detail></AdverseEvents>"
-    )
-    raw = (
-        raw.replace(b"000001", b"test")
-        .replace(
-            b"<PackageInsertNo>test</PackageInsertNo>",
-            b"<PackageInsertNo>001</PackageInsertNo>",
-        )
-        .replace(b"111111111111", b"1234567A0000")
-        .replace("製品A".encode(), "テスト薬".encode())
-    )
-    original = tmp_path / "source.xml"
-    original.write_bytes(raw)
-    document = structured / "test_001" / "document.json"
-    units = structured / "test_001" / "search_units.jsonl"
-    SqliteRegistrationPublisher(
-        index_path,
-        FileAttachmentImportStore(tmp_path / "imports"),
-        allowed_roots=(tmp_path,),
-    ).publish_inputs(
-        (
-            RegistrationInput(
-                PmdaXmlDecoder().decode(raw),
-                raw,
-                (original, document, units),
-                original,
-            ),
-        ),
-        initial=True,
-    )
-
-    app = create_app(structured, index_path, import_directory=tmp_path / "imports")
-    client = TestClient(app)
-    with client:
-        # /api プローブ
-        res_api = client.get("/api")
-        assert res_api.status_code == 200
-        assert res_api.json() == {"status": "ok"}
-
-        # /health
-        res_health = client.get("/health")
-        assert res_health.status_code == 200
-        assert res_health.json()["status"] == "ok"
-
-        # /api/medicines
-        res_med = client.get("/api/medicines")
-        assert res_med.status_code == 200
-        assert len(res_med.json()["items"]) >= 1
-
-        # /api/chat
-        res_chat = client.post(
-            "/api/chat",
-            json={"message": "頭痛の薬", "product_yj_codes": ["999999999999"]},
-        )
-        assert res_chat.status_code == 200
-        assert res_chat.json()["needs_clarification"] is True
-
-        # /ws/chat
-        with client.websocket_connect("/ws/chat") as ws:
-            ws.send_json({"type": "ping"})
-            pong = ws.receive_json()
-            assert pong == {"type": "pong"}
 
 
 @pytest.mark.parametrize(
@@ -985,66 +874,6 @@ def test_domain_has_no_compatibility_facades() -> None:
     assert all(not path.exists() for path in removed_paths)
 
 
-def test_public_modules_and_api_work_without_legacy_packages_in_subprocess(
-    tmp_path: Path,
-) -> None:
-    import os
-    import subprocess
-
-    from backend.tests.support.storage_fixtures import (
-        build_document_store,
-        write_structured_document,
-    )
-
-    structured = write_structured_document(tmp_path)
-    index_path = tmp_path / "isolated.sqlite3"
-    build_document_store(structured, index_path)
-    from backend.tests.support.registration_runtime_fixtures import (
-        register_synthetic_prepared_index,
-    )
-
-    register_synthetic_prepared_index(structured, index_path)
-    for package in ("chat", "retrieval", "medicines", "storage", "jev"):
-        assert not (BACKEND_ROOT / package).exists()
-    environment = dict(os.environ)
-    environment.update(
-        PYTHON_DOTENV_DISABLED="1",
-        TYPESAFE_API_KEY="",
-        JEV_API_KEY="",
-        OPENAI_API_KEY="",
-        GEMINI_API_KEY="",
-        GOOGLE_API_KEY="",
-    )
-    code = """
-import importlib, sys
-from pathlib import Path
-from backend.main import create_app
-from fastapi.testclient import TestClient
-for module in ("backend.presentation.chat_service", "backend.infrastructure.cli.build_search_index"):
-    importlib.import_module(module)
-with TestClient(create_app(Path(sys.argv[1]), Path(sys.argv[2]))) as client:
-    assert client.get("/api").json() == {"status": "ok"}
-    assert client.get("/health").json()["status"] == "ok"
-    assert len(client.get("/api/medicines").json()["items"]) == 1
-    response = client.post("/api/chat", json={"message": "頭痛", "product_yj_codes": ["999999999999"]})
-    assert response.status_code == 200 and response.json()["needs_clarification"]
-    with client.websocket_connect("/api/ws") as socket:
-        socket.send_json({"type": "ping"})
-        assert socket.receive_json() == {"type": "pong"}
-print("canonical modules and API smoke passed")
-"""
-    process = subprocess.run(
-        [sys.executable, "-c", code, str(structured), str(index_path)],
-        cwd=BACKEND_ROOT.parent,
-        env=environment,
-        capture_output=True,
-        text=True,
-        timeout=30,
-    )
-    assert process.returncode == 0, process.stdout + process.stderr
-    assert "canonical modules and API smoke passed" in process.stdout
-
-
 @pytest.mark.parametrize(
     ("module_name", "source", "line", "dependency"),
     [
@@ -1133,10 +962,10 @@ print("canonical modules and API smoke passed")
             "import backend.domain.retrieval.repositories.EvidenceRepository",
         ),
         (
-            "backend.infrastructure.persistence.registration_publisher",
-            "from ..composition.index_verifier import verify_schema_readiness\n",
+            "backend.infrastructure.persistence.postgres_registration",
+            "from ..composition.app_lifespan import create_app_lifespan\n",
             1,
-            "import backend.infrastructure.composition.index_verifier.verify_schema_readiness",
+            "import backend.infrastructure.composition.app_lifespan.create_app_lifespan",
         ),
         (
             "backend.domain.retrieval.primitives",
@@ -1169,10 +998,10 @@ print("canonical modules and API smoke passed")
             "import backend.domain.retrieval.repositories",
         ),
         (
-            "backend.infrastructure.persistence.registration_publisher",
-            "from ..composition import index_verifier\n",
+            "backend.infrastructure.persistence.postgres_registration",
+            "from ..composition import app_lifespan\n",
             1,
-            "import backend.infrastructure.composition.index_verifier",
+            "import backend.infrastructure.composition.app_lifespan",
         ),
         (
             "backend.presentation.request_logging",
@@ -1241,16 +1070,16 @@ print("canonical modules and API smoke passed")
             "import backend.application.indexing.attachment_projection.project_attachment",
         ),
         (
-            "backend.infrastructure.persistence.registration_publisher",
-            "from ..sources.file_index_source import FileIndexSourceReader\n",
+            "backend.infrastructure.persistence.postgres_registration",
+            "from ..sources.yj_csv import project_yj_row\n",
             1,
-            "import backend.infrastructure.sources.file_index_source.FileIndexSourceReader",
+            "import backend.infrastructure.sources.yj_csv.project_yj_row",
         ),
         (
-            "backend.infrastructure.persistence.registration_publisher",
-            'def f(x: "backend.infrastructure.sources.file_index_source.FileIndexSourceReader") -> None:\n    pass\n',
+            "backend.infrastructure.persistence.postgres_registration",
+            'def f(x: "backend.infrastructure.sources.yj_csv.project_yj_row") -> None:\n    pass\n',
             1,
-            "annotation backend.infrastructure.sources.file_index_source.FileIndexSourceReader",
+            "annotation backend.infrastructure.sources.yj_csv.project_yj_row",
         ),
         (
             "backend.infrastructure.llm.provider_factory",
@@ -1326,12 +1155,12 @@ print("canonical modules and API smoke passed")
         ),
         (
             "backend.infrastructure.evidence_mapping",
-            "from .persistence.evidence_reader import SqlAlchemyEvidenceReader\n",
+            "from .persistence.postgres_runtime import PostgresRuntime\n",
             1,
-            "import backend.infrastructure.persistence.evidence_reader.SqlAlchemyEvidenceReader",
+            "import backend.infrastructure.persistence.postgres_runtime.PostgresRuntime",
         ),
         (
-            "backend.infrastructure.persistence.attachment_import_store",
+            "backend.infrastructure.persistence.postgres_registration",
             "from ..pmda_xml.artifact_mapping import result_from_dict\n",
             1,
             "import backend.infrastructure.pmda_xml.artifact_mapping.result_from_dict",
@@ -1487,23 +1316,23 @@ def test_import_linter_contracts_detect_submodule_violations() -> None:
         ),
         (
             "Persistence does not depend on input sources",
-            "backend.infrastructure.persistence.registration_publisher",
-            "backend.infrastructure.sources.file_index_source",
+            "backend.infrastructure.persistence.postgres_registration",
+            "backend.infrastructure.sources.yj_csv",
         ),
         (
-            "Persistence does not depend on non-XML technology adapters and isolates XML fallback",
-            "backend.infrastructure.persistence.attachment_import_store",
+            "Persistence does not depend on other technology adapters",
+            "backend.infrastructure.persistence.postgres_registration",
             "backend.infrastructure.pmda_xml.artifact_mapping",
         ),
         (
-            "Persistence does not depend on non-XML technology adapters and isolates XML fallback",
-            "backend.infrastructure.persistence.evidence_reader",
+            "Persistence does not depend on other technology adapters",
+            "backend.infrastructure.persistence.postgres_runtime",
             "backend.infrastructure.intent.jev_classifier",
         ),
         (
             "Infrastructure adapters do not depend on composition or CLI",
-            "backend.infrastructure.persistence.registration_publisher",
-            "backend.infrastructure.composition.index_verifier",
+            "backend.infrastructure.persistence.postgres_registration",
+            "backend.infrastructure.composition.app_lifespan",
         ),
         (
             "Package insert definitions do not depend on other infrastructure adapters",
@@ -1513,7 +1342,7 @@ def test_import_linter_contracts_detect_submodule_violations() -> None:
         (
             "Infrastructure payload mappers do not depend on adapter packages",
             "backend.infrastructure.evidence_mapping",
-            "backend.infrastructure.persistence.evidence_reader",
+            "backend.infrastructure.persistence.postgres_runtime",
         ),
         (
             "External technology adapters are independent",

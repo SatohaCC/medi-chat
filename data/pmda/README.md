@@ -1,13 +1,13 @@
 # PMDA添付文書 データ作成・構造化ツール（backend CLI）
 
-医薬品医療機器総合機構（PMDA）が公開する医療用医薬品添付文書（XML形式）をパースし、検索・対話AI向けの構造化JSONおよびSQLite全文検索（FTS5）インデックスを生成するツール群です。
+医薬品医療機器総合機構（PMDA）が公開する医療用医薬品添付文書（XML形式）をパースし、確認用の構造化JSONを生成し、明示登録ではPostgreSQLへ原本bytes・完全構造・検索投影を保存するツール群です。
 
 ## ディレクトリ構成
 
 - `originals/`: 元XMLと図（移行時はbyte不変）
-- `structured/`: 既存検索用document/JSONL/validation/manifest/SQLite
-- `imports/`: Web取り込み不変版と登録世代の検索成果物。登録成功時にSQLiteのactive世代と候補へ即時反映します。
-- `migration-artifacts/`: 元ignored一時成果物の保全先
+- `structured/`: 既存の回帰テストが比較に使うdocument/JSONL。runtimeは読みません。不要な旧SQLite・索引・validation出力・重複辞書は削除済みです。
+- `current-v4/`: 原本フォルダと重複しない取り込みXMLを1件だけ保持。旧SQLite・世代・構造化出力は削除済みで、runtimeは読みません。
+- 過去の`imports/`（原本は`originals/`とbyte一致）と`migration-artifacts/`（pytestキャッシュ）は削除済みです。
 - 変換正本: `backend.infrastructure.pmda_xml`、入口: `backend.infrastructure.cli.structure_pmda_xml`
 - 辞書の純粋変換: `backend.application.medicine.autocomplete`、CSV境界: `backend.infrastructure.sources.yj_csv`
 
@@ -41,36 +41,23 @@ uv run --project backend --locked python -m backend.infrastructure.cli.structure
 - 各文書の `document.json`: 原文XMLの階層、メタデータ、節索引
 - 各文書の `search_units.jsonl`: 項目番号ごとに1行のJSON（本文・表・文脈見出し・出典）
 - 各文書の `validation.json`: 原文の網羅性、参照先、図ファイルの検証結果
-- 全文検索用SQLiteインデックスはバックエンドが構造化データから作成
+- 公開登録の検索投影はPostgreSQL内で保持し、offline JSONLを読み戻しません。
 
-検索単位は文書キーと項目番号の組ごとに1レコードです。例えば `11.2` の
-分類・頻度・副作用セル、表の行、内部の箇条書きは同じレコードの本文へ収めます。
-`10.1` と `10.2` のような別項目は分け、親項目にはその項目自身の本文だけを残します。
-子項目だけを持つ空の親項目は出力しません。`document.json` の原文構造は保持します。
+検索単位は文書版と大項目番号ごとです。子項目の本文・表・見出し・文脈を親の大項目レコードへ順序付きで保持し、10.1/10.2の検索でも大項目10を返します。完全Domain構造は子階層や参照・表cell・図を別途保持します。
 
-上記のoffline変換は、JSONLを再生成しても公開検索へ登録しません。登録済み版の所有artifactへの直接上書きは拒否します。
-新しいXMLを公開する場合はWeb取り込みか明示登録CLIを使用してください。移行・初期登録済みDBに対する登録CLIの例です。
+`pnpm build:data`はoffline変換だけです。公開登録は明示migration・初期登録後のWebまたは次のCLIを使います。
 
 ```bash
-uv run --project backend --locked python -m backend.infrastructure.cli.structure_pmda_xml \
-  copy/new.xml --register --index-path copy/index.sqlite3 --import-dir copy/imports
+uv run --project backend --locked python -m backend.infrastructure.cli.structure_pmda_xml new.xml --register --database-env MEDI_CHAT_DATABASE_URL
 ```
 
-`pnpm build:data`も登録modeです。`build_search_index`は既に登録されたactive集合を検証・再構築する入口であり、未登録XMLの自動走査や旧版の再登録は行いません。
-
-```bash
-uv run --project backend python -m backend.infrastructure.cli.build_search_index \
-  --structured-dir data/pmda/structured \
-  --index-path data/pmda/structured/.chat-search.sqlite3
-```
-
-索引の整合判定には、登録されたactive集合の実内容を使います。未準備・不整合では起動を拒否し、自動再構築はしません。
+PGの完全構造から検索投影を再構築する場合は`pnpm db:rebuild`を明示します。原本再decode・旧JSONL再走査は行わず、原本/図・receipt・公開世代は保持します。未準備・不整合では起動を拒否し、起動時に自動migration/初期登録/清掃/再構築は行いません。
 
 ## Web取り込みと版の置換
 
-`/imports`と`POST /api/attachment-imports`は原XML・生成物を保存した後、検索DBへ即時登録します。アップロードは運用中の検索対象と候補を変更する操作です。同YJは原XMLの改訂日によらず初回成功登録順で新版へ切り替えます。旧文書A+Bに新文書Aを登録した場合、Bは旧版を保持します。active参照とreader leaseがなくなった旧版の所有XML・JSON・JSONL・図だけを削除し、同原本の再送で旧版を復活させません。登録用YJがないXMLは拒否されます。
+`/imports`と`POST /api/attachment-imports`は原XMLbytea・完全構造・検索投影を一つのDB transactionで公開し、候補へ反映します。同YJは改訂年月の最新を採用し、同年月の別原本は409、年月なしは422です。旧A+Bに新Aを登録しても旧Bは保持します。参照0payloadのDB清掃は旧MVCC読取を妨げず、同原本再送で旧版を再有効化しません。登録用YJなしは拒否します。
 
-旧DBはbackend/writerを停止し、整合backupと別コピーでの復元検査を行った上で、Alembic移行と初期登録を明示実行してください。[backendの導入手順](../../backend/README.md#検索インデックスの構築)に従い、まずコピー先で検証します。初期登録後だけWeb/APIまたは`--register`で新版を公開し、旧原本群を初期登録CLIで再走査しません。
+旧SQLiteや保存JSONLの互換読み取り・移行はありません。原本・図・手作業データを保持し、空PGへの初期登録を明示してください。[backendの導入手順](../../backend/README.md#検索インデックスの構築)を参照してください。初期登録は非空台帳を拒否します。
 
 ## 補完辞書
 
@@ -81,11 +68,10 @@ uv run --project backend python -m backend.infrastructure.cli.build_search_index
 
 旧data_tools/data→data/pmda/originals、旧data_tools/structured→data/pmda/structured。
 保存済みJSON内の旧source pathは歴史的出典として保持しています。元データを再生成せず移行しました。
-明示MEDI_CHAT_STRUCTURED_DIR/MEDI_CHAT_INDEX_PATH/MEDI_CHAT_DATABASE_URLは優先を維持します。旧pathの運用設定は移行先へ明示変更してください。明示旧DBを別DBへ自動切替えません。
-新しいWeb版はpublisherが即時公開します。手動でstructuredへ配置する操作や、Web登録後のbuild_search_index実行は不要です。
+runtimeの接続先は`MEDI_CHAT_DATABASE_URL`です。旧`MEDI_CHAT_STRUCTURED_DIR`/`MEDI_CHAT_INDEX_PATH`/`MEDI_CHAT_IMPORT_DIR`は拒否します。入力XMLやoffline出力の相対パスはroot基準ですが、runtimeはそれらへ依存しません。
 
 ## ローカルデータについて
 
 実添付文書のXML・図、本文を含む構造化JSON/JSONL、登録世代データ、実データ由来のoracle・SQLite fixtureはGit管理対象外です。各自のローカル環境に用意し、リポジトリへ追加しないでください。項目体系の定義・変換コードと、合成データのテストは引き続き管理します。
 
-実データを使う回帰テストにはローカルの原本・派生データ・fixtureが必要です。データがないcheckoutで、その検証が成功したとは扱いません。今回の除去ではローカルファイルを保持し、コードやテストの期待値は変更していません。
+実データを使う回帰テストにはローカルの原本・比較用JSON/JSONLが必要です。データがないcheckoutで、その検証が成功したとは扱いません。不要なローカル生成物を整理しましたが、原本・比較用データ・コード・テストの期待値は変更していません。

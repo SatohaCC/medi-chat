@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 from collections.abc import Callable, Iterator
 from importlib import import_module
@@ -21,7 +20,6 @@ from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicin
 from backend.domain.retrieval.identifiers import SearchUnitId
 from backend.domain.retrieval.primitives import (
     DetectionSource,
-    SearchSectionCode,
 )
 from backend.domain.retrieval.services import (
     detect_intent_from_keywords,
@@ -34,7 +32,6 @@ from backend.domain.retrieval.value_objects import (
     EvidenceColumns,
     EvidenceReference,
     EvidenceSection,
-    SearchCriteria,
 )
 from backend.domain.retrieval.value_objects import Evidence as ChatSource
 from backend.infrastructure.evidence_mapping import build_evidence as evidence_from_unit
@@ -46,18 +43,7 @@ from backend.infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,
     load_package_insert_definitions,
 )
-from backend.infrastructure.persistence.evidence_reader import SqlAlchemyEvidenceReader
-from backend.infrastructure.persistence.sqlite_engine import create_sqlite_engine
 from backend.infrastructure.pmda_xml.transform import transform
-from backend.tests.infrastructure.persistence.test_alembic_migrations import (
-    _migrate_database,
-)
-from backend.tests.support.storage_fixtures import (
-    build_document_store,
-    make_search_payload,
-    write_structured_document,
-)
-from sqlalchemy.engine import URL
 
 
 @pytest.fixture
@@ -638,13 +624,9 @@ def test_固定キーワードの優先順位を維持する(message: str, inten
     ],
     ids=["existing_seven_codes", "approved_chapter_codes"],
 )
-@pytest.mark.parametrize("observation", ["chapter_reader", "pure_sort"])
-def test_SQLiteと根拠一覧の項目順が一致する(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
+def test_根拠一覧の項目番号順を維持する(
     codes: list[str],
     expected_codes: list[str],
-    observation: str,
 ) -> None:
     sources = [
         Evidence(
@@ -661,71 +643,6 @@ def test_SQLiteと根拠一覧の項目順が一致する(
         )
         for index, code in enumerate(codes)
     ]
-    if observation == "chapter_reader":
-        for key in (
-            "MEDI_CHAT_STRUCTURED_DIR",
-            "MEDI_CHAT_INDEX_PATH",
-            "MEDI_CHAT_DATABASE_URL",
-        ):
-            monkeypatch.delenv(key, raising=False)
-        source = write_structured_document(tmp_path)
-        units = [
-            {
-                "unit_id": evidence.unit_id.value,
-                "document_key": evidence.document_id.value,
-                "product_yj_codes": [code.value for code in evidence.product_yj_codes],
-                "section": dict(evidence.section),
-                "kind": evidence.kind,
-                "text": evidence.excerpt,
-            }
-            for evidence in sources
-        ]
-        (source / "test_001" / "search_units.jsonl").write_text(
-            "\n".join(
-                json.dumps(make_search_payload(unit), ensure_ascii=False)
-                for unit in units
-            ),
-            encoding="utf-8",
-        )
-        index_path = tmp_path / "sort.sqlite3"
-        _migrate_database(index_path, source)
-        build_document_store(source, index_path)
-        medicines = (
-            ResolvedMedicine(
-                medicine=DomainMedicineMatch(
-                    generic_name="テスト成分",
-                    brand_names=("テスト薬",),
-                    yj_codes=("1234567A0000",),
-                ),
-                document_ids=("test_001",),
-            ),
-        )
-        engine = create_sqlite_engine(
-            URL.create("sqlite", database=index_path.as_posix()).render_as_string(
-                hide_password=False
-            )
-        )
-        try:
-            retrieved = asyncio.run(
-                SqlAlchemyEvidenceReader(engine).search(
-                    SearchCriteria(
-                        source=DetectionSource("logic"),
-                        section_codes=tuple(
-                            SearchSectionCode(value) for value in codes
-                        ),
-                    ),
-                    medicines,
-                )
-            )
-            assert isinstance(retrieved, tuple)
-            assert all(type(item) is Evidence for item in retrieved)
-            assert [item.section["code"] for item in retrieved] == expected_codes
-            assert [item.unit_id for item in retrieved] == [
-                item.unit_id for item in sorted(sources, key=evidence_section_sort_key)
-            ]
-            sources = list(retrieved)
-        finally:
-            engine.dispose()
     source_codes = [
         source.section["code"]
         for source in sorted(sources, key=evidence_section_sort_key)

@@ -67,5 +67,6 @@ for-llm
 /data_tools/structured/*
 !/data_tools/structured/README.md
 /backend/tests/fixtures/interaction_oracle_v6.json
+/backend/tests/fixtures/postgres_public_catalogue_oracle.json
 /backend/tests/fixtures/definition-*-reference.json
 /backend/tests/fixtures/*.sqlite3.gz

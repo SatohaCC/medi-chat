@@ -2,9 +2,8 @@ from collections.abc import Callable
 from typing import Protocol
 
 from ...domain.attachment.entities import AttachmentDocument
-from ...domain.attachment.identifiers import DocumentId
 from ...domain.retrieval.entities import SearchUnit
-from .import_models import ArtifactBundle, DecodedAttachment, ImportResult
+from .import_models import ArtifactBundle, DecodedAttachment, ImportPage, ImportResult
 
 
 class AttachmentDecoder(Protocol):
@@ -20,13 +19,6 @@ class AttachmentArtifactEncoder(Protocol):
     ) -> ArtifactBundle: ...
 
 
-class AttachmentImportStore(Protocol):
-    def read(self, document_id: DocumentId, source_sha256: str) -> ImportResult: ...
-    def commit(
-        self, bundle: ArtifactBundle, source: bytes, *, check_cancel: Callable[[], None]
-    ) -> ImportResult: ...
-
-
 class AttachmentRegistrationPublisher(Protocol):
     def publish(
         self,
@@ -36,3 +28,4 @@ class AttachmentRegistrationPublisher(Protocol):
         check_cancel: Callable[[], None],
     ) -> ImportResult: ...
     def read_result(self, document_id: str, digest: str) -> ImportResult: ...
+    def list_imports(self, *, limit: int, offset: int) -> ImportPage: ...

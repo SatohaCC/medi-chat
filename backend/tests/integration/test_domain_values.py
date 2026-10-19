@@ -165,7 +165,7 @@ def test_evidence_nested_values_are_independent_of_input_and_output(field, paylo
             actual.clear()
         else:
             actual.clear()
-    except (TypeError, AttributeError):
+    except TypeError, AttributeError:
         pass
     next_output = getattr(first, field)
     assert (

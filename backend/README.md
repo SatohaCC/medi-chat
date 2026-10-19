@@ -1,6 +1,6 @@
 # バックエンドの構成と命名規則
 
-このバックエンドは、**医薬品情報意思決定支援**という一つの業務ドメインを実装します。医薬品同定と添付文書根拠検索はそのサブドメインで、`application/chat` は両者を組み合わせる回答ユースケース、`presentation` はチャットを届ける配信層です。読み取り中心のため、会話集約、汎用Repository、Unit of Work、ドメインイベントは追加していません。Repository Interfaceは各 bounded context の `repositories.py` に定義し、SQLite、SQLAlchemy Core、Alembicは外側の層に閉じ込めます。
+このバックエンドは、**医薬品情報意思決定支援**という一つの業務ドメインを実装します。医薬品同定と添付文書根拠検索はそのサブドメインで、`application/chat` は両者を組み合わせる回答ユースケース、`presentation` はチャットを届ける配信層です。読み取り中心のため、会話集約、汎用Repository、Unit of Work、ドメインイベントは追加していません。Repository Interfaceは各 bounded context の `repositories.py` に定義し、PostgreSQL、SQLAlchemy Core、Alembicは外側の層に閉じ込めます。
 
 ## チャットの入出力上限
 
@@ -39,7 +39,7 @@ RESTとWebSocketは重複のない対象YJコードを1～50件受け付けま�
 | `infrastructure/llm` | OpenAI/Gemini SDKと代替応答の実装 |
 | `infrastructure/composition` / `main.py` | `app_lifespan.py`（`create_app_lifespan`）で具象の生成・接続・準備済みDB検証・SDK/worker/engineの所有終了を集約し、`main.py`（`create_app`）はCORS・ルーター登録とlifespan委譲のみを担当する |
 | `config` | 接続設定と生成provider/modelの環境default供給 |
-| `infrastructure/cli` | `build_search_index`、`initialize_registrations`の公開module入口 |
+| `infrastructure/cli` | `manage_postgres`の明示migration/初期登録/export/rebuild/maintenance、`structure_pmda_xml`のoffline変換入口 |
 | `infrastructure/package_insert_definitions` | 単一JSONのIO/検証と用途別組立、および各アダプター向け設定型（`definition_settings.py`）の所有。正式名称はattachment、検索規則・整形はretrieval、回答指示はApplicationが所有する |
 
 公開DTOの`ChatMessage`/`ChatResponse`/`ChatSource`/`MedicineMatch`は`presentation`に置き、REST JSON・WSイベント・OpenAPIの名前を維持します。applicationの同名モデルはフレームワーク非依存の入出力です。`IntentResult.candidates`が意図判定の業務契約で、`raw_response`は公開原本として保持します。applicationはSDKの`answers`/`choice`/`probabilities`を読まず、presentation mapperが入力DTOからApplication入力への変換と、Application結果から公開JSONへの変換を担当します。準備済みの回答はApplicationモデルのまま生成まで保持し、出力DTOから内部モデルへ復元しません。
@@ -48,7 +48,7 @@ RESTとWebSocketは重複のない対象YJコードを1～50件受け付けま�
 
 医薬品候補の取得は `application/medicine/product_contracts.py` の `MedicineSnapshotProvider` を使い、同じ公開世代のIDと医薬品Readerだけを要求します。根拠検索側の `RetrievalSnapshotProvider` は根拠Readerも提供します。Infrastructureの世代runtimeは両契約を満たし、どちらも `acquire()` の終了まで同じ世代とleaseを保持します。
 
-`infrastructure/sources` は入力ファイルの読取を担当します。登録原本の不変保存は `persistence/attachment_import_store.py`、公開済みDBと所有artifactの整合性検証・読取は `persistence/registration_reader.py` が担当し、persistenceからsourcesへは依存しません。また、JSON/検索単位payloadのシリアライズ（`index_payloads.py`）は `pmda_xml` から分離し、`GenerationRuntime` や `SqliteRegistrationPublisher` には `PmdaXmlDecoder` / `PmdaArtifactEncoder` をコンストラクタDIで注入します。
+`infrastructure/sources` は明示した入力ファイルの読取を担当します。原本bytea・完全構造JSONB・検索投影の保存は `persistence/postgres_registration.py`、read-only MVCC読取は `persistence/postgres_runtime.py`、起動時のDB内整合性検証は `persistence/postgres_readiness.py` が担当します。persistenceはXML/source adapterへ依存せず、完全Domain構造は明示mapperで往復します。Composition RootがdecoderをImportServiceへ、encoderをpublisherへ注入し、engine/workersの寿命を所有します。
 
 ### 出力DTOの逆変換を防ぐ検査
 
@@ -88,7 +88,7 @@ domain全体からapplication・infrastructure・presentationへの依存も禁�
 文字列・数値も `DomainPrimitive` に統一します。共通基底は
 `foundation.primitives.primitives` の `BaseString` / `BaseFiniteFloat` です。
 比較は同じ具象Primitive同士で行い、文字列の検索・ソート・数値計算には `.value` を使います。
-API・JSON・SQLite・プロンプトの境界でも `.value` へ変換します。
+API・JSON・DB・プロンプトの境界でも `.value` へ変換します。
 基本型との暗黙の比較や `asdict()` による公開JSON生成は行いません（Ruff `TID251` で `dataclasses.asdict` を禁止）。
 `from_value()` は基本型から復元し、同じ具象型の不変Primitiveはそのまま受け取るため、
 独自コンストラクタを持つモデルの `dataclasses.replace()` にも利用できます。
@@ -192,7 +192,7 @@ backend/
 │   ├── sources/         # FileIndexSourceReader、MedicineCodeTableReader
 │   ├── llm/             # SDK provider / fallback
 │   ├── composition/     # app_lifespan(DI配線)、index verifier、persistence lifespan
-│   ├── cli/             # build_search_index、initialize_registrations
+│   ├── cli/             # manage_postgres、structure_pmda_xml
 │   ├── evidence_mapping.py
 │   ├── index_payloads.py # XML非依存のJSON/検索単位payload変換
 │   └── json_payloads.py
@@ -201,7 +201,7 @@ backend/
 └── tests/               # 現在形式の生成・保存・検索と未管理DB拒否を検証
 ```
 
-旧`backend.chat`/`retrieval`/`medicines`/`storage`/`jev`とcompositionの旧サービス再公開は削除しました。ドメインモデルも責務別の正本へ統一し、既知のリポジトリ内利用側は正本へ移行しています。公開起動点は`backend.main:app`/`create_app`、既存REST/WSルート、FastAPI DI関数、6つのCLI moduleです。リポジトリ外の旧Python import利用は確認対象外です。
+旧`backend.chat`/`retrieval`/`medicines`/`storage`/`jev`とcompositionの旧サービス再公開は削除しました。ドメインモデルも責務別の正本へ統一し、既知のリポジトリ内利用側は正本へ移行しています。公開起動点は`backend.main:app`/`create_app`、既存REST/WSルート、FastAPI DI関数、用途別CLI moduleです。リポジトリ外の旧Python import利用は確認対象外です。
 
 ## 命名規則
 
@@ -209,53 +209,39 @@ backend/
 
 ## データベース運用とマイグレーション
 
-データベースには SQLite（FTS5全文検索対応）を使用し、スキーマ管理には **Alembic**、クエリ実行には **SQLAlchemy Core** を採用しています。
+PostgreSQL 18、SQLAlchemy Core、Alembicを使用します。接続poolとworkerはlifespanが所有します。ローカルDockerの起動・owner/runtime権限分離は[root README](../README.md#ローカルpostgresqlの準備)を参照してください。
 
 ### マイグレーション手順
 
-```bash
-# 最新スキーマへのアップグレード
-uv run --project backend alembic -c backend/alembic.ini upgrade head
+ownerのURLを`MEDI_CHAT_MIGRATION_DATABASE_URL`へ、アプリのDML用URLを`MEDI_CHAT_DATABASE_URL`へ設定します。URLの値をCLI引数やログへ出さず、環境変数名で対象を明示します。
 
-# ベース状態（全テーブル削除）へのダウングレード
-uv run --project backend alembic -c backend/alembic.ini downgrade base
+```bash
+pnpm db:migrate
+pnpm db:initialize
 ```
+
+初期登録は空の登録台帳だけを対象とし、既存DBを置換しません。旧SQLite/生成JSONLを読み戻す互換・移行・起動fallbackはありません。元XML/図を空PGへ再登録します。明示Alembic設定は`backend/postgres-alembic.ini`です。通常startup/publisherはDDLを実行しません。
 
 ### 検索インデックスの構築
 
-登録済みactive集合を検証します。旧ディレクトリを走査して旧版を再登録しません。
-旧索引は移行せず、原本から新しいDBとimport先へ再登録してください。
-起動時にschema作成や初期登録は行いません。まずコピー先で照合してください。
+原本からの新規登録はWebまたは次の明示CLIを使います。
 
 ```bash
-uv run --project backend alembic -c backend/alembic.ini -x index_path=copy/index.sqlite3 upgrade head
-uv run --project backend python -m backend.infrastructure.cli.initialize_registrations \
-  --originals-dir copy/originals --structured-dir copy/structured \
-  --index-path copy/index.sqlite3 --import-dir copy/imports
+uv run --project backend --locked python -m backend.infrastructure.cli.structure_pmda_xml new.xml --register --database-env MEDI_CHAT_DATABASE_URL
 ```
 
-既存変換CLIの引数と厳格な図検査は維持しています。通常modeはoffline変換で公開登録しません。
-登録済み所有artifactへの直接上書きは拒否します。`--register`を明示するとWebと同じpublisherで
-登録します（`--output-dir`は純変換専用）。`build:data`はこの登録modeを利用します。
+保持された完全Domain構造から投影を再構築する場合は`pnpm db:rebuild`（public schema）です。直接CLIを使う場合は`manage_postgres --database-env <owner URL変数名> --schema <対象schema> rebuild --confirm-schema <同じschema>`を明示します。原XMLの再decodeや入力ディレクトリ再走査は行いません。登録receipt・原本/図bytea・公開pointerを保持し、破損した原本/完全構造・確認不一致では書き込みません。
 
 ```bash
-uv run --project backend python -m backend.infrastructure.cli.structure_pmda_xml \
-  copy/new.xml --register --index-path copy/index.sqlite3 --import-dir copy/imports
+pnpm db:maintenance
+pnpm db:export --version-id <document_id:sha256> --output-dir <新規出力先>
 ```
 
-```bash
-# 既定のパス (data/pmda/structured/ -> .chat-search.sqlite3) でインデックス構築
-uv run --project backend python -m backend.infrastructure.cli.build_search_index
-
-# 任意のパスを指定して実行
-uv run --project backend python -m backend.infrastructure.cli.build_search_index \
-  --structured-dir data/pmda/structured \
-  --index-path data/pmda/structured/.chat-search.sqlite3
-```
+exportは原本byteaと図の元bytesを出力します。清掃は参照0payloadをDB transactionで回収し、receipt/tombstoneは残します。保存元ファイルや別schemaを削除する処理はありません。
 
 ### 添付文書データの再生成
 
-旧形式のJSON・検索データ・旧SQLite索引は読み取り・移行対象にしません。原本を保持し、新しい出力先で現在の変換器による構造化、空DBへのAlembic upgrade、原本からの初期登録を行います。旧索引のstamp・互換読み取り・自動修復は提供しません。保存形式と検証条件は[変換規則](../docs/pmda-xml-conversion.md)を参照してください。
+`pnpm build:data`または`structure_pmda_xml --source-dir ... --output-dir ...`は確認用の純粋なoffline変換です。JSONLを生成してもPGへ公開登録しません。入力・出力の相対パスはリポジトリroot基準です。
 
 ## ポートとアダプターの拡張手順
 
@@ -272,10 +258,7 @@ uv run --project backend python -m backend.infrastructure.cli.build_search_index
 
 ## 開発コマンド
 
-DB設定・CLIに渡す相対パス（`MEDI_CHAT_STRUCTURED_DIR`、
-`MEDI_CHAT_INDEX_PATH`、SQLite URLの相対DBパスを含む）は、
-実行ディレクトリではなくリポジトリルートを基準に解決します。
-絶対パスの明示指定も利用できます。実行時にはDB接続用に絶対パスへ解決します。
+DBは明示したPostgreSQL URLで選択します。CLIの入力・export出力の相対パスはリポジトリroot基準です。旧`MEDI_CHAT_STRUCTURED_DIR`/`MEDI_CHAT_INDEX_PATH`/`MEDI_CHAT_IMPORT_DIR`は拒否します。
 
 リポジトリ直下で実行します。
 
@@ -352,32 +335,25 @@ Value Objectとして保持します。検索ポートは文書IDを公開する
 
 ## XML取り込みの公開境界
 
-`POST /api/attachment-imports`はmultipartの`file`1つを受け取り、`GET /api/attachment-imports/{document_id}/{source_sha256}`は保存結果metadataを返します。新規201・同原本200、入力数/空400、上限413、非XML415、構造/解析422、保存矛盾409、保存IO500。新APIのエラーは`detail: {code, message}`です。
+`POST /api/attachment-imports`はmultipartの`file`1つを受け取り、`GET /api/attachment-imports/{document_id}/{source_sha256}`は保存結果metadataを返します。新規201・同原本200、入力数/空400、上限413、非XML415、構造/解析422、保存矛盾409、保存IO500。エラーは`detail: {code, message, phase}`で、409は`conflicts`も返します。
 
-lifespanが取り込みworkerを所有し、decoder/encoder/保存IOをevent loop外で実行して終了を待ちます。既定保存先は`data/pmda/imports`、環境変数は`MEDI_CHAT_IMPORT_DIR`です。Alembic移行と初期登録済みの検索DBが起動前提です。既存DBはwriter停止・整合backup・コピー復元検査後、上記「検索インデックスの構築」の明示手順で移行してください。起動時に自動DDL・初期登録はしません。
+lifespanが取り込みworkerを所有し、decoderとpublisherをevent loop外で実行して終了を待ちます。原本/図bytea、完全構造JSONB、検索投影、active集合、世代pointer、receiptをPostgreSQLに保持します。`PostgresRegistrationPublisher`が一つのDB transactionで公開し、失敗時はrollbackします。新規201・同原本200、Location、エラーcode/message/phase/conflictsと削除済GET410を維持します。
 
-Web取り込みは保存だけでなく、`SqliteRegistrationPublisher`でactive製品・検索本文・候補・fingerprintを同一SQLite transactionで公開します。旧structured/manifestは直接上書きせず、import rootに版と世代成果物を保存します。YJごとに原本の改訂年月（YYYY-MM）が最も新しい添付文書を採用し、旧文書の未置換YJは保持します。古い原本を後から登録しても公開先・検索世代を戻しません。同じ改訂年月の別原本が同じYJに対応する場合は409（same_revision_conflict）、改訂年月がない場合は422（missing_revision）で拒否します。初期登録CLIも同じ規則を使います。active参照とreader leaseがない旧版の所有ファイルだけを削除し、削除待ちは再試行します。同原本の再送は保存済みreceiptを再利用し、旧版を復活させません。登録順は公開結果の受付番号としてのみ保持します。登録に利用できるYJがないXMLは422で拒否します。原本/保存絶対パスの公開APIは追加していません。
+YJごとに最も新しい改訂年月を選択し、同年月の別原本は409、年月なしは422です。A+Bの旧版に新Aが来た場合は旧Bを保持します。参照0payloadの削除失敗はDB由来reasonのcleanup_pendingになり、明示maintenance/登録後の限定再試行で回収します。再送はreceiptを再利用し、削除済み旧版の本文を復活させません。元XML・既存SQLite・手作業データは削除しません。
 
 ### 通常E2Eと索引の明示回復
 
-`pnpm test:e2e`は通常devと同じdotenv読み込み・DB設定解決を使い、read-only readinessと通常mainの内部read-only probe compositionによる実OS healthを確認してから画面suiteへ進みます。`uv run --project backend --locked python -m backend.infrastructure.cli.configured_e2e_gate --resolve-only`で秘密値を出さず絶対source/indexを確認できます。未準備・staleでは非0で止まり、起動時の自動build/migrateは行いません。
-
-運用索引の再構築は対象の絶対source/indexを明示し、その対象を利用するbackend/writerを利用者が停止した後に行います。試験から既存serverを停止しません。Windowsでは`infrastructure.cli.index_maintenance.assert_stopped`がDBと存在するWAL/SHMの排他可否を検査します。`checked_backup(target, backup)`でmanaged schema・integrity・全テーブルの論理内容・保存fingerprintを照合したread-only SQLite backupを作成し、別一時DBへ復元して同じ論理snapshotであることを確認します。backupは保存し、`verify_rebuild_preconditions(target, backup)`成立後、既存`build_search_index` moduleへ絶対source/indexを渡して明示再構築してください。対象未明示・backup未確認・open writer・unmanaged schemaでは更新せず、必要な停止/backup/migration判断へ戻します。
-
-再構築後はsource/index/fingerprint/件数/前後hashと実healthを記録します。原XML・図・document.json・search_units.jsonl・manifest・旧保全物を再生成しません。登録済みモデルではWeb登録と明示登録CLIが同じpublisherを使い、active製品・検索本文・候補・fingerprintを一つのSQLite transactionで公開します。純粋なoffline変換は公開登録ではありません。
+`pnpm test:e2e`は通常dotenvで選択したPGをread-only readiness検査し、専用port3212の実OS health、その後mock/real Chromiumを順に実行します。`configured_e2e_gate --resolve-only`は秘密値を出しません。configured DBは書込/修復せず、未準備・実破損は拒否します。実接続試験は`TEST_DATABASE_URL`/`TEST_RUNTIME_DATABASE_URL`で明示した`medi_chat_test`の所有UUIDschemaだけを作成・削除します。既存serverや別runのschemaは停止・削除しません。
 
 ### 公開世代と取得の所有
 
-医薬品解決からdetector・検索・改訂のmaterializeまで、一つのgeneration leaseを所有します。取得の終了・例外・取消でleaseを解放し、LLM streamは解放後の不変な根拠snapshotを使います。別processで新版が公開されても旧取得へ新本文を混ぜず、新しい要求だけが新世代を読みます。旧版ファイルと派生世代は参照と生存owner leaseがなくなった後に所有manifestを再確認して削除します。ownerの生存はPIDとprocess開始時刻で確認し、固定TTLでは追い出しません。
+製品解決・全detector・要求YJへの再投影・改訂materializeは、一つのread-only REPEATABLE READ接続でpointerを固定して行います。並行detectorが同じ接続を使う際はSQL利用を直列化します。別processが公開し旧payloadをDELETEしても、旧scopeはMVCCにより旧根拠を一貫して読み、次の要求だけが新版を使います。永久lease/PID/ファイルmanifestはありません。
 
-通常startupと明示CLIはSQLite自身のjournal回復と所有cleanupを行います。公開済みartifactの破損は起動拒否で、旧世代fallback・自動DDL・再構築を行いません。configured E2E gateのreadinessはread-onlyです。cleanup待ち・lease・未公開attempt/stageがあれば明示startup/CLI回復へ返します。前検査後の競合もprobe起動側・health側で再確認し、probeはjournal回復・store cleanup・publisher recoveryを実行しません。通常mainの既定回復は維持します。healthの件数・generation_idはread-only snapshotから取得し、leaseを書きません。
+例外・取消・切断・checkout待ちでも所有workerの完了とconnection返却を待ちます。LLM streamはmaterialize済みの不変な根拠だけを使い、DB接続を保持しません。poolとworkerの終了はcompositionが所有し、注入された外部engineを勝手に破棄しません。
 
-JanomeのTokenizerはlifespanでワーカースレッド上に初期化してから要求を受け付けます。初回質問の辞書初期化待ちを起動時へ移します。
+startup/readinessはDDL・清掃・全原本decodeを行いません。DB内SHA256/サイズと完全構造・catalogue・投影の整合を検証し、Pythonへ原本/図を転送しません。JSON/projectionのMD5指紋は事故検出用です。整合した清掃待ちは起動でき、healthもDBを変更しません。Janomeは起動時にworker上で初期化します。
 
-通常mainは登録・世代取得用のSQLAlchemy Engineをlifespanで所有し、接続プールを要求間で共有します。取り込みと読取workerの終了を待ってからプールを破棄します。CLI・直接構築でEngineを注入しない場合は従来どおり操作ごとに生成・破棄します。世代データは起動時にリースを書かず先読みし、要求ごとの世代ID比較で更新を検出します。先読みの失敗は起動失敗として扱います。
-
-質問内の検索投影と一時FTS索引は検索対象の文書ID・YJコード集合ごとに再利用し、スナップショット終了時に閉じます。並行検索と終了処理を直列化し、検索完了までリースを保持します。別の質問への索引共有は行いません。PostgreSQL移行時にも接続プールの所有を維持できますが、現時点のDB設定・公開ロック・原本検証・FTS検索はSQLite用です。PostgreSQL用adapterと日本語検索の互換検証は別途必要です。
-
+検索は1文字を無視し、2文字は再投影後のraw JSON文字列を照合します。3文字以上は正規化trigram phraseとBM25互換順位を使い、候補に件数LIMITやpg_trgm類似度閾値をかけません。要求内の文書ID/YJ集合ごとに投影を再利用し、scope終了時に破棄します。順位・Unicode・全表/出典は独立固定oracleで検証します。
 
 ### 改訂年月による公開先の選択
 
@@ -387,14 +363,14 @@ JanomeのTokenizerはlifespanでワーカースレッド上に初期化してか
 同年月の別原本は版番号・ファイル名・登録順で決めず、明示的な競合とします。
 ドメイン規則は医薬品情報を所有せず、文書版と改訂年月を扱います。
 
-再送識別、公開受付番号、所有ファイル、旧版・検索世代のlease保護とcleanupはInfrastructureが担当します。
+再送識別、公開受付番号、DB保持payload、MVCC snapshotとcleanupはInfrastructureが担当します。
 古い原本の登録は保存結果を返しますが、検索対象の変更がなければ検索索引や世代は更新しません。
-DBの保存形式と既存APIの項目は維持します。
+既存APIの保存結果の項目は維持します。
 
 既存DBの公開先が改訂年月の最大値と一致しない、または最新年月の原本が曖昧な場合、
 起動・読取検証と登録は `revision_policy_migration_required` で停止し、自動で参照先を書き換えません。
 運用writer停止・backupと復元検査の上、原本を確認し、準備済みの別DBへ既存の
-`initialize_registrations` CLIで明示的に初期登録して検証してください。
+`manage_postgres initialize`（`pnpm db:initialize`）で明示的に初期登録して検証してください。
 最も新しい原本がすでに削除されている場合は、原本の再取得が必要です。
 同年月競合は原本の誤り・対象YJを確認して解消する必要があります。
 

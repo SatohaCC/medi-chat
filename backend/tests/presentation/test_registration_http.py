@@ -7,26 +7,21 @@ import pytest_asyncio
 from backend.application.attachment_import.import_document import (
     AttachmentImportService,
 )
-from backend.infrastructure.pmda_xml.artifact_mapping import PmdaArtifactEncoder
 from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
 from backend.presentation.attachment_import_routes import router
-from backend.tests.integration.test_registration_publisher import (
-    publisher as publisher,
-)
-from backend.tests.integration.test_registration_publisher import (
-    snapshot,
-    source,
-)
-from backend.tests.support.attachment_import_fixtures import encoded
+from backend.tests.integration.test_postgres_registration import pg_publisher
+from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
+from backend.tests.support.postgres_observations import digest
+from backend.tests.support.registration_oracles import source
 from fastapi import FastAPI
+
+publisher = pg_publisher
 
 
 @pytest_asyncio.fixture
 async def client(publisher):
     service = AttachmentImportService(
         decoder=PmdaXmlDecoder(),
-        encoder=PmdaArtifactEncoder(),
-        store=publisher.store,
         publisher=publisher,
     )
     app = FastAPI()
@@ -47,18 +42,10 @@ async def post(client, value):
 
 
 @pytest.mark.asyncio
-async def test_tc106_113_unregistered_store_is_private_then_first_receipt_published(
+async def test_tc106_113_unknown_version_is_private_then_first_receipt_published(
     client, publisher
 ):
     value = source("stored以前")
-    bundle = encoded(value)
-    publisher.store.commit(bundle, value)
-    original = {
-        file.name: publisher.store._target(bundle.document_id, bundle.source_sha256)
-        .joinpath(file.name)
-        .read_bytes()
-        for file in bundle.files
-    }
     url = f"/api/attachment-imports/000001_test/{hashlib.sha256(value).hexdigest()}"
     assert (await client.get(url)).status_code == 404
     response = await post(client, value)
@@ -96,12 +83,6 @@ async def test_tc106_113_unregistered_store_is_private_then_first_receipt_publis
         and result["replaced_yj_codes"] == []
         and result["cleanup_pending"] == []
     )
-    assert {
-        file.name: publisher.store._target(bundle.document_id, bundle.source_sha256)
-        .joinpath(file.name)
-        .read_bytes()
-        for file in bundle.files
-    } == original
     repeat = await post(client, value)
     assert repeat.status_code == 200 and repeat.json()["reused"] is True
     assert (
@@ -143,12 +124,12 @@ async def test_tc106_old_deleted_receipt_post_never_recreates_files_get_is_gone(
 async def test_tc107_validation_error_phase_and_no_publication(
     client, publisher, value, status, code
 ):
-    before = snapshot(publisher)
+    before = digest(publisher.engine)
     response = await post(client, value)
     assert response.status_code == status
     assert response.json()["detail"]["code"] == code
     assert response.json()["detail"]["phase"] == "validation"
-    assert snapshot(publisher) == before
+    assert digest(publisher.engine) == before
 
 
 def test_tc106_107_openapi_declares_reuse_and_conflict_metadata():
@@ -183,10 +164,10 @@ async def test_tc107_artifact_conflict_has_declared_list_and_preserves_old_publi
     from backend.application.attachment_import.import_errors import ImportConflict
 
     assert (await post(client, source("旧公開"))).status_code == 201
-    before = snapshot(publisher)
+    before = digest(publisher.engine)
 
     def conflict(phase):
-        if phase == "artifacts":
+        if phase == "source":
             raise ImportConflict(
                 "source_hash_conflict", "Source artifact conflicts", phase="artifact"
             )
@@ -200,23 +181,23 @@ async def test_tc107_artifact_conflict_has_declared_list_and_preserves_old_publi
         "phase": "artifact",
         "conflicts": [],
     }
-    assert snapshot(publisher) == before
+    assert digest(publisher.engine) == before
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "fault_phase,expected_phase",
     [
-        ("artifacts", "artifact"),
-        ("index", "projection"),
-        ("transaction", "publication"),
+        ("source", "artifact"),
+        ("units", "projection"),
+        ("before_commit", "publication"),
     ],
 )
 async def test_tc107_build_failure_returns_stable_phase_and_old_snapshot(
     client, publisher, fault_phase, expected_phase
 ):
     assert (await post(client, source("旧公開"))).status_code == 201
-    before = snapshot(publisher)
+    before = digest(publisher.engine)
 
     def fail(phase):
         if phase == fault_phase:
@@ -230,15 +211,11 @@ async def test_tc107_build_failure_returns_stable_phase_and_old_snapshot(
         "message": "Registration could not be published",
         "phase": expected_phase,
     }
-    assert snapshot(publisher) == before
+    assert digest(publisher.engine) == before
 
 
 @pytest.mark.asyncio
-async def test_tc106_partial_b_and_cleanup_pending_public_metadata(
-    client, publisher, monkeypatch
-):
-    from pathlib import Path
-
+async def test_tc106_partial_b_and_cleanup_pending_public_metadata(client, publisher):
     old = source("旧共通", ("111111111111", "222222222222"))
     first = await post(client, old)
     assert first.status_code == 201
@@ -250,14 +227,12 @@ async def test_tc106_partial_b_and_cleanup_pending_public_metadata(
     assert partial["active_yj_codes"] == ["222222222222"]
     assert partial["registration_sequence"] == 1
     assert partial["artifacts_deleted"] is False
-    unlink = Path.unlink
 
-    def fail(path, *args, **kwargs):
-        if path.name == "source.xml" and path.read_bytes() == old:
-            raise PermissionError("fixed cleanup failure")
-        return unlink(path, *args, **kwargs)
+    def fail(phase):
+        if phase == "cleanup":
+            raise OSError("fixed database cleanup failure")
 
-    monkeypatch.setattr(Path, "unlink", fail)
+    publisher.fault = fail
     new_b = source("新B", ("222222222222",), revised_at="2026-11")
     pending = await post(client, new_b)
     assert pending.status_code == 201
@@ -270,11 +245,11 @@ async def test_tc106_partial_b_and_cleanup_pending_public_metadata(
     assert payload["cleanup_pending"] == [
         {
             "version_id": f"000001_test:{hashlib.sha256(old).hexdigest()}",
-            "reason": "io_error",
+            "reason": "database_cleanup_failed",
         }
     ]
     assert (await client.get(old_url)).status_code == 200
-    monkeypatch.setattr(Path, "unlink", unlink)
+    publisher.fault = lambda phase: None
     retry = await post(client, new_b)
     assert retry.status_code == 200
     finished = retry.json()

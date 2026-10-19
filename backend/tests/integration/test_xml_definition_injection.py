@@ -2,7 +2,7 @@
 
 import hashlib
 import json
-import sqlite3
+import os
 from dataclasses import replace
 from importlib import import_module
 
@@ -10,26 +10,22 @@ import httpx
 import pytest
 from backend.application.indexing.attachment_projection import project_attachment
 from backend.application.medicine.product_models import ResolvedMedicine
-from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.domain.retrieval.primitives import DetectionSource, SearchSectionCode
 from backend.domain.retrieval.value_objects import SearchCriteria
 from backend.infrastructure.package_insert_definitions import loader
-from backend.infrastructure.persistence.attachment_import_store import (
-    FileAttachmentImportStore,
+from backend.infrastructure.persistence import postgres_schema as schema
+from backend.infrastructure.persistence.postgres_registration import (
+    PostgresRegistrationPublisher,
 )
-from backend.infrastructure.persistence.generation_runtime import GenerationRuntime
+from backend.infrastructure.persistence.postgres_runtime import PostgresRuntime
 from backend.infrastructure.persistence.read_workers import ReadWorkers
-from backend.infrastructure.persistence.registration_publisher import (
-    SqliteRegistrationPublisher,
-)
 from backend.infrastructure.pmda_xml.artifact_mapping import PmdaArtifactEncoder
 from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
 from backend.infrastructure.pmda_xml.transform import transform
-from backend.tests.infrastructure.persistence.test_alembic_migrations import (
-    _migrate_database,
-)
 from backend.tests.support.attachment_import_fixtures import xml_source
+from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
+from sqlalchemy import select
 
 
 @pytest.mark.asyncio
@@ -37,7 +33,7 @@ from backend.tests.support.attachment_import_fixtures import xml_source
     "entrypoint", ["transform", "decoder_encoder", "publisher_materialize", "web"]
 )
 async def test_tc19_all_entries_keep_injected_definition_without_reload(
-    tmp_path, monkeypatch, entrypoint
+    tmp_path, monkeypatch, entrypoint, pg_engines
 ):
     data = json.loads(loader.DEFINITIONS_PATH.read_text(encoding="utf-8"))
     data["sections"]["27"] = {
@@ -54,20 +50,12 @@ async def test_tc19_all_entries_keep_injected_definition_without_reload(
     ).replace(b"2026-10", b"2026-11")
     decoder = PmdaXmlDecoder(xml_settings=definitions.xml_settings)
     encoder = PmdaArtifactEncoder()
-    structured = tmp_path / "structured"
-    structured.mkdir()
-    index = tmp_path / "index.sqlite3"
-    _migrate_database(index, structured)
-    store = FileAttachmentImportStore(tmp_path / "imports")
-    publisher = SqliteRegistrationPublisher(
-        index, store, xml_settings=definitions.xml_settings
-    )
+    publisher = PostgresRegistrationPublisher(pg_engines[1], encoder=encoder)
     workers = ReadWorkers()
-    runtime = GenerationRuntime(
-        publisher,
+    runtime = PostgresRuntime(
+        pg_engines[1],
         workers=workers,
         text_search_policy=definitions.text_search_policy,
-        xml_settings=definitions.xml_settings,
     )
     app = None
     if entrypoint == "web":
@@ -81,7 +69,10 @@ async def test_tc19_all_entries_keep_injected_definition_without_reload(
             ),
             xml_source("<Warnings><Detail><Lang>旧原文</Lang></Detail></Warnings>"),
         )
-        app = main.create_app(structured, index, import_directory=store.root)
+        app = main.create_app(
+            database_url=os.environ["TEST_RUNTIME_DATABASE_URL"],
+            _database_schema=pg_engines[2],
+        )
 
     def forbid(*args, **kwargs):
         pytest.fail("explicit XML definition returned to loader/getter")
@@ -95,9 +86,8 @@ async def test_tc19_all_entries_keep_injected_definition_without_reload(
         "backend.infrastructure.pmda_xml.units",
         "backend.infrastructure.pmda_xml.xml_nodes",
         "backend.infrastructure.pmda_xml.transform",
-        "backend.infrastructure.persistence.generation_runtime",
-        "backend.infrastructure.persistence.registration_publisher",
-        "backend.infrastructure.persistence.evidence_reader",
+        "backend.infrastructure.persistence.postgres_runtime",
+        "backend.infrastructure.persistence.postgres_registration",
         "backend.infrastructure.intent.jev_classifier",
     ):
         monkeypatch.setattr(
@@ -156,9 +146,7 @@ async def test_tc19_all_entries_keep_injected_definition_without_reload(
                 )
                 for row in evidence
             )
-            rows = _saved_rows(
-                store, result.document_id, result.source_sha256, result.generation_id
-            )
+            rows = _saved_rows(pg_engines[1], result.document_id, result.source_sha256)
         else:
             assert app is not None
             async with (
@@ -202,10 +190,9 @@ async def test_tc19_all_entries_keep_injected_definition_without_reload(
                     )
                 payload = response.json()
                 rows = _saved_rows(
-                    store,
+                    pg_engines[1],
                     payload["document_id"],
                     payload["source_sha256"],
-                    payload["generation_id"],
                 )
         by_code = {row["section"]["code"]: row for row in rows}
         assert by_code["27"]["section"]["title"] == "追加項目の正式名称"
@@ -222,25 +209,29 @@ async def test_tc19_all_entries_keep_injected_definition_without_reload(
         await workers.aclose()
 
 
-def _saved_rows(store, document_id, digest, generation_id):
-    target = store._target(DocumentId(document_id), digest)
-    assert hashlib.sha256((target / "source.xml").read_bytes()).hexdigest() == digest
-    assert (
-        json.loads((target / "document.json").read_bytes())["source"]["sha256"]
-        == digest
-    )
+def _saved_rows(engine, document_id, digest):
     version_id = f"{document_id}:{digest}"
-    generation_file = (
-        store.root
-        / "generations"
-        / generation_id
-        / (hashlib.sha256(version_id.encode()).hexdigest() + ".jsonl")
-    )
-    generation_rows = [
-        json.loads(line)
-        for line in generation_file.read_text(encoding="utf-8").splitlines()
-    ]
-    by_code = {row["section"]["code"]: row for row in generation_rows}
+    with engine.connect() as connection:
+        version = (
+            connection.execute(
+                select(schema.versions).where(
+                    schema.versions.c.version_id == version_id
+                )
+            )
+            .mappings()
+            .one()
+        )
+        assert hashlib.sha256(version["source"]).hexdigest() == digest
+        assert version["catalogue"]["source"]["sha256"] == digest
+        rows = [
+            json.loads(value)
+            for value in connection.execute(
+                select(schema.units.c.payload_json)
+                .where(schema.units.c.version_id == version_id)
+                .order_by(schema.units.c.position)
+            ).scalars()
+        ]
+    by_code = {row["section"]["code"]: row for row in rows}
     assert set(by_code) == {"27", "10"}
     for code, row in by_code.items():
         assert row["schema_version"] == "medi-chat.pmda-sections.v4"
@@ -249,29 +240,22 @@ def _saved_rows(store, document_id, digest, generation_id):
         assert row["unit_id"] == f"{version_id}:{code}"
     assert by_code["10"]["blocks"][0]["columns"][0] == "注入薬剤列"
     assert by_code["10"]["blocks"][0]["rows"][0][0]["text"] == "相手薬の原文"
+    # Compare common offline projection expectations separately from DB version identity.
     return [
-        json.loads(line)
-        for line in (target / "search_units.jsonl")
-        .read_text(encoding="utf-8")
-        .splitlines()
+        {**row, "unit_id": f"{document_id}:{row['section']['code']}"} for row in rows
     ]
 
 
 @pytest.mark.asyncio
-async def test_tc21_injected_heading_policy_reaches_old_lease_and_new_request(
-    tmp_path, monkeypatch
+async def test_tc21_injected_heading_policy_reaches_old_scope_and_new_request(
+    pg_engines, monkeypatch
 ):
     definitions = loader.get_package_insert_definitions()
     policy = replace(
         definitions.text_search_policy, scope_heading_texts=frozenset({"特別見出し"})
     )
-    structured = tmp_path / "structured"
-    structured.mkdir()
-    index = tmp_path / "index.sqlite3"
-    _migrate_database(index, structured)
-    store = FileAttachmentImportStore(tmp_path / "imports")
-    publisher = SqliteRegistrationPublisher(
-        index, store, xml_settings=definitions.xml_settings
+    publisher = PostgresRegistrationPublisher(
+        pg_engines[1], encoder=PmdaArtifactEncoder()
     )
     decoder = PmdaXmlDecoder(xml_settings=definitions.xml_settings)
     old = xml_source(
@@ -282,15 +266,10 @@ async def test_tc21_injected_heading_policy_reaches_old_lease_and_new_request(
     ).replace(b"2026-10", b"2026-11")
     first = publisher.publish(decoder.decode(old), old)
     workers = ReadWorkers()
-    runtime = GenerationRuntime(
-        publisher,
-        workers=workers,
-        text_search_policy=policy,
-        xml_settings=definitions.xml_settings,
-    )
-    from backend.infrastructure.persistence import generation_runtime
+    runtime = PostgresRuntime(pg_engines[1], workers=workers, text_search_policy=policy)
+    from backend.infrastructure.persistence import postgres_runtime
 
-    real_heading_judgment = generation_runtime.is_scope_heading_only
+    real_heading_judgment = postgres_runtime.is_scope_heading_only
     judgments = []
 
     def observe_heading(unit, *, text_search_policy):
@@ -298,15 +277,15 @@ async def test_tc21_injected_heading_policy_reaches_old_lease_and_new_request(
         judgments.append((unit["unit_id"], unit["kind"], text_search_policy, result))
         return result
 
-    monkeypatch.setattr(generation_runtime, "is_scope_heading_only", observe_heading)
+    monkeypatch.setattr(postgres_runtime, "is_scope_heading_only", observe_heading)
 
     def forbid(*args, **kwargs):
         pytest.fail("injected runtime policy returned to definition source")
 
     for name in (
         "backend.infrastructure.package_insert_definitions.loader",
-        "backend.infrastructure.persistence.generation_runtime",
-        "backend.infrastructure.persistence.registration_publisher",
+        "backend.infrastructure.persistence.postgres_runtime",
+        "backend.infrastructure.persistence.postgres_registration",
         "backend.infrastructure.pmda_xml.decoder",
         "backend.infrastructure.pmda_xml.units",
         "backend.infrastructure.pmda_xml.sections",
@@ -371,9 +350,6 @@ async def test_tc21_injected_heading_policy_reaches_old_lease_and_new_request(
         ]
         with pytest.raises(RuntimeError, match="released"):
             await old_snapshot.evidence_reader.search(criteria, target)
-        with sqlite3.connect(index) as connection:
-            assert connection.execute(
-                "SELECT count(*) FROM generation_leases"
-            ).fetchone() == (0,)
+        assert pg_engines[1].pool.checkedout() == 0
     finally:
         await workers.aclose()

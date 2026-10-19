@@ -1,0 +1,80 @@
+name: Synthetic PostgreSQL contracts
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  postgres-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci-admin-ephemeral
+          POSTGRES_DB: postgres
+        ports:
+          - 15432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      PYTHONUTF8: "1"
+      PYTHON_DOTENV_DISABLED: "1"
+      TEST_DATABASE_URL: postgresql+psycopg://medi_chat_owner:ci-owner-ephemeral@127.0.0.1:15432/medi_chat_test
+      TEST_RUNTIME_DATABASE_URL: postgresql+psycopg://medi_chat_app:ci-runtime-ephemeral@127.0.0.1:15432/medi_chat_test
+      MEDI_CHAT_DATABASE_URL: postgresql+psycopg://medi_chat_app:ci-runtime-ephemeral@127.0.0.1:15432/medi_chat_test
+      OPENAI_API_KEY: ""
+      GEMINI_API_KEY: ""
+      GOOGLE_API_KEY: ""
+      TYPESAFE_API_KEY: ""
+      JEV_API_KEY: ""
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.6.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.14"
+      - run: pnpm install --frozen-lockfile
+      - run: uv sync --project backend --locked
+      - name: Initialize this job's disposable service with separated roles
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_OWNER_PASSWORD: ci-owner-ephemeral
+          POSTGRES_RUNTIME_PASSWORD: ci-runtime-ephemeral
+        run: |
+          bash -n scripts/postgres/init.sh
+          docker exec -i \
+            -e POSTGRES_USER -e POSTGRES_OWNER_PASSWORD -e POSTGRES_RUNTIME_PASSWORD \
+            '${{ job.services.postgres.id }}' bash < scripts/postgres/init.sh
+      - name: Real PG contracts using synthetic source data
+        run: >-
+          pnpm --filter backend exec uv run --locked pytest
+          tests/infrastructure/persistence/test_postgres_storage.py
+          tests/infrastructure/persistence/test_postgres_workers.py
+          tests/infrastructure/persistence/test_postgres_fixture_ownership.py
+          tests/integration/test_postgres_browser_fixture.py
+          tests/integration/test_import_history.py
+          tests/integration/test_postgres_readiness.py
+          tests/integration/test_postgres_snapshot.py
+          tests/integration/test_postgres_process_failure.py
+          tests/integration/test_postgres_registration.py::test_pg003_005_real_migration_and_runtime_permissions
+          tests/integration/test_postgres_search.py::test_pg028_public_corpus_and_equal_rank_use_legacy_codepoint_order
+          --basetemp "${{ runner.temp }}/ci-postgres-contracts" -q
+      - name: Architecture, lint and Python types
+        run: |
+          pnpm --filter backend lint
+          pnpm --filter backend exec uv run --locked ruff format --check .
+          pnpm typecheck:python

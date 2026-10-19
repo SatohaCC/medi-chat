@@ -78,9 +78,7 @@ def test_tc01_single_source_bytes_and_tc03_constructor_ownership() -> None:
     from backend.infrastructure.package_insert_definitions.loader import (
         DEFINITIONS_PATH,
     )
-    from backend.infrastructure.persistence.evidence_reader import (
-        SqlAlchemyEvidenceReader,
-    )
+    from backend.infrastructure.persistence.postgres_runtime import PostgresRuntime
     from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
     from backend.presentation.chat_service import AppChatService
     from backend.project_paths import PROJECT_ROOT
@@ -95,7 +93,7 @@ def test_tc01_single_source_bytes_and_tc03_constructor_ownership() -> None:
         (AppChatService, {"intent_policy", "answer_prompt_policy"}),
         (JevIntentClassifier, {"classification_settings"}),
         (JanomeKeywordExtractor, {"search_policy", "morphology_settings"}),
-        (SqlAlchemyEvidenceReader, {"text_search_policy"}),
+        (PostgresRuntime, {"text_search_policy", "workers"}),
         (PmdaXmlDecoder, {"xml_settings"}),
     ):
         names = set(inspect.signature(constructor).parameters)

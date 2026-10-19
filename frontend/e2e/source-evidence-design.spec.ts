@@ -2,6 +2,64 @@ import { expect, test } from "@playwright/test";
 import type { SourceItem } from "../features/chat/model/chat";
 import { openChat } from "./helpers/chat";
 
+test("続きを読む includes citation and references in the same card region", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  const chat = await openChat(page);
+  await chat.input.fill("テスト根拠");
+  await chat.send.click();
+  chat.respond({
+    type: "sources",
+    sources: [
+      {
+        unit_id: "references-clamp",
+        document_id: "test-document",
+        product_name: "テスト医薬品",
+        generic_name: "テスト成分",
+        product_yj_codes: ["3339003F5020"],
+        document_revision: { year_month: "2026-10", version: "第2版" },
+        section: { code: "10", title: "相互作用" },
+        kind: "section",
+        excerpt: "短い原文です。",
+        columns: null,
+        references: Array.from({ length: 30 }, (_, index) => ({
+          kind: "HeaderRef",
+          target_section_code: `16.${index + 1}`,
+          target_url: `https://example.invalid/reference/${index + 1}`,
+        })),
+        url: "https://example.invalid/source",
+        retrieved_by: ["logic"],
+      },
+    ],
+  });
+  await page.getByRole("button", { name: /添付文書の根拠を表示/ }).click();
+  const card = page.locator('[data-unit-id="references-clamp"]');
+  const toggle = card.getByRole("button", { name: "続きを読む", exact: true });
+  await expect(toggle).toBeVisible();
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  const regionId = await toggle.getAttribute("aria-controls");
+  const region = card.locator(`[id="${regionId}"]`);
+  const lastReference = region.locator('a[href="https://example.invalid/reference/30"]');
+  await expect(lastReference).toHaveAttribute("tabindex", "-1");
+  expect(
+    await region.evaluate((element) => element.getBoundingClientRect().height),
+  ).toBeLessThanOrEqual(150);
+  await expect(region.getByText("改訂: 2026-10 / 第2版", { exact: true })).toHaveCount(1);
+  await toggle.click();
+  await expect(
+    card.getByRole("button", { name: "折りたたむ", exact: true }),
+  ).toHaveAttribute("aria-expanded", "true");
+  await expect(lastReference).not.toHaveAttribute("tabindex", "-1");
+  await expect(region.getByRole("link", { name: /PMDAの出典を開く/ })).toBeVisible();
+  expect(
+    await region.evaluate((element) => element.getBoundingClientRect().height),
+  ).toBeGreaterThan(150);
+  await card.getByRole("button", { name: "折りたたむ", exact: true }).click();
+  await expect(lastReference).toHaveAttribute("tabindex", "-1");
+  await page.screenshot({ path: "../tmp/evidence-card-collapsed.png", fullPage: true });
+});
+
 for (const width of [1280, 390]) {
   test(`根拠デザインは回答と分離し原文・出典を保持する (${width}px)`, async ({
     page,

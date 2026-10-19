@@ -33,13 +33,8 @@ from backend.tests.application.chat.test_answer_preparation import (
     UnusedKeywordExtractor,
 )
 from backend.tests.integration.test_chat_service import RecordingProvider
-from backend.tests.support.registration_runtime_fixtures import (
-    register_synthetic_prepared_index,
-)
-from backend.tests.support.storage_fixtures import (
-    build_document_store,
-    write_structured_document,
-)
+from backend.tests.support.postgres_fixtures import pg_api as pg_api
+from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -342,12 +337,8 @@ async def test_fixed_evidence_does_not_wait_for_morphology_and_updates_are_cumul
 
 
 def test_startup_initializes_janome_off_event_loop_before_accepting_requests(
-    tmp_path, monkeypatch
+    pg_api, monkeypatch
 ):
-    structured = write_structured_document(tmp_path)
-    index = tmp_path / "index.sqlite3"
-    build_document_store(structured, index)
-    register_synthetic_prepared_index(structured, index)
     initialized = []
 
     def initialize():
@@ -358,7 +349,7 @@ def test_startup_initializes_janome_off_event_loop_before_accepting_requests(
     monkeypatch.setattr(main, "get_janome_tokenizer", initialize)
     monkeypatch.setenv("TYPESAFE_API_KEY", "")
     monkeypatch.setenv("JEV_API_KEY", "")
-    app = main.create_app(structured, index, import_directory=tmp_path / "imports")
+    app = pg_api()
     assert initialized == []
     with TestClient(app) as client:
         assert initialized == [True]
