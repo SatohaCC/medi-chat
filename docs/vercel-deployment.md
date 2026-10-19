@@ -33,9 +33,10 @@ pnpm --filter backend db:migrate
 - `POST /api/attachment-imports/uploads`にfilename・byte_size・source_sha256を送り、ランダムな256bitのupload_idを受け取る。このIDは一時セッションの操作用なので共有しない。
 - `POST /api/attachment-imports/uploads/{upload_id}/parts/{index}`で0始まりの分割データを送信する。サーバーは位置・正確な部分サイズを検証。同一bytesの再送は成功し、異なるbytesでの置換は409とする。
 - `POST /api/attachment-imports/uploads/{upload_id}/complete`で全体のサイズ・SHA-256を検証してから、既存のXML検証・改訂判定・atomicな公開処理へ渡す。欠落は409、全体のハッシュ不一致は422。既存と同じ登録結果DTO・Location、新規201／再送200を返す。
-- 完了時に分割bytesを削除し、再試行に必要な小さいmetadataだけを保持する。同じ完了要求の再送は保存済みの結果を参照し、二重公開しない。公開後・セッション完了記録前に切断しても、既存publisherの原本ハッシュによる冪等性を使って再試行できる。
+- 完了時に分割bytesを削除し、再試行に必要な小さいmetadataだけを保持する。同じ完了要求の再送は登録履歴の再送用結果を参照し、二重公開しない。原本payloadが旧版として削除済みでも200・reused=trueを返す。結果GETの削除済み判定（410）は維持する。公開後・セッション完了記録前に切断しても、既存publisherの原本ハッシュによる冪等性を使って再試行できる。
 - 有効期間は作成から最大1時間。未完了セッションは最大16件（原本bytesは最大160MiB）。完了metadataは作成時に直近64件へ整理する。期限切れセッションとその部分データは次のセッション作成、または`pnpm --filter backend db:maintenance`で回収する。TTL到達時に常駐タイマーで削除する構成ではない。
 - 送信失敗時は画面にサーバーのエラーを表示し、手動で再送できる。ページ再読込後の途中再開や、自動のXML再登録は行わない。
+- XML・メタデータ・全体ハッシュの不正、上限超過、改訂競合など確定的な取り込み失敗では、セッションと部分bytesを削除して取り込み枠を解放する。未送信部分がある409と一時的な保存障害・取消では再試行用に保持する。
 
 ## デプロイ時に残る作業
 

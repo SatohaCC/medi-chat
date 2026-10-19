@@ -434,6 +434,10 @@ class PostgresRegistrationPublisher:
     def read_result(self, document_id: str, digest: str) -> ImportResult:
         return self._result(f"{document_id}:{digest}", get=True)
 
+    def replay_result(self, document_id: str, digest: str) -> ImportResult:
+        """Replay a retained receipt even after its original payload was reclaimed."""
+        return self._result(f"{document_id}:{digest}", reused=True)
+
     def list_imports(self, *, limit: int, offset: int) -> ImportPage:
         try:
             with self.engine.connect().execution_options(

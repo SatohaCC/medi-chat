@@ -4,9 +4,123 @@ import hashlib
 
 import httpx
 import pytest
+from backend.application.attachment_import.import_errors import ImportStorageError
 from backend.tests.support.attachment_import_fixtures import xml_source
 from backend.tests.support.postgres_fixtures import pg_api as pg_api
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
+from sqlalchemy import text
+
+
+async def send_parts(client, raw, *, digest=None):
+    started = await client.post(
+        "/api/attachment-imports/uploads",
+        json={
+            "filename": "テスト.xml",
+            "byte_size": len(raw),
+            "source_sha256": digest or hashlib.sha256(raw).hexdigest(),
+        },
+    )
+    assert started.status_code == 201
+    session = started.json()
+    path = f"/api/attachment-imports/uploads/{session['upload_id']}"
+    for index, offset in enumerate(range(0, len(raw), session["chunk_bytes"])):
+        assert (
+            await client.post(
+                f"{path}/parts/{index}",
+                content=raw[offset : offset + session["chunk_bytes"]],
+            )
+        ).status_code == 204
+    return path
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("cleanup_first", [True, False])
+async def test_complete_retry_preserves_cleaned_receipt(pg_api, cleanup_first):
+    app = pg_api()
+    old = xml_source().replace(b"111111111111", b"222222222222")
+    newer = old.replace(b"2026-10", b"2026-11")
+    async with (
+        app.router.lifespan_context(app),
+        httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://test"
+        ) as client,
+    ):
+        registered = await client.post(
+            "/api/attachment-imports", files={"file": ("テスト.xml", old)}
+        )
+        assert registered.status_code == 201
+        path = await send_parts(client, old)
+        if cleanup_first:
+            assert (
+                await client.post(
+                    "/api/attachment-imports", files={"file": ("テスト新版.xml", newer)}
+                )
+            ).status_code == 201
+        first = await client.post(path + "/complete")
+        assert first.status_code == 200
+        if not cleanup_first:
+            assert (
+                await client.post(
+                    "/api/attachment-imports", files={"file": ("テスト新版.xml", newer)}
+                )
+            ).status_code == 201
+        assert (await client.get(registered.headers["location"])).status_code == 410
+        retry = await client.post(path + "/complete")
+        assert retry.status_code == 200
+        assert retry.json()["reused"] is True
+        assert retry.json()["artifacts_deleted"] is True
+        assert retry.json()["active_yj_codes"] == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failure", ["xml", "digest"])
+async def test_terminal_failure_releases_capacity(pg_api, pg_engines, failure):
+    app = pg_api()
+    async with (
+        app.router.lifespan_context(app),
+        httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://test"
+        ) as client,
+    ):
+        for _ in range(17):
+            path = await send_parts(
+                client, b"<broken", digest="a" * 64 if failure == "digest" else None
+            )
+            assert (await client.post(path + "/complete")).status_code == 422
+        with pg_engines[0].connect() as connection:
+            for table in ("attachment_uploads", "attachment_upload_parts"):
+                assert (
+                    connection.execute(
+                        text(f"SELECT count(*) FROM {table}")
+                    ).scalar_one()
+                    == 0
+                )
+        raw = xml_source().replace(b"111111111111", b"222222222222")
+        path = await send_parts(client, raw)
+        assert (await client.post(path + "/complete")).status_code == 201
+
+
+@pytest.mark.asyncio
+async def test_transient_failure_keeps_parts_for_retry(pg_api, monkeypatch):
+    app = pg_api()
+    async with (
+        app.router.lifespan_context(app),
+        httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://test"
+        ) as client,
+    ):
+        raw = xml_source().replace(b"111111111111", b"222222222222")
+        path = await send_parts(client, raw)
+        publisher = app.state.attachment_import_service.publisher
+        publish = publisher.publish
+
+        def fail(*args, **kwargs):
+            raise ImportStorageError("test_unavailable", "テスト一時障害")
+
+        monkeypatch.setattr(publisher, "publish", fail)
+        assert (await client.post(path + "/complete")).status_code == 500
+        monkeypatch.setattr(publisher, "publish", publish)
+        assert (await client.post(path + "/complete")).status_code == 201
 
 
 @pytest.mark.asyncio

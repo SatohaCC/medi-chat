@@ -3,14 +3,19 @@ import threading
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import suppress
-from dataclasses import replace
 from typing import TypeVar
 
 from .import_contracts import (
     AttachmentDecoder,
     AttachmentRegistrationPublisher,
 )
-from .import_errors import ImportCancelled
+from .import_errors import (
+    ImportCancelled,
+    ImportConflict,
+    ImportLimitExceeded,
+    InvalidAttachment,
+    UnsupportedAttachment,
+)
 from .import_models import ImportPage, ImportResult
 from .upload_contracts import UploadStore
 from .upload_models import UploadSpec
@@ -95,14 +100,34 @@ class AttachmentImportService:
         )
 
     async def finish_upload(self, upload_id: str) -> ImportResult:
+        try:
+            return await self._finish_upload(upload_id)
+        except (
+            InvalidAttachment,
+            UnsupportedAttachment,
+            ImportLimitExceeded,
+            ImportConflict,
+        ) as exc:
+            # Missing parts may still arrive; deterministic failures cannot be
+            # repaired by resending this immutable session's existing bytes.
+            if exc.code != "upload_incomplete":
+                await self._run(
+                    lambda: self._uploads().discard(upload_id), threading.Event()
+                )
+            raise
+
+    async def _finish_upload(self, upload_id: str) -> ImportResult:
         uploaded = await self._run(
             lambda: self._uploads().read(upload_id), threading.Event()
         )
-        if uploaded.document_id is not None:
-            result = await self.read_result(
-                uploaded.document_id, uploaded.spec.source_sha256
+        document_id = uploaded.document_id
+        if document_id is not None:
+            return await self._run(
+                lambda: self.publisher.replay_result(
+                    document_id, uploaded.spec.source_sha256
+                ),
+                threading.Event(),
             )
-            return replace(result, reused=True)
         assert uploaded.source is not None
         result = await self.import_document(
             uploaded.source, original_filename=uploaded.spec.filename

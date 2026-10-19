@@ -197,3 +197,7 @@ class PostgresUploadStore:
             connection.execute(
                 delete(upload_parts).where(upload_parts.c.upload_id == upload_id)
             )
+
+    def discard(self, upload_id: str) -> None:
+        with self._transaction() as connection:
+            connection.execute(delete(uploads).where(uploads.c.upload_id == upload_id))
