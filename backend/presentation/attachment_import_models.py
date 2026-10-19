@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from ..application.attachment_import.import_models import ImportResult
+from ..application.attachment_import.import_models import ImportPage, ImportResult
 
 
 class ImportedProductResponse(BaseModel):
@@ -12,6 +12,52 @@ class ImportedRevisionResponse(BaseModel):
     source_label: str | None
     year_month: str | None
     version: str | None
+
+
+class ImportSummaryResponse(BaseModel):
+    document_id: str
+    source_sha256: str
+    filename: str | None
+    registration_sequence: int
+    revised_at: str
+    products: list[ImportedProductResponse]
+    active_yj_codes: list[str]
+    artifacts_deleted: bool
+
+
+class ImportListResponse(BaseModel):
+    items: list[ImportSummaryResponse]
+    total_count: int
+    limit: int
+    offset: int
+
+    @classmethod
+    def from_page(
+        cls, page: ImportPage, *, limit: int, offset: int
+    ) -> ImportListResponse:
+        return cls(
+            items=[
+                ImportSummaryResponse(
+                    document_id=item.document_id,
+                    source_sha256=item.source_sha256,
+                    filename=item.filename,
+                    registration_sequence=item.registration_sequence,
+                    revised_at=item.revised_at,
+                    products=[
+                        ImportedProductResponse(
+                            yj_code=p.yj_code, brand_name=p.brand_name
+                        )
+                        for p in item.products
+                    ],
+                    active_yj_codes=list(item.active_yj_codes),
+                    artifacts_deleted=item.artifacts_deleted,
+                )
+                for item in page.items
+            ],
+            total_count=page.total_count,
+            limit=limit,
+            offset=offset,
+        )
 
 
 class ImportWarningResponse(BaseModel):

@@ -5,6 +5,8 @@ import { join, resolve } from "node:path";
 import { expect, test } from "@playwright/test";
 import { ensurePortAvailable } from "../scripts/owned-server.mjs";
 
+import { cleanupFixture } from "./helpers/postgres-fixture";
+
 const root = resolve("..");
 const evidence = resolve(
   process.env.MEDI_CHAT_E2E_EVIDENCE ||
@@ -218,5 +220,6 @@ test("TC137 real browser three confirmations and normal single/pair without API 
       owned.kill();
       await stopped;
     }
+    cleanupFixture(root, isolated);
   }
 });

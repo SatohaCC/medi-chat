@@ -5,11 +5,7 @@ from __future__ import annotations
 import hashlib
 import html
 import json
-import shutil
-import sqlite3
-import tempfile
 import unittest
-from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 from xml.etree import ElementTree as ET
@@ -17,7 +13,6 @@ from xml.etree import ElementTree as ET
 from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
 from backend.domain.retrieval.primitives import IntentName, Probability
 from backend.domain.retrieval.value_objects import IntentCandidate
-from backend.main import create_app
 from backend.tests.application.chat.test_product_identity_responses import CONFIRMATIONS
 from backend.tests.integration.test_interaction_xml_oracle import (
     ORACLE,
@@ -25,12 +20,19 @@ from backend.tests.integration.test_interaction_xml_oracle import (
     assert_public_collection,
 )
 from backend.tests.support.paths import PROJECT_ROOT
-from backend.tests.support.storage_fixtures import build_document_store
+from backend.tests.support.postgres_public_application import (
+    original_application_factory,
+)
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from sqlalchemy import text
 
 REPO_ROOT = PROJECT_ROOT
-STRUCTURED_DIR = REPO_ROOT / "data" / "pmda" / "structured"
+CATALOGUE = json.loads(
+    (
+        REPO_ROOT / "backend/tests/fixtures/postgres_public_catalogue_oracle.json"
+    ).read_text(encoding="utf-8")
+)
 
 
 class UnavailableIntentClassifier:
@@ -73,34 +75,20 @@ class InteractionKeywords:
 
 
 class ChatApiRouteTests(unittest.TestCase):
-    temp_dir: tempfile.TemporaryDirectory[str]
-    index_path: Path
     client_context: Any
     client: TestClient
     classifier_patch: Any
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.temp_dir = tempfile.TemporaryDirectory()
-        index_path = Path(cls.temp_dir.name) / "chat-search.sqlite3"
-        cls.index_path = index_path
-        from backend.tests.support.registration_runtime_fixtures import (
-            register_existing_test_source,
-        )
-
-        prepared = register_existing_test_source(STRUCTURED_DIR, index_path)
-        cls.structured_dir = prepared
+        cls.database_context = original_application_factory()
+        cls.build = staticmethod(cls.database_context.__enter__())
         cls.classifier_patch = patch(
             "backend.main.JevIntentClassifier", UnavailableIntentClassifier
         )
         cls.classifier_patch.start()
         cls.client_context = TestClient(
-            create_app(
-                prepared,
-                index_path,
-                llm_provider_factory=lambda _: PromptEchoProvider(),
-                import_directory=Path(cls.temp_dir.name) / "imports",
-            )
+            cls.build(llm_provider_factory=lambda _: PromptEchoProvider())
         )
         cls.client = cls.client_context.__enter__()
 
@@ -108,42 +96,34 @@ class ChatApiRouteTests(unittest.TestCase):
     def tearDownClass(cls) -> None:
         cls.client_context.__exit__(None, None, None)
         cls.classifier_patch.stop()
-        cls.temp_dir.cleanup()
+        cls.database_context.__exit__(None, None, None)
 
     def test_health_reports_loaded_documents_and_units(self) -> None:
         response = self.client.get("/health")
 
         self.assertEqual(response.status_code, 200)
-        expected_documents = list(self.structured_dir.glob("*/document.json"))
-        expected_units = sum(
-            sum(
-                1
-                for line in (document.parent / "search_units.jsonl")
-                .read_text(encoding="utf-8")
-                .splitlines()
-                if line
+        for path in (REPO_ROOT / "data/pmda/originals").glob("*/*.xml"):
+            self.assertEqual(
+                hashlib.sha256(path.read_bytes()).hexdigest(),
+                CATALOGUE["originals"][path.name],
             )
-            for document in expected_documents
-        )
         self.assertEqual(
             response.json(),
             {
                 "status": "ok",
-                "document_count": len(expected_documents),
-                "unit_count": expected_units,
+                "document_count": CATALOGUE["document_count"],
+                "unit_count": CATALOGUE["unit_count"],
                 "generation_id": self._published_generation(),
             },
         )
 
     def _published_generation(self) -> str:
-        from contextlib import closing
-
-        with closing(
-            sqlite3.connect(self.index_path.as_uri() + "?mode=ro", uri=True)
-        ) as connection:
+        app = self.client.app
+        assert isinstance(app, FastAPI)
+        with app.state.database_engine.connect() as connection:
             return connection.execute(
-                "SELECT generation_id FROM registration_state WHERE singleton=1"
-            ).fetchone()[0]
+                text("SELECT generation_id FROM registration_state")
+            ).scalar_one()
 
     def test_interaction_pair_returns_both_directions_with_row_context_and_sources(
         self,
@@ -472,42 +452,6 @@ class ChatApiRouteTests(unittest.TestCase):
             {"630004_3339003F5020_1_08"},
         )
 
-    def test_empty_document_store_fails_at_startup(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            app = create_app(
-                Path(temp_dir) / "missing", Path(temp_dir) / "index.sqlite3"
-            )
-            with self.assertRaises(RuntimeError), TestClient(app):
-                pass
-
-    def test_adding_a_structured_document_refreshes_the_sqlite_index(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            root = Path(temp_dir)
-            structured_dir = root / "structured"
-            structured_dir.mkdir()
-            first_source = self.structured_dir / "630004_3339003F5020_1_08"
-            second_source = self.structured_dir / "800155_6290004M1029_1_47"
-            shutil.copytree(first_source, structured_dir / first_source.name)
-
-            first_document_store = build_document_store(
-                structured_dir, root / "index.sqlite3"
-            )
-            first_stats = first_document_store.index_stats
-            shutil.copytree(second_source, structured_dir / second_source.name)
-
-            refreshed_document_store = build_document_store(
-                structured_dir, root / "index.sqlite3"
-            )
-
-            self.assertEqual(
-                refreshed_document_store.index_stats["document_count"],
-                first_stats["document_count"] + 1,
-            )
-            self.assertGreater(
-                refreshed_document_store.index_stats["unit_count"],
-                first_stats["unit_count"],
-            )
-
     def test_medicine_lookup_resolves_brand_and_yj_code(self) -> None:
         response = self.client.get("/api/medicines", params={"query": "イグザレルト"})
 
@@ -523,13 +467,7 @@ class ChatApiRouteTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         items = response.json()["items"]
-        expected_codes = {
-            product["yj_code"]
-            for document_path in STRUCTURED_DIR.glob("*/document.json")
-            for product in json.loads(document_path.read_text(encoding="utf-8"))[
-                "document"
-            ]["products"]
-        }
+        expected_codes = set(CATALOGUE["yj_codes"])
         actual_codes = {code for item in items for code in item["yj_codes"]}
         self.assertEqual(actual_codes, expected_codes)
 

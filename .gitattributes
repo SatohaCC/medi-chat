@@ -1,2 +1,3 @@
 # 原本のSHA-256をOS間で一致させるため、XMLの改行を変換しない。
 data_tools/data/**/*.xml -text
+scripts/postgres/*.sh text eol=lf

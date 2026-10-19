@@ -9,7 +9,7 @@ dependencies = [
     "google-genai>=1.0.0",
     "janome>=0.5.0",
     "openai>=1.50.0",
-    "psutil>=7.2,<8",
+    "psycopg[binary]>=3.2,<4",
     "pydantic>=2.10.0",
     "python-dotenv>=1.0.0",
     "sqlalchemy>=2.0,<3",
@@ -22,6 +22,7 @@ dev = [
     "httpx>=0.28.1",
     "import-linter>=2.15",
     "mypy>=2.4.0",
+    "psutil>=7.2,<8",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "ruff>=0.16.9",
@@ -214,7 +215,7 @@ source_modules = ["backend.infrastructure.persistence"]
 forbidden_modules = ["backend.infrastructure.sources"]
 
 [[tool.importlinter.contracts]]
-name = "Persistence does not depend on non-XML technology adapters and isolates XML fallback"
+name = "Persistence does not depend on other technology adapters"
 type = "forbidden"
 source_modules = ["backend.infrastructure.persistence"]
 forbidden_modules = [
@@ -223,12 +224,6 @@ forbidden_modules = [
     "backend.infrastructure.morphology",
     "backend.infrastructure.pmda_xml",
 ]
-ignore_imports = [
-    "backend.infrastructure.persistence.generation_runtime -> backend.infrastructure.pmda_xml.decoder",
-    "backend.infrastructure.persistence.registration_publisher -> backend.infrastructure.pmda_xml.artifact_mapping",
-    "backend.infrastructure.persistence.registration_publisher -> backend.infrastructure.pmda_xml.decoder",
-]
-unmatched_ignore_imports_alerting = "none"
 
 [[tool.importlinter.contracts]]
 name = "Infrastructure adapters do not depend on composition or CLI"

@@ -2,7 +2,7 @@
 
 import * as stylex from "@stylexjs/stylex";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useId, useMemo, useRef, useState } from "react";
 import { styles } from "./ExpandableEvidenceContent.styles";
 import { SourceEvidenceContent } from "./SourceEvidenceContent";
 
@@ -10,6 +10,7 @@ export interface ExpandableEvidenceContentProps {
   content: string;
   highlightWords?: string[];
   alwaysExpanded?: boolean;
+  children?: ReactNode;
 }
 
 const COLLAPSED_HEIGHT = 150;
@@ -35,13 +36,16 @@ export function ExpandableEvidenceContent({
   content,
   highlightWords,
   alwaysExpanded = false,
+  children,
 }: ExpandableEvidenceContentProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isClamped, setIsClamped] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const contentId = useId();
 
   useEffect(() => {
-    if (alwaysExpanded || !content) return;
+    if (alwaysExpanded) return;
     const el = containerRef.current;
     if (!el) return;
 
@@ -54,10 +58,10 @@ export function ExpandableEvidenceContent({
 
     if (typeof ResizeObserver !== "undefined") {
       const ro = new ResizeObserver(checkOverflow);
-      ro.observe(el);
+      ro.observe(contentRef.current ?? el);
       return () => ro.disconnect();
     }
-  }, [alwaysExpanded, content]);
+  }, [alwaysExpanded]);
 
   const hasKeywordMatch = useMemo(() => {
     if (!highlightWords || highlightWords.length === 0) return false;
@@ -72,39 +76,55 @@ export function ExpandableEvidenceContent({
   // Manage keyboard accessibility: remove visually clipped descendants from tab order when collapsed
   useEffect(() => {
     const container = containerRef.current;
-    if (!container || !content) return;
+    if (!container) return;
 
-    if (showClamping) {
-      const containerRect = container.getBoundingClientRect();
-      const focusable = container.querySelectorAll<HTMLElement>(
-        'a[href], button, input, textarea, select, details, [tabindex]:not([tabindex="-1"])',
-      );
-      for (const el of focusable) {
-        const rect = el.getBoundingClientRect();
-        // If the element top is at or below the 150px cutoff, remove from tab order
-        if (rect.top >= containerRect.top + COLLAPSED_HEIGHT - 4) {
-          if (!el.hasAttribute("data-hidden-by-clamp")) {
-            const orig = el.getAttribute("tabindex");
-            if (orig !== null) {
-              el.setAttribute("data-orig-tabindex", orig);
+    const updateFocusableElements = () => {
+      if (showClamping) {
+        const containerRect = container.getBoundingClientRect();
+        const focusable = container.querySelectorAll<HTMLElement>(
+          'a[href], button, input, textarea, select, details, summary, [tabindex]:not([tabindex="-1"])',
+        );
+        for (const el of focusable) {
+          const rect = el.getBoundingClientRect();
+          // Clipped links, including footer references, must not receive keyboard focus.
+          if (rect.bottom > containerRect.top + COLLAPSED_HEIGHT - 4) {
+            if (!el.hasAttribute("data-hidden-by-clamp")) {
+              const orig = el.getAttribute("tabindex");
+              if (orig !== null) {
+                el.setAttribute("data-orig-tabindex", orig);
+              }
+              el.setAttribute("data-hidden-by-clamp", "true");
+              el.tabIndex = -1;
             }
-            el.setAttribute("data-hidden-by-clamp", "true");
-            el.tabIndex = -1;
           }
         }
+      } else {
+        restoreFocusableElements(container);
       }
-    } else {
-      restoreFocusableElements(container);
-    }
+    };
+    updateFocusableElements();
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(updateFocusableElements);
+    if (contentRef.current) observer?.observe(contentRef.current);
+    const mutations = new MutationObserver(updateFocusableElements);
+    mutations.observe(container, { childList: true, subtree: true });
 
     return () => {
+      observer?.disconnect();
+      mutations.disconnect();
       restoreFocusableElements(container);
     };
-  }, [showClamping, content]);
+  }, [showClamping]);
 
   // Always expanded (e.g. Warning / Contraindication) bypasses clamping and accordion
   if (alwaysExpanded) {
-    return <SourceEvidenceContent content={content} highlightWords={highlightWords} />;
+    return (
+      children ?? (
+        <SourceEvidenceContent content={content} highlightWords={highlightWords} />
+      )
+    );
   }
 
   const handleToggle = () => {
@@ -119,6 +139,7 @@ export function ExpandableEvidenceContent({
   return (
     <div>
       <div
+        id={contentId}
         ref={containerRef}
         onScroll={() => {
           if (showClamping && containerRef.current) {
@@ -127,7 +148,11 @@ export function ExpandableEvidenceContent({
         }}
         {...stylex.props(styles.wrapper, showClamping ? styles.clamped : styles.expanded)}
       >
-        <SourceEvidenceContent content={content} highlightWords={highlightWords} />
+        <div ref={contentRef}>
+          {children ?? (
+            <SourceEvidenceContent content={content} highlightWords={highlightWords} />
+          )}
+        </div>
         {showClamping && <div {...stylex.props(styles.fadeOverlay)} aria-hidden="true" />}
       </div>
 
@@ -137,6 +162,7 @@ export function ExpandableEvidenceContent({
             type="button"
             onClick={handleToggle}
             aria-expanded={isExpanded}
+            aria-controls={contentId}
             {...stylex.props(styles.toggleButton, isExpanded && styles.collapseButton)}
           >
             {isExpanded ? (

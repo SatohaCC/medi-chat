@@ -22,3 +22,21 @@ export interface AttachmentImportResult {
   cleanup_pending: { version_id: string; reason: string }[];
   artifacts_deleted: boolean;
 }
+
+export interface AttachmentImportSummary {
+  document_id: string;
+  source_sha256: string;
+  filename: string | null;
+  registration_sequence: number;
+  revised_at: string;
+  products: { yj_code: string | null; brand_name: string | null }[];
+  active_yj_codes: string[];
+  artifacts_deleted: boolean;
+}
+
+export interface AttachmentImportPage {
+  items: AttachmentImportSummary[];
+  total_count: number;
+  limit: number;
+  offset: number;
+}

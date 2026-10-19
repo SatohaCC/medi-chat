@@ -1,9 +1,8 @@
 """TC133/134: 実copyASGI/REST両WS、全DTOと同接続次要求。"""
 
 import asyncio
-import sqlite3
 import threading
-from contextlib import asynccontextmanager, closing
+from contextlib import asynccontextmanager
 
 import pytest
 from backend.application.retrieval.intent_contracts import IntentResult
@@ -24,35 +23,33 @@ from backend.tests.integration.test_interaction_xml_oracle import (
     assert_prompt_oracle,
     assert_public_source,
 )
-from backend.tests.integration.test_registration_publisher import publish
+from backend.tests.integration.test_postgres_registration import (
+    pg_publisher as pg_publisher,
+)
+from backend.tests.integration.test_postgres_registration import publish
 from backend.tests.support.interaction_raw_oracle import DOCUMENTS, ROOT
+from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 
-@pytest.fixture(scope="module")
-def public_copy(tmp_path_factory):
-    from backend.infrastructure.persistence.attachment_import_store import (
-        FileAttachmentImportStore,
-    )
-    from backend.infrastructure.persistence.registration_publisher import (
-        SqliteRegistrationPublisher,
-    )
-    from backend.tests.infrastructure.persistence.test_alembic_migrations import (
-        _migrate_database,
-    )
+@pytest.fixture
+def public_copy(pg_engines, pg_publisher, monkeypatch):
+    import os
 
-    root = tmp_path_factory.mktemp("identity-public")
-    index = root / "copy.sqlite3"
-    _migrate_database(index, root)
-    pub = SqliteRegistrationPublisher(
-        index, FileAttachmentImportStore(root / "imports")
-    )
+    for key in (
+        "TYPESAFE_API_KEY",
+        "OPENAI_API_KEY",
+        "GEMINI_API_KEY",
+        "GOOGLE_API_KEY",
+    ):
+        monkeypatch.setenv(key, "")
     for doc in [*[x[0] for x in DOCUMENTS], "780069_3961008F1020_1_30"]:
         publish(
-            pub, next((ROOT / "data/pmda/originals").glob(f"*/{doc}.xml")).read_bytes()
+            pg_publisher,
+            next((ROOT / "data/pmda/originals").glob(f"*/{doc}.xml")).read_bytes(),
         )
-    return pub
+    return {"schema": pg_engines[2], "url": os.environ["TEST_RUNTIME_DATABASE_URL"]}
 
 
 class Classifier:
@@ -115,22 +112,21 @@ class SnapshotCounter:
             )
 
 
-def lease_count(pub):
-    with closing(sqlite3.connect(f"{pub.index_path.as_uri()}?mode=ro", uri=True)) as c:
-        return c.execute("SELECT count(*) FROM generation_leases").fetchone()[0]
+def connection_count(configuration):
+    return configuration["engine"].pool.checkedout()
 
 
 @pytest.fixture
 def public_client(public_copy):
     provider = Provider()
     app = create_app(
-        public_copy.index_path.parent,
-        public_copy.index_path,
-        import_directory=public_copy.store.root,
+        database_url=public_copy["url"],
+        _database_schema=public_copy["schema"],
         llm_provider_factory=provider.factory,
     )
     with TestClient(app) as client:
         assert isinstance(client.app, FastAPI)
+        public_copy["engine"] = app.state.database_engine
         service = app.state.chat_service
         counter = SnapshotCounter(service.snapshot_provider)
         service.snapshot_provider = counter
@@ -189,7 +185,7 @@ def test_tc133_rest_all_fields_zero_search_generation(
         "jev_response": {"fixed": True} if available else None,
     }
     assert counter.search_calls == provider.factory_calls == provider.stream_calls == 0
-    assert lease_count(public_copy) == 0
+    assert connection_count(public_copy) == 0
 
 
 def receive_done(ws):
@@ -229,7 +225,7 @@ def test_tc134_fixed_end_ping_then_normal_same_connection(
         ]
         assert (
             counter.search_calls == provider.factory_calls == provider.stream_calls == 0
-            and lease_count(public_copy) == 0
+            and connection_count(public_copy) == 0
         )
         ws.send_json({"type": "ping"})
         assert ws.receive_json() == {"type": "pong"}
@@ -284,14 +280,14 @@ def test_tc134_fixed_end_ping_then_normal_same_connection(
         assert (
             provider.factory_calls == provider.stream_calls == 1
             and counter.search_calls == (2 if available else 1)
-            and lease_count(public_copy) == 0
+            and connection_count(public_copy) == 0
         )
         ws.send_json({"type": "ping"})
         assert ws.receive_json() == {"type": "pong"}
 
 
 @pytest.mark.parametrize("path", ["/api/ws", "/ws/chat"])
-def test_tc134_disconnect_during_preparation_releases_real_lease(
+def test_tc134_disconnect_during_preparation_releases_real_connection(
     public_client, public_copy, path
 ):
     client, service, counter, provider = public_client
@@ -318,8 +314,8 @@ def test_tc134_disconnect_during_preparation_releases_real_lease(
             "type": "retrieval_status",
             "stage": "jev_searching",
         }
-        assert entered.wait(10) and lease_count(public_copy) == 1
-    assert lease_count(public_copy) == 0
+        assert entered.wait(10) and connection_count(public_copy) == 1
+    assert connection_count(public_copy) == 0
     assert counter.search_calls == provider.factory_calls == provider.stream_calls == 0
 
 
@@ -358,5 +354,5 @@ def test_tc133_normal_rest_full_fields_original_prompt(
     assert (
         provider.factory_calls == provider.stream_calls == 1
         and counter.search_calls > 0
-        and lease_count(public_copy) == 0
+        and connection_count(public_copy) == 0
     )

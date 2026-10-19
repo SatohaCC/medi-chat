@@ -1,6 +1,6 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { request as httpRequest } from "node:http";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -11,9 +11,10 @@ import {
 } from "../scripts/owned-server.mjs";
 import {
   assertCurrentImport,
+  cleanupFixture,
   logicalSnapshot,
   pythonBinary,
-} from "./helpers/sqlite-fixture";
+} from "./helpers/postgres-fixture";
 
 const root = resolve("..");
 const evidence = resolve(
@@ -111,8 +112,7 @@ test("real browser upload, resend, process restart GET and active registration",
         phase: "validation",
       },
     });
-    const index = join(isolated, "index.sqlite3");
-    const initialFileHash = hash(readFileSync(index));
+    const index = isolated;
     const initial = logicalSnapshot(root, index);
     expect(initial.integrity).toBe("ok");
     const medicinesBefore = await (
@@ -180,17 +180,10 @@ test("real browser upload, resend, process restart GET and active registration",
     ).json();
     expect(candidates.generation_id).toBe(result.generation_id);
     expect(candidates.generation_id).not.toBe(medicinesBefore.generation_id);
-    // Observe the old byte oracle separately; WAL pages need not change the main file.
-    const walDiagnosis = JSON.stringify({
-      initialFileHash,
-      registeredFileHash: hash(readFileSync(index)),
-      walBytes: readFileSync(`${index}-wal`).length,
-      initial,
-      registered,
-    });
-    writeFileSync(join(evidence, "wal-diagnosis.json"), walDiagnosis);
-    await testInfo.attach("wal-diagnosis", {
-      body: walDiagnosis,
+    const databaseDiagnosis = JSON.stringify({ initial, registered });
+    writeFileSync(join(evidence, "database-diagnosis.json"), databaseDiagnosis);
+    await testInfo.attach("database-diagnosis", {
+      body: databaseDiagnosis,
       contentType: "application/json",
     });
     const repeated = page.waitForResponse(
@@ -207,24 +200,12 @@ test("real browser upload, resend, process restart GET and active registration",
     expect(repeatResult.generation_id).toBe(result.generation_id);
     expect(repeatResult.reused).toBe(true);
     expect(logicalSnapshot(root, index)).toEqual(registered);
-    const version = join(
-      isolated,
-      "imports/versions",
-      hash(Buffer.from(result.document_id)),
-      result.source_sha256,
-    );
-    expect(readFileSync(join(version, "source.xml"))).toEqual(source);
-    const units = readFileSync(join(version, "search_units.jsonl"), "utf8")
-      .trim()
-      .split("\n")
-      .map((line) => JSON.parse(line));
-    expect(units).toHaveLength(result.search_unit_count);
-    expect(assertCurrentImport(root, index, version)).toEqual({
+    const versionId = `${result.document_id}:${result.source_sha256}`;
+    expect(assertCurrentImport(root, isolated, versionId)).toEqual({
       sections: 22,
       source_tree: "passed",
       stored_index: "passed",
     });
-    expect(readdirSync(version)).toContain("document.json");
     await stop();
     await start();
     const saved = await request.get(`http://127.0.0.1:3211${location}`);
@@ -239,6 +220,47 @@ test("real browser upload, resend, process restart GET and active registration",
     expect(
       medicinesAfter.items.flatMap((item: { yj_codes: string[] }) => item.yj_codes),
     ).toContain("3339003F5020");
+    const xmlVersion = (month: string, products: string[], body: string) =>
+      Buffer.from(`<PackIns drugType="Medicine"><CompanyIdentifier>test</CompanyIdentifier><PackageInsertNo>browser</PackageInsertNo><DateOfPreparationOrRevision><PreparationOrRevision id="今回"><YearMonth>${month}</YearMonth><Version>1</Version></PreparationOrRevision></DateOfPreparationOrRevision><ApprovalEtc>${products.map((code, index) => `<DetailBrandName id="${index}"><ApprovalBrandName><Lang>テスト製品${code === "777777777777" ? "A" : "B"}</Lang></ApprovalBrandName><BrandCode><YJCode>${code}</YJCode></BrandCode></DetailBrandName>`).join("")}</ApprovalEtc><Warnings><Detail><Lang>${body}</Lang></Detail></Warnings></PackIns>`);
+    const uploadVersion = async (buffer: Buffer) => {
+      await page.getByLabel("XMLファイル").setInputFiles({ name: "テスト改訂.xml", mimeType: "application/xml", buffer });
+      const pending = page.waitForResponse((response) => response.url().endsWith("/api/attachment-imports") && response.request().method() === "POST");
+      await page.getByRole("button", { name: "取り込む", exact: true }).click();
+      const response = await pending;
+      expect([200, 201]).toContain(response.status());
+      return { result: await response.json(), location: response.headers().location, status: response.status() };
+    };
+    const a = "777777777777", b = "888888888888";
+    const oldBytes = xmlVersion("2026-10", [a, b], "テスト旧ブラウザ警告");
+    const old = await uploadVersion(oldBytes);
+    expect(old.status).toBe(201);
+    const newerA = await uploadVersion(xmlVersion("2026-11", [a], "テスト新版A警告"));
+    expect(newerA.result.replaced_yj_codes).toEqual([a]);
+    const retained = await request.get(`http://127.0.0.1:3211${old.location}`);
+    expect(retained.status()).toBe(200);
+    expect((await retained.json()).active_yj_codes).toEqual([b]);
+    const oldB = await (await request.get(`http://127.0.0.1:3211/api/search?q=テスト旧ブラウザ&yj_codes=${b}`)).json();
+    expect(oldB.total_count).toBe(1);
+    expect(oldB.items[0].product_yj_codes).toEqual([b]);
+    const newerB = await uploadVersion(xmlVersion("2026-12", [b], "テスト新版B警告"));
+    expect(newerB.result.deleted_version_ids).toContain(`${old.result.document_id}:${old.result.source_sha256}`);
+    expect((await request.get(`http://127.0.0.1:3211${old.location}`)).status()).toBe(410);
+    const replay = await uploadVersion(oldBytes);
+    expect(replay.status).toBe(200);
+    expect(replay.result.reused).toBe(true);
+    expect(replay.result.artifacts_deleted).toBe(true);
+    expect(replay.result.active_yj_codes).toEqual([]);
+    expect(replay.result.generation_id).toBe(newerB.result.generation_id);
+    await expect(page.getByText("この旧版の所有ファイルは削除済みです。同原本の再送でも復活しません。")).toBeVisible();
+    await page.screenshot({ path: join(evidence, "real-version-nonrevival.png"), fullPage: true });
+    await stop();
+    await start();
+    expect((await request.get(`http://127.0.0.1:3211${old.location}`)).status()).toBe(410);
+    expect((await request.get(`http://127.0.0.1:3211${newerA.location}`)).status()).toBe(200);
+    const currentB = await (await request.get(`http://127.0.0.1:3211/api/search?q=テスト新版B&yj_codes=${b}`)).json();
+    expect(currentB.total_count).toBe(1);
+    expect(currentB.items[0].unit_id).toContain(newerB.result.source_sha256);
+    writeFileSync(join(evidence, "real-version-sequence.json"), JSON.stringify({ old, newerA, newerB, replay, retained: await retained.json(), oldB, currentB }, null, 2));
     await testInfo.attach("real-state", {
       body: JSON.stringify({
         isolated,
@@ -258,6 +280,7 @@ test("real browser upload, resend, process restart GET and active registration",
     );
   } finally {
     await stop();
+    cleanupFixture(root, isolated);
     await testInfo.attach("backend-log", { body: logs, contentType: "text/plain" });
     writeFileSync(join(evidence, "real-backend.log"), logs);
   }

@@ -1,22 +1,28 @@
 import hashlib
-import sqlite3
-from pathlib import Path
 
 import pytest
-from backend.domain.attachment.identifiers import DocumentId
-from backend.tests.integration.test_registration_publisher import publisher as publisher
-from backend.tests.integration.test_registration_publisher import snapshot, source
+from backend.infrastructure.persistence import postgres_schema as schema
 from backend.tests.presentation.test_registration_http import client as client
 from backend.tests.presentation.test_registration_http import post
+from backend.tests.presentation.test_registration_http import publisher as publisher
+from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
+from backend.tests.support.postgres_observations import digest
+from backend.tests.support.registration_oracles import source
+from sqlalchemy import select
 
 
 def current_generation(publisher):
-    with sqlite3.connect(
-        publisher.index_path.as_uri() + "?mode=ro", uri=True
-    ) as connection:
+    with publisher.engine.connect() as connection:
+        return connection.execute(select(schema.state.c.generation_id)).scalar_one()
+
+
+def stored_result(publisher, version_id):
+    with publisher.engine.connect() as connection:
         return connection.execute(
-            "SELECT generation_id FROM registration_state WHERE singleton=1"
-        ).fetchone()[0]
+            select(schema.receipts.c.result).where(
+                schema.receipts.c.version_id == version_id
+            )
+        ).scalar_one()
 
 
 def expected(
@@ -74,13 +80,7 @@ async def test_tc106_all_registration_dtos_have_fixed_complete_fields(
     response = await post(client, old)
     assert response.status_code == 201, response.text
     assert response.json() == expected(old, current_generation(publisher), 1, (a, b))
-    stored = (
-        publisher.store._target(
-            DocumentId("000001_test"), hashlib.sha256(old).hexdigest()
-        )
-        / "result.json"
-    )
-    saved = stored.read_bytes()
+    saved = stored_result(publisher, old_id)
     repeat = await post(client, old)
     assert repeat.status_code == 200
     assert repeat.json() == expected(
@@ -105,16 +105,14 @@ async def test_tc106_all_registration_dtos_have_fixed_complete_fields(
     assert repeat.json() == expected(
         old, current_generation(publisher), 1, (a, b), active=(b,), reused=True
     )
-    assert stored.read_bytes() == saved
-    original_unlink = Path.unlink
+    assert stored_result(publisher, old_id) == saved
 
-    def fail(path, *args, **kwargs):
-        if path.parent == stored.parent:
-            raise PermissionError("fixed pending IO")
-        return original_unlink(path, *args, **kwargs)
+    def fail(phase):
+        if phase == "cleanup":
+            raise OSError("fixed database cleanup failure")
 
     with monkeypatch.context() as patch:
-        patch.setattr(Path, "unlink", fail)
+        patch.setattr(publisher, "fault", fail)
         new_b = source("P B更新", (b,), revised_at="2026-11")
         response = await post(client, new_b)
         assert response.status_code == 201, response.text
@@ -124,7 +122,7 @@ async def test_tc106_all_registration_dtos_have_fixed_complete_fields(
             3,
             (b,),
             replaced=(b,),
-            pending=((old_id, "io_error"),),
+            pending=((old_id, "database_cleanup_failed"),),
             status="registered_cleanup_pending",
             revised_at="2026-11",
         )
@@ -136,7 +134,7 @@ async def test_tc106_all_registration_dtos_have_fixed_complete_fields(
             active=(),
             status="superseded",
         )
-        assert stored.read_bytes() == saved
+        assert stored_result(publisher, old_id) == saved
     repeat = await post(client, new_b)
     assert repeat.status_code == 200
     assert repeat.json() == expected(
@@ -216,10 +214,10 @@ async def test_tc107_old_input_boundaries_real_publisher_preserve_snapshot(
     client, publisher, files, status, code, message
 ):
     assert (await post(client, source("旧公開"))).status_code == 201
-    before = snapshot(publisher)
+    before = digest(publisher.engine)
     response = await client.post("/api/attachment-imports", files=files)
     assert response.status_code == status
     assert response.json() == {
         "detail": {"code": code, "message": message, "phase": "validation"}
     }
-    assert snapshot(publisher) == before
+    assert digest(publisher.engine) == before

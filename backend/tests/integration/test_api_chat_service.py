@@ -16,6 +16,8 @@ from backend.tests.application.chat.test_answer_preparation import (
     UnusedKeywordExtractor,
 )
 from backend.tests.infrastructure.intent.test_jev_intent_mapping import RecordingReader
+from backend.tests.support.postgres_fixtures import pg_api as pg_api
+from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
 
 
 class RecordingProvider:
@@ -72,17 +74,9 @@ async def test_api_service_closes_owned_stream_and_preserves_generation_defaults
     assert provider.closed is True
 
 
-def test_application_lifespan_closes_owned_intent_sdk(tmp_path, monkeypatch):
+def test_application_lifespan_closes_owned_intent_sdk(pg_api, monkeypatch):
     from backend import main
-    from backend.infrastructure.persistence.index_writer import SqlAlchemyIndexWriter
-    from backend.infrastructure.persistence.sqlite_engine import create_sqlite_engine
-    from backend.infrastructure.sources.file_index_source import FileIndexSourceReader
-    from backend.tests.infrastructure.persistence.test_alembic_migrations import (
-        _migrate_database,
-    )
-    from backend.tests.support.storage_fixtures import write_structured_document
     from fastapi.testclient import TestClient
-    from sqlalchemy.engine import URL
 
     class OwnedClassifier(UnusedIntentClassifier):
         is_available = False
@@ -93,28 +87,7 @@ def test_application_lifespan_closes_owned_intent_sdk(tmp_path, monkeypatch):
 
     classifier = OwnedClassifier()
     monkeypatch.setattr(main, "JevIntentClassifier", lambda **kwargs: classifier)
-    source = write_structured_document(tmp_path)
-    index = tmp_path / "index.sqlite3"
-    _migrate_database(index, source)
-    engine = create_sqlite_engine(
-        URL.create("sqlite", database=index.as_posix()).render_as_string(
-            hide_password=False
-        )
-    )
-    try:
-        SqlAlchemyIndexWriter(engine).replace(
-            FileIndexSourceReader(source).read_snapshot()
-        )
-    finally:
-        engine.dispose()
-    from backend.tests.support.registration_runtime_fixtures import (
-        register_synthetic_prepared_index,
-    )
-
-    register_synthetic_prepared_index(source, index)
-    with TestClient(
-        main.create_app(source, index, import_directory=tmp_path / "imports")
-    ) as client:
+    with TestClient(pg_api()) as client:
         assert client.get("/health").status_code == 200
         assert classifier.closed is False
     assert classifier.closed is True

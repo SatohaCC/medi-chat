@@ -1,7 +1,7 @@
 from typing import Annotated
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from starlette.datastructures import UploadFile
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -20,6 +20,7 @@ from .attachment_import_models import (
     AttachmentImportResponse,
     ImportConflictResponse,
     ImportErrorResponse,
+    ImportListResponse,
 )
 from .dependencies import get_import_service
 
@@ -135,6 +136,19 @@ async def import_attachment(
         f"/api/attachment-imports/{quote(result.document_id, safe='')}/{result.source_sha256}"
     )
     return AttachmentImportResponse.from_result(result)
+
+
+@router.get("", response_model=ImportListResponse)
+async def list_attachments(
+    service: ImportService,
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> ImportListResponse:
+    try:
+        page = await service.list_imports(limit=limit, offset=offset)
+    except AttachmentImportError as exc:
+        raise import_error(exc) from None
+    return ImportListResponse.from_page(page, limit=limit, offset=offset)
 
 
 @router.get(

@@ -2,16 +2,17 @@
 
 import argparse
 import json
+import os
 from collections.abc import AsyncIterator
 from pathlib import Path
 
 import uvicorn
-from backend import main
 from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
 from backend.infrastructure.intent.jev_classifier import JevIntentClassifier
 from backend.infrastructure.morphology.janome_keyword_extractor import (
     JanomeKeywordExtractor,
 )
+from backend.tests.support.postgres_browser_fixture import fixture_schema, selected_url
 
 _metrics_path: Path | None = None
 _metrics: dict[str, object] = {"factory_calls": 0, "stream_calls": 0, "questions": []}
@@ -64,13 +65,15 @@ def run() -> None:
     parser.add_argument("--metrics-file", type=Path)
     args = parser.parse_args()
     _metrics_path = args.metrics_file
+    os.environ["MEDI_CHAT_DATABASE_URL"] = selected_url()
+    from backend import main
+
     main.JevIntentClassifier = FixedClassifier
     main.JanomeKeywordExtractor = FixedKeywords
     app = main.create_app(
-        args.root / "structured",
-        args.root / "index.sqlite3",
-        provider_factory,
-        import_directory=args.root / "imports",
+        database_url=selected_url(),
+        _database_schema=fixture_schema(args.root),
+        llm_provider_factory=provider_factory,
     )
     uvicorn.run(app, host="127.0.0.1", port=args.port)
 

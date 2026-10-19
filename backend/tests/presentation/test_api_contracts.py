@@ -4,26 +4,19 @@ from __future__ import annotations
 
 import json
 import os
-from pathlib import Path
+from copy import deepcopy
 from typing import Any
 from unittest.mock import patch
 
 import httpx
 import pytest
-from backend.infrastructure.persistence.index_writer import SqlAlchemyIndexWriter
-from backend.infrastructure.sources.file_index_source import FileIndexSourceReader
 from backend.main import create_app
 from backend.presentation.chat_models import ChatResponse
 from backend.presentation.dependencies import get_chat_service
-from backend.tests.infrastructure.persistence.test_package_insert_index import (
-    migrated_index as migrated_index,
-)
 from backend.tests.support.paths import FIXTURES_ROOT, PROJECT_ROOT
-from backend.tests.support.registration_runtime_fixtures import (
-    register_synthetic_prepared_index,
-)
+from backend.tests.support.postgres_fixtures import pg_api as pg_api
+from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
 from fastapi.testclient import TestClient
-from sqlalchemy.engine import Engine
 from starlette.websockets import WebSocketDisconnect
 
 REPO_ROOT = PROJECT_ROOT
@@ -32,19 +25,23 @@ LEGACY_OPENAPI_PATH = FIXTURES_ROOT / "current-openapi-reference.json"
 
 @pytest.mark.asyncio
 async def test_rest_and_openapi_contracts_match_baseline(
-    migrated_index: tuple[Path, Engine],
+    pg_api,
 ) -> None:
-    source, engine = migrated_index
-    SqlAlchemyIndexWriter(engine).replace(FileIndexSourceReader(source).read_snapshot())
-    assert engine.url.database is not None
-    index_path = Path(engine.url.database)
-    register_synthetic_prepared_index(source, index_path)
 
     # 1. OpenAPI契約比較
     reference_data = json.loads(LEGACY_OPENAPI_PATH.read_text(encoding="utf-8"))
     expected_openapi = reference_data["schema"]
-    app = create_app(source, index_path, import_directory=index_path.parent / "imports")
-    actual_openapi = app.openapi()
+    app = pg_api()
+    actual_openapi = deepcopy(app.openapi())
+    # The history list is an explicit additive API, covered with real PG in
+    # test_import_history.py. Keep the frozen pre-existing contracts exact.
+    history_get = actual_openapi["paths"]["/api/attachment-imports"].pop("get")
+    assert history_get["responses"]["200"]["content"]["application/json"]["schema"] == {
+        "$ref": "#/components/schemas/ImportListResponse"
+    }
+    for name in ("ImportListResponse", "ImportSummaryResponse"):
+        assert name in actual_openapi["components"]["schemas"]
+        del actual_openapi["components"]["schemas"][name]
     assert actual_openapi == expected_openapi
 
     # 2. RESTエンドポイント比較
@@ -111,15 +108,10 @@ async def test_rest_and_openapi_contracts_match_baseline(
 
 
 def test_ws_public_events_match_baseline(
-    migrated_index: tuple[Path, Engine],
+    pg_api,
 ) -> None:
-    source, engine = migrated_index
-    SqlAlchemyIndexWriter(engine).replace(FileIndexSourceReader(source).read_snapshot())
-    assert engine.url.database is not None
-    index_path = Path(engine.url.database)
-    register_synthetic_prepared_index(source, index_path)
 
-    app = create_app(source, index_path, import_directory=index_path.parent / "imports")
+    app = pg_api()
     client = TestClient(app)
     with client:
         # 1. Ping-pong
@@ -210,15 +202,10 @@ def test_ws_public_events_match_baseline(
 
 
 def test_http_and_ws_dependencies_can_be_overridden(
-    migrated_index: tuple[Path, Engine],
+    pg_api,
 ) -> None:
-    source, engine = migrated_index
-    SqlAlchemyIndexWriter(engine).replace(FileIndexSourceReader(source).read_snapshot())
-    assert engine.url.database is not None
-    index_path = Path(engine.url.database)
-    register_synthetic_prepared_index(source, index_path)
 
-    app = create_app(source, index_path, import_directory=index_path.parent / "imports")
+    app = pg_api()
 
     class FakeChatService:
         def __init__(self) -> None:
@@ -313,55 +300,26 @@ def test_http_and_ws_dependencies_can_be_overridden(
         assert fake_service.calls == 2
 
 
-def test_create_app_retains_existing_arguments(
-    migrated_index: tuple[Path, Engine],
-) -> None:
-    source, engine = migrated_index
-    SqlAlchemyIndexWriter(engine).replace(FileIndexSourceReader(source).read_snapshot())
-    assert engine.url.database is not None
-    index_path = Path(engine.url.database)
-    register_synthetic_prepared_index(source, index_path)
-
+def test_create_app_refuses_file_arguments_and_keeps_provider_injection(
+    pg_api, tmp_path
+):
     def fake_factory(name: str | None) -> Any:
         return object()
 
-    # 1. 3 positional arguments: (structured_dir, index_path, llm_provider_factory)
-    app1 = create_app(
-        source, index_path, fake_factory, import_directory=index_path.parent / "imports"
-    )
-    assert app1 is not None
-
-    # 2. database_url as keyword argument
-    db_url = f"sqlite:///{index_path.as_posix()}"
-    app2 = create_app(
-        source,
-        index_path,
-        fake_factory,
-        database_url=db_url,
-        import_directory=index_path.parent / "imports",
-    )
-    assert app2 is not None
-
-    # 3. database_url passed positionally must raise TypeError (keyword-only)
+    with pytest.raises(ValueError, match="Legacy runtime file settings"):
+        create_app(tmp_path, tmp_path / "old.sqlite3", fake_factory)
     with pytest.raises(TypeError):
-        create_app(source, index_path, fake_factory, db_url)  # type: ignore[misc]
-
-    # Verify factory is set on chat_service during lifespan
-    client = TestClient(app1)
-    with client:
-        assert app1.state.chat_service.provider_factory is fake_factory
+        create_app(None, None, fake_factory, "postgresql://unused")  # type: ignore[misc]
+    app = pg_api(llm_provider_factory=fake_factory)
+    with TestClient(app):
+        assert app.state.chat_service.provider_factory is fake_factory
 
 
 def test_existing_provider_and_invalid_ws_behaviors_are_preserved(
-    migrated_index: tuple[Path, Engine],
+    pg_api,
 ) -> None:
-    source, engine = migrated_index
-    SqlAlchemyIndexWriter(engine).replace(FileIndexSourceReader(source).read_snapshot())
-    assert engine.url.database is not None
-    index_path = Path(engine.url.database)
-    register_synthetic_prepared_index(source, index_path)
 
-    app = create_app(source, index_path, import_directory=index_path.parent / "imports")
+    app = pg_api()
     client = TestClient(app)
     with client:
         # 1. Unsupported provider returns validation error

@@ -22,7 +22,7 @@ export function createSupervisor({
     "--reload",
   ],
   cwd = BACKEND_DIR,
-  healthUrl = "http://127.0.0.1:8000/health",
+  healthUrl = "http://127.0.0.1:8000/api",
   healthCheckIntervalMs = 1500,
   healthFailureThreshold = 3,
   startupTimeoutMs = 15000,

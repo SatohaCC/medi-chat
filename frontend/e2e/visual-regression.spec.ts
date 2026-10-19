@@ -6,6 +6,9 @@ import { visualImport, visualJev, visualSource } from "./helpers/presentation";
 
 // Development chrome is outside the application visual oracle.
 test.beforeEach(async ({ page }) => {
+  await page.route("**/api/attachment-imports?**", (route) =>
+    route.fulfill({ json: { items: [], total_count: 0, limit: 20, offset: 0 } }),
+  );
   // Remote Spectrum fonts may load or time out between screenshots.
   await page.route("https://use.typekit.net/**", (route) => route.abort());
   await page.addInitScript(() => {
@@ -20,6 +23,11 @@ test.beforeEach(async ({ page }) => {
 });
 const geometryPath = resolve("e2e/fixtures/visual-geometry.json");
 async function visualSnapshot(page: Page, testInfo: TestInfo, name: string) {
+  if (name.startsWith("imports-")) {
+    await expect(
+      page.getByText("取り込み済みのXMLはありません。", { exact: false }),
+    ).toBeVisible();
+  }
   await page.evaluate(() => document.fonts.ready);
   const regions: Record<
     string,

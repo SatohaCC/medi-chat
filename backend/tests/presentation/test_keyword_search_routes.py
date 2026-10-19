@@ -2,19 +2,15 @@
 
 from __future__ import annotations
 
-import tempfile
 import unittest
-from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 
 from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
-from backend.main import create_app
-from backend.tests.support.paths import PROJECT_ROOT
+from backend.tests.support.postgres_public_application import (
+    original_application_factory,
+)
 from fastapi.testclient import TestClient
-
-REPO_ROOT = PROJECT_ROOT
-STRUCTURED_DIR = REPO_ROOT / "data" / "pmda" / "structured"
 
 
 class UnavailableIntentClassifier:
@@ -31,40 +27,26 @@ class UnavailableIntentClassifier:
 
 
 class KeywordSearchApiRouteTests(unittest.TestCase):
-    temp_dir: tempfile.TemporaryDirectory[str]
-    index_path: Path
     client_context: Any
     client: TestClient
     classifier_patch: Any
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.temp_dir = tempfile.TemporaryDirectory()
-        index_path = Path(cls.temp_dir.name) / "chat-search.sqlite3"
-        cls.index_path = index_path
-        from backend.tests.support.registration_runtime_fixtures import (
-            register_existing_test_source,
-        )
-
-        prepared = register_existing_test_source(STRUCTURED_DIR, index_path)
+        cls.database_context = original_application_factory()
+        build = cls.database_context.__enter__()
         cls.classifier_patch = patch(
             "backend.main.JevIntentClassifier", UnavailableIntentClassifier
         )
         cls.classifier_patch.start()
-        cls.client_context = TestClient(
-            create_app(
-                prepared,
-                index_path,
-                import_directory=Path(cls.temp_dir.name) / "imports",
-            )
-        )
+        cls.client_context = TestClient(build())
         cls.client = cls.client_context.__enter__()
 
     @classmethod
     def tearDownClass(cls) -> None:
         cls.client_context.__exit__(None, None, None)
         cls.classifier_patch.stop()
-        cls.temp_dir.cleanup()
+        cls.database_context.__exit__(None, None, None)
 
     def test_search_without_yj_codes_searches_all_registered_medicines(self) -> None:
         response = self.client.get("/api/search", params={"q": "副作用"})

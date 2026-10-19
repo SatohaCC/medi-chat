@@ -12,25 +12,25 @@ from backend.application.attachment_import.import_errors import (
     ImportLimitExceeded,
     ImportStorageError,
 )
-from backend.infrastructure.persistence.attachment_import_store import (
-    FileAttachmentImportStore,
-)
 from backend.infrastructure.pmda_xml.artifact_mapping import (
     MAX_ARTIFACT_BYTES,
     PmdaArtifactEncoder,
 )
 from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
 from backend.presentation.attachment_import_routes import router
+from backend.tests.integration.test_postgres_registration import (
+    pg_publisher as pg_publisher,
+)
 from backend.tests.support.attachment_import_fixtures import xml_source
+from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
 from fastapi import FastAPI
 
 
 @pytest_asyncio.fixture
-async def client(tmp_path):
+async def client(pg_publisher):
     service = AttachmentImportService(
         decoder=PmdaXmlDecoder(),
-        encoder=PmdaArtifactEncoder(),
-        store=FileAttachmentImportStore(tmp_path),
+        publisher=pg_publisher,
     )
     app = FastAPI()
     app.state.attachment_import_service = service
@@ -52,8 +52,8 @@ async def test_upload_get_and_resend(client):
     assert response.status_code == 201
     result = response.json()
     assert result["source_sha256"] == hashlib.sha256(source).hexdigest()
-    assert result["status"] == "stored" and result["reused"] is False
-    assert result["search_index_updated"] is False
+    assert result["status"] == "registered" and result["reused"] is False
+    assert result["search_index_updated"] is True
     assert result["section_count"] == result["search_unit_count"] == 1
     assert result["products"] == [{"yj_code": "111111111111", "brand_name": "製品A"}]
     assert (await client.get(response.headers["location"])).json() == result
@@ -305,54 +305,3 @@ async def test_actual_output_byte_boundary_through_http(
     assert response.status_code == status
     if status == 201:
         assert (await client.get(response.headers["location"])).status_code == 200
-
-
-@pytest.mark.asyncio
-async def test_real_storage_fault_and_corruption_are_private_and_preserve_versions(
-    client, tmp_path, monkeypatch
-):
-    first = await client.post(
-        "/api/attachment-imports", files={"file": ("a.xml", xml_source())}
-    )
-    assert first.status_code == 201
-    location = first.headers["location"]
-    original = FileAttachmentImportStore._write_file
-
-    def fail(path, content):
-        raise OSError("private C:/secret/capacity-or-permission")
-
-    monkeypatch.setattr(FileAttachmentImportStore, "_write_file", staticmethod(fail))
-    failed = await client.post(
-        "/api/attachment-imports",
-        files={"file": ("b.xml", xml_source("<Warnings><Lang>別版</Lang></Warnings>"))},
-    )
-    assert failed.status_code == 500
-    assert failed.json() == {
-        "detail": {
-            "code": "storage_error",
-            "message": "Import could not be saved",
-            "phase": "validation",
-        }
-    }
-    assert "secret" not in failed.text
-    assert not list(tmp_path.glob(".stage-*"))
-    assert (await client.get(location)).status_code == 200
-    monkeypatch.setattr(
-        FileAttachmentImportStore, "_write_file", staticmethod(original)
-    )
-    (document,) = tmp_path.rglob("document.json")
-    document.write_bytes(b"corrupt")
-    for response in [
-        await client.get(location),
-        await client.post(
-            "/api/attachment-imports", files={"file": ("a.xml", xml_source())}
-        ),
-    ]:
-        assert response.status_code == 409
-        assert set(response.json()["detail"]) == {
-            "code",
-            "message",
-            "phase",
-            "conflicts",
-        }
-    assert document.read_bytes() == b"corrupt"

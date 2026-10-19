@@ -6,7 +6,6 @@ import json
 from collections.abc import AsyncIterator, Mapping
 from copy import deepcopy
 from dataclasses import asdict, dataclass, fields, replace
-from pathlib import Path
 
 import pytest
 from backend.application.chat.answer_preparation import prepare_reply
@@ -14,16 +13,6 @@ from backend.application.chat.answer_prompt_builder import build_answer_messages
 from backend.application.chat.answer_question import answer_question
 from backend.application.chat.answer_stream import stream_answer
 from backend.application.chat.chat_models import ChatMessage, ChatResponse
-from backend.application.indexing.index_builder import build_index
-from backend.application.indexing.index_contracts import IndexSourceReader, IndexWriter
-from backend.application.indexing.index_models import (
-    IndexBuildResult,
-    IndexDocument,
-    IndexUnit,
-    SourceSnapshot,
-)
-from backend.application.medicine.product_catalog import MedicineCatalog
-from backend.application.medicine.product_contracts import RegisteredMedicineReader
 from backend.application.medicine.product_models import (
     RegisteredMedicine,
     ResolvedMedicine,
@@ -57,10 +46,8 @@ from backend.domain.retrieval.primitives import (
     SearchSectionCode,
 )
 from backend.domain.retrieval.repositories import (
-    EvidenceRepository,
     EvidenceSearchTarget,
 )
-from backend.domain.retrieval.services import merge_evidence
 from backend.domain.retrieval.value_objects import (
     DocumentRevision,
     Evidence,
@@ -68,7 +55,6 @@ from backend.domain.retrieval.value_objects import (
     IntentCandidate,
     SearchCriteria,
 )
-from backend.infrastructure.index_payloads import build_index_document, build_index_unit
 from backend.infrastructure.intent.jev_classifier import JevIntentClassifier
 from backend.infrastructure.morphology.janome_keyword_extractor import (
     JanomeKeywordExtractor,
@@ -76,20 +62,8 @@ from backend.infrastructure.morphology.janome_keyword_extractor import (
 from backend.infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,
 )
-from backend.infrastructure.persistence import schema
-from backend.infrastructure.persistence.evidence_reader import SqlAlchemyEvidenceReader
-from backend.infrastructure.persistence.index_writer import SqlAlchemyIndexWriter
-from backend.infrastructure.persistence.medicine_reader import SqlAlchemyMedicineReader
-from backend.infrastructure.sources.file_index_source import FileIndexSourceReader
 from backend.presentation.chat_dto_mapper import chat_response_to_api
-from backend.tests.infrastructure.persistence.test_package_insert_index import (
-    migrated_index as migrated_index,
-)
 from backend.tests.support.paths import FIXTURES_ROOT
-from backend.tests.support.storage_fixtures import make_search_payload
-from sqlalchemy import select, text
-from sqlalchemy.engine import Engine
-from sqlalchemy.exc import IntegrityError
 
 
 class FakeSdkError(RuntimeError):
@@ -322,210 +296,23 @@ def test_keyword_extractor_contract(
                 assert result.section_codes == ()
 
 
-class RecordingIndexSource:
-    def __init__(self, snapshot: SourceSnapshot) -> None:
-        self.snapshot = deepcopy(snapshot)
-        self.calls = 0
-
-    def read_snapshot(self) -> SourceSnapshot:
-        self.calls += 1
-        return deepcopy(self.snapshot)
-
-
-class MemoryIndexWriter:
-    def __init__(self) -> None:
-        self.received: list[SourceSnapshot] = []
-        self.saved: SourceSnapshot | None = None
-
-    def replace(self, snapshot: SourceSnapshot) -> IndexBuildResult:
-        self.received.append(snapshot)
-        self.saved = deepcopy(snapshot)
-        return IndexBuildResult(len(snapshot.documents), len(snapshot.units))
-
-
-def _assert_index_values(value: object) -> None:
-    pure_types = (
-        SourceSnapshot,
-        IndexDocument,
-        IndexUnit,
-        RegisteredMedicine,
-        MedicineProduct,
-        MedicineDocumentReference,
-        IndexBuildResult,
-    )
-    if isinstance(value, Mapping) and type(value) is not dict:
-        _assert_json_values(dict(value))
-    elif isinstance(value, pure_types):
-        assert type(value) in pure_types
-        for field in fields(value):
-            _assert_index_values(getattr(value, field.name))
-    elif isinstance(value, tuple):
-        assert type(value) is tuple
-        for item in value:
-            _assert_index_values(item)
-    else:
-        if isinstance(
-            value,
-            (
-                BaseFiniteFloat,
-                BaseString,
-                DetectionSource,
+def fixed_medicines():
+    return (
+        RegisteredMedicine(
+            medicine=MedicineProduct(
+                yj_code=YjCode("1234567A0000"),
+                brand_name="テスト薬",
+                generic_name="テスト成分",
+                english_name="",
+                hiragana_name="",
             ),
-        ):
-            return
-        _assert_json_values(value)
-
-
-def _assert_core_saved_snapshot(engine: Engine, snapshot: SourceSnapshot) -> None:
-    # 実DB保存値を比較する。applicationにはRow/Engine/SQLを渡さない。
-    with engine.connect() as connection:
-        documents = connection.execute(select(schema.documents)).all()
-        assert [
-            (row.document_key, json.loads(row.payload_json)) for row in documents
-        ] == [
-            (document.document_id, document.payload) for document in snapshot.documents
-        ]
-        medicines = connection.execute(select(schema.medicines)).all()
-        assert [
-            (*tuple(row)[:-1], json.loads(row.revision_json)) for row in medicines
-        ] == [
-            (
-                medicine.document_id.value,
-                medicine.yj_code.value if medicine.yj_code is not None else None,
-                medicine.brand_name,
-                medicine.generic_name,
-                medicine.english_name,
-                medicine.hiragana_name,
-                medicine.pmda_url.value,
-                medicine.revision,
-            )
-            for medicine in snapshot.medicines
-        ]
-        units = connection.execute(
-            select(schema.units).order_by(schema.units.c.unit_id)
-        ).all()
-        assert [(*tuple(row)[:-1], json.loads(row.payload_json)) for row in units] == [
-            (
-                unit.unit_id,
-                unit.document_id,
-                unit.section_code,
-                unit.kind,
-                unit.payload,
-            )
-            for unit in snapshot.units
-        ]
-        fts = connection.execute(
-            text(
-                "SELECT unit_id, document_key, section_code, kind, query_text, drug_name "
-                "FROM unit_fts ORDER BY unit_id"
-            )
-        ).all()
-        assert [tuple(row) for row in fts] == [
-            (
-                unit.unit_id,
-                unit.document_id,
-                unit.section_code,
-                unit.kind,
-                unit.query_text,
-                unit.drug_name,
-            )
-            for unit in snapshot.units
-        ]
-        assert (
-            connection.execute(
-                select(schema.index_meta.c.value).where(
-                    schema.index_meta.c.key == "source_fingerprint"
-                )
-            ).scalar_one()
-            == snapshot.fingerprint
-        )
-
-
-@pytest.mark.parametrize("source_kind", ["file", "fake"])
-@pytest.mark.parametrize("writer_kind", ["core", "memory"])
-def test_index_ports_accept_equivalent_snapshots(
-    migrated_index: tuple[Path, Engine], source_kind: str, writer_kind: str
-) -> None:
-    source_dir, engine = migrated_index
-    file_source = FileIndexSourceReader(source_dir)
-    snapshot = file_source.read_snapshot()
-    # 全保存項目は既存fixtureの固定値から期待する。動的fingerprintだけは同じ取得値を渡す。
-    document: dict[str, JsonValue] = {
-        "schema_version": "medi-chat.pmda-prescription-xml.v2",
-        "document": {
-            "company_identifier": "test",
-            "package_insert_no": "001",
-            "generic_name": "テスト成分",
-            "products": [{"yj_code": "1234567A0000", "brand_name": "テスト薬"}],
-        },
-        "source": {"pmda_url": "https://example.test/package-insert"},
-    }
-    expected = SourceSnapshot(
-        documents=(IndexDocument("test_001", document),),
-        medicines=(
-            RegisteredMedicine(
-                medicine=MedicineProduct(
-                    yj_code=YjCode("1234567A0000"),
-                    brand_name="テスト薬",
-                    generic_name="テスト成分",
-                    english_name="",
-                    hiragana_name="",
-                ),
-                reference=MedicineDocumentReference(
-                    document_id=DocumentId("test_001"),
-                    pmda_url=PmdaUrl("https://example.test/package-insert"),
-                    revision=AttachmentProductRevision({}),
-                ),
+            reference=MedicineDocumentReference(
+                document_id=DocumentId("test_001"),
+                pmda_url=PmdaUrl("https://example.test/package-insert"),
+                revision=AttachmentProductRevision({}),
             ),
         ),
-        units=tuple(
-            IndexUnit(
-                unit_id=f"test_001:{index:03d}",
-                document_id="test_001",
-                section_code="11.1",
-                kind="text",
-                payload=make_search_payload(
-                    {
-                        "unit_id": f"test_001:{index:03d}",
-                        "document_key": "test_001",
-                        "product_yj_codes": ["1234567A0000"],
-                        "section": {"code": "11.1", "title": "重大な副作用"},
-                        "kind": "text",
-                        "text": f"頭痛に注意してください。記載{index}",
-                    }
-                ),
-                query_text=f"頭痛に注意してください 記載{index} 重大な副作用",
-                drug_name="",
-            )
-            for index in range(3)
-        ),
-        fingerprint=snapshot.fingerprint,
     )
-    assert snapshot.fingerprint.strip()
-    assert snapshot == expected
-    _assert_index_values(snapshot)
-    fake_source = RecordingIndexSource(expected)
-    memory_writer = MemoryIndexWriter()
-    source_reader: IndexSourceReader = (
-        file_source if source_kind == "file" else fake_source
-    )
-    writer: IndexWriter = (
-        SqlAlchemyIndexWriter(engine) if writer_kind == "core" else memory_writer
-    )
-    result = build_index(source_reader, writer)
-    assert type(result) is IndexBuildResult
-    assert result == IndexBuildResult(1, 3)
-    _assert_index_values(result)
-    if source_kind == "fake":
-        assert fake_source.calls == 1
-        assert fake_source.snapshot == expected
-    if writer_kind == "core":
-        _assert_core_saved_snapshot(engine, expected)
-    else:
-        assert memory_writer.received == [expected]
-        assert memory_writer.saved == expected
-        _assert_index_values(memory_writer.received[0])
-        _assert_index_values(memory_writer.saved)
 
 
 @dataclass(frozen=True)
@@ -738,28 +525,16 @@ async def _assert_prepared_answer(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("medicine_kind", ["real", "fake"])
-@pytest.mark.parametrize("evidence_kind", ["real", "fake"])
-async def test_answer_preparation_accepts_real_and_fake_readers(
-    migrated_index: tuple[Path, Engine],
+async def test_answer_preparation_accepts_pure_reader_ports(
     answer_preparation_case: AnswerPreparationCase,
-    medicine_kind: str,
-    evidence_kind: str,
 ) -> None:
-    source, engine = migrated_index
     case = answer_preparation_case
-    snapshot = FileIndexSourceReader(source).read_snapshot()
-    assert SqlAlchemyIndexWriter(engine).replace(snapshot) == IndexBuildResult(1, 3)
-    fake_medicine = RecordingMedicineReader(snapshot.medicines)
+    fake_medicine = RecordingMedicineReader(fixed_medicines())
     fake_evidence = RecordingEvidenceReader(
         case.expected_reply.sources, case.expected_reply.resolved_medicines
     )
-    medicine_reader: RegisteredMedicineReader = (
-        SqlAlchemyMedicineReader(engine) if medicine_kind == "real" else fake_medicine
-    )
-    evidence_reader: EvidenceRepository = (
-        SqlAlchemyEvidenceReader(engine) if evidence_kind == "real" else fake_evidence
-    )
+    medicine_reader = fake_medicine
+    evidence_reader = fake_evidence
     intent = RecordingIntentClassifier(
         IntentResult(
             is_available=True,
@@ -789,99 +564,14 @@ async def test_answer_preparation_accepts_real_and_fake_readers(
     assert intent.requests[0].question == "テスト薬の副作用と頭痛について"
     _assert_answer_values(intent.requests[0])
     assert keywords.texts == [" の副作用と頭痛について"]
-    if medicine_kind == "fake":
-        assert fake_medicine.calls == 1
-    if evidence_kind == "fake":
-        assert len(fake_evidence.requests) == 3
-        assert {criteria.source for criteria, _ in fake_evidence.requests} == {
-            "logic",
-            "jev",
-            "keyword",
-        }
-    await _assert_prepared_answer(reply, case)
-
-
-@pytest.mark.asyncio
-async def test_multiple_document_ids_are_global_and_collisions_roll_back(
-    migrated_index,
-):
-    source, engine = migrated_index
-    first = FileIndexSourceReader(source).read_snapshot()
-    second_payload = deepcopy(first.documents[0].payload)
-    metadata = second_payload["document"]
-    assert isinstance(metadata, dict)
-    metadata["company_identifier"] = "second"
-    second_document, second_medicines = build_index_document(second_payload)
-    assert second_document.document_id == "second_001"
-    second_units = []
-    for index, unit in enumerate(first.units):
-        payload = deepcopy(unit.payload)
-        payload.update(unit_id=f"second:{index:03}", document_key="second_001")
-        second_units.append(build_index_unit(payload, "second_001"))
-    snapshot = SourceSnapshot(
-        (*first.documents, second_document),
-        (*first.medicines, *second_medicines),
-        (*first.units, *second_units),
-        "two-document-fixture",
-    )
-    writer = SqlAlchemyIndexWriter(engine)
-    assert writer.replace(snapshot) == IndexBuildResult(2, 6)
-    medicines = await SqlAlchemyMedicineReader(engine).read_medicines()
-    matches = tuple(
-        ResolvedMedicine(
-            medicine=DomainMedicineMatch(
-                generic_name=group.generic_name,
-                brand_names=tuple(group.brand_names),
-                yj_codes=tuple(group.yj_codes),
-                matched_aliases=tuple(group.matched_aliases),
-            ),
-            document_ids=tuple(group.document_ids),
-        )
-        for group in MedicineCatalog(medicines).resolve_medicines("", ["1234567A0000"])
-    )
-    hits = await SqlAlchemyEvidenceReader(engine).search(
-        SearchCriteria(
-            source=DetectionSource("logic"), section_codes=(SearchSectionCode("11.1"),)
-        ),
-        matches,
-    )
-    sources = merge_evidence(((hits, DetectionSource.LOGIC),))
-    response = chat_response_to_api(
-        ChatResponse(
-            answer="",
-            intent="adverse_events",
-            retrieval_strategy="three_detectors",
-            sources=list(sources),
-        )
-    )
-    payload = response.model_dump(mode="json")
-    assert [item["unit_id"] for item in payload["sources"]] == [
-        "second:000",
-        "second:001",
-        "second:002",
-        "test_001:000",
-        "test_001:001",
-        "test_001:002",
-    ]
-    assert {item["document_id"] for item in payload["sources"]} == {
-        "second_001",
-        "test_001",
+    assert fake_medicine.calls == 1
+    assert len(fake_evidence.requests) == 3
+    assert {criteria.source for criteria, _ in fake_evidence.requests} == {
+        "logic",
+        "jev",
+        "keyword",
     }
-    collision = replace(second_units[0], unit_id="test_001:000")
-    conflicting = replace(
-        snapshot,
-        units=(*first.units, collision, *second_units[1:]),
-        fingerprint="collision",
-    )
-    with pytest.raises(IntegrityError, match="UNIQUE constraint failed: units.unit_id"):
-        writer.replace(conflicting)
-    preserved = await SqlAlchemyEvidenceReader(engine).search(
-        SearchCriteria(
-            source=DetectionSource("logic"), section_codes=(SearchSectionCode("11.1"),)
-        ),
-        matches,
-    )
-    assert [item.to_dict() for item in preserved] == [item.to_dict() for item in hits]
+    await _assert_prepared_answer(reply, case)
 
 
 @pytest.mark.asyncio
@@ -905,38 +595,11 @@ class RecordingProviderFactory:
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("medicine_kind", ["real", "fake"])
-@pytest.mark.parametrize("evidence_kind", ["real", "fake"])
-async def test_clarification_does_not_create_or_call_provider(
-    migrated_index: tuple[Path, Engine],
-    monkeypatch: pytest.MonkeyPatch,
-    medicine_kind: str,
-    evidence_kind: str,
-) -> None:
-    source, engine = migrated_index
-    snapshot = FileIndexSourceReader(source).read_snapshot()
-    assert SqlAlchemyIndexWriter(engine).replace(snapshot) == IndexBuildResult(1, 3)
-    fake_medicine = RecordingMedicineReader(snapshot.medicines)
+async def test_clarification_does_not_create_or_call_provider() -> None:
+    fake_medicine = RecordingMedicineReader(fixed_medicines())
     fake_evidence = RecordingEvidenceReader([], [])
-    real_evidence = SqlAlchemyEvidenceReader(engine)
-    evidence_requests: list[
-        tuple[SearchCriteria, tuple[EvidenceSearchTarget, ...]]
-    ] = []
-    real_search = real_evidence.search
-
-    async def record_real_search(
-        criteria: SearchCriteria, medicines: tuple[EvidenceSearchTarget, ...]
-    ) -> tuple[Evidence, ...]:
-        evidence_requests.append((criteria, deepcopy(medicines)))
-        return await real_search(criteria, medicines)
-
-    monkeypatch.setattr(real_evidence, "search", record_real_search)
-    medicine_reader: RegisteredMedicineReader = (
-        SqlAlchemyMedicineReader(engine) if medicine_kind == "real" else fake_medicine
-    )
-    evidence_reader: EvidenceRepository = (
-        real_evidence if evidence_kind == "real" else fake_evidence
-    )
+    medicine_reader = fake_medicine
+    evidence_reader = fake_evidence
     conversation = (ChatMessage(role="user", content="副作用を教えて"),)
     product_yj_codes = ["0000000A0000"]
     conversation_before = deepcopy(conversation)
@@ -971,7 +634,5 @@ async def test_clarification_does_not_create_or_call_provider(
     assert product_yj_codes == codes_before
     assert factory.names == []
     assert factory.provider.calls == []
-    assert evidence_requests == []
     assert fake_evidence.requests == []
-    if medicine_kind == "fake":
-        assert fake_medicine.calls == 1
+    assert fake_medicine.calls == 1

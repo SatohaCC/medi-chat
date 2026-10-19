@@ -5,9 +5,6 @@ import threading
 from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import TypeVar
-from weakref import WeakKeyDictionary
-
-from sqlalchemy.engine import Engine
 
 T = TypeVar("T")
 
@@ -59,18 +56,3 @@ class ReadWorkers:
         cleanup.result()
         if cancelled:
             raise asyncio.CancelledError
-
-
-# 直接readerを構築する既存CLI/テスト用。主たる所有者はcompositionが明示注入する。
-# ownerはEngineを保持しないので、このfallbackがEngineの寿命を延ばさない。
-_fallback_workers: WeakKeyDictionary[Engine, ReadWorkers] = WeakKeyDictionary()
-_fallback_lock = threading.Lock()
-
-
-def read_workers_for_engine(engine: Engine) -> ReadWorkers:
-    with _fallback_lock:
-        workers = _fallback_workers.get(engine)
-        if workers is None:
-            workers = ReadWorkers()
-            _fallback_workers[engine] = workers
-        return workers

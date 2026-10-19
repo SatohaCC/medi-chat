@@ -3,45 +3,33 @@
 from __future__ import annotations
 
 import os
-import tempfile
 import unittest
-from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 
-from backend.main import create_app
-from backend.tests.support.paths import PROJECT_ROOT
+from backend.tests.support.postgres_public_application import (
+    original_application_factory,
+)
 from fastapi.testclient import TestClient
-
-REPO_ROOT = PROJECT_ROOT
-STRUCTURED_DIR = REPO_ROOT / "data" / "pmda" / "structured"
 
 
 class ChatWebSocketRouteTests(unittest.TestCase):
-    temp_dir: tempfile.TemporaryDirectory[str]
     app: Any
     client_context: Any
     client: TestClient
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.temp_dir = tempfile.TemporaryDirectory()
-        index_path = Path(cls.temp_dir.name) / "chat-search.sqlite3"
-        from backend.tests.support.registration_runtime_fixtures import (
-            register_existing_test_source,
-        )
-
-        prepared = register_existing_test_source(STRUCTURED_DIR, index_path)
-        cls.app = create_app(
-            prepared, index_path, import_directory=Path(cls.temp_dir.name) / "imports"
-        )
+        cls.database_context = original_application_factory()
+        build = cls.database_context.__enter__()
+        cls.app = build()
         cls.client_context = TestClient(cls.app)
         cls.client = cls.client_context.__enter__()
 
     @classmethod
     def tearDownClass(cls) -> None:
         cls.client_context.__exit__(None, None, None)
-        cls.temp_dir.cleanup()
+        cls.database_context.__exit__(None, None, None)
 
     def test_api_health(self) -> None:
         response = self.client.get("/api")

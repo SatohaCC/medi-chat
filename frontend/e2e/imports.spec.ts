@@ -1,5 +1,11 @@
 import { expect, test } from "@playwright/test";
 
+test.beforeEach(async ({ page }) => {
+  await page.route("**/api/attachment-imports?**", (route) =>
+    route.fulfill({ json: { items: [], total_count: 0, limit: 20, offset: 0 } }),
+  );
+});
+
 const result = {
   document_id: "test-document",
   source_sha256: "a".repeat(64),

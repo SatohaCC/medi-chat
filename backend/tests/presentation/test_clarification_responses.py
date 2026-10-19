@@ -2,17 +2,13 @@
 
 from __future__ import annotations
 
-import tempfile
 import unittest
-from pathlib import Path
 from typing import Any
 
-from backend.main import create_app
-from backend.tests.support.paths import PROJECT_ROOT
+from backend.tests.support.postgres_public_application import (
+    original_application_factory,
+)
 from fastapi.testclient import TestClient
-
-REPO_ROOT = PROJECT_ROOT
-STRUCTURED_DIR = REPO_ROOT / "data" / "pmda" / "structured"
 
 
 class RecordingLLMProvider:
@@ -27,32 +23,19 @@ class RecordingLLMProvider:
 
 
 class ClarificationResponseTests(unittest.TestCase):
-    temp_dir: tempfile.TemporaryDirectory[str]
-    index_path: Path
-
     @classmethod
     def setUpClass(cls) -> None:
-        cls.temp_dir = tempfile.TemporaryDirectory()
-        cls.index_path = Path(cls.temp_dir.name) / "chat-search.sqlite3"
-        from backend.tests.support.registration_runtime_fixtures import (
-            register_existing_test_source,
-        )
-
-        cls.prepared_source = register_existing_test_source(
-            STRUCTURED_DIR, cls.index_path
-        )
+        cls.database_context = original_application_factory()
+        cls.build = staticmethod(cls.database_context.__enter__())
 
     @classmethod
     def tearDownClass(cls) -> None:
-        cls.temp_dir.cleanup()
+        cls.database_context.__exit__(None, None, None)
 
     def test_rest_clarification_does_not_call_provider(self) -> None:
         provider = RecordingLLMProvider()
-        app = create_app(
-            self.prepared_source,
-            self.index_path,
+        app = self.build(
             llm_provider_factory=lambda _name: provider,
-            import_directory=Path(self.temp_dir.name) / "imports",
         )
         with TestClient(app) as client:
             response = client.post(
@@ -74,11 +57,8 @@ class ClarificationResponseTests(unittest.TestCase):
 
     def test_websocket_clarification_does_not_call_provider(self) -> None:
         provider = RecordingLLMProvider()
-        app = create_app(
-            self.prepared_source,
-            self.index_path,
+        app = self.build(
             llm_provider_factory=lambda _name: provider,
-            import_directory=Path(self.temp_dir.name) / "imports",
         )
         with (
             TestClient(app) as client,

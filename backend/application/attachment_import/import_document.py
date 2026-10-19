@@ -1,23 +1,16 @@
 import asyncio
-import hashlib
 import threading
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import suppress
-from dataclasses import replace
 from typing import TypeVar
 
-from ...domain.attachment.identifiers import DocumentId
-from ...domain.foundation.exceptions import DomainValidationError
-from ..indexing.attachment_projection import project_attachment
 from .import_contracts import (
-    AttachmentArtifactEncoder,
     AttachmentDecoder,
-    AttachmentImportStore,
     AttachmentRegistrationPublisher,
 )
-from .import_errors import ImportCancelled, ImportNotFound
-from .import_models import ImportResult
+from .import_errors import ImportCancelled
+from .import_models import ImportPage, ImportResult
 
 T = TypeVar("T")
 
@@ -27,13 +20,9 @@ class AttachmentImportService:
         self,
         *,
         decoder: AttachmentDecoder,
-        encoder: AttachmentArtifactEncoder,
-        store: AttachmentImportStore,
-        publisher: AttachmentRegistrationPublisher | None = None,
+        publisher: AttachmentRegistrationPublisher,
     ) -> None:
         self.decoder = decoder
-        self.encoder = encoder
-        self.store = store
         self.publisher = publisher
         self._executor = ThreadPoolExecutor(
             max_workers=2, thread_name_prefix="attachment-import"
@@ -53,26 +42,7 @@ class AttachmentImportService:
         def operation() -> ImportResult:
             check_cancel()
             decoded = self.decoder.decode(source, original_filename=original_filename)
-            if self.publisher is not None:
-                return self.publisher.publish(
-                    decoded, source, check_cancel=check_cancel
-                )
-            check_cancel()
-            digest = hashlib.sha256(source).hexdigest()
-            try:
-                existing = self.store.read(decoded.document.document_id, digest)
-            except ImportNotFound:
-                pass
-            else:
-                return replace(existing, reused=True)
-            check_cancel()
-            bundle = self.encoder.encode(
-                decoded.document,
-                project_attachment(decoded.document),
-                decoded.source_info,
-            )
-            check_cancel()
-            return self.store.commit(bundle, source, check_cancel=check_cancel)
+            return self.publisher.publish(decoded, source, check_cancel=check_cancel)
 
         return await self._run(operation, cancelled)
 
@@ -101,22 +71,8 @@ class AttachmentImportService:
         return result.result()
 
     async def read_result(self, document_id: str, source_sha256: str) -> ImportResult:
-        if self.publisher is not None:
-            publisher = self.publisher
-            return await self._run(
-                lambda: publisher.read_result(document_id, source_sha256),
-                threading.Event(),
-            )
-
-        def read_from_store() -> ImportResult:
-            try:
-                doc_id = DocumentId(document_id)
-            except DomainValidationError as exc:
-                raise ValueError(str(exc)) from None
-            return self.store.read(doc_id, source_sha256)
-
         return await self._run(
-            read_from_store,
+            lambda: self.publisher.read_result(document_id, source_sha256),
             threading.Event(),
         )
 
@@ -135,3 +91,11 @@ class AttachmentImportService:
         cleanup.result()
         if cancelled:
             raise asyncio.CancelledError
+
+    async def list_imports(self, *, limit: int, offset: int) -> ImportPage:
+        if not 1 <= limit <= 100 or offset < 0:
+            raise ValueError("Invalid import page")
+        return await self._run(
+            lambda: self.publisher.list_imports(limit=limit, offset=offset),
+            threading.Event(),
+        )

@@ -26,7 +26,7 @@ from backend.infrastructure.morphology.janome_keyword_extractor import (
 from backend.infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,
 )
-from backend.infrastructure.persistence.evidence_reader import SqlAlchemyEvidenceReader
+from backend.infrastructure.persistence.postgres_runtime import _Scope
 
 
 class FakeJevIntentClassifier:
@@ -116,7 +116,7 @@ class EvidenceSearchTests(unittest.IsolatedAsyncioTestCase):
     async def test_criteria_collection_does_not_search(self):
         catalog = get_package_insert_definitions()
         with patch.object(
-            SqlAlchemyEvidenceReader,
+            _Scope,
             "search",
             side_effect=AssertionError("検索を実行してはいけない"),
         ) as search:

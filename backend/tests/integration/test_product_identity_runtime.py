@@ -1,11 +1,8 @@
-"""TC132/135: copy実SQLite lease、所有child publisher、固定SDKdouble。"""
+"""TC132/135: 実PostgreSQL snapshot、所有child publisher、固定SDKdouble。"""
 
 import asyncio
 import hashlib
-import sqlite3
-import subprocess
-import sys
-from contextlib import asynccontextmanager, closing
+from contextlib import asynccontextmanager
 from typing import TypedDict
 
 import pytest
@@ -21,15 +18,18 @@ from backend.domain.retrieval.value_objects import IntentPolicy
 from backend.infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,
 )
-from backend.infrastructure.persistence.generation_runtime import GenerationRuntime
+from backend.infrastructure.persistence.postgres_runtime import PostgresRuntime
 from backend.infrastructure.persistence.read_workers import ReadWorkers
 from backend.tests.application.retrieval.test_product_identity_retrieval import (
     Classifier,
     Keywords,
 )
-from backend.tests.integration.test_registration_publisher import publish, source
-from backend.tests.integration.test_registration_publisher import publisher as publisher
-from backend.tests.support.paths import PROJECT_ROOT
+from backend.tests.integration.test_postgres_registration import pg_publisher, publish
+from backend.tests.integration.test_postgres_snapshot import publish_in_process
+from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
+from backend.tests.support.registration_oracles import source
+
+publisher = pg_publisher
 
 X = "111111111111"
 A = "222222222222"
@@ -42,11 +42,8 @@ def named(body, name, code, doc, *, revised_at="2026-10"):
     )
 
 
-def leases(publisher):
-    with closing(
-        sqlite3.connect(f"{publisher.index_path.as_uri()}?mode=ro", uri=True)
-    ) as c:
-        return c.execute("SELECT count(*) FROM generation_leases").fetchone()[0]
+def connections(publisher):
+    return publisher.engine.pool.checkedout()
 
 
 class ForbiddenSearch:
@@ -112,14 +109,14 @@ class Dependencies(TypedDict):
         ("アマリールの効能", ["999999999999"], "product_code_lookup"),
     ],
 )
-async def test_tc132_all_early_entries_release_real_lease_without_search_generation(
+async def test_tc132_all_early_entries_release_real_connection_without_search_generation(
     publisher, entry, message, codes, strategy
 ):
     publish(publisher, named("原文X", "イグザレルト", X, "x"))
     publish(publisher, named("原文A", "アマリール", A, "a"))
     final = publish(publisher, named("原文I", "イトラコナゾール", ITRA, "i"))
     workers = ReadWorkers()
-    runtime = GenerationRuntime(publisher, workers=workers)
+    runtime = PostgresRuntime(publisher.engine, workers=workers)
     search = ForbiddenSearch()
     observed = ObservedRuntime(runtime, search)
     provider = CountingProvider()
@@ -170,17 +167,19 @@ async def test_tc132_all_early_entries_release_real_lease_without_search_generat
         ] == expected_codes
         assert observed.generations[0].value == final.generation_id
         assert search.calls == provider.factory_calls == provider.stream_calls == 0
-        assert leases(publisher) == 0
+        assert connections(publisher) == 0
     finally:
         await workers.aclose()
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("failure", ["exception", "cancel"])
-async def test_tc132_classifier_exception_cancel_release_real_lease(publisher, failure):
+async def test_tc132_classifier_exception_cancel_release_real_connection(
+    publisher, failure
+):
     publish(publisher, named("原文X", "イグザレルト", X, "x"))
     workers = ReadWorkers()
-    runtime = GenerationRuntime(publisher, workers=workers)
+    runtime = PostgresRuntime(publisher.engine, workers=workers)
     entered = asyncio.Event()
 
     class BlockingClassifier:
@@ -206,13 +205,13 @@ async def test_tc132_classifier_exception_cancel_release_real_lease(publisher, f
     try:
         await entered.wait()
         if failure == "cancel":
-            assert leases(publisher) == 1
+            assert connections(publisher) == 1
             task.cancel()
         with pytest.raises(
             RuntimeError if failure == "exception" else asyncio.CancelledError
         ):
             await task
-        assert leases(publisher) == 0
+        assert connections(publisher) == 0
     finally:
         await workers.aclose()
 
@@ -220,13 +219,13 @@ async def test_tc132_classifier_exception_cancel_release_real_lease(publisher, f
 @pytest.mark.asyncio
 @pytest.mark.parametrize("confirmation", [False, True])
 async def test_tc135_identity_and_materialize_stay_old_across_os_publish(
-    publisher, tmp_path, confirmation, monkeypatch
+    publisher, pg_engines, confirmation, monkeypatch
 ):
     old = named("旧原文X", "イグザレルト", X, "x")
     publish(publisher, old)
     first = publish(publisher, named("旧原文A", "アマリール", A, "a"))
     workers = ReadWorkers()
-    runtime = GenerationRuntime(publisher, workers=workers)
+    runtime = PostgresRuntime(publisher.engine, workers=workers)
     entered = asyncio.Event()
     release = asyncio.Event()
 
@@ -269,36 +268,18 @@ async def test_tc135_identity_and_materialize_stay_old_across_os_publish(
     task = asyncio.create_task(retrieve(PausedClassifier()))
     try:
         await entered.wait()
-        assert leases(publisher) == 1
+        assert connections(publisher) == 1
         assert resolved_before_barrier, (
             "selected resolution must precede publication barrier"
         )
         assert resolved_before_barrier[0][0].brand_names == ("イグザレルト",)
-        paths = []
-        for name, value in [
-            ("x", named("新原文X", "新製品X", X, "x", revised_at="2026-11")),
-            ("a", named("新原文A", "別製品Z", A, "a", revised_at="2026-11")),
-        ]:
-            path = tmp_path / f"replacement-{name}.xml"
-            path.write_bytes(value)
-            paths.append(path)
-        script = "from pathlib import Path;import sys;from backend.infrastructure.persistence.registration_publisher import SqliteRegistrationPublisher;from backend.infrastructure.persistence.attachment_import_store import FileAttachmentImportStore;from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder;p=SqliteRegistrationPublisher(Path(sys.argv[1]),FileAttachmentImportStore(Path(sys.argv[2])));[(p.publish(PmdaXmlDecoder().decode(v:=Path(f).read_bytes()),v)) for f in sys.argv[3:]]"
-        result = await asyncio.to_thread(
-            subprocess.run,
-            [
-                sys.executable,
-                "-c",
-                script,
-                str(publisher.index_path),
-                str(publisher.store.root),
-                *[str(x) for x in paths],
-            ],
-            capture_output=True,
-            cwd=PROJECT_ROOT,
-            timeout=60,
-        )
-        assert result.returncode == 0, result.stderr.decode(errors="replace")
-        assert leases(publisher) == 1
+        for value in (
+            named("新原文X", "新製品X", X, "x", revised_at="2026-11"),
+            named("新原文A", "別製品Z", A, "a", revised_at="2026-11"),
+        ):
+            result = await asyncio.to_thread(publish_in_process, pg_engines[2], value)
+            assert result["status"] == "ok"
+        assert connections(publisher) == 1
         release.set()
         previous = await task
         assert previous.resolved_medicines[0].brand_names == ("イグザレルト",)
@@ -315,15 +296,14 @@ async def test_tc135_identity_and_materialize_stay_old_across_os_publish(
                 "旧原文X" in previous.sources[0].excerpt
                 and "新原文X" not in previous.sources[0].excerpt
             )
-        assert leases(publisher) == 0
+        assert connections(publisher) == 0
         current = await retrieve(Classifier())
         assert current.retrieval_strategy == "three_detectors"
         assert current.resolved_medicines[0].brand_names == ("新製品X",)
         assert len(current.sources) == 1 and "新原文X" in current.sources[0].excerpt
-        assert (
-            leases(publisher) == 0
-            and runtime.cached_generation_id != first.generation_id
-        )
+        assert connections(publisher) == 0
+        async with runtime.acquire() as latest:
+            assert latest.generation_id.value != first.generation_id
     finally:
         release.set()
         if not task.done():
@@ -366,7 +346,7 @@ async def test_tc130_correct_amaryl_original_indication_reaches_generation(publi
             yield "正常生成"
 
     workers = ReadWorkers()
-    runtime = GenerationRuntime(publisher, workers=workers)
+    runtime = PostgresRuntime(publisher.engine, workers=workers)
     provider = Provider()
     try:
         reply = await answer_question(
@@ -399,6 +379,6 @@ async def test_tc130_correct_amaryl_original_indication_reaches_generation(publi
             provider.factory_calls == provider.stream_calls == 1
             and reply.answer == "正常生成"
         )
-        assert leases(publisher) == 0
+        assert connections(publisher) == 0
     finally:
         await workers.aclose()

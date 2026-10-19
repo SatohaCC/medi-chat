@@ -1,5 +1,7 @@
 # PMDA電子添文の構造化データ
 
+このディレクトリに残している`document.json`と`search_units.jsonl`は、既存回帰テストの比較用データです。通常の起動・検索・一覧はPostgreSQLを使用し、これらを読みません。旧SQLite・manifest・validation出力と、frontend側に同一内容がある補完辞書のコピーは削除しました。
+
 原本XMLを変更せず、バックエンドの変換器から現在形式を生成する。
 
 ```powershell
