@@ -11,7 +11,6 @@ from backend.domain.attachment.primitives import (
     AttachmentText,
 )
 from backend.domain.attachment.value_objects import (
-    AttachmentBlock,
     AttachmentBody,
     AttachmentContext,
     AttachmentMetadata,
@@ -106,13 +105,3 @@ def test_content_is_deeply_immutable_and_metadata_reads_are_independent():
     assert cell.references[0].metadata["unknown"] == ["原文"]
     with pytest.raises((AttributeError, TypeError)):
         cast(MutableSequence[AttachmentTableCell], block.table.rows[0])[0] = cell
-
-
-def test_body_rejects_mutable_input_collection():
-    with pytest.raises(AttachmentDomainError, match="tuple"):
-        AttachmentBody(
-            blocks=cast(
-                tuple[AttachmentBlock, ...],
-                [AttachmentParagraph(text=AttachmentText("本文"))],
-            )
-        )

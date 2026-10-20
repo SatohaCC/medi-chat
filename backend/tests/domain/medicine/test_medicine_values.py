@@ -1,7 +1,6 @@
-"""医薬品の単一値・名称群・製品の不正状態を実モデルで拒否する。"""
+"""医薬品Primitiveの検証と名称群・製品の値契約。"""
 
 from dataclasses import FrozenInstanceError
-from typing import Any
 
 import pytest
 from backend.domain.foundation.exceptions import DomainValidationError
@@ -70,21 +69,8 @@ def test_yj_normalizes_before_format_validation():
     assert YjCode("1234567a0000").value == "1234567a0000"
 
 
-def test_names_allow_absence_but_reject_wrong_roles():
+def test_names_allow_absence():
     assert MedicineNames() == MedicineNames()
-    with pytest.raises(DomainValidationError):
-        MedicineNames(brand_name="テスト")  # pyright: ignore[reportArgumentType]
-    with pytest.raises(DomainValidationError):
-        MedicineNames(brand_name=GenericName("テスト"))  # pyright: ignore[reportArgumentType]
-
-
-@pytest.mark.parametrize(
-    "field", ["brand_name", "generic_name", "english_name", "hiragana_name"]
-)
-def test_each_name_role_rejects_raw_strings(field):
-    values: dict[str, Any] = {field: "テスト"}
-    with pytest.raises(DomainValidationError):
-        MedicineNames(**values)
 
 
 def test_name_vo_is_immutable_and_keyword_only():
@@ -96,7 +82,7 @@ def test_name_vo_is_immutable_and_keyword_only():
         MedicineNames(BrandName("テスト"))  # pyright: ignore[reportCallIssue]
 
 
-def test_product_checks_types_and_group_fallback():
+def test_product_keeps_group_fallback():
     code = YjCode("1234567A0000")
     names = MedicineNames(generic_name=GenericName(" 成分Ａ "))
     assert MedicineProduct(yj_code=code, names=names).match_group_id == ProductGroupId(
@@ -111,27 +97,6 @@ def test_product_checks_types_and_group_fallback():
         yj_code=code, names=punctuation
     ).match_group_id == ProductGroupId(code.value)
     assert punctuation.generic_name == GenericName("（・）")
-    with pytest.raises(DomainValidationError):
-        MedicineProduct(yj_code=code.value, names=names)  # pyright: ignore[reportArgumentType]
-    with pytest.raises(DomainValidationError):
-        MedicineProduct(yj_code=code, names={})  # pyright: ignore[reportArgumentType]
-
-
-@pytest.mark.parametrize(
-    "changes",
-    [
-        {"generic_name": "成分"},
-        {"brand_names": [BrandName("テスト")]},
-        {"brand_names": (GenericName("テスト"),)},
-        {"yj_codes": ("1234567A0000",)},
-        {"matched_aliases": ("テスト",)},
-    ],
-)
-def test_match_rejects_untyped_or_mutable_values(changes):
-    values: dict[str, Any] = {"generic_name": None, "brand_names": (), "yj_codes": ()}
-    values.update(changes)
-    with pytest.raises(DomainValidationError):
-        MedicineMatch(**values)
 
 
 def test_match_keeps_order_and_is_immutable():

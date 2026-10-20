@@ -109,21 +109,21 @@ Entity / Value Object は型付け済みの値をコンストラクタへ渡し�
 汎用JSON型の正本は `domain.foundation.json_types.JsonValue` です。
 文字列基底 `BaseString` はNFKC正規化と前後の余白除去を行い、空文字を禁止します。省略可能な概念は `Primitive | None` として表現します。原表記を保持する名称は `DomainPrimitive[str]` から定義し、空白だけの値は拒否しつつNFKCやtrimを適用しません。
 
-medicineの販売名・一般名・英名・読み名称はそれぞれ `BrandName` / `GenericName` / `EnglishName` / `HiraganaName`、検出別名は `MatchedAlias` が単一値を検証します。`MedicineNames` VOが名称群を保持し、`MedicineProduct` は公開IDと名称VOを保持します。`MedicineMatch` も名称・YJコードのPrimitiveを保持します。VO/Entityの入口では具象型と不変tupleを確認し、生の文字列や異なる役割のPrimitiveを拒否します。値の内容検証と正規化はPrimitiveが所有し、モデルでは再実行しません。
+medicineの販売名・一般名・英名・読み名称はそれぞれ `BrandName` / `GenericName` / `EnglishName` / `HiraganaName`、検出別名は `MatchedAlias` が単一値を検証します。`MedicineNames` VOが名称群を保持し、`MedicineProduct` は公開IDと名称VOを保持します。`MedicineMatch` も名称・YJコードのPrimitiveを保持します。値の内容検証と正規化はPrimitiveが所有し、VO/Entityでは再実行しません。型付きフィールドと不変コレクションの整合はPyright/mypyで確認します。VO/Entityの `__post_init__` は複数値の関係・集約の不変条件がある場合だけ定義し、型確認だけの処理や汎用 `_require` ヘルパーは置きません。
 
 任意名称の欠落・空文字・空白だけの値は取り込み境界で `None` に変換し、数値等は文字列化せず拒否します。Applicationの読み取り投影は `.value` と従来の空文字を公開します。照合用の正規化は原表記とは分けて導出します。`YjCode` は既存ID基底のNFKC/trim後に12文字ASCII英数字を要求し、コードの実在性は保証しません。形式制約はID基底の `value_pattern` で宣言し、公開IDモジュールから例外モジュールへ依存しません。
 
 PresentationはYJコードを `str` として受け取り、必須・配列件数・重複等の入力契約を検証します。YJ固有の形式制約は重ねず、Applicationの検索・根拠取得入口で `parse_yj_codes()` がDomain Primitiveへ変換します。不正値は `InvalidMedicineInput` へ変換し、RESTは422、WebSocketは接続を維持したエラー応答を返します。カタログ内部は `Sequence[YjCode]` のみを扱い、文字列からの暗黙変換を行いません。
 attachmentの販売名・英名・正式項目名・改訂ラベル・版表記も原表記を保持します。本文の `AttachmentText` は有効な空本文を保持し、非空の名称とは区別します。`RevisionYearMonth` は正規化後のASCII年月（0001年～9999年、01月～12月）を検証します。
 
-`AttachmentSourceOrder` は0以上の整数を表し、boolを拒否します。VOの文脈比較には出現順を含めず、XML decoder・永続化mapper・検索投影で明示変換します。保存JSONの `source_order` は従来の整数/Noneです。VOと `AttachmentDocument` の入口は具象型、Optional、tuple/frozensetとその全要素を検証し、重複・親子関係等の既存不変条件も維持します。
+`AttachmentSourceOrder` は0以上の整数を表し、boolを拒否します。VOの文脈比較には出現順を含めず、XML decoder・永続化mapper・検索投影で明示変換します。保存JSONの `source_order` は従来の整数/Noneです。VOと `AttachmentDocument` は重複・親子関係等の業務上の不変条件を検証します。XML/保存JSONなど外部の生データの型は入力・復元境界で確認し、明示的にPrimitiveと不変コレクションを組み立てます。
 
-登録時のYJ形式は公開 `YjCode` へ集約し、`RegistrationVersion` は型と非空集合を検証します。アップロードSHAもPresentationではstrとして受け取り、Applicationの `UploadSpec` が `AttachmentSha256` で検証・正規化します。不正入力は既存の入力エラー形式へ変換します。ファイルサイズ等の通信上の制約は維持します。
+登録時のYJ形式は公開 `YjCode` へ集約し、`RegistrationVersion` は登録対象の製品集合が非空であることを検証します。アップロードSHAもPresentationではstrとして受け取り、Applicationの `UploadSpec` が `AttachmentSha256` で検証・正規化します。不正入力は既存の入力エラー形式へ変換します。ファイルサイズ等の通信上の制約は維持します。
 添付文書の文字列Primitiveと検索確率も共通生成処理から `validate()` を呼び、
 各コンテキストの制約だけを追加します。Enumの正規化基底もfoundationに置きます。
 コレクションを含むモデルは、不変なタプルとして保持します。
 
-retrievalの `Evidence` は表示製品名・一般名・種類・出典をOptional Primitive、本文を空文字も保持する `EvidenceExcerpt` として持ちます。公開JSONとプロンプトでは `.value` を明示的に取り出し、不在は既存の空文字へ戻します。VOと `SearchUnit` は具象型・不変コレクション・全要素型を生成時に確認します。表の列位置/結合数は `SearchColumnIndex` / `SearchCellSpan`、固定意図の順位は `KeywordPriority` が検証します。
+retrievalの `Evidence` は表示製品名・一般名・種類・出典をOptional Primitive、本文を空文字も保持する `EvidenceExcerpt` として持ちます。公開JSONとプロンプトでは `.value` を明示的に取り出し、不在は既存の空文字へ戻します。VOと `SearchUnit` は型付きの値を受け取り、基本型・要素型の確認だけの生成時処理は置きません。表の列位置/結合数は `SearchColumnIndex` / `SearchCellSpan`、固定意図の順位は `KeywordPriority` が検証します。
 
 検索ポリシーの語彙は原表記を保持する `SearchPolicyTerm` とし、症状ルールは `SymptomKeywordRule` のtupleで保持します。元の設定辞書やlistをDomainに保持しません。設定JSONの形式と、検索時の語彙・順序・重複排除は維持します。根拠の改訂・参照は未知metadataを保持し、項目/列のMappingは空の原文セル・自由な番号も保持します。
 

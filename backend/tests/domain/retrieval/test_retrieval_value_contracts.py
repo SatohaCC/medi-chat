@@ -1,4 +1,4 @@
-"""検索の単一値と不変なモデルの生成契約。"""
+"""検索Primitiveの検証と型付きモデルの不変性。"""
 
 from dataclasses import FrozenInstanceError, fields, replace
 from typing import Any
@@ -124,22 +124,6 @@ def examples() -> list[Any]:
 
 
 MODELS = examples()
-FIELDS = [(model, field.name) for model in MODELS for field in fields(model)]
-
-
-@pytest.mark.parametrize("model,name", FIELDS)
-@pytest.mark.parametrize("invalid", ["raw", 1, [], ("raw",)])
-def test_all_fields_reject_wrong_types(model, name, invalid):
-    with pytest.raises(DomainValidationError):
-        replace(model, **{name: invalid})
-
-
-@pytest.mark.parametrize(
-    "model,name", [(m, n) for m, n in FIELDS if getattr(m, n) is not None]
-)
-def test_required_fields_reject_none(model, name):
-    with pytest.raises(DomainValidationError):
-        replace(model, **{name: None})
 
 
 def test_models_are_frozen_and_defaults_are_valid():
@@ -181,14 +165,6 @@ def test_search_policy_does_not_retain_source_mapping_or_lists():
         policy.symptom_rules[0].keywords += ()  # pyright: ignore[reportAttributeAccessIssue]
 
 
-def test_nested_table_cells_and_sources_reject_untyped_elements():
-    with pytest.raises(DomainValidationError):
-        v.SearchTable(columns=(), rows=(("cell",),))  # pyright: ignore[reportArgumentType]
-    evidence = next(model for model in MODELS if isinstance(model, v.Evidence))
-    with pytest.raises(DomainValidationError):
-        replace(evidence, retrieved_by=frozenset({"logic"}))
-
-
 def test_evidence_mappings_keep_empty_original_values_and_independent_output():
     raw = {"unknown": "", "code": "自由な番号"}
     section = v.EvidenceSection(raw)
@@ -196,5 +172,3 @@ def test_evidence_mappings_keep_empty_original_values_and_independent_output():
     output = section.to_dict()
     output.clear()
     assert section.to_dict() == {"unknown": "", "code": "自由な番号"}
-    with pytest.raises(DomainValidationError):
-        v.EvidenceSection({"code": 1})  # pyright: ignore[reportArgumentType]

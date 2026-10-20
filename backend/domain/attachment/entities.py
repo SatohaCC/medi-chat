@@ -12,8 +12,6 @@ from .value_objects import (
     AttachmentRevision,
     AttachmentSection,
     AttachmentSource,
-    _require,
-    _require_items,
 )
 
 # 添付文書自体: 文書内の製品・項目階層の整合性を所有する
@@ -31,12 +29,6 @@ class AttachmentDocument:
     reference_targets: tuple[AttachmentReferenceTarget, ...] = ()
 
     def __post_init__(self) -> None:
-        _require(self.document_id, DocumentId)
-        _require(self.source, AttachmentSource)
-        _require_items(self.revisions, AttachmentRevision)
-        _require_items(self.products, AttachmentProduct)
-        _require_items(self.sections, AttachmentSection)
-        _require_items(self.reference_targets, AttachmentReferenceTarget)
         if len({r.reference_id for r in self.reference_targets}) != len(
             self.reference_targets
         ):
@@ -47,14 +39,12 @@ class AttachmentDocument:
             raise AttachmentDomainError(
                 "an attachment cannot contain duplicate products"
             )
-
         sections = tuple(s for root in self.sections for s in root.walk())
         section_codes = {s.code for s in sections}
         if len(section_codes) != len(sections):
             raise AttachmentDomainError(
                 "an attachment cannot contain duplicate sections"
             )
-
         if any(s.parent_code and s.parent_code not in section_codes for s in sections):
             raise AttachmentDomainError("section parent must exist in the document")
         if any(section.parent_code is not None for section in self.sections):

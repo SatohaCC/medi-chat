@@ -4,7 +4,6 @@ from dataclasses import dataclass
 
 from ..medicine.identifiers import YjCode
 from ..shared.services import normalize_match_text
-from .exceptions import MedicineDomainError
 from .primitives import ProductGroupId
 from .value_objects import MedicineNames
 
@@ -15,12 +14,6 @@ class MedicineProduct:
 
     yj_code: YjCode | None
     names: MedicineNames
-
-    def __post_init__(self) -> None:
-        if self.yj_code is not None and not isinstance(self.yj_code, YjCode):
-            raise MedicineDomainError("expected YjCode or None")
-        if not isinstance(self.names, MedicineNames):
-            raise MedicineDomainError("expected MedicineNames")
 
     @property
     def match_group_id(self) -> ProductGroupId | None:

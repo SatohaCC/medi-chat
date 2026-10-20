@@ -1,4 +1,4 @@
-"""単一値・構造値・文書の不正状態を生成時に拒否する。"""
+"""添付文書Primitiveの検証と構造・集約の不変条件。"""
 
 from dataclasses import FrozenInstanceError, fields, replace
 from typing import Any
@@ -130,33 +130,6 @@ def examples() -> list[Any]:
 
 
 EXAMPLES = examples()
-BAD_FIELDS = [(model, field.name) for model in EXAMPLES for field in fields(model)]
-
-
-@pytest.mark.parametrize(
-    ("model", "name"),
-    BAD_FIELDS,
-    ids=lambda value: type(value).__name__ if not isinstance(value, str) else value,
-)
-@pytest.mark.parametrize("invalid", ["untyped", 1, [], ("untyped",)])
-def test_every_typed_field_rejects_wrong_types(model, name, invalid):
-    with pytest.raises(DomainError):
-        replace(model, **{name: invalid})
-
-
-@pytest.mark.parametrize(
-    ("model", "name"),
-    [(model, name) for model, name in BAD_FIELDS if getattr(model, name) is not None],
-)
-def test_required_fields_reject_none(model, name):
-    with pytest.raises(DomainError):
-        replace(model, **{name: None})
-
-
-def test_nested_table_rows_reject_wrong_cells_and_mutable_rows():
-    for rows in [(("raw",),), ([],)]:
-        with pytest.raises(DomainError):
-            v.AttachmentTable(columns=(), rows=rows)
 
 
 def test_defaults_and_optional_absence_are_valid_and_values_are_frozen():
@@ -173,5 +146,11 @@ def test_registration_uses_yj_primitive_contract_without_second_regex():
     assert replace(
         value, yj_codes=frozenset({YjCode("1234567a0000")})
     ).yj_codes == frozenset({YjCode("1234567a0000")})
-    with pytest.raises(DomainError):
-        replace(value, yj_codes=frozenset({"1234567A0000"}))
+
+
+def test_registration_requires_a_nonempty_product_set():
+    value = next(
+        value for value in EXAMPLES if isinstance(value, v.RegistrationVersion)
+    )
+    with pytest.raises(DomainError, match="at least one YJ"):
+        replace(value, yj_codes=frozenset())

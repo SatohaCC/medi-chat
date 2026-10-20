@@ -110,6 +110,8 @@ def _read_block(value: dict[str, Any]) -> v.AttachmentBlock:
     context = _read_context(value["context"])
     references = tuple(_read_reference(ref) for ref in value["references"])
     if value["kind"] == "paragraph":
+        if type(value["is_heading"]) is not bool:
+            raise ValueError("paragraph heading must be boolean")
         return v.AttachmentParagraph(
             text=p.AttachmentText(value["text"]),
             is_heading=value["is_heading"],

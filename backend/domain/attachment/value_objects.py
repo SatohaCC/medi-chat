@@ -5,7 +5,6 @@ AttachmentRevision / Source / Product / Section は添付文書自体の構造�
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from dataclasses import dataclass, field
 
 from ..foundation.json_types import JsonValue
@@ -14,7 +13,6 @@ from ..medicine.identifiers import YjCode
 from .exceptions import (
     AttachmentDomainError,
     MissingOrInvalidYjError,
-    MissingRevisionError,
 )
 from .identifiers import DocumentId
 from .primitives import (
@@ -44,17 +42,12 @@ class SectionDefinition:
     code: NumberedSectionCode
     title: DefinitionTitle
 
-    def __post_init__(self) -> None:
-        _require(self.code, NumberedSectionCode)
-        _require(self.title, DefinitionTitle)
-
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class SectionTaxonomy:
     sections: tuple[SectionDefinition, ...]
 
     def __post_init__(self) -> None:
-        _require_items(self.sections, SectionDefinition)
         codes = tuple(section.code for section in self.sections)
         if len(codes) != len(set(codes)):
             raise AttachmentDomainError("duplicate section definition")
@@ -68,10 +61,6 @@ class InteractionColumnDefinition:
     id: InteractionColumnId
     title: DefinitionTitle
 
-    def __post_init__(self) -> None:
-        _require(self.id, InteractionColumnId)
-        _require(self.title, DefinitionTitle)
-
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class RegistrationVersion:
@@ -81,42 +70,12 @@ class RegistrationVersion:
     revised_at: RevisionYearMonth
 
     def __post_init__(self) -> None:
-        if not isinstance(self.document_id, DocumentId) or not isinstance(
-            self.source_sha256, AttachmentSha256
-        ):
-            raise AttachmentDomainError(
-                "registration version requires typed document identity and source SHA256"
-            )
-        if (
-            not isinstance(self.yj_codes, frozenset)
-            or not self.yj_codes
-            or any(not isinstance(code, YjCode) for code in self.yj_codes)
-        ):
-            raise MissingOrInvalidYjError("missing_or_invalid_yj")
-        if not isinstance(self.revised_at, RevisionYearMonth):
-            raise MissingRevisionError("registration requires a revision month")
+        if not self.yj_codes:
+            raise MissingOrInvalidYjError("registration requires at least one YJ code")
 
     @property
     def version_id(self) -> DocumentVersionId:
         return DocumentVersionId(f"{self.document_id}:{self.source_sha256}")
-
-
-def _require(
-    value: object, expected: type | tuple[type, ...], *, optional: bool = False
-) -> None:
-    if optional and value is None:
-        return
-    if not isinstance(value, expected):
-        raise AttachmentDomainError(
-            f"invalid attachment field type: expected {expected}"
-        )
-
-
-def _require_items(values: object, item_type: type | tuple[type, ...]) -> None:
-    if not isinstance(values, tuple):
-        raise AttachmentDomainError("content collections must be tuples")
-    for value in values:
-        _require(value, item_type)
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -127,19 +86,10 @@ class AttachmentReferenceTarget:
     text: AttachmentText
     context: AttachmentContext = field(default_factory=lambda: AttachmentContext())
 
-    def __post_init__(self) -> None:
-        _require(self.reference_id, AttachmentText)
-        _require(self.text, AttachmentText)
-        _require(self.context, AttachmentContext)
-
 
 @dataclass(frozen=True, slots=True, eq=False)
 class AttachmentMetadata(ImmutableMapping[JsonValue]):
     """原本の未知metadataも失わない独立した値。"""
-
-    def __post_init__(self) -> None:
-        _require(self._data, Mapping)
-        super().__post_init__()
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -151,11 +101,6 @@ class AttachmentContext:
     # 文書全体での出現順。同じ文脈の隣接表行の結合判定には含めない。
     source_order: AttachmentSourceOrder | None = field(default=None, compare=False)
 
-    def __post_init__(self) -> None:
-        _require_items(self.product_codes, AttachmentProductCode)
-        _require_items(self.labels, AttachmentText)
-        _require(self.source_order, AttachmentSourceOrder, optional=True)
-
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class AttachmentReference:
@@ -164,11 +109,6 @@ class AttachmentReference:
     label: AttachmentText
     target_id: AttachmentText | None = None
     metadata: AttachmentMetadata = field(default_factory=AttachmentMetadata)
-
-    def __post_init__(self) -> None:
-        _require(self.label, AttachmentText)
-        _require(self.target_id, AttachmentText, optional=True)
-        _require(self.metadata, AttachmentMetadata)
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -182,14 +122,6 @@ class AttachmentTableCell:
     references: tuple[AttachmentReference, ...] = ()
     context: AttachmentContext = field(default_factory=AttachmentContext)
 
-    def __post_init__(self) -> None:
-        _require(self.text, AttachmentText)
-        _require(self.column, AttachmentColumnIndex)
-        _require(self.rowspan, AttachmentCellSpan)
-        _require(self.colspan, AttachmentCellSpan)
-        _require(self.context, AttachmentContext)
-        _require_items(self.references, AttachmentReference)
-
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class AttachmentTable:
@@ -200,11 +132,6 @@ class AttachmentTable:
     column_contexts: tuple[AttachmentContext, ...] = ()
 
     def __post_init__(self) -> None:
-        _require_items(self.columns, AttachmentText)
-        _require_items(self.rows, tuple)
-        for row in self.rows:
-            _require_items(row, AttachmentTableCell)
-        _require_items(self.column_contexts, AttachmentContext)
         if self.column_contexts and len(self.column_contexts) != len(self.columns):
             raise AttachmentDomainError("table column contexts must match headings")
 
@@ -216,23 +143,12 @@ class AttachmentParagraph:
     context: AttachmentContext = field(default_factory=AttachmentContext)
     references: tuple[AttachmentReference, ...] = ()
 
-    def __post_init__(self) -> None:
-        _require(self.text, AttachmentText)
-        _require(self.is_heading, bool)
-        _require(self.context, AttachmentContext)
-        _require_items(self.references, AttachmentReference)
-
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class AttachmentTableBlock:
     table: AttachmentTable
     context: AttachmentContext = field(default_factory=AttachmentContext)
     references: tuple[AttachmentReference, ...] = ()
-
-    def __post_init__(self) -> None:
-        _require(self.table, AttachmentTable)
-        _require(self.context, AttachmentContext)
-        _require_items(self.references, AttachmentReference)
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -241,12 +157,6 @@ class AttachmentFigure:
     description: AttachmentText
     context: AttachmentContext = field(default_factory=AttachmentContext)
     references: tuple[AttachmentReference, ...] = ()
-
-    def __post_init__(self) -> None:
-        _require(self.reference, AttachmentText)
-        _require(self.description, AttachmentText)
-        _require(self.context, AttachmentContext)
-        _require_items(self.references, AttachmentReference)
 
 
 type AttachmentBlock = AttachmentParagraph | AttachmentTableBlock | AttachmentFigure
@@ -258,12 +168,6 @@ class AttachmentBody:
 
     blocks: tuple[AttachmentBlock, ...] = ()
     text: AttachmentText | None = None
-
-    def __post_init__(self) -> None:
-        _require_items(
-            self.blocks, (AttachmentParagraph, AttachmentTableBlock, AttachmentFigure)
-        )
-        _require(self.text, AttachmentText, optional=True)
 
 
 # 添付文書自体: 改訂・原本の所在・掲載製品・項目階層
@@ -278,12 +182,6 @@ class AttachmentRevision:
     version: RevisionVersion
     metadata: AttachmentMetadata = field(default_factory=AttachmentMetadata)
 
-    def __post_init__(self) -> None:
-        _require(self.source_label, RevisionSourceLabel)
-        _require(self.year_month, RevisionYearMonth)
-        _require(self.version, RevisionVersion)
-        _require(self.metadata, AttachmentMetadata)
-
 
 @dataclass(frozen=True, slots=True)
 class AttachmentSource:
@@ -291,10 +189,6 @@ class AttachmentSource:
 
     pmda_url: AttachmentUrl
     sha256: AttachmentSha256 | None = None
-
-    def __post_init__(self) -> None:
-        _require(self.pmda_url, AttachmentUrl)
-        _require(self.sha256, AttachmentSha256, optional=True)
 
 
 @dataclass(frozen=True, slots=True)
@@ -304,11 +198,6 @@ class AttachmentProduct:
     product_code: AttachmentProductCode
     brand_name: AttachmentBrandName
     english_name: AttachmentEnglishName | None = None
-
-    def __post_init__(self) -> None:
-        _require(self.product_code, AttachmentProductCode)
-        _require(self.brand_name, AttachmentBrandName)
-        _require(self.english_name, AttachmentEnglishName, optional=True)
 
 
 @dataclass(frozen=True, slots=True)
@@ -322,11 +211,6 @@ class AttachmentSection:
     children: tuple[AttachmentSection, ...] = ()
 
     def __post_init__(self) -> None:
-        _require(self.code, NumberedSectionCode)
-        _require(self.title, AttachmentSectionTitle)
-        _require(self.body, AttachmentBody, optional=True)
-        _require(self.header, AttachmentText, optional=True)
-        _require_items(self.children, AttachmentSection)
         if any(child.parent_code != self.code for child in self.children):
             raise AttachmentDomainError(
                 "section children must have the owning parent code"
@@ -346,10 +230,6 @@ class AttachmentSection:
 class AttachmentProductRevision(ImmutableMapping[JsonValue]):
     """医薬品情報の出典改訂。未知metadataを含む独立したスナップショット。"""
 
-    def __post_init__(self) -> None:
-        _require(self._data, Mapping)
-        super().__post_init__()
-
 
 @dataclass(frozen=True, slots=True)
 class MedicineDocumentReference:
@@ -358,8 +238,3 @@ class MedicineDocumentReference:
     document_id: DocumentId
     pmda_url: PmdaUrl
     revision: AttachmentProductRevision
-
-    def __post_init__(self) -> None:
-        _require(self.document_id, DocumentId)
-        _require(self.pmda_url, PmdaUrl)
-        _require(self.revision, AttachmentProductRevision)
