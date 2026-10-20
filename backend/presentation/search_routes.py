@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
+from ..application.medicine.input_values import InvalidMedicineInput
 from .chat_service import AppChatService
 from .dependencies import get_chat_service
 from .search_models import KeywordSearchResponse
@@ -39,5 +40,8 @@ async def search_package_inserts(
     if chat_service is None:
         return KeywordSearchResponse(query=q, items=[], total_count=0)
 
-    items = await chat_service.search_keywords(q, yj_codes or ())
+    try:
+        items = await chat_service.search_keywords(q, yj_codes or ())
+    except InvalidMedicineInput as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from None
     return KeywordSearchResponse(query=q, items=items, total_count=len(items))

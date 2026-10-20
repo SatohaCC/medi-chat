@@ -10,7 +10,7 @@ from backend.application.medicine.product_models import (
     RegisteredMedicine,
     ResolvedMedicine,
 )
-from backend.domain.medicine.primitives import ProductGroupId
+from backend.domain.medicine.primitives import BrandName, GenericName, ProductGroupId
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 
 from ...domain.medicine.exceptions import MedicineDomainError
@@ -96,10 +96,10 @@ class MedicineCatalog:
                 indexed.setdefault(medicine.yj_code, []).append(medicine)
         return {yj_code: tuple(medicines) for yj_code, medicines in indexed.items()}
 
-    def _match_yj_groups(self, yj_codes: Sequence[str | YjCode]) -> list[_ProductGroup]:
+    def _match_yj_groups(self, yj_codes: Sequence[YjCode]) -> list[_ProductGroup]:
         """指定されたYJコードに対応する医薬品グループを取得する。"""
         groups: dict[ProductGroupId, _ProductGroup] = {}
-        for yj_code in dict.fromkeys(YjCode.from_value(value) for value in yj_codes):
+        for yj_code in dict.fromkeys(yj_codes):
             for medicine in self._medicines_by_yj.get(yj_code, ()):
                 group = groups.setdefault(
                     medicine.ingredient_id,
@@ -115,21 +115,23 @@ class MedicineCatalog:
     def _match_result(group: _ProductGroup) -> ResolvedMedicine:
         return ResolvedMedicine(
             medicine=DomainMedicineMatch(
-                generic_name=group.generic_name,
-                brand_names=tuple(group.brand_names),
-                yj_codes=tuple(group.yj_codes),
+                generic_name=GenericName(group.generic_name)
+                if group.generic_name
+                else None,
+                brand_names=tuple(BrandName(name) for name in group.brand_names),
+                yj_codes=tuple(YjCode(code) for code in group.yj_codes),
             ),
             document_ids=tuple(group.document_ids),
         )
 
-    def match_yj_codes(self, codes: Sequence[str | YjCode]) -> list[ResolvedMedicine]:
+    def match_yj_codes(self, codes: Sequence[YjCode]) -> list[ResolvedMedicine]:
         """製品コードで照合し、不変の結果を返す。"""
         return [self._match_result(group) for group in self._match_yj_groups(codes)]
 
-    def names_for_yj_codes(self, codes: Sequence[str | YjCode]) -> list[str]:
+    def names_for_yj_codes(self, codes: Sequence[YjCode]) -> list[str]:
         """選択製品の登録名をキーワード抽出の除外語として返す。"""
         matched_medicines = [
-            medicine.medicine
+            medicine
             for group in self._match_yj_groups(codes)
             for medicine in group.medicines
         ]

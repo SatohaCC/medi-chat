@@ -10,6 +10,8 @@ import httpx
 import pytest
 from backend.application.indexing.attachment_projection import project_attachment
 from backend.application.medicine.product_models import ResolvedMedicine
+from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.primitives import BrandName, MatchedAlias
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.domain.retrieval.primitives import DetectionSource, SearchSectionCode
 from backend.domain.retrieval.value_objects import SearchCriteria
@@ -132,7 +134,16 @@ async def test_tc19_all_entries_keep_injected_definition_without_reload(
                     ),
                     (
                         ResolvedMedicine(
-                            medicine=DomainMedicineMatch("", (), ("111111111111",), ()),
+                            medicine=DomainMedicineMatch(
+                                generic_name=None,
+                                brand_names=tuple(BrandName(value) for value in ()),
+                                yj_codes=tuple(
+                                    YjCode(value) for value in ("111111111111",)
+                                ),
+                                matched_aliases=tuple(
+                                    MatchedAlias(value) for value in ()
+                                ),
+                            ),
                             document_ids=("000001_test",),
                         ),
                     ),
@@ -172,7 +183,14 @@ async def test_tc19_all_entries_keep_injected_definition_without_reload(
                         (
                             ResolvedMedicine(
                                 medicine=DomainMedicineMatch(
-                                    "", (), ("111111111111",), ()
+                                    generic_name=None,
+                                    brand_names=tuple(BrandName(value) for value in ()),
+                                    yj_codes=tuple(
+                                        YjCode(value) for value in ("111111111111",)
+                                    ),
+                                    matched_aliases=tuple(
+                                        MatchedAlias(value) for value in ()
+                                    ),
                                 ),
                                 document_ids=("000001_test",),
                             ),
@@ -302,7 +320,12 @@ async def test_tc21_injected_heading_policy_reaches_old_scope_and_new_request(
     )
     target = (
         ResolvedMedicine(
-            medicine=DomainMedicineMatch("", (), ("111111111111",), ()),
+            medicine=DomainMedicineMatch(
+                generic_name=None,
+                brand_names=tuple(BrandName(value) for value in ()),
+                yj_codes=tuple(YjCode(value) for value in ("111111111111",)),
+                matched_aliases=tuple(MatchedAlias(value) for value in ()),
+            ),
             document_ids=("000001_test",),
         ),
     )

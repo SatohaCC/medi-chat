@@ -4,6 +4,8 @@ import hashlib
 import json
 
 import pytest
+from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.primitives import BrandName, MatchedAlias
 from backend.domain.retrieval.primitives import (
     DetectionSource,
     SearchKeyword,
@@ -56,7 +58,14 @@ async def test_pg028_public_corpus_and_equal_rank_use_legacy_codepoint_order(
                     ),
                     (
                         ResolvedMedicine(
-                            medicine=MedicineMatch("", (), codes, ()),
+                            medicine=MedicineMatch(
+                                generic_name=None,
+                                brand_names=tuple(BrandName(value) for value in ()),
+                                yj_codes=tuple(YjCode(value) for value in codes),
+                                matched_aliases=tuple(
+                                    MatchedAlias(value) for value in ()
+                                ),
+                            ),
                             document_ids=(
                                 "000001_a",
                                 "000001_B",
@@ -174,7 +183,12 @@ async def test_pg031_more_than_four_hundred_results_have_no_limit(
     )
     medicines = (
         ResolvedMedicine(
-            MedicineMatch("", (), codes, ()),
+            MedicineMatch(
+                generic_name=None,
+                brand_names=tuple(BrandName(value) for value in ()),
+                yj_codes=tuple(YjCode(value) for value in codes),
+                matched_aliases=tuple(MatchedAlias(value) for value in ()),
+            ),
             tuple(receipt.document_id for receipt in receipts),
         ),
     )
@@ -232,7 +246,14 @@ async def test_pg032_original_xml_tables_and_sources_match_independent_oracle(
             for document in ORACLE:
                 medicines = (
                     ResolvedMedicine(
-                        MedicineMatch("", (), (document["yj"],), ()),
+                        MedicineMatch(
+                            generic_name=None,
+                            brand_names=tuple(BrandName(value) for value in ()),
+                            yj_codes=tuple(
+                                YjCode(value) for value in (document["yj"],)
+                            ),
+                            matched_aliases=tuple(MatchedAlias(value) for value in ()),
+                        ),
                         (document["document_id"],),
                     ),
                 )

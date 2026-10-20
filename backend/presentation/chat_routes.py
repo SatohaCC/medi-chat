@@ -4,22 +4,21 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
+from ..application.medicine.input_values import InvalidMedicineInput
 from .chat_models import ChatMessage, ChatResponse
 from .chat_service import AppChatService as ChatService
 from .dependencies import get_chat_service
-from .medicine_models import MAX_PRODUCT_YJ_CODES, YJCode
+from .medicine_models import MAX_PRODUCT_YJ_CODES
 
 
 class ChatRequest(BaseModel):
     """REST API 経由で受信するチャット同期リクエストモデル"""
 
     message: str = Field(min_length=1, max_length=2000)
-    product_yj_codes: list[YJCode] = Field(
-        min_length=1, max_length=MAX_PRODUCT_YJ_CODES
-    )
+    product_yj_codes: list[str] = Field(min_length=1, max_length=MAX_PRODUCT_YJ_CODES)
     provider: str | None = None
     model: str | None = None
 
@@ -32,7 +31,7 @@ class ChatRequest(BaseModel):
 
     @field_validator("product_yj_codes")
     @classmethod
-    def validate_unique_product_codes(cls, value: list[YJCode]) -> list[YJCode]:
+    def validate_unique_product_codes(cls, value: list[str]) -> list[str]:
         if len(value) != len(set(value)):
             raise ValueError("product_yj_codes must not contain duplicates")
         return value
@@ -47,9 +46,12 @@ async def create_chat_response(
     service: Annotated[ChatService, Depends(get_chat_service)],
 ) -> ChatResponse:
     """添付文書の根拠引用および任意のLLM文章生成を伴う質問回答を行う"""
-    return await service.answer_question(
-        [ChatMessage(role="user", content=payload.message)],
-        payload.product_yj_codes,
-        payload.provider,
-        payload.model,
-    )
+    try:
+        return await service.answer_question(
+            [ChatMessage(role="user", content=payload.message)],
+            payload.product_yj_codes,
+            payload.provider,
+            payload.model,
+        )
+    except InvalidMedicineInput as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from None

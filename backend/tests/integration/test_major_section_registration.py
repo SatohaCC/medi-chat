@@ -2,6 +2,7 @@
 
 import pytest
 from backend.application.medicine.product_catalog import MedicineCatalog
+from backend.domain.medicine.identifiers import YjCode
 from backend.domain.retrieval.primitives import (
     DetectionSource,
     SearchKeyword,
@@ -51,7 +52,7 @@ async def test_saved_major_section_keeps_children_after_restart_and_search(
     try:
         async with runtime.acquire() as snapshot:
             catalog = MedicineCatalog(await snapshot.medicine_reader.read_medicines())
-            medicines = tuple(catalog.match_yj_codes(["111111111111"]))
+            medicines = tuple(catalog.match_yj_codes((YjCode("111111111111"),)))
             for reader in (snapshot.evidence_reader,):
                 for keywords in ((), (SearchKeyword("対象薬剤"),)):
                     evidence = await reader.search(

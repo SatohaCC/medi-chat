@@ -18,6 +18,11 @@ from backend.domain.attachment.value_objects import (
 )
 from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.primitives import (
+    BrandName,
+    GenericName,
+)
+from backend.domain.medicine.value_objects import MedicineNames
 from backend.domain.retrieval.primitives import IntentName, Probability
 from backend.domain.retrieval.value_objects import IntentCandidate
 from backend.infrastructure.morphology.janome_keyword_extractor import (
@@ -73,10 +78,12 @@ class EvidenceSearchTests(unittest.IsolatedAsyncioTestCase):
                     RegisteredMedicine(
                         medicine=MedicineProduct(
                             yj_code=YjCode("3339003F5020"),
-                            brand_name="テスト薬",
-                            generic_name="テスト成分",
-                            english_name="",
-                            hiragana_name="",
+                            names=MedicineNames(
+                                brand_name=BrandName("テスト薬"),
+                                generic_name=GenericName("テスト成分"),
+                                english_name=None,
+                                hiragana_name=None,
+                            ),
                         ),
                         reference=MedicineDocumentReference(
                             document_id=DocumentId("test_001"),

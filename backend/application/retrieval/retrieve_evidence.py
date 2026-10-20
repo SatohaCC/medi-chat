@@ -4,9 +4,11 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from copy import deepcopy
 
+from backend.application.medicine.input_values import parse_yj_codes
 from backend.application.medicine.product_catalog import MedicineCatalog
 from backend.application.medicine.product_contracts import RegisteredMedicineReader
 from backend.application.medicine.product_models import ResolvedMedicine
+from backend.domain.medicine.identifiers import YjCode
 
 from ...domain.retrieval.repositories import EvidenceRepository
 from ...domain.retrieval.services import (
@@ -39,9 +41,34 @@ async def retrieve_evidence(
     snapshot_provider: RetrievalSnapshotProvider | None = None,
     on_logic_sources: SourcesCallback | None = None,
 ) -> RetrievalResult:
+    return await _retrieve_evidence(
+        message,
+        parse_yj_codes(product_yj_codes),
+        medicine_reader=medicine_reader,
+        evidence_reader=evidence_reader,
+        intent_classifier=intent_classifier,
+        keyword_extractor=keyword_extractor,
+        intent_policy=intent_policy,
+        snapshot_provider=snapshot_provider,
+        on_logic_sources=on_logic_sources,
+    )
+
+
+async def _retrieve_evidence(
+    message: str,
+    product_yj_codes: tuple[YjCode, ...],
+    *,
+    medicine_reader: RegisteredMedicineReader,
+    evidence_reader: EvidenceRepository,
+    intent_classifier: IntentClassifier,
+    keyword_extractor: KeywordExtractor,
+    intent_policy: IntentPolicy,
+    snapshot_provider: RetrievalSnapshotProvider | None = None,
+    on_logic_sources: SourcesCallback | None = None,
+) -> RetrievalResult:
     if snapshot_provider is not None:
         async with snapshot_provider.acquire() as snapshot:
-            return await retrieve_evidence(
+            return await _retrieve_evidence(
                 message,
                 product_yj_codes,
                 medicine_reader=snapshot.medicine_reader,
@@ -103,7 +130,7 @@ async def retrieve_evidence(
     )
     resolved_codes = {code for group in resolved for code in group.yj_codes}
     unregistered_codes = [
-        code for code in product_yj_codes if code not in resolved_codes
+        code.value for code in product_yj_codes if code.value not in resolved_codes
     ]
     notices = []
     if unregistered_codes:

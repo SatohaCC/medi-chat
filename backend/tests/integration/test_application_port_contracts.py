@@ -36,7 +36,13 @@ from backend.domain.foundation.primitives.primitives import (
 )
 from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.primitives import (
+    BrandName,
+    GenericName,
+    MatchedAlias,
+)
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
+from backend.domain.medicine.value_objects import MedicineNames
 from backend.domain.retrieval.identifiers import SearchUnitId
 from backend.domain.retrieval.primitives import (
     DetectionSource,
@@ -136,10 +142,12 @@ async def test_intent_classifier_contract(
         medicines=(
             ResolvedMedicine(
                 medicine=DomainMedicineMatch(
-                    generic_name="テスト成分",
-                    brand_names=("テスト錠",),
-                    yj_codes=("1234567A0000",),
-                    matched_aliases=("テスト錠",),
+                    generic_name=GenericName("テスト成分"),
+                    brand_names=tuple(BrandName(value) for value in ("テスト錠",)),
+                    yj_codes=tuple(YjCode(value) for value in ("1234567A0000",)),
+                    matched_aliases=tuple(
+                        MatchedAlias(value) for value in ("テスト錠",)
+                    ),
                 ),
                 document_ids=("document-1",),
             ),
@@ -301,10 +309,12 @@ def fixed_medicines():
         RegisteredMedicine(
             medicine=MedicineProduct(
                 yj_code=YjCode("1234567A0000"),
-                brand_name="テスト薬",
-                generic_name="テスト成分",
-                english_name="",
-                hiragana_name="",
+                names=MedicineNames(
+                    brand_name=BrandName("テスト薬"),
+                    generic_name=GenericName("テスト成分"),
+                    english_name=None,
+                    hiragana_name=None,
+                ),
             ),
             reference=MedicineDocumentReference(
                 document_id=DocumentId("test_001"),
@@ -352,9 +362,9 @@ def answer_preparation_case() -> AnswerPreparationCase:
         resolved_medicines=[
             ResolvedMedicine(
                 medicine=DomainMedicineMatch(
-                    generic_name="テスト成分",
-                    brand_names=("テスト薬",),
-                    yj_codes=("1234567A0000",),
+                    generic_name=GenericName("テスト成分"),
+                    brand_names=tuple(BrandName(value) for value in ("テスト薬",)),
+                    yj_codes=tuple(YjCode(value) for value in ("1234567A0000",)),
                 ),
                 document_ids=("test_001",),
             )
@@ -479,6 +489,7 @@ def _assert_answer_values(value: object) -> None:
         ChatResponse,
         RegisteredMedicine,
         MedicineProduct,
+        MedicineNames,
         MedicineDocumentReference,
         ResolvedMedicine,
         DomainMedicineMatch,
@@ -501,6 +512,9 @@ def _assert_answer_values(value: object) -> None:
             (
                 BaseFiniteFloat,
                 BaseString,
+                BrandName,
+                GenericName,
+                MatchedAlias,
                 DetectionSource,
             ),
         ):

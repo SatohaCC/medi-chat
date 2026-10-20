@@ -14,6 +14,7 @@ from backend.application.chat.chat_models import ChatMessage
 from backend.application.medicine.product_catalog import MedicineCatalog
 from backend.application.retrieval.intent_contracts import IntentResult
 from backend.application.retrieval.retrieve_evidence import retrieve_evidence
+from backend.domain.medicine.identifiers import YjCode
 from backend.domain.retrieval.primitives import (
     DetectionSource,
     IntentName,
@@ -487,7 +488,9 @@ async def test_tc121_complete_six_tables_and_original_reference_destinations(
     try:
         async with runtime.acquire() as snapshot:
             catalog = MedicineCatalog(await snapshot.medicine_reader.read_medicines())
-            selected = tuple(catalog.match_yj_codes([doc[2] for doc in DOCUMENTS]))
+            selected = tuple(
+                catalog.match_yj_codes(tuple(YjCode(doc[2]) for doc in DOCUMENTS))
+            )
             sources = await snapshot.evidence_reader.search(
                 SearchCriteria(
                     source=DetectionSource.LOGIC,

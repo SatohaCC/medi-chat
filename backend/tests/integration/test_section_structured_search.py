@@ -3,6 +3,8 @@
 import asyncio
 
 from backend.application.medicine.product_models import ResolvedMedicine
+from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.primitives import BrandName, MatchedAlias
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.domain.retrieval.primitives import (
     DetectionSource,
@@ -32,7 +34,12 @@ def test_generated_section_is_one_postgres_hit_with_table_and_original_revision(
     try:
         medicines = (
             ResolvedMedicine(
-                medicine=DomainMedicineMatch("", (), ("3339003F5020",), ()),
+                medicine=DomainMedicineMatch(
+                    generic_name=None,
+                    brand_names=tuple(BrandName(value) for value in ()),
+                    yj_codes=tuple(YjCode(value) for value in ("3339003F5020",)),
+                    matched_aliases=tuple(MatchedAlias(value) for value in ()),
+                ),
                 document_ids=(source.stem,),
             ),
         )

@@ -11,6 +11,8 @@ import time
 
 import pytest
 from backend.application.medicine.product_models import ResolvedMedicine
+from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.primitives import BrandName, MatchedAlias
 from backend.domain.medicine.value_objects import MedicineMatch
 from backend.domain.retrieval.primitives import DetectionSource, SearchSectionCode
 from backend.domain.retrieval.value_objects import SearchCriteria
@@ -29,7 +31,17 @@ from sqlalchemy.exc import DBAPIError
 
 
 def target(code="111111111111"):
-    return (ResolvedMedicine(MedicineMatch("", (), (code,), ()), ("000001_test",)),)
+    return (
+        ResolvedMedicine(
+            MedicineMatch(
+                generic_name=None,
+                brand_names=tuple(BrandName(value) for value in ()),
+                yj_codes=tuple(YjCode(value) for value in (code,)),
+                matched_aliases=tuple(MatchedAlias(value) for value in ()),
+            ),
+            ("000001_test",),
+        ),
+    )
 
 
 def warning_criteria():

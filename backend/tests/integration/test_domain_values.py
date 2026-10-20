@@ -20,8 +20,13 @@ from backend.domain.foundation.exceptions import DomainValidationError
 from backend.domain.foundation.json_types import JsonValue
 from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.identifiers import YjCode
-from backend.domain.medicine.primitives import ProductGroupId
+from backend.domain.medicine.primitives import (
+    BrandName,
+    GenericName,
+    ProductGroupId,
+)
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
+from backend.domain.medicine.value_objects import MedicineNames
 from backend.domain.retrieval.primitives import DetectionSource, Probability
 from backend.tests.domain.retrieval.test_evidence_collection import make_evidence
 
@@ -46,9 +51,9 @@ def test_medicine_match_is_a_deeply_immutable_value_object():
     brand_names = ["商品"]
     match = ResolvedMedicine(
         medicine=DomainMedicineMatch(
-            generic_name="成分",
-            brand_names=tuple(brand_names),
-            yj_codes=("1234567A0000",),
+            generic_name=GenericName("成分"),
+            brand_names=tuple(BrandName(value) for value in tuple(brand_names)),
+            yj_codes=tuple(YjCode(value) for value in ("1234567A0000",)),
         ),
         document_ids=("document",),
     )
@@ -63,10 +68,12 @@ def test_medicine_group_keeps_aggregate_state_private():
     medicine = RegisteredMedicine(
         medicine=MedicineProduct(
             yj_code=YjCode("1234567A0000"),
-            brand_name="商品",
-            generic_name="成分",
-            english_name="",
-            hiragana_name="",
+            names=MedicineNames(
+                brand_name=BrandName("商品"),
+                generic_name=GenericName("成分"),
+                english_name=None,
+                hiragana_name=None,
+            ),
         ),
         reference=MedicineDocumentReference(
             document_id=DocumentId("document"),
@@ -95,10 +102,12 @@ def test_medicine_revision_is_independent_of_input_and_public_output():
         RegisteredMedicine(
             medicine=MedicineProduct(
                 yj_code=None,
-                brand_name="",
-                generic_name="",
-                english_name="",
-                hiragana_name="",
+                names=MedicineNames(
+                    brand_name=None,
+                    generic_name=None,
+                    english_name=None,
+                    hiragana_name=None,
+                ),
             ),
             reference=MedicineDocumentReference(
                 document_id=DocumentId("自由なID"),
@@ -133,7 +142,7 @@ def _change_revision(value: Mapping[str, JsonValue], version: str) -> None:
         ("references", [{"metadata": [None, {"value": "参照原文"}]}]),
         ("section", {"code": "自由番号", "title": "原見出し"}),
         ("columns", {"drug_name": "原文列"}),
-        ("product_yj_codes", ["自由な識別子"]),
+        ("product_yj_codes", ["1234567A0000"]),
     ],
 )
 def test_evidence_nested_values_are_independent_of_input_and_output(field, payload):

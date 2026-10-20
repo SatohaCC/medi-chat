@@ -12,6 +12,8 @@ from backend.application.medicine.product_models import (
     ResolvedMedicine,
 )
 from backend.domain.foundation.primitives.primitives import BaseFiniteFloat, BaseString
+from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.primitives import BrandName, GenericName, MatchedAlias
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.domain.retrieval.primitives import DetectionSource, SearchSectionCode
 from backend.domain.retrieval.value_objects import SearchCriteria
@@ -96,7 +98,14 @@ async def test_api_and_ws_respond_while_search_is_blocked(
                 (
                     ResolvedMedicine(
                         medicine=DomainMedicineMatch(
-                            "テスト成分", ("テスト薬",), ("1234567A0000",), ()
+                            generic_name=GenericName("テスト成分"),
+                            brand_names=tuple(
+                                BrandName(value) for value in ("テスト薬",)
+                            ),
+                            yj_codes=tuple(
+                                YjCode(value) for value in ("1234567A0000",)
+                            ),
+                            matched_aliases=tuple(MatchedAlias(value) for value in ()),
                         ),
                         document_ids=("test_001",),
                     ),
@@ -234,10 +243,16 @@ async def test_pg027_workers_own_connections_and_return_plain_values(pg_api, ope
                             (
                                 ResolvedMedicine(
                                     medicine=DomainMedicineMatch(
-                                        "テスト成分",
-                                        ("テスト薬",),
-                                        ("1234567A0000",),
-                                        (),
+                                        generic_name=GenericName("テスト成分"),
+                                        brand_names=tuple(
+                                            BrandName(value) for value in ("テスト薬",)
+                                        ),
+                                        yj_codes=tuple(
+                                            YjCode(value) for value in ("1234567A0000",)
+                                        ),
+                                        matched_aliases=tuple(
+                                            MatchedAlias(value) for value in ()
+                                        ),
                                     ),
                                     document_ids=("test_001",),
                                 ),

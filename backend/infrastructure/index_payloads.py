@@ -7,6 +7,13 @@ from typing import Any
 from backend.application.medicine.product_models import RegisteredMedicine
 from backend.domain.attachment.value_objects import MedicineDocumentReference
 from backend.domain.medicine.entities import MedicineProduct
+from backend.domain.medicine.primitives import (
+    BrandName,
+    EnglishName,
+    GenericName,
+    HiraganaName,
+)
+from backend.domain.medicine.value_objects import MedicineNames
 
 from ..application.attachment_import.import_models import (
     ImportedProduct,
@@ -351,6 +358,14 @@ def _string(value: JsonValue) -> str:
     return value
 
 
+def _optional_name_text(value: JsonValue) -> str | None:
+    """任意名称の不在を識別し、実在する原表記は変更しない。"""
+    if value is None:
+        return None
+    text = _string(value)
+    return text if text.strip() else None
+
+
 def _objects(value: JsonValue) -> list[dict[str, JsonValue]]:
     if not isinstance(value, list):
         raise TypeError("Expected a JSON array")
@@ -405,10 +420,24 @@ def build_index_document(
             RegisteredMedicine(
                 medicine=MedicineProduct(
                     yj_code=YjCode(_string(yj_code)) if yj_code is not None else None,
-                    brand_name=_string(product.get("brand_name") or ""),
-                    generic_name=_string(metadata.get("generic_name") or ""),
-                    english_name=_string(product.get("english_name") or ""),
-                    hiragana_name=_string(product.get("hiragana_name") or ""),
+                    names=MedicineNames(
+                        brand_name=BrandName(name)
+                        if (name := _optional_name_text(product.get("brand_name")))
+                        is not None
+                        else None,
+                        generic_name=GenericName(name)
+                        if (name := _optional_name_text(metadata.get("generic_name")))
+                        is not None
+                        else None,
+                        english_name=EnglishName(name)
+                        if (name := _optional_name_text(product.get("english_name")))
+                        is not None
+                        else None,
+                        hiragana_name=HiraganaName(name)
+                        if (name := _optional_name_text(product.get("hiragana_name")))
+                        is not None
+                        else None,
+                    ),
                 ),
                 reference=MedicineDocumentReference(
                     document_id=DocumentId(document_id),

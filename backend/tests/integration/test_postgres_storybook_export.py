@@ -3,6 +3,8 @@
 import runpy
 
 import pytest
+from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.primitives import BrandName, MatchedAlias
 from backend.tests.support.paths import PROJECT_ROOT
 from backend.tests.support.postgres_fixtures import pg_api as pg_api
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
@@ -33,7 +35,12 @@ async def test_pg038_storybook_export_is_readonly_and_returns_public_evidence(
             ),
             (
                 ResolvedMedicine(
-                    medicine=MedicineMatch("", (), ("1234567A0000",), ()),
+                    medicine=MedicineMatch(
+                        generic_name=None,
+                        brand_names=tuple(BrandName(value) for value in ()),
+                        yj_codes=tuple(YjCode(value) for value in ("1234567A0000",)),
+                        matched_aliases=tuple(MatchedAlias(value) for value in ()),
+                    ),
                     document_ids=("test_001",),
                 ),
             ),

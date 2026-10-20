@@ -46,10 +46,14 @@ def test_section_evidence_gets_current_revision_from_document_metadata():
     [
         ("成分原文", [{"yj_code": None, "brand_name": ""}], "成分原文"),
         ("", [], "自由な文書ID"),
-        ("成分原文", [{"yj_code": "自由コード", "brand_name": "商品原文"}], "商品原文"),
+        (
+            "成分原文",
+            [{"yj_code": "1234567A0000", "brand_name": "商品原文"}],
+            "商品原文",
+        ),
         (
             " Ａ成分① ",
-            [{"yj_code": "自由コード", "brand_name": " Ｂ商品② "}],
+            [{"yj_code": "1234567A0000", "brand_name": " Ｂ商品② "}],
             " Ｂ商品② ",
         ),
         (" Ａ成分① ", [{"yj_code": None, "brand_name": ""}], " Ａ成分① "),
@@ -62,7 +66,7 @@ def test_allowed_values_and_original_information_are_preserved(
     unit = {
         "unit_id": "自由な根拠ID",
         "document_key": "自由な文書ID",
-        "product_yj_codes": ["自由コード"],
+        "product_yj_codes": ["1234567A0000"],
         "document_revision": {},
         "section": {},
         "text": "原文\n改行",
@@ -80,7 +84,7 @@ def test_allowed_values_and_original_information_are_preserved(
         "document_id": "自由な文書ID",
         "product_name": name,
         "generic_name": generic,
-        "product_yj_codes": ["自由コード"],
+        "product_yj_codes": ["1234567A0000"],
         "document_revision": {},
         "section": {},
         "kind": "",
@@ -138,15 +142,15 @@ def test_unused_invalid_document_url_and_unselected_brand_are_not_newly_rejected
         {
             "unit_id": "id",
             "document_key": "doc",
-            "product_yj_codes": ["selected"],
+            "product_yj_codes": ["1234567A0000"],
             "source": {"url": "unit-url"},
         },
         {
             "source": ["unused wrong type"],
             "document": {
                 "products": [
-                    {"yj_code": "selected", "brand_name": "選択原文"},
-                    {"yj_code": "unselected", "brand_name": ["unused wrong type"]},
+                    {"yj_code": "1234567A0000", "brand_name": "選択原文"},
+                    {"yj_code": "1234567A0001", "brand_name": ["unused wrong type"]},
                 ]
             },
         },
@@ -209,16 +213,20 @@ def test_product_code_is_validated_at_json_boundary(code):
 
 def test_product_selection_uses_normalized_ids_and_keeps_unselected_brand_unread():
     evidence = build_evidence(
-        {"unit_id": "id", "document_key": "doc", "product_yj_codes": ["Ａ"]},
+        {
+            "unit_id": "id",
+            "document_key": "doc",
+            "product_yj_codes": ["１２３４５６７Ａ００００"],
+        },
         {
             "document": {
                 "products": [
-                    {"yj_code": "A", "brand_name": "選択商品"},
-                    {"yj_code": "B", "brand_name": ["未選択"]},
+                    {"yj_code": "1234567A0000", "brand_name": "選択商品"},
+                    {"yj_code": "1234567A0001", "brand_name": ["未選択"]},
                 ]
             }
         },
         "logic",
     )
     assert evidence.product_name == "選択商品"
-    assert evidence.product_yj_codes == (YjCode("A"),)
+    assert evidence.product_yj_codes == (YjCode("1234567A0000"),)

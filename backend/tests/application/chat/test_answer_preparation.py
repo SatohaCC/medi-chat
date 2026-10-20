@@ -20,6 +20,11 @@ from backend.domain.attachment.value_objects import (
 )
 from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.primitives import (
+    BrandName,
+    GenericName,
+)
+from backend.domain.medicine.value_objects import MedicineNames
 from backend.domain.retrieval.primitives import (
     DetectionSource,
     IntentName,
@@ -38,10 +43,12 @@ class MedicineReader:
             RegisteredMedicine(
                 medicine=MedicineProduct(
                     yj_code=YjCode("1234567A0000"),
-                    brand_name="商品",
-                    generic_name="成分",
-                    english_name="",
-                    hiragana_name="",
+                    names=MedicineNames(
+                        brand_name=BrandName("商品"),
+                        generic_name=GenericName("成分"),
+                        english_name=None,
+                        hiragana_name=None,
+                    ),
                 ),
                 reference=MedicineDocumentReference(
                     document_id=DocumentId("document"),
@@ -267,7 +274,7 @@ async def test_partially_unresolved_products_preserve_resolved_medicine_and_skip
     monkeypatch.setattr(retrieval, "detect_jev_criteria", jev)
     monkeypatch.setattr(retrieval, "detect_morphology_criteria", lambda *args: None)
     reader = OrderedEvidenceReader(False)
-    codes = ["1234567A0000", "unknown"]
+    codes = ["1234567A0000", "0000000A0000"]
     before = deepcopy(codes)
     reply = await preparation.prepare_reply(
         [ChatMessage(role="user", content="質問")],
@@ -286,7 +293,7 @@ async def test_partially_unresolved_products_preserve_resolved_medicine_and_skip
 
     all_unknown_reply = await preparation.prepare_reply(
         [ChatMessage(role="user", content="質問")],
-        ["unknown"],
+        ["0000000A0000"],
         medicine_reader=MedicineReader(),
         evidence_reader=reader,
         intent_classifier=UnusedIntentClassifier(),

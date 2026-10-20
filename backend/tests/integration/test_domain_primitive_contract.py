@@ -40,7 +40,7 @@ from backend.tests.domain.retrieval.test_evidence_collection import make_evidenc
         DocumentId("doc"),
         PmdaUrl("url"),
         SectionCode("1"),
-        YjCode("code"),
+        YjCode("1234567A0000"),
         ProductGroupId("成分"),
         IntentName("warnings"),
         SearchKeyword("症状"),

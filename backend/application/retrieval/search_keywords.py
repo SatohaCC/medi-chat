@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
+from backend.application.medicine.input_values import parse_yj_codes
 from backend.application.medicine.product_catalog import MedicineCatalog
 from backend.application.medicine.product_contracts import RegisteredMedicineReader
+from backend.domain.medicine.identifiers import YjCode
 
 from ...domain.retrieval.primitives import DetectionSource
 from ...domain.retrieval.repositories import EvidenceRepository
@@ -28,9 +30,29 @@ async def search_evidence_by_keywords(
     snapshot_provider: RetrievalSnapshotProvider | None = None,
 ) -> tuple[Evidence, ...]:
     """キーワードと任意の対象医薬品コードに基づいて添付文書の根拠を検索する。"""
+    return await _search_evidence_by_keywords(
+        query,
+        parse_yj_codes(product_yj_codes),
+        medicine_reader=medicine_reader,
+        evidence_reader=evidence_reader,
+        keyword_extractor=keyword_extractor,
+        snapshot_provider=snapshot_provider,
+    )
+
+
+async def _search_evidence_by_keywords(
+    query: str,
+    product_yj_codes: tuple[YjCode, ...] = (),
+    *,
+    medicine_reader: RegisteredMedicineReader,
+    evidence_reader: EvidenceRepository,
+    keyword_extractor: KeywordExtractor | None = None,
+    snapshot_provider: RetrievalSnapshotProvider | None = None,
+) -> tuple[Evidence, ...]:
+    """キーワードと任意の対象医薬品コードに基づいて添付文書の根拠を検索する。"""
     if snapshot_provider is not None:
         async with snapshot_provider.acquire() as snapshot:
-            return await search_evidence_by_keywords(
+            return await _search_evidence_by_keywords(
                 query,
                 product_yj_codes,
                 medicine_reader=snapshot.medicine_reader,
@@ -43,7 +65,7 @@ async def search_evidence_by_keywords(
         return ()
 
     catalog = MedicineCatalog(medicines)
-    requested_codes = [code.strip() for code in product_yj_codes if code.strip()]
+    requested_codes = product_yj_codes
     if requested_codes:
         targets = tuple(catalog.match_yj_codes(requested_codes))
     else:

@@ -16,6 +16,7 @@ from backend.application.medicine.product_models import ResolvedMedicine
 from backend.application.retrieval.intent_contracts import IntentRequest
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.primitives import BrandName, GenericName
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.domain.retrieval.identifiers import SearchUnitId
 from backend.domain.retrieval.primitives import (
@@ -557,7 +558,9 @@ def test_専用指示の項目名を生成し根拠原文を保持する(
     activate_catalog(catalog_data)
     medicine = ResolvedMedicine(
         medicine=DomainMedicineMatch(
-            generic_name="成分", brand_names=("製品",), yj_codes=("1234567A0000",)
+            generic_name=GenericName("成分"),
+            brand_names=tuple(BrandName(value) for value in ("製品",)),
+            yj_codes=tuple(YjCode(value) for value in ("1234567A0000",)),
         ),
         document_ids=("document-1",),
     )

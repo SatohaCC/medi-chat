@@ -13,6 +13,7 @@ from backend.domain.foundation.primitives.primitives import (
     BaseFiniteFloat,
     BaseString,
 )
+from backend.domain.medicine.primitives import BrandName, GenericName, MatchedAlias
 from backend.domain.medicine.value_objects import MedicineMatch
 from backend.domain.retrieval.primitives import DetectionSource
 from backend.domain.retrieval.value_objects import Evidence
@@ -57,6 +58,9 @@ def _assert_pure_value(value: object) -> None:
             (
                 BaseFiniteFloat,
                 BaseString,
+                BrandName,
+                GenericName,
+                MatchedAlias,
                 DetectionSource,
             ),
         ):
@@ -163,10 +167,16 @@ def _application_response(payload):
         resolved_medicines=[
             ResolvedMedicine(
                 medicine=MedicineMatch(
-                    generic_name=m["generic_name"],
-                    brand_names=tuple(m["brand_names"]),
-                    yj_codes=tuple(m["yj_codes"]),
-                    matched_aliases=tuple(m["matched_aliases"]),
+                    generic_name=GenericName(m["generic_name"])
+                    if m["generic_name"]
+                    else None,
+                    brand_names=tuple(
+                        BrandName(value) for value in tuple(m["brand_names"])
+                    ),
+                    yj_codes=tuple(YjCode(value) for value in tuple(m["yj_codes"])),
+                    matched_aliases=tuple(
+                        MatchedAlias(value) for value in tuple(m["matched_aliases"])
+                    ),
                 ),
                 document_ids=tuple(m["document_ids"]),
             )

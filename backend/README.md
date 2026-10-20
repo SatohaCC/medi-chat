@@ -107,7 +107,13 @@ Entity / Value Object は型付け済みの値をコンストラクタへ渡し�
 検索のSearchCriteria、IntentCandidate、IntentSelectionに加え、MedicineMatch、
 添付文書の全Value Objectが不変な値として保持されます。
 汎用JSON型の正本は `domain.foundation.json_types.JsonValue` です。
-文字列基底 `BaseString` はNFKC正規化と前後の余白除去を行い、空文字を禁止します（DDDの原則に則り、プリミティブ文字列はそもそも空文字を許容せず不正な状態のインスタンスを作らせません。省略可能な概念は `Primitive | None` のように型として表現します）。
+文字列基底 `BaseString` はNFKC正規化と前後の余白除去を行い、空文字を禁止します。省略可能な概念は `Primitive | None` として表現します。原表記を保持する名称は `DomainPrimitive[str]` から定義し、空白だけの値は拒否しつつNFKCやtrimを適用しません。
+
+medicineの販売名・一般名・英名・読み名称はそれぞれ `BrandName` / `GenericName` / `EnglishName` / `HiraganaName`、検出別名は `MatchedAlias` が単一値を検証します。`MedicineNames` VOが名称群を保持し、`MedicineProduct` は公開IDと名称VOを保持します。`MedicineMatch` も名称・YJコードのPrimitiveを保持します。VO/Entityの入口では具象型と不変tupleを確認し、生の文字列や異なる役割のPrimitiveを拒否します。値の内容検証と正規化はPrimitiveが所有し、モデルでは再実行しません。
+
+任意名称の欠落・空文字・空白だけの値は取り込み境界で `None` に変換し、数値等は文字列化せず拒否します。Applicationの読み取り投影は `.value` と従来の空文字を公開します。照合用の正規化は原表記とは分けて導出します。`YjCode` は既存ID基底のNFKC/trim後に12文字ASCII英数字を要求し、コードの実在性は保証しません。形式制約はID基底の `value_pattern` で宣言し、公開IDモジュールから例外モジュールへ依存しません。
+
+PresentationはYJコードを `str` として受け取り、必須・配列件数・重複等の入力契約を検証します。YJ固有の形式制約は重ねず、Applicationの検索・根拠取得入口で `parse_yj_codes()` がDomain Primitiveへ変換します。不正値は `InvalidMedicineInput` へ変換し、RESTは422、WebSocketは接続を維持したエラー応答を返します。カタログ内部は `Sequence[YjCode]` のみを扱い、文字列からの暗黙変換を行いません。
 添付文書Primitiveは直接継承して固有の例外型・形式制約だけを追加します。
 添付文書の文字列Primitiveと検索確率も共通生成処理から `validate()` を呼び、
 各コンテキストの制約だけを追加します。Enumの正規化基底もfoundationに置きます。

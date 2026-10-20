@@ -9,11 +9,12 @@ from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from ..application.chat.stream_closing import closing_stream
+from ..application.medicine.input_values import InvalidMedicineInput
 from .chat_models import ChatMessage
 from .chat_service import AppChatService as ChatService
 from .dependencies import get_chat_service
 from .evidence_models import ChatSource
-from .medicine_models import MAX_PRODUCT_YJ_CODES, YJCode
+from .medicine_models import MAX_PRODUCT_YJ_CODES
 
 ALLOWED_PROVIDER_NAMES: set[str] = {"openai", "gemini"}
 
@@ -28,16 +29,14 @@ class WebSocketChatRequest(BaseModel):
     """WebSocket 経由で受信するチャットリクエストペイロード"""
 
     type: Literal["message"] = "message"
-    product_yj_codes: list[YJCode] = Field(
-        min_length=1, max_length=MAX_PRODUCT_YJ_CODES
-    )
+    product_yj_codes: list[str] = Field(min_length=1, max_length=MAX_PRODUCT_YJ_CODES)
     messages: list[ChatMessage] = Field(min_length=1, max_length=50)
     provider: str | None = Field(default=None, max_length=50)
     model: str | None = Field(default=None, max_length=100)
 
     @field_validator("product_yj_codes")
     @classmethod
-    def validate_unique_product_codes(cls, value: list[YJCode]) -> list[YJCode]:
+    def validate_unique_product_codes(cls, value: list[str]) -> list[str]:
         if len(value) != len(set(value)):
             raise ValueError("product_yj_codes must not contain duplicates")
         return value
@@ -147,11 +146,16 @@ async def stream_chat_response(
                     {"type": "sources", "sources": [s.model_dump() for s in sources]}
                 )
 
-            reply = await service.prepare_reply(
-                payload.messages,
-                payload.product_yj_codes,
-                on_logic_sources=publish_logic,
-            )
+            try:
+                reply = await service.prepare_reply(
+                    payload.messages,
+                    payload.product_yj_codes,
+                    on_logic_sources=publish_logic,
+                )
+
+            except InvalidMedicineInput as exc:
+                await websocket.send_json({"type": "error", "content": str(exc)})
+                continue
 
             if not reply.needs_clarification:
                 if reply.sources:
