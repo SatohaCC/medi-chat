@@ -17,6 +17,7 @@ export function AppHeader({ children }: AppHeaderProps) {
   const isChat = pathname === "/" || pathname === "";
   const isSearch = pathname?.startsWith("/search");
   const isImports = pathname?.startsWith("/imports");
+  const isGuide = pathname?.startsWith("/guide");
 
   return (
     <header {...stylex.props(styles.header)}>
@@ -51,6 +52,13 @@ export function AppHeader({ children }: AppHeaderProps) {
             aria-current={isImports ? "page" : undefined}
           >
             XML取り込み
+          </Link>
+          <Link
+            href="/guide"
+            {...stylex.props(styles.navLink, isGuide && styles.activeNavLink)}
+            aria-current={isGuide ? "page" : undefined}
+          >
+            検索の仕組み
           </Link>
         </nav>
       </div>

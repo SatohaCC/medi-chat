@@ -22,7 +22,7 @@ from backend.domain.retrieval.primitives import (
     DetectionSource,
 )
 from backend.domain.retrieval.services import (
-    detect_intent_from_keywords,
+    detect_intents_from_keywords,
     evidence_section_sort_key,
     format_scoped_text,
 )
@@ -148,12 +148,9 @@ async def test_明示注入したカタログを再読込せず各利用先に�
     )
 
     if consumer == "keyword_intent":
-        assert (
-            detect_intent_from_keywords(
-                "追補について", intent_policy=catalog.intent_policy
-            )
-            == "supplementary"
-        )
+        assert detect_intents_from_keywords(
+            "追補について", intent_policy=catalog.intent_policy
+        ) == ("supplementary",)
     elif consumer == "section_codes":
         assert catalog.intent_policy.section_codes_for_intent("supplementary") == (
             "27",
@@ -389,10 +386,9 @@ def test_新しい項目の定義だけで検索とプロンプトとXMLに反�
     catalog_data["answer_prompt"]["citation_examples"].append("27")
     catalog = activate_catalog(catalog_data)
 
-    assert (
-        detect_intent_from_keywords("追補について", intent_policy=catalog.intent_policy)
-        == "supplementary"
-    )
+    assert detect_intents_from_keywords(
+        "追補について", intent_policy=catalog.intent_policy
+    ) == ("supplementary",)
     assert catalog.intent_policy.section_codes_for_intent("supplementary") == ("27",)
     assert extract_search_keywords("追補") == []
     assert (
@@ -596,17 +592,19 @@ def test_専用指示の項目名を生成し根拠原文を保持する(
 @pytest.mark.parametrize(
     ("message", "intent"),
     [
-        ("副作用と併用について", "interaction"),
-        ("妊娠可能な人は？", "reproductive_potential"),
-        ("妊娠中は？", "pregnancy"),
-        ("主要文献は？", "contact_info"),
-        ("作用機序は？", "indications"),
-        ("こんにちは", "document_search"),
+        ("副作用と併用について", ("interaction", "adverse_events", "indications")),
+        ("妊娠可能な人は？", ("reproductive_potential", "pregnancy")),
+        ("妊娠中は？", ("pregnancy",)),
+        ("主要文献は？", ("contact_info",)),
+        ("作用機序は？", ("indications", "pharmacology")),
+        ("こんにちは", ()),
     ],
 )
-def test_固定キーワードの優先順位を維持する(message: str, intent: str) -> None:
+def test_固定キーワードの全分類を取得する(
+    message: str, intent: tuple[str, ...]
+) -> None:
     assert (
-        detect_intent_from_keywords(
+        detect_intents_from_keywords(
             message, intent_policy=get_package_insert_definitions().intent_policy
         )
         == intent

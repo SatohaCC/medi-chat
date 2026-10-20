@@ -1,8 +1,11 @@
 """TC20: whole REST/WS observations with real temporary storage and fixed SDK doubles."""
 
+import html
 import json
+import re
 from copy import deepcopy
 from unittest.mock import patch
+from xml.etree import ElementTree as ET
 
 from backend.tests.integration.test_interaction_xml_oracle import ORACLE as XML_ORACLE
 from backend.tests.integration.test_interaction_xml_oracle import (
@@ -10,10 +13,60 @@ from backend.tests.integration.test_interaction_xml_oracle import (
     major_expectations,
 )
 from backend.tests.presentation import test_api_routes as api_fixture
-from backend.tests.support.paths import FIXTURES_ROOT
+from backend.tests.support.paths import FIXTURES_ROOT, PROJECT_ROOT
+from backend.tests.support.section_records import major_unit_id
 from fastapi import FastAPI
 
 REFERENCE = FIXTURES_ROOT / "definition-public-reference.json"
+
+
+def indication_originals(documents):
+    originals = {}
+    for document in documents:
+        path = next(
+            (PROJECT_ROOT / "data/pmda/originals").glob(
+                f"*/{document['document_id']}.xml"
+            )
+        )
+        root = ET.parse(path).getroot()
+        for code, tag in (
+            ("4", "IndicationsOrEfficacy"),
+            ("5", "EfficacyRelatedPrecautions"),
+        ):
+            for node in root.iter():
+                if node.tag.rsplit("}", 1)[-1] != tag:
+                    continue
+                texts = [
+                    leaf.text
+                    for leaf in node.iter()
+                    if leaf.tag.rsplit("}", 1)[-1] == "Lang"
+                    and not len(leaf)
+                    and leaf.text
+                    and leaf.text.strip()
+                ]
+                if texts:
+                    originals[major_unit_id(document, code)] = (document, code, texts)
+    return originals
+
+
+def assert_expanded_source(source, document, code, originals):
+    if code not in {"4", "5"}:
+        assert_public_source(source, document, code)
+        return
+    assert source["unit_id"] == major_unit_id(document, code)
+    for key in ("document_id", "product_name", "generic_name"):
+        assert source[key] == document[key]
+    assert source["product_yj_codes"] == [document["yj"]]
+    assert source["section"]["code"] == code
+    assert (
+        source["section"]["title"]
+        == {"4": "効能又は効果", "5": "効能又は効果に関連する注意"}[code]
+    )
+    assert source["document_revision"] == document["revision"]
+    assert source["kind"] == "section"
+    body = "".join(html.unescape(re.sub(r"<[^>]+>", "", source["excerpt"])).split())
+    for text in originals[source["unit_id"]][2]:
+        assert "".join(text.split()) in body
 
 
 def observe_public() -> dict[str, object]:
@@ -87,11 +140,22 @@ def test_tc20_public_envelope_is_stable_and_current_content_matches_originals() 
             identifier: (document, code)
             for identifier, document, code in major_expectations(documents)
         }
+        # 「相互作用」は「作用」にも一致するため、4/5の原本も独立に照合する。
+        originals = indication_originals(documents)
+        indexed.update(
+            {
+                identifier: (doc, code)
+                for identifier, (doc, code, _) in originals.items()
+            }
+        )
+        indexed = dict(
+            sorted(indexed.items(), key=lambda item: (int(item[1][1]), item[0]))
+        )
         assert [source["unit_id"] for source in sources] == list(indexed)
         for source in sources:
             document, code = indexed[source["unit_id"]]
-            assert_public_source(source, document, code)
-            expected_routes = ["logic", "jev"]
+            assert_expanded_source(source, document, code, originals)
+            expected_routes = ["logic"] if code in {"4", "5"} else ["logic", "jev"]
             if document is not XML_ORACLE[0] and code == "10":
                 expected_routes.append("keyword")
             assert source["retrieved_by"] == expected_routes
@@ -103,7 +167,7 @@ def test_tc20_public_envelope_is_stable_and_current_content_matches_originals() 
                 previous_ids = ids
                 for source in event["sources"]:
                     document, code = indexed[source["unit_id"]]
-                    assert_public_source(source, document, code)
+                    assert_expanded_source(source, document, code, originals)
         assert previous_ids == set(indexed)
         for messages in case["provider_messages"]:
             assert messages[1:] == [{"role": "user", "content": "相互作用は？"}]

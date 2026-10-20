@@ -33,30 +33,33 @@ from .value_objects import (
 )
 
 
-def detect_intent_from_keywords(message: str, *, intent_policy: IntentPolicy) -> str:
-    """最初の一致を採用し、一致がなければ通常検索の意図を返す。"""
+def detect_intents_from_keywords(
+    message: str, *, intent_policy: IntentPolicy
+) -> tuple[str, ...]:
+    """一致したすべての分類を、それぞれ一度だけ返す。"""
     compact = normalize_match_text(message)
-    for definition in intent_policy.keyword_intents:
+    return tuple(
+        definition.id.value
+        for definition in intent_policy.keyword_intents
         if any(
             normalize_match_text(keyword.text.value) in compact
             for keyword in definition.keywords
-        ):
-            return definition.id.value
-    return intent_policy.fallback_intent.value
+        )
+    )
 
 
 def detect_fixed_keyword_criteria(
     message: str, intent_policy: IntentPolicy
-) -> SearchCriteria | None:
+) -> tuple[SearchCriteria, ...]:
     """項目指定のない意図は固定項目検索の条件にしない。"""
-    intent = detect_intent_from_keywords(message, intent_policy=intent_policy)
-    codes = intent_policy.section_codes_for_intent(intent)
-    if not codes:
-        return None
-    return SearchCriteria(
-        source=DetectionSource.LOGIC,
-        intent=IntentName(intent),
-        section_codes=tuple(SearchSectionCode(code) for code in codes),
+    return tuple(
+        SearchCriteria(
+            source=DetectionSource.LOGIC,
+            intent=IntentName(intent),
+            section_codes=tuple(SearchSectionCode(code) for code in codes),
+        )
+        for intent in detect_intents_from_keywords(message, intent_policy=intent_policy)
+        if (codes := intent_policy.section_codes_for_intent(intent))
     )
 
 

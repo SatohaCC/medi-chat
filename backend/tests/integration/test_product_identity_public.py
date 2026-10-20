@@ -172,6 +172,8 @@ def test_tc133_rest_all_fields_zero_search_generation(
         if available or "併用" in message or "飲み合わせ" in message
         else "indications"
     )
+    if not available and "併用" in message and "効能" in message:
+        intent = "interaction, indications"
     assert r.json() == {
         "answer": CONFIRMATIONS[strategy][0],
         "intent": intent,

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import unittest
 
-from backend.domain.retrieval.services import detect_intent_from_keywords
+from backend.domain.retrieval.services import detect_intents_from_keywords
 from backend.infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,
 )
@@ -18,48 +18,48 @@ def get_section_codes_for_intent(intent: str) -> list[str] | None:
 
 
 class IntentRuleTests(unittest.TestCase):
-    def test_detect_intent_from_keywords(self) -> None:
+    def test_detect_intents_from_keywords(self) -> None:
         self.assertEqual(
-            detect_intent_from_keywords(
+            detect_intents_from_keywords(
                 "副作用について教えて",
                 intent_policy=get_package_insert_definitions().intent_policy,
             ),
-            "adverse_events",
+            ("adverse_events", "indications"),
         )
         self.assertEqual(
-            detect_intent_from_keywords(
+            detect_intents_from_keywords(
                 "1日何錠飲みますか？",
                 intent_policy=get_package_insert_definitions().intent_policy,
             ),
-            "dosage",
+            ("dosage",),
         )
         self.assertEqual(
-            detect_intent_from_keywords(
+            detect_intents_from_keywords(
                 "併用しても大丈夫？",
                 intent_policy=get_package_insert_definitions().intent_policy,
             ),
-            "interaction",
+            ("interaction",),
         )
         self.assertEqual(
-            detect_intent_from_keywords(
+            detect_intents_from_keywords(
                 "妊娠中に飲める？",
                 intent_policy=get_package_insert_definitions().intent_policy,
             ),
-            "pregnancy",
+            ("pregnancy",),
         )
         self.assertEqual(
-            detect_intent_from_keywords(
+            detect_intents_from_keywords(
                 "薬のメカニズムは？",
                 intent_policy=get_package_insert_definitions().intent_policy,
             ),
-            "pharmacology",
+            ("pharmacology",),
         )
         self.assertEqual(
-            detect_intent_from_keywords(
+            detect_intents_from_keywords(
                 "一般質問です",
                 intent_policy=get_package_insert_definitions().intent_policy,
             ),
-            "document_search",
+            (),
         )
 
     def test_get_section_codes_for_intent(self) -> None:

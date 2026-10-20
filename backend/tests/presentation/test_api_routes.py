@@ -235,7 +235,7 @@ class ChatApiRouteTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertEqual(payload["intent"], "adverse_events")
+        self.assertEqual(payload["intent"], "adverse_events, indications")
         raw_source = next((REPO_ROOT / "data/pmda/originals").glob("*/*630004*.xml"))
         raw_root = ET.parse(raw_source).getroot()
         expected_sha = hashlib.sha256(raw_source.read_bytes()).hexdigest()
@@ -264,12 +264,13 @@ class ChatApiRouteTests(unittest.TestCase):
             {source["unit_id"] for source in payload["sources"]},
             {
                 f"630004_3339003F5020_1_08:{expected_sha}:11",
+                f"630004_3339003F5020_1_08:{expected_sha}:4",
             },
         )
-        self.assertEqual(len(payload["sources"]), 1)
+        self.assertEqual(len(payload["sources"]), 2)
         self.assertTrue(
             all(
-                source["section"]["code"].startswith("11")
+                source["section"]["code"] in {"4", "11"}
                 for source in payload["sources"]
             )
         )
@@ -285,7 +286,7 @@ class ChatApiRouteTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertEqual(payload["intent"], "reproductive_potential")
+        self.assertEqual(payload["intent"], "reproductive_potential, pregnancy")
         self.assertTrue(payload["sources"])
         self.assertTrue(
             all(source["section"]["code"] == "9" for source in payload["sources"])
