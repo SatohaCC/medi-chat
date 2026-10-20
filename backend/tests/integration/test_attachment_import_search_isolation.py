@@ -42,7 +42,7 @@ async def test_http_import_and_restart_preserve_search_snapshot(pg_api, pg_engin
         ):
             found = await search(app, criteria, (known,))
             assert len(found) == 1
-            assert all(f"記載{i}" in found[0].excerpt for i in range(3))
+            assert all(f"記載{i}" in found[0].excerpt.value for i in range(3))
             if iteration == 0:
                 previous = found
                 invalid = await client.post(
@@ -75,7 +75,7 @@ async def test_http_import_and_restart_preserve_search_snapshot(pg_api, pg_engin
                 unknown = SearchTarget((result["document_id"],), ("111111111111",))
                 imported = await search(app, criteria, (unknown,))
                 assert len(imported) == 1
-                assert "新薬の副作用" in imported[0].excerpt
+                assert "新薬の副作用" in imported[0].excerpt.value
                 assert await search(app, criteria, (known,)) == previous
                 saved = digest(pg_engines[0])
             else:

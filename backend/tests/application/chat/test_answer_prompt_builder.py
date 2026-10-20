@@ -11,6 +11,13 @@ from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import BrandName, GenericName
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.domain.retrieval.identifiers import SearchUnitId
+from backend.domain.retrieval.primitives import (
+    EvidenceExcerpt,
+    EvidenceGenericName,
+    EvidenceProductName,
+    EvidenceSourceUrl,
+    SearchUnitKind,
+)
 from backend.domain.retrieval.value_objects import (
     DocumentRevision,
     EvidenceColumns,
@@ -28,8 +35,8 @@ class AnswerPromptBuilderTests(unittest.TestCase):
         source = ChatSource(
             unit_id=SearchUnitId("unit-1"),
             document_id=DocumentId("doc-1"),
-            product_name="テスト錠",
-            generic_name="テスト成分",
+            product_name=EvidenceProductName("テスト錠"),
+            generic_name=EvidenceGenericName("テスト成分"),
             product_yj_codes=(YjCode("1234567A8901"),),
             document_revision=DocumentRevision(
                 {
@@ -39,8 +46,8 @@ class AnswerPromptBuilderTests(unittest.TestCase):
                 }
             ),
             section=EvidenceSection({"code": "10.1", "title": "併用禁忌"}),
-            kind="interaction_row",
-            excerpt="本文",
+            kind=SearchUnitKind("interaction_row"),
+            excerpt=EvidenceExcerpt("本文"),
             columns=EvidenceColumns(
                 {
                     "drug_name": "相手薬",
@@ -57,7 +64,7 @@ class AnswerPromptBuilderTests(unittest.TestCase):
                     }
                 ),
             ),
-            url="https://example.test/doc#section-10-1",
+            url=EvidenceSourceUrl("https://example.test/doc#section-10-1"),
         )
         medicine = ResolvedMedicine(
             medicine=DomainMedicineMatch(

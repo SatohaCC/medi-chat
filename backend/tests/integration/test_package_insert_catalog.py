@@ -21,6 +21,11 @@ from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicin
 from backend.domain.retrieval.identifiers import SearchUnitId
 from backend.domain.retrieval.primitives import (
     DetectionSource,
+    EvidenceExcerpt,
+    EvidenceGenericName,
+    EvidenceProductName,
+    EvidenceSourceUrl,
+    SearchUnitKind,
 )
 from backend.domain.retrieval.services import (
     detect_intents_from_keywords,
@@ -74,16 +79,16 @@ def _source(**values: Any) -> ChatSource:
     return ChatSource(
         unit_id=SearchUnitId.from_value(values.pop("unit_id", "unit-1")),
         document_id=DocumentId("document-1"),
-        product_name="テスト製品",
-        generic_name="テスト成分",
+        product_name=EvidenceProductName("テスト製品"),
+        generic_name=EvidenceGenericName("テスト成分"),
         product_yj_codes=(YjCode("1234567A0000"),),
         document_revision=DocumentRevision(values.pop("document_revision", {})),
-        url=values.pop("url", "https://example.test/source"),
+        url=EvidenceSourceUrl(values.pop("url", "https://example.test/source")),
         section=EvidenceSection(
             values.pop("section", {"code": "1", "title": "原文の見出し"})
         ),
-        kind="item",
-        excerpt="原文の本文",
+        kind=SearchUnitKind("item"),
+        excerpt=EvidenceExcerpt("原文の本文"),
         columns=EvidenceColumns(columns) if columns is not None else None,
         references=tuple(EvidenceReference(ref) for ref in references),
         retrieved_by=frozenset({DetectionSource(retrieved_by)})
@@ -633,14 +638,14 @@ def test_根拠一覧の項目番号順を維持する(
         Evidence(
             unit_id=SearchUnitId(f"test_001:{index:03d}"),
             document_id=DocumentId("test_001"),
-            product_name="テスト薬",
-            generic_name="テスト成分",
+            product_name=EvidenceProductName("テスト薬"),
+            generic_name=EvidenceGenericName("テスト成分"),
             product_yj_codes=(YjCode("1234567A0000"),),
             document_revision=DocumentRevision({}),
             section=EvidenceSection({"code": code}),
-            kind="text",
-            excerpt="原文の本文",
-            url="https://example.test/package-insert",
+            kind=SearchUnitKind("text"),
+            excerpt=EvidenceExcerpt("原文の本文"),
+            url=EvidenceSourceUrl("https://example.test/package-insert"),
         )
         for index, code in enumerate(codes)
     ]

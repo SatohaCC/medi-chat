@@ -123,6 +123,10 @@ attachmentの販売名・英名・正式項目名・改訂ラベル・版表記�
 各コンテキストの制約だけを追加します。Enumの正規化基底もfoundationに置きます。
 コレクションを含むモデルは、不変なタプルとして保持します。
 
+retrievalの `Evidence` は表示製品名・一般名・種類・出典をOptional Primitive、本文を空文字も保持する `EvidenceExcerpt` として持ちます。公開JSONとプロンプトでは `.value` を明示的に取り出し、不在は既存の空文字へ戻します。VOと `SearchUnit` は具象型・不変コレクション・全要素型を生成時に確認します。表の列位置/結合数は `SearchColumnIndex` / `SearchCellSpan`、固定意図の順位は `KeywordPriority` が検証します。
+
+検索ポリシーの語彙は原表記を保持する `SearchPolicyTerm` とし、症状ルールは `SymptomKeywordRule` のtupleで保持します。元の設定辞書やlistをDomainに保持しません。設定JSONの形式と、検索時の語彙・順序・重複排除は維持します。根拠の改訂・参照は未知metadataを保持し、項目/列のMappingは空の原文セル・自由な番号も保持します。
+
 
 エンティティ（MedicineProduct、SearchUnit等）は各コンテキストで固有の識別子・不変条件・
 比較操作を持つドメインモデルとして定義します。

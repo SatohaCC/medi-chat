@@ -206,7 +206,7 @@ async def test_pg031_more_than_four_hundred_results_have_no_limit(
             assert {item.document_id.value for item in first} == {
                 receipt.document_id for receipt in receipts
             }
-            assert all("テスト全件検索" in item.excerpt for item in first)
+            assert all("テスト全件検索" in item.excerpt.value for item in first)
             assert [item.to_dict() for item in repeated] == [
                 item.to_dict() for item in first
             ]
@@ -284,8 +284,8 @@ async def test_pg032_requested_product_tables_and_version_sources_match_old_snap
                     warning_criteria(), target(code)
                 )
                 assert [item.to_dict() for item in actual] == ORACLE["products"][code]
-                assert ("A値" in actual[0].excerpt) is (code == "111111111111")
-                assert ("B値" in actual[0].excerpt) is (code == "222222222222")
+                assert ("A値" in actual[0].excerpt.value) is (code == "111111111111")
+                assert ("B値" in actual[0].excerpt.value) is (code == "222222222222")
         assert pg_engines[1].pool.checkedout() == 0
     finally:
         await workers.aclose()

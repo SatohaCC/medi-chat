@@ -46,10 +46,15 @@ from backend.domain.medicine.value_objects import MedicineNames
 from backend.domain.retrieval.identifiers import SearchUnitId
 from backend.domain.retrieval.primitives import (
     DetectionSource,
+    EvidenceExcerpt,
+    EvidenceGenericName,
+    EvidenceProductName,
+    EvidenceSourceUrl,
     IntentName,
     Probability,
     SearchKeyword,
     SearchSectionCode,
+    SearchUnitKind,
 )
 from backend.domain.retrieval.repositories import (
     EvidenceSearchTarget,
@@ -373,14 +378,14 @@ def answer_preparation_case() -> AnswerPreparationCase:
             Evidence(
                 unit_id=SearchUnitId(f"test_001:{index:03d}"),
                 document_id=DocumentId("test_001"),
-                product_name="テスト薬",
-                generic_name="テスト成分",
+                product_name=EvidenceProductName("テスト薬"),
+                generic_name=EvidenceGenericName("テスト成分"),
                 product_yj_codes=(YjCode("1234567A0000"),),
                 document_revision=DocumentRevision({}),
                 section=EvidenceSection({"code": "11.1", "title": "重大な副作用"}),
-                kind="text",
-                excerpt=f"頭痛に注意してください。記載{index}",
-                url="https://example.test/package-insert",
+                kind=SearchUnitKind("text"),
+                excerpt=EvidenceExcerpt(f"頭痛に注意してください。記載{index}"),
+                url=EvidenceSourceUrl("https://example.test/package-insert"),
                 retrieved_by=frozenset(DetectionSource),
             )
             for index in range(3)
@@ -515,6 +520,10 @@ def _assert_answer_values(value: object) -> None:
                 BrandName,
                 GenericName,
                 MatchedAlias,
+                EvidenceProductName,
+                EvidenceGenericName,
+                EvidenceSourceUrl,
+                EvidenceExcerpt,
                 DetectionSource,
             ),
         ):

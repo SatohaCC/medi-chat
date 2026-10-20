@@ -18,6 +18,15 @@ class DetectionSource(ValidatedStrEnum):
 
 
 @dataclass(frozen=True, slots=True)
+class _OriginalTerm(DomainPrimitive[str]):
+    """非空の原表記を変更せず保持する。"""
+
+    def validate(self) -> None:
+        if not isinstance(self.value, str) or not self.value.strip():
+            raise DomainValidationError("original term must be nonempty text")
+
+
+@dataclass(frozen=True, slots=True)
 class IntentName(BaseString):
     """判定された質問意図の名前。"""
 
@@ -61,28 +70,18 @@ class EvidenceContextLabel(BaseString):
 
 
 @dataclass(frozen=True, slots=True)
-class EvidenceBrandName(BaseString):
-    """正規化せず原文を保持する根拠用の販売名。"""
-
-    def _normalize(self, value: object) -> str:
-        if not isinstance(value, str):
-            raise DomainValidationError("値は文字列である必要があります。")
-        return value
+class EvidenceBrandName(_OriginalTerm):
+    """原表記を保持する根拠値。"""
 
 
 @dataclass(frozen=True, slots=True)
-class EvidenceGenericName(BaseString):
-    """正規化せず原文を保持する根拠用の一般名。"""
-
-    def _normalize(self, value: object) -> str:
-        if not isinstance(value, str):
-            raise DomainValidationError("値は文字列である必要があります。")
-        return value
+class EvidenceGenericName(_OriginalTerm):
+    """原表記を保持する根拠値。"""
 
 
 @dataclass(frozen=True, slots=True)
-class EvidenceSourceUrl(BaseString):
-    """根拠の出典参照文字列。既存の入力契約を保持する。"""
+class EvidenceSourceUrl(_OriginalTerm):
+    """原表記を保持する根拠値。"""
 
 
 @dataclass(frozen=True, slots=True)
@@ -117,3 +116,45 @@ class SearchUnitSectionCode(SearchSectionCode):
 @dataclass(frozen=True, slots=True)
 class SearchUnitUrl(BaseHttpUrl):
     """検索単位の外部参照URL。"""
+
+
+@dataclass(frozen=True, slots=True)
+class KeywordPriority(DomainPrimitive[int]):
+    """固定検索意図の正の優先順位。"""
+
+    def validate(self) -> None:
+        if type(self.value) is not int or self.value < 1:
+            raise DomainValidationError("priority must be a positive integer")
+
+
+@dataclass(frozen=True, slots=True)
+class SearchColumnIndex(DomainPrimitive[int]):
+    """検索表の0始まりの列位置。"""
+
+    def validate(self) -> None:
+        if type(self.value) is not int or self.value < 0:
+            raise DomainValidationError("column must be a nonnegative integer")
+
+
+@dataclass(frozen=True, slots=True)
+class SearchCellSpan(DomainPrimitive[int]):
+    """検索表の正の結合数。"""
+
+    def validate(self) -> None:
+        if type(self.value) is not int or self.value < 1:
+            raise DomainValidationError("span must be a positive integer")
+
+
+@dataclass(frozen=True, slots=True)
+class EvidenceProductName(_OriginalTerm):
+    """補完・連結を含む根拠の表示製品名。"""
+
+
+@dataclass(frozen=True, slots=True)
+class EvidenceExcerpt(SearchUnitText):
+    """空本文も含め保持する根拠本文。"""
+
+
+@dataclass(frozen=True, slots=True)
+class SearchPolicyTerm(_OriginalTerm):
+    """検索ポリシーの非空語彙。"""

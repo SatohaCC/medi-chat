@@ -2,6 +2,8 @@
 
 from dataclasses import replace
 
+from backend.domain.retrieval.primitives import SearchCellSpan, SearchColumnIndex
+
 from ...domain.attachment.entities import AttachmentDocument
 from ...domain.attachment.exceptions import AttachmentDomainError
 from ...domain.attachment.value_objects import (
@@ -80,9 +82,9 @@ def _block(block: AttachmentBlock) -> SearchContentBlock:
                     tuple(
                         SearchTableCell(
                             text=SearchUnitText(cell.text.value),
-                            column=cell.column.value,
-                            rowspan=cell.rowspan.value,
-                            colspan=cell.colspan.value,
+                            column=SearchColumnIndex(cell.column.value),
+                            rowspan=SearchCellSpan(cell.rowspan.value),
+                            colspan=SearchCellSpan(cell.colspan.value),
                             references=_references(cell.references),
                             context=_context(cell.context),
                         )

@@ -15,7 +15,14 @@ from backend.domain.foundation.primitives.primitives import (
 )
 from backend.domain.medicine.primitives import BrandName, GenericName, MatchedAlias
 from backend.domain.medicine.value_objects import MedicineMatch
-from backend.domain.retrieval.primitives import DetectionSource
+from backend.domain.retrieval.primitives import (
+    DetectionSource,
+    EvidenceExcerpt,
+    EvidenceGenericName,
+    EvidenceProductName,
+    EvidenceSourceUrl,
+    SearchUnitKind,
+)
 from backend.domain.retrieval.value_objects import Evidence
 from backend.presentation.chat_dto_mapper import (
     chat_message_from_api,
@@ -61,6 +68,10 @@ def _assert_pure_value(value: object) -> None:
                 BrandName,
                 GenericName,
                 MatchedAlias,
+                EvidenceProductName,
+                EvidenceGenericName,
+                EvidenceSourceUrl,
+                EvidenceExcerpt,
                 DetectionSource,
             ),
         ):
@@ -186,18 +197,22 @@ def _application_response(payload):
             Evidence(
                 unit_id=SearchUnitId(v["unit_id"]),
                 document_id=DocumentId(v["document_id"]),
-                product_name=v["product_name"],
-                generic_name=v["generic_name"],
+                product_name=EvidenceProductName(v["product_name"])
+                if v["product_name"]
+                else None,
+                generic_name=EvidenceGenericName(v["generic_name"])
+                if v["generic_name"]
+                else None,
                 product_yj_codes=tuple(YjCode(c) for c in v["product_yj_codes"]),
                 document_revision=DocumentRevision(v["document_revision"]),
                 section=EvidenceSection(v["section"]),
-                kind=v["kind"],
-                excerpt=v["excerpt"],
+                kind=SearchUnitKind(v["kind"]) if v["kind"] else None,
+                excerpt=EvidenceExcerpt(v["excerpt"]),
                 columns=EvidenceColumns(v["columns"])
                 if v["columns"] is not None
                 else None,
                 references=tuple(EvidenceReference(r) for r in v["references"]),
-                url=v["url"],
+                url=EvidenceSourceUrl(v["url"]) if v["url"] else None,
                 retrieved_by=frozenset(DetectionSource(d) for d in v["retrieved_by"]),
             )
             for v in payload["sources"]

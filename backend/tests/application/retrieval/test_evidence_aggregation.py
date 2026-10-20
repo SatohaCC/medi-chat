@@ -5,7 +5,14 @@ from backend.application.retrieval.retrieve_evidence import _search_evidence
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.retrieval.identifiers import SearchUnitId
-from backend.domain.retrieval.primitives import DetectionSource
+from backend.domain.retrieval.primitives import (
+    DetectionSource,
+    EvidenceExcerpt,
+    EvidenceGenericName,
+    EvidenceProductName,
+    EvidenceSourceUrl,
+    SearchUnitKind,
+)
 from backend.domain.retrieval.value_objects import (
     DocumentRevision,
     Evidence,
@@ -18,14 +25,16 @@ def evidence(index, code="11.1", text=None):
     return Evidence(
         unit_id=SearchUnitId(f"test_001:{index:03d}"),
         document_id=DocumentId("test_001"),
-        product_name="テスト薬",
-        generic_name="テスト成分",
+        product_name=EvidenceProductName("テスト薬"),
+        generic_name=EvidenceGenericName("テスト成分"),
         product_yj_codes=(YjCode("1234567A0000"),),
         document_revision=DocumentRevision({}),
         section=EvidenceSection({"code": code, "title": "原見出し"}),
-        kind="text",
-        excerpt=text if text is not None else f"頭痛に注意してください。記載{index}",
-        url="https://example.test/package-insert",
+        kind=SearchUnitKind("text"),
+        excerpt=EvidenceExcerpt(
+            text if text is not None else f"頭痛に注意してください。記載{index}"
+        ),
+        url=EvidenceSourceUrl("https://example.test/package-insert"),
     )
 
 
@@ -81,7 +90,7 @@ async def test_重複はunit_idだけで除去し固有unitと取得元を保持
         "test_001:002": frozenset({"jev"}),
         "test_001:003": frozenset({"keyword"}),
     }
-    assert {source.unit_id.value: source.excerpt for source in sources} == {
+    assert {source.unit_id.value: source.excerpt.value for source in sources} == {
         "test_001:000": "頭痛の同じ原文",
         "test_001:001": "個別unitの同じ原文",
         "test_001:002": "個別unitの同じ原文",

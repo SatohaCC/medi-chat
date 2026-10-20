@@ -66,9 +66,12 @@ async def test_saved_major_section_keeps_children_after_restart_and_search(
                     assert {item.section["code"] for item in evidence} == {"10"}
                     assert len({item.unit_id for item in evidence}) == 1
                     for item in evidence:
-                        assert "禁忌の対象薬剤" in item.excerpt
-                        assert "注意の対象薬剤" in item.excerpt
-                        assert "10.1" in item.excerpt and "10.2" in item.excerpt
+                        assert "禁忌の対象薬剤" in item.excerpt.value
+                        assert "注意の対象薬剤" in item.excerpt.value
+                        assert (
+                            "10.1" in item.excerpt.value
+                            and "10.2" in item.excerpt.value
+                        )
                 for absent in ("1", "10.3"):
                     assert (
                         await reader.search(

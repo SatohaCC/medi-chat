@@ -80,9 +80,9 @@ def test_generated_section_is_one_postgres_hit_with_table_and_original_revision(
         assert len(whole) == 1
         payload = whole[0].to_dict()
         assert payload["unit_id"] == f"{source.stem}:{receipt.source_sha256}:10"
-        assert "リトナビル" in whole[0].excerpt
-        assert "<table>" in whole[0].excerpt
-        assert whole[0].excerpt.count("<tr>") == 15
+        assert "リトナビル" in whole[0].excerpt.value
+        assert "<table>" in whole[0].excerpt.value
+        assert whole[0].excerpt.value.count("<tr>") == 15
         assert payload["document_revision"] == {
             "source_label": "今回",
             "year_month": "2025-11",
@@ -93,9 +93,9 @@ def test_generated_section_is_one_postgres_hit_with_table_and_original_revision(
         }
         assert len(adverse) == 1
         assert adverse[0].unit_id.value == f"{source.stem}:{receipt.source_sha256}:11"
-        assert adverse[0].excerpt.count("<table>") == 1
-        assert adverse[0].excerpt.count("<tr>") == 34
-        assert "精神神経系" in adverse[0].excerpt
-        assert "頻度不明" in adverse[0].excerpt
+        assert adverse[0].excerpt.value.count("<table>") == 1
+        assert adverse[0].excerpt.value.count("<tr>") == 34
+        assert "精神神経系" in adverse[0].excerpt.value
+        assert "頻度不明" in adverse[0].excerpt.value
     finally:
         assert pg_publisher.engine.pool.checkedout() == 0

@@ -218,7 +218,7 @@ def test_tables_keep_columns_spans_newlines_and_references_in_one_unit():
         snapshot = block.table
         assert [column.value for column in snapshot.columns] == ["分類", "頻度", "症状"]
         assert [
-            (cell.column, cell.rowspan, cell.colspan, cell.text.value)
+            (cell.column.value, cell.rowspan.value, cell.colspan.value, cell.text.value)
             for row in snapshot.rows
             for cell in row
         ] == [(0, 2, 1, "消化器"), (1, 1, 2, "頻度不明\n注意"), (1, 1, 2, "悪心\n嘔吐")]

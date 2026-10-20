@@ -109,12 +109,12 @@ async def test_pg023_scope_reads_old_rows_after_other_process_publication_and_de
                 warning_criteria(), target()
             )
             assert medicines[0].revision.to_dict()["year_month"] == "2026-10"
-            assert len(evidence) == 1 and "テスト旧根拠" in evidence[0].excerpt
+            assert len(evidence) == 1 and "テスト旧根拠" in evidence[0].excerpt.value
             assert evidence[0].document_revision.to_dict()["year_month"] == "2026-10"
         async with runtime.acquire() as current:
             assert current.generation_id.value == new["generation"]
             result = await current.evidence_reader.search(warning_criteria(), target())
-            assert len(result) == 1 and "テスト新根拠" in result[0].excerpt
+            assert len(result) == 1 and "テスト新根拠" in result[0].excerpt.value
         assert pg_engines[1].pool.checkedout() == 0
     finally:
         await workers.aclose()

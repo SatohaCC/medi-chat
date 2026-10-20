@@ -6,7 +6,14 @@ import pytest
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.retrieval.identifiers import SearchUnitId
-from backend.domain.retrieval.primitives import DetectionSource
+from backend.domain.retrieval.primitives import (
+    DetectionSource,
+    EvidenceExcerpt,
+    EvidenceGenericName,
+    EvidenceProductName,
+    EvidenceSourceUrl,
+    SearchUnitKind,
+)
 from backend.domain.retrieval.services import merge_evidence
 from backend.domain.retrieval.value_objects import (
     DocumentRevision,
@@ -37,16 +44,20 @@ def make_evidence(unit_id="unit", code="11.1", excerpt="原文\n本文", **kwarg
     return Evidence(
         unit_id=SearchUnitId.from_value(data["unit_id"]),
         document_id=DocumentId.from_value(data["document_id"]),
-        product_name=data["product_name"],
-        generic_name=data["generic_name"],
+        product_name=EvidenceProductName(data["product_name"])
+        if data["product_name"]
+        else None,
+        generic_name=EvidenceGenericName(data["generic_name"])
+        if data["generic_name"]
+        else None,
         product_yj_codes=tuple(
             YjCode.from_value(code) for code in data["product_yj_codes"]
         ),
         document_revision=DocumentRevision(data["document_revision"]),
         section=EvidenceSection(data["section"]),
-        kind=data["kind"],
-        excerpt=data["excerpt"],
-        url=data["url"],
+        kind=SearchUnitKind(data["kind"]) if data["kind"] else None,
+        excerpt=EvidenceExcerpt(data["excerpt"]),
+        url=EvidenceSourceUrl(data["url"]) if data["url"] else None,
         columns=EvidenceColumns(columns) if columns is not None else None,
         references=tuple(EvidenceReference(ref) for ref in data.get("references", ())),
         retrieved_by=frozenset({DetectionSource(retrieved_by)})
@@ -93,7 +104,7 @@ async def test_distinct_ids_and_all_forty_evidences_are_retained():
     assert [item.unit_id.value for item in result] == [
         f"unit-{index:02}" for index in range(40)
     ]
-    assert all(item.excerpt == "原文\n本文" for item in result)
+    assert all(item.excerpt.value == "原文\n本文" for item in result)
 
 
 def test_evidence_rejects_empty_unit_id():
@@ -132,7 +143,8 @@ async def test_id_collision_keeps_first_content_for_each_condition_order(order):
     result = await collect(hits, order)
     assert len(result) == 1
     assert (
-        result[0].excerpt == {"logic": "固定判定の原文", "jev": "Jevの原文"}[order[0]]
+        result[0].excerpt.value
+        == {"logic": "固定判定の原文", "jev": "Jevの原文"}[order[0]]
     )
     assert result[0].retrieved_by == frozenset(["logic", "jev"])
 
@@ -146,7 +158,7 @@ def test_merge_results_are_independent_snapshots():
     assert isinstance(first, tuple)
     assert first[0].retrieved_by == frozenset({"logic"})
     assert current[0].retrieved_by == frozenset(["logic", "keyword"])
-    assert current[0].excerpt == "最初の原文"
+    assert current[0].excerpt.value == "最初の原文"
     assert original.retrieved_by == frozenset()
     assert merge_evidence(()) == ()
 
@@ -198,6 +210,6 @@ def test_merge_preserves_existing_sources_on_first_and_duplicate_hits():
     later = make_evidence(excerpt="後続", retrieved_by="keyword")
     result = merge_evidence((((first, later), DetectionSource.JEV),))
     assert result[0].retrieved_by == frozenset(DetectionSource)
-    assert result[0].excerpt == "最初"
+    assert result[0].excerpt.value == "最初"
     assert first.retrieved_by == frozenset({DetectionSource.LOGIC})
     assert merge_evidence(((result, DetectionSource.LOGIC),)) == result

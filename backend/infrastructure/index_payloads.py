@@ -141,7 +141,7 @@ def _block(block: SearchContentBlock) -> tuple[str, dict[str, Any]]:
             rows.append(
                 "<tr>"
                 + "".join(
-                    f'<td rowspan="{cell.rowspan}" colspan="{cell.colspan}">{html.escape(cell.text.value).replace(chr(10), "<br>")}</td>'
+                    f'<td rowspan="{cell.rowspan.value}" colspan="{cell.colspan.value}">{html.escape(cell.text.value).replace(chr(10), "<br>")}</td>'
                     for cell in row
                 )
                 + "</tr>"
@@ -150,9 +150,9 @@ def _block(block: SearchContentBlock) -> tuple[str, dict[str, Any]]:
                 [
                     {
                         "text": cell.text.value,
-                        "column": cell.column,
-                        "rowspan": cell.rowspan,
-                        "colspan": cell.colspan,
+                        "column": cell.column.value,
+                        "rowspan": cell.rowspan.value,
+                        "colspan": cell.colspan.value,
                         "product_yj_codes": [
                             code.value for code in cell.context.product_codes
                         ],

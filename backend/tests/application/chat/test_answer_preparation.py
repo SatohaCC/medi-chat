@@ -249,7 +249,7 @@ async def test_detector_completion_order_preserves_intent_and_first_content(
     assert reply.intent == ", ".join(names[source] for source in order)
     if collision:
         assert len(reply.sources) == 1
-        assert reply.sources[0].excerpt == f"{order[0]}の原文"
+        assert reply.sources[0].excerpt.value == f"{order[0]}の原文"
         assert reply.sources[0].retrieved_by == frozenset(["logic", "jev", "keyword"])
     else:
         assert [source.unit_id.value for source in reply.sources] == [
@@ -257,7 +257,7 @@ async def test_detector_completion_order_preserves_intent_and_first_content(
             "logic",
             "jev",
         ]
-        assert [source.excerpt for source in reply.sources] == [
+        assert [source.excerpt.value for source in reply.sources] == [
             "keywordの原文",
             "logicの原文",
             "jevの原文",

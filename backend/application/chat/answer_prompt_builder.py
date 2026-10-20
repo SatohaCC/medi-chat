@@ -55,16 +55,16 @@ def build_answer_system_prompt(
                 for column in answer_prompt_policy.interaction_columns
                 if s.columns.get(column.id)
             )
-        if not details and s.excerpt:
-            details.append(s.excerpt)
+        if not details and s.excerpt.value:
+            details.append(s.excerpt.value)
         content_text = "\n  ".join(details)
         source_blocks.append(
             f"[根拠 {i}] (単位ID: {s.unit_id.value})\n"
-            f"- 対象製品: {s.product_name}\n"
+            f"- 対象製品: {s.product_name.value if s.product_name is not None else ''}\n"
             f"- YJコード: {', '.join(code.value for code in s.product_yj_codes)}\n"
             f"- 改訂情報: {revision or '不明'}\n"
             f"- 項目: {sec_name}\n"
-            f"- 出典URL: {s.url or '不明'}\n"
+            f"- 出典URL: {s.url.value if s.url is not None else '不明'}\n"
             f"- 参照先: {'; '.join(references) if references else 'なし'}\n"
             f"- 内容:\n  {content_text}"
         )

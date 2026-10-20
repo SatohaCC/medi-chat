@@ -53,6 +53,11 @@ def extract_search_keywords(
             else definitions.morphology_settings
         )
     search = search_policy
+    stop_words = frozenset(term.value for term in search.stop_words)
+    symptom_keywords = {
+        rule.adjective.value: tuple(term.value for term in rule.keywords)
+        for rule in search.symptom_rules
+    }
     tokenizer = get_janome_tokenizer()
     tokens: list[Any] = list(tokenizer.tokenize(text))
 
@@ -61,7 +66,7 @@ def extract_search_keywords(
 
     def add_keyword(word: str) -> None:
         clean = word.strip()
-        if len(clean) >= 2 and clean not in search.stop_words and clean not in seen:
+        if len(clean) >= 2 and clean not in stop_words and clean not in seen:
             seen.add(clean)
             keywords.append(clean)
 
@@ -73,15 +78,15 @@ def extract_search_keywords(
         # 形容詞による症状（例: 眠い -> 眠気）の検出
         if pos[0] == "形容詞":
             base = tok.base_form
-            if base in search.symptom_keywords_by_adjective:
-                for term in search.symptom_keywords_by_adjective[base]:
+            if base in symptom_keywords:
+                for term in symptom_keywords[base]:
                     add_keyword(term)
             i += 1
             continue
 
         # 実質名詞の抽出
         if pos[0] == "名詞" and pos[1] in ("一般", "固有名詞", "サ変接続"):
-            if tok.surface in search.stop_words:
+            if tok.surface in stop_words:
                 i += 1
                 continue
 
@@ -109,7 +114,7 @@ def extract_search_keywords(
                 else:
                     break
 
-            if compound != tok.surface and compound not in search.stop_words:
+            if compound != tok.surface and compound not in stop_words:
                 add_keyword(compound)
             add_keyword(tok.surface)
             i = next_idx

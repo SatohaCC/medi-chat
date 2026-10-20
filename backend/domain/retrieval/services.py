@@ -11,6 +11,8 @@ from .identifiers import SearchUnitId
 from .primitives import (
     DetectionSource,
     EvidenceContextLabel,
+    EvidenceExcerpt,
+    EvidenceProductName,
     IntentName,
     Probability,
     SearchKeyword,
@@ -140,13 +142,16 @@ def build_evidence(
     )
     return replace(
         unit,
-        product_name=" / ".join(brand_names) or generic_name or unit.document_id.value,
-        generic_name=generic_name,
-        excerpt=format_scoped_text(
-            unit.excerpt, tuple(label.value for label in context_labels)
+        product_name=EvidenceProductName(
+            " / ".join(brand_names) or generic_name or unit.document_id.value
         ),
-        url=unit.url
-        or (document.pmda_url.value if document.pmda_url is not None else ""),
+        generic_name=document.generic_name,
+        excerpt=EvidenceExcerpt(
+            format_scoped_text(
+                unit.excerpt.value, tuple(label.value for label in context_labels)
+            )
+        ),
+        url=unit.url or document.pmda_url,
     )
 
 
@@ -173,7 +178,9 @@ def is_scope_heading_only(
     kind: str | None, text: str, *, text_search_policy: TextSearchPolicy
 ) -> bool:
     """本文が検索範囲見出しだけか判定する。"""
-    return kind == "item" and text.strip() in text_search_policy.scope_heading_texts
+    return kind == "item" and any(
+        text.strip() == term.value for term in text_search_policy.scope_heading_texts
+    )
 
 
 def evidence_section_sort_key(

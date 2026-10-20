@@ -9,7 +9,9 @@ from backend.domain.medicine.identifiers import YjCode
 from backend.domain.retrieval.primitives import (
     EvidenceBrandName,
     EvidenceContextLabel,
+    EvidenceExcerpt,
     EvidenceGenericName,
+    EvidenceProductName,
     EvidenceSourceUrl,
 )
 from backend.domain.retrieval.services import build_evidence as format_evidence
@@ -133,8 +135,8 @@ def test_scope_and_unit_url_have_existing_priority():
         {"source": {"pmda_url": "https://example.test/document"}},
         "keyword",
     )
-    assert evidence.excerpt == "原見出し\n本文"
-    assert evidence.url == "https://example.test/unit"
+    assert evidence.excerpt.value == "原見出し\n本文"
+    assert evidence.url == EvidenceSourceUrl("https://example.test/unit")
 
 
 def test_unused_invalid_document_url_and_unselected_brand_are_not_newly_rejected():
@@ -156,23 +158,23 @@ def test_unused_invalid_document_url_and_unselected_brand_are_not_newly_rejected
         },
         "logic",
     )
-    assert evidence.product_name == "選択原文"
-    assert evidence.url == "unit-url"
+    assert evidence.product_name == EvidenceProductName("選択原文")
+    assert evidence.url == EvidenceSourceUrl("unit-url")
 
 
 def test_domain_formats_typed_original_values_without_io():
-    original = replace(make_evidence(), excerpt="本文", url="")
+    original = replace(make_evidence(), excerpt=EvidenceExcerpt("本文"), url=None)
     document = EvidenceDocument(
         EvidenceGenericName("原成分"),
         (EvidenceProduct(YjCode("1234567A0000"), EvidenceBrandName("原商品")),),
         EvidenceSourceUrl("document-url"),
     )
     formatted = format_evidence(original, document, (EvidenceContextLabel("成人"),))
-    assert formatted.product_name == "原商品"
-    assert formatted.generic_name == "原成分"
-    assert formatted.excerpt == "〈成人〉 本文"
-    assert formatted.url == "document-url"
-    assert original.excerpt == "本文"
+    assert formatted.product_name == EvidenceProductName("原商品")
+    assert formatted.generic_name == EvidenceGenericName("原成分")
+    assert formatted.excerpt.value == "〈成人〉 本文"
+    assert formatted.url == EvidenceSourceUrl("document-url")
+    assert original.excerpt.value == "本文"
 
 
 def test_mapping_normalizes_labels_without_changing_original_characters_or_order():
@@ -186,7 +188,7 @@ def test_mapping_normalizes_labels_without_changing_original_characters_or_order
         {},
         "logic",
     )
-    assert evidence.excerpt == "〈Ａ①〉 〈成人〉 〈Ａ①〉 本文"
+    assert evidence.excerpt.value == "〈Ａ①〉 〈成人〉 〈Ａ①〉 本文"
 
 
 @pytest.mark.parametrize("label", ["", "  "])
@@ -228,5 +230,5 @@ def test_product_selection_uses_normalized_ids_and_keeps_unselected_brand_unread
         },
         "logic",
     )
-    assert evidence.product_name == "選択商品"
+    assert evidence.product_name == EvidenceProductName("選択商品")
     assert evidence.product_yj_codes == (YjCode("1234567A0000"),)

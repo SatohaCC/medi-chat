@@ -19,6 +19,7 @@ from backend.domain.medicine.primitives import ProductGroupId
 from backend.domain.retrieval.identifiers import SearchUnitId
 from backend.domain.retrieval.primitives import (
     DetectionSource,
+    EvidenceExcerpt,
     IntentName,
     Probability,
     SearchKeyword,
@@ -96,7 +97,7 @@ def test_dataclass_reconstruction_preserves_search_primitives():
 
 def test_evidence_json_and_api_keep_basic_values_after_reconstruction():
     evidence = make_evidence()
-    reconstructed = replace(evidence, excerpt="更新した原文")
+    reconstructed = replace(evidence, excerpt=EvidenceExcerpt("更新した原文"))
     payload = reconstructed.to_dict()
     assert payload["unit_id"] == evidence.unit_id.value
     assert payload["document_id"] == evidence.document_id.value

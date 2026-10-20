@@ -5,6 +5,9 @@ from functools import lru_cache
 from pathlib import Path
 from types import MappingProxyType
 
+from backend.domain.retrieval.primitives import KeywordPriority, SearchPolicyTerm
+from backend.domain.retrieval.value_objects import SymptomKeywordRule
+
 from ...application.chat.answer_prompt_policy import (
     AnswerColumn,
     AnswerGuidance,
@@ -93,7 +96,9 @@ def load_package_insert_definitions(path: Path) -> PackageInsertDefinitions:
                     )
                     for keyword in intent.keywords
                 ),
-                keyword_priority=intent.keyword_priority,
+                keyword_priority=KeywordPriority(intent.keyword_priority)
+                if intent.keyword_priority is not None
+                else None,
             )
             for intent in source.intents.values()
         ),
@@ -140,9 +145,20 @@ def load_package_insert_definitions(path: Path) -> PackageInsertDefinitions:
         interaction_columns=columns,
         intent_policy=intent_policy,
         text_search_policy=TextSearchPolicy(
-            stop_words=source.text_search.stop_words,
-            symptom_keywords_by_adjective=source.text_search.symptom_keywords_by_adjective,
-            scope_heading_texts=source.text_search.scope_heading_texts,
+            stop_words=frozenset(
+                SearchPolicyTerm(word) for word in source.text_search.stop_words
+            ),
+            symptom_rules=tuple(
+                SymptomKeywordRule(
+                    adjective=SearchPolicyTerm(word),
+                    keywords=tuple(SearchPolicyTerm(term) for term in terms),
+                )
+                for word, terms in source.text_search.symptom_keywords_by_adjective.items()
+            ),
+            scope_heading_texts=frozenset(
+                SearchPolicyTerm(word)
+                for word in source.text_search.scope_heading_texts
+            ),
         ),
         answer_prompt_policy=AnswerPromptPolicy(
             intent_labels=MappingProxyType(labels),

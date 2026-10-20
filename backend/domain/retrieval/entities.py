@@ -15,6 +15,11 @@ from .primitives import (
 from .value_objects import (
     DocumentRevision,
     SearchContentBlock,
+    SearchFigure,
+    SearchParagraph,
+    SearchTableBlock,
+    _require,
+    _require_items,
 )
 
 
@@ -33,3 +38,16 @@ class SearchUnit:
     blocks: tuple[SearchContentBlock, ...] = ()
     revisions: tuple[DocumentRevision, ...] = ()
     section_title: SearchUnitText | None = None
+
+    def __post_init__(self) -> None:
+        _require(self.unit_id, SearchUnitId)
+        _require(self.document_id, DocumentId)
+        _require(self.section_code, SearchUnitSectionCode)
+        _require(self.kind, SearchUnitKind)
+        _require(self.text, SearchUnitText)
+        _require_items(self.product_codes, SearchUnitProductCode)
+        _require(self.source_url, SearchUnitUrl, optional=True)
+        _require_items(self.context_labels, EvidenceContextLabel)
+        _require_items(self.blocks, (SearchParagraph, SearchTableBlock, SearchFigure))
+        _require_items(self.revisions, DocumentRevision)
+        _require(self.section_title, SearchUnitText, optional=True)

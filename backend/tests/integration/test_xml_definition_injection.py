@@ -149,7 +149,7 @@ async def test_tc19_all_entries_keep_injected_definition_without_reload(
                     ),
                 )
             assert {row.section["code"] for row in evidence} == {"27", "10"}
-            combined = "".join(row.excerpt for row in evidence)
+            combined = "".join(row.excerpt.value for row in evidence)
             assert "追補の原文本文" in combined and "相手薬の原文" in combined
             assert all(
                 row.unit_id.value.startswith(
@@ -197,7 +197,7 @@ async def test_tc19_all_entries_keep_injected_definition_without_reload(
                         ),
                     )
                     assert {row.section["code"] for row in evidence} == {"27", "10"}
-                    combined = "".join(row.excerpt for row in evidence)
+                    combined = "".join(row.excerpt.value for row in evidence)
                     assert "追補の原文本文" in combined
                     assert "相手薬の原文" in combined
                     assert all(
@@ -335,7 +335,7 @@ async def test_tc21_injected_heading_policy_reaches_old_scope_and_new_request(
             assert old_snapshot.generation_id.value == first.generation_id
             old_rows = await old_snapshot.evidence_reader.search(criteria, target)
             assert [row.section["code"] for row in old_rows] == ["1", "2"]
-            assert [row.excerpt for row in old_rows] == [
+            assert [row.excerpt.value for row in old_rows] == [
                 '<h3 data-section-code="1">1 警告</h3><p>特別見出し</p>',
                 '<h3 data-section-code="2">2 禁忌</h3><p>旧保持原文</p>',
             ]
@@ -347,7 +347,7 @@ async def test_tc21_injected_heading_policy_reaches_old_scope_and_new_request(
                 assert new_snapshot.generation_id.value == latest.generation_id
                 new_rows = await new_snapshot.evidence_reader.search(criteria, target)
                 assert [row.section["code"] for row in new_rows] == ["1", "2"]
-                assert [row.excerpt for row in new_rows] == [
+                assert [row.excerpt.value for row in new_rows] == [
                     '<h3 data-section-code="1">1 警告</h3><p>特別見出し</p>',
                     '<h3 data-section-code="2">2 禁忌</h3><p>新保持原文</p>',
                 ]
@@ -367,7 +367,7 @@ async def test_tc21_injected_heading_policy_reaches_old_scope_and_new_request(
             kind == "section" and observed_policy is policy and result is False
             for _, kind, observed_policy, result in judgments
         )
-        assert [row.excerpt for row in old_rows] == [
+        assert [row.excerpt.value for row in old_rows] == [
             '<h3 data-section-code="1">1 警告</h3><p>特別見出し</p>',
             '<h3 data-section-code="2">2 禁忌</h3><p>旧保持原文</p>',
         ]

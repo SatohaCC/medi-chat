@@ -10,8 +10,10 @@ from ..domain.retrieval.primitives import (
     DetectionSource,
     EvidenceBrandName,
     EvidenceContextLabel,
+    EvidenceExcerpt,
     EvidenceGenericName,
     EvidenceSourceUrl,
+    SearchUnitKind,
 )
 from ..domain.retrieval.services import (
     build_evidence as format_evidence,
@@ -40,6 +42,13 @@ def _string(value: JsonValue) -> str:
     if not isinstance(value, str):
         raise TypeError("Expected a JSON string")
     return value
+
+
+def _optional_text(value: JsonValue) -> str | None:
+    if value is None:
+        return None
+    text = _string(value)
+    return text if text.strip() else None
 
 
 def _strings(value: JsonValue) -> list[str]:
@@ -91,9 +100,9 @@ def build_evidence(
         codes,
     )
     unit_url = _object(unit.get("source") or {}).get("url")
-    generic_name = _string(metadata.get("generic_name") or "")
+    generic_name = _optional_text(metadata.get("generic_name"))
     pmda_url = (
-        _string(_object(document_payload.get("source") or {}).get("pmda_url") or "")
+        _optional_text(_object(document_payload.get("source") or {}).get("pmda_url"))
         if not unit_url
         else ""
     )
@@ -103,7 +112,7 @@ def build_evidence(
             EvidenceProduct(
                 yj_code=item.yj_code,
                 brand_name=EvidenceBrandName(name)
-                if (name := _string(item.payload.get("brand_name") or ""))
+                if (name := _optional_text(item.payload.get("brand_name")))
                 else None,
             )
             for item in selected
@@ -121,20 +130,24 @@ def build_evidence(
     raw_unit = Evidence(
         unit_id=SearchUnitId(_string(unit["unit_id"])),
         document_id=DocumentId(document_id),
-        product_name="",
-        generic_name="",
+        product_name=None,
+        generic_name=None,
         product_yj_codes=codes,
         document_revision=DocumentRevision(_object(revision or {})),
         section=EvidenceSection(_string_object(unit.get("section") or {})),
-        kind=_string(unit.get("kind") or ""),
-        excerpt=_string(unit.get("text") or ""),
+        kind=SearchUnitKind(kind)
+        if (kind := _optional_text(unit.get("kind"))) is not None
+        else None,
+        excerpt=EvidenceExcerpt(_string(unit.get("text", ""))),
         columns=EvidenceColumns(_string_object(columns))
         if columns is not None
         else None,
         references=tuple(
             EvidenceReference(ref) for ref in _objects(unit.get("references") or [])
         ),
-        url=_string(unit_url or ""),
+        url=EvidenceSourceUrl(url)
+        if (url := _optional_text(unit_url)) is not None
+        else None,
         retrieved_by=frozenset({DetectionSource(retrieved_by)}),
     )
     return format_evidence(
