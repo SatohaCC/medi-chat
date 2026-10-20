@@ -191,8 +191,10 @@ async def test_detector_completion_order_preserves_intent_and_first_content(
 
     def fixed(*args):
         assert releases["logic"].wait(5), "fixed detector was not released"
-        return SearchCriteria(
-            source=DetectionSource("logic"), intent=IntentName("interaction")
+        return (
+            SearchCriteria(
+                source=DetectionSource("logic"), intent=IntentName("interaction")
+            ),
         )
 
     def morphology(*args):

@@ -1,0 +1,366 @@
+[
+  {
+    "priority": 1,
+    "keywords": [
+      "相互作用",
+      "飲み合わせ",
+      "併用",
+      "一緒に使える",
+      "一緒に使",
+      "一緒に飲"
+    ],
+    "sections": [
+      {
+        "code": "10",
+        "title": "相互作用"
+      },
+      {
+        "code": "10.1",
+        "title": "併用禁忌"
+      },
+      {
+        "code": "10.2",
+        "title": "併用注意"
+      },
+      {
+        "code": "16.7",
+        "title": "薬物相互作用"
+      }
+    ]
+  },
+  {
+    "priority": 2,
+    "keywords": ["副作用"],
+    "sections": [
+      {
+        "code": "11",
+        "title": "副作用"
+      },
+      {
+        "code": "11.1",
+        "title": "重大な副作用"
+      },
+      {
+        "code": "11.2",
+        "title": "その他の副作用"
+      }
+    ]
+  },
+  {
+    "priority": 3,
+    "keywords": ["用法", "用量", "飲み方", "何錠"],
+    "sections": [
+      {
+        "code": "6",
+        "title": "用法及び用量"
+      },
+      {
+        "code": "7",
+        "title": "用法及び用量に関連する注意"
+      }
+    ]
+  },
+  {
+    "priority": 4,
+    "keywords": ["避妊", "生殖能", "妊娠可能"],
+    "sections": [
+      {
+        "code": "9.4",
+        "title": "生殖能を有する者"
+      }
+    ]
+  },
+  {
+    "priority": 5,
+    "keywords": ["妊婦", "妊娠"],
+    "sections": [
+      {
+        "code": "9.5",
+        "title": "妊婦"
+      }
+    ]
+  },
+  {
+    "priority": 6,
+    "keywords": ["授乳"],
+    "sections": [
+      {
+        "code": "9.6",
+        "title": "授乳婦"
+      }
+    ]
+  },
+  {
+    "priority": 7,
+    "keywords": ["小児"],
+    "sections": [
+      {
+        "code": "9.7",
+        "title": "小児等"
+      }
+    ]
+  },
+  {
+    "priority": 8,
+    "keywords": ["高齢"],
+    "sections": [
+      {
+        "code": "9.8",
+        "title": "高齢者"
+      }
+    ]
+  },
+  {
+    "priority": 9,
+    "keywords": ["腎", "透析"],
+    "sections": [
+      {
+        "code": "9.2",
+        "title": "腎機能障害患者"
+      }
+    ]
+  },
+  {
+    "priority": 10,
+    "keywords": ["肝"],
+    "sections": [
+      {
+        "code": "9.3",
+        "title": "肝機能障害患者"
+      }
+    ]
+  },
+  {
+    "priority": 11,
+    "keywords": [
+      "効能",
+      "効果",
+      "何の薬",
+      "どんな薬",
+      "どういう薬",
+      "何に効く",
+      "効く",
+      "効き目",
+      "効きめ",
+      "適応",
+      "何に使う",
+      "作用"
+    ],
+    "sections": [
+      {
+        "code": "4",
+        "title": "効能又は効果"
+      },
+      {
+        "code": "5",
+        "title": "効能又は効果に関連する注意"
+      }
+    ]
+  },
+  {
+    "priority": 12,
+    "keywords": ["禁忌"],
+    "sections": [
+      {
+        "code": "2",
+        "title": "禁忌"
+      }
+    ]
+  },
+  {
+    "priority": 13,
+    "keywords": ["警告"],
+    "sections": [
+      {
+        "code": "1",
+        "title": "警告"
+      }
+    ]
+  },
+  {
+    "priority": 14,
+    "keywords": ["過量", "飲み過ぎ", "誤飲", "中毒"],
+    "sections": [
+      {
+        "code": "13",
+        "title": "過量投与"
+      }
+    ]
+  },
+  {
+    "priority": 15,
+    "keywords": [
+      "動態",
+      "血中濃度",
+      "半減期",
+      "代謝",
+      "排泄",
+      "CYP",
+      "バイオアベイラビリティ"
+    ],
+    "sections": [
+      {
+        "code": "16",
+        "title": "薬物動態"
+      },
+      {
+        "code": "16.1",
+        "title": "血中濃度"
+      },
+      {
+        "code": "16.2",
+        "title": "吸収"
+      },
+      {
+        "code": "16.3",
+        "title": "分布"
+      },
+      {
+        "code": "16.4",
+        "title": "代謝"
+      },
+      {
+        "code": "16.5",
+        "title": "排泄"
+      },
+      {
+        "code": "16.6",
+        "title": "特定の背景を有する患者"
+      },
+      {
+        "code": "16.7",
+        "title": "薬物相互作用"
+      },
+      {
+        "code": "16.8",
+        "title": "その他"
+      }
+    ]
+  },
+  {
+    "priority": 16,
+    "keywords": ["薬理", "機序", "メカニズム"],
+    "sections": [
+      {
+        "code": "18",
+        "title": "薬効薬理"
+      },
+      {
+        "code": "18.1",
+        "title": "作用機序"
+      }
+    ]
+  },
+  {
+    "priority": 17,
+    "keywords": ["運転", "検査", "基本的注意"],
+    "sections": [
+      {
+        "code": "8",
+        "title": "重要な基本的注意"
+      }
+    ]
+  },
+  {
+    "priority": 18,
+    "keywords": ["適用上", "粉砕", "噛み砕"],
+    "sections": [
+      {
+        "code": "14",
+        "title": "適用上の注意"
+      }
+    ]
+  },
+  {
+    "priority": 19,
+    "keywords": ["臨床成績", "治験", "有効率"],
+    "sections": [
+      {
+        "code": "17",
+        "title": "臨床成績"
+      },
+      {
+        "code": "17.1",
+        "title": "有効性及び安全性に関する試験"
+      },
+      {
+        "code": "17.2",
+        "title": "製造販売後調査等"
+      },
+      {
+        "code": "17.3",
+        "title": "その他"
+      }
+    ]
+  },
+  {
+    "priority": 20,
+    "keywords": ["包装", "PTP", "シート"],
+    "sections": [
+      {
+        "code": "22",
+        "title": "包装"
+      }
+    ]
+  },
+  {
+    "priority": 21,
+    "keywords": ["理化学", "構造式", "分子量"],
+    "sections": [
+      {
+        "code": "19",
+        "title": "有効成分に関する理化学的知見"
+      }
+    ]
+  },
+  {
+    "priority": 22,
+    "keywords": ["文献", "問い合わせ", "相談窓口"],
+    "sections": [
+      {
+        "code": "24",
+        "title": "文献請求先及び問い合わせ先"
+      }
+    ]
+  },
+  {
+    "priority": 23,
+    "keywords": ["承認条件"],
+    "sections": [
+      {
+        "code": "21",
+        "title": "承認条件"
+      }
+    ]
+  },
+  {
+    "priority": 24,
+    "keywords": ["製造販売", "メーカー", "製薬会社"],
+    "sections": [
+      {
+        "code": "26",
+        "title": "製造販売業者等"
+      }
+    ]
+  },
+  {
+    "priority": 25,
+    "keywords": ["保存", "保管", "取扱い"],
+    "sections": [
+      {
+        "code": "20",
+        "title": "取扱い上の注意"
+      }
+    ]
+  },
+  {
+    "priority": 26,
+    "keywords": ["性状", "剤形", "外観", "色", "識別コード"],
+    "sections": [
+      {
+        "code": "3.2",
+        "title": "製剤の性状"
+      }
+    ]
+  }
+]

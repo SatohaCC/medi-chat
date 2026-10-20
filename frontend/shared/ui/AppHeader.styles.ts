@@ -51,6 +51,7 @@ export const styles = stylex.create({
   },
   nav: {
     display: "flex",
+    flexWrap: "wrap",
     alignItems: "center",
     gap: "6px",
   },

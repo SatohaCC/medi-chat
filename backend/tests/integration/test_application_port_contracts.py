@@ -429,6 +429,11 @@ class RecordingEvidenceReader:
         assert criteria in (
             SearchCriteria(
                 source=DetectionSource("logic"),
+                intent=IntentName("indications"),
+                section_codes=(SearchSectionCode("4"), SearchSectionCode("5")),
+            ),
+            SearchCriteria(
+                source=DetectionSource("logic"),
                 intent=IntentName("adverse_events"),
                 section_codes=(
                     SearchSectionCode("11"),
@@ -565,7 +570,12 @@ async def test_answer_preparation_accepts_pure_reader_ports(
     _assert_answer_values(intent.requests[0])
     assert keywords.texts == [" の副作用と頭痛について"]
     assert fake_medicine.calls == 1
-    assert len(fake_evidence.requests) == 3
+    assert len(fake_evidence.requests) == 4
+    assert {
+        criteria.intent.value
+        for criteria, _ in fake_evidence.requests
+        if criteria.source == "logic" and criteria.intent is not None
+    } == {"adverse_events", "indications"}
     assert {criteria.source for criteria, _ in fake_evidence.requests} == {
         "logic",
         "jev",
@@ -610,7 +620,7 @@ async def test_clarification_does_not_create_or_call_provider() -> None:
     # 旧response_builderの確認応答全文・全項目を固定する。
     expected = ChatResponse(
         answer="指定されたYJコードのすべてに対応する電子添文が、現在の検索データにありません。",
-        intent="adverse_events",
+        intent="adverse_events, indications",
         retrieval_strategy="product_code_lookup",
         needs_clarification=True,
         notices=["検索対象の構造化データに登録されているYJコードを指定してください。"],

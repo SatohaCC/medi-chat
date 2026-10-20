@@ -87,8 +87,10 @@ async def test_logic_is_published_while_jev_waits_and_children_are_reclaimed(
     monkeypatch.setattr(
         retrieval,
         "_detect_fixed_keyword_criteria",
-        lambda *args: SearchCriteria(
-            source=DetectionSource.LOGIC, intent=IntentName("interaction")
+        lambda *args: (
+            SearchCriteria(
+                source=DetectionSource.LOGIC, intent=IntentName("interaction")
+            ),
         ),
     )
     monkeypatch.setattr(retrieval, "detect_morphology_criteria", lambda *args: None)
@@ -179,8 +181,10 @@ def test_websocket_sends_logic_before_jev_then_replaces_with_integrated_sources(
     monkeypatch.setattr(
         retrieval,
         "_detect_fixed_keyword_criteria",
-        lambda *args: SearchCriteria(
-            source=DetectionSource.LOGIC, intent=IntentName("interaction")
+        lambda *args: (
+            SearchCriteria(
+                source=DetectionSource.LOGIC, intent=IntentName("interaction")
+            ),
         ),
     )
     monkeypatch.setattr(retrieval, "detect_morphology_criteria", lambda *args: None)
@@ -263,8 +267,10 @@ async def test_fixed_evidence_does_not_wait_for_morphology_and_updates_are_cumul
     monkeypatch.setattr(
         retrieval,
         "_detect_fixed_keyword_criteria",
-        lambda *args: SearchCriteria(
-            source=DetectionSource.LOGIC, intent=IntentName("interaction")
+        lambda *args: (
+            SearchCriteria(
+                source=DetectionSource.LOGIC, intent=IntentName("interaction")
+            ),
         ),
     )
     task = asyncio.create_task(
@@ -385,7 +391,7 @@ def test_all_detectors_start_together_and_generation_waits_for_last(
             return IntentResult(is_available=jev_available)
 
     monkeypatch.setattr(
-        retrieval, "_detect_fixed_keyword_criteria", lambda *args: local("logic")
+        retrieval, "_detect_fixed_keyword_criteria", lambda *args: (local("logic"),)
     )
     monkeypatch.setattr(
         retrieval, "detect_morphology_criteria", lambda *args: local("keyword")

@@ -4,7 +4,7 @@
 
 - `sections.<番号>.title` は正式名称の正本です。attachmentのSectionTaxonomyへ読み込み、Applicationのdefinition_projectionから各利用側へ写します。原文見出し・本文・出典・改訂をこの名称で上書きしません。親はNumberedSectionCodeから導出します。
 - `display_title` / `classification_title` は用途別の別名だけを指定します。省略時は正式名称を使います。
-- 意図の `sections` は検索対象の番号配列です。固定キーワードはkeyword_priorityが小さい順で最初の一致を採用します。exclude_from_text_searchがtrueの語は除外語へ派生し、additional_stop_wordsへ重ねて定義しません。
+- 意図の `sections` は検索対象の番号配列です。固定キーワードは一致した全分類を検索条件にします。keyword_priorityは列挙順を安定させるためだけに使い、分類を除外する優先順位にはしません。exclude_from_text_searchがtrueの語は除外語へ派生し、additional_stop_wordsへ重ねて定義しません。
 - Jevのclassification.descriptionは説明だけを持ち、番号と名称は参照から生成します。classification.sectionsの省略時は検索対象の最初の項目です。SDK用criteriaはInfrastructureで生成します。
 - 回答指示の `{section:10.1}` はApplicationで正式名称へ展開します。answer_guidance.minimum_medicinesは専用指示の薬剤数下限です。
 - 相互作用列のID・名称・順はattachmentの定義です。XMLタグはPmdaXmlSettings、回答列はApplicationのAnswerPromptPolicyへ投影します。XMLの汎用タグは祖先文脈で解決します。

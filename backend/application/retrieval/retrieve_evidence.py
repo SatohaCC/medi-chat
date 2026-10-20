@@ -209,9 +209,10 @@ async def collect_search_criteria(
                 qualifying_intents = result.qualifying_intents
             else:
                 if result is not None:
-                    criteria.append(result)
-                    logic_criteria.append(result)
-                    if on_logic_criteria is not None:
+                    conditions = result if isinstance(result, tuple) else (result,)
+                    criteria.extend(conditions)
+                    logic_criteria.extend(conditions)
+                    if conditions and on_logic_criteria is not None:
                         await on_logic_criteria(list(logic_criteria))
     finally:
         for task in tasks:

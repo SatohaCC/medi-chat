@@ -1,0 +1,56 @@
+import asyncio
+
+import pytest
+from backend.application.retrieval.intent_contracts import IntentResult
+from backend.application.retrieval.retrieve_evidence import retrieve_evidence
+from backend.infrastructure.package_insert_definitions.loader import (
+    get_package_insert_definitions,
+)
+from backend.tests.application.chat.test_answer_preparation import MedicineReader
+from backend.tests.domain.retrieval.test_evidence_collection import make_evidence
+
+
+class NoKeywords:
+    def extract_keywords(self, text):
+        return ()
+
+
+@pytest.mark.asyncio
+async def test_all_logic_conditions_reach_search_and_progressive_results_without_duplicates():
+    calls = []
+    published = []
+    release_jev = asyncio.Event()
+
+    class Classifier:
+        async def classify(self, request):
+            await release_jev.wait()
+            return IntentResult(is_available=False)
+
+    class Reader:
+        async def search(self, criteria, medicines):
+            calls.append(criteria.intent.value)
+            return (
+                make_evidence("shared", "10.1", "共通の原文"),
+                make_evidence(criteria.intent.value, "11.1", "分類ごとの原文"),
+            )
+
+    async def publish(sources):
+        published.append(sources)
+        release_jev.set()
+
+    async with asyncio.timeout(5):
+        result = await retrieve_evidence(
+            "副作用と飲み合わせを教えて",
+            ["1234567A0000"],
+            medicine_reader=MedicineReader(),
+            evidence_reader=Reader(),
+            intent_classifier=Classifier(),
+            keyword_extractor=NoKeywords(),
+            intent_policy=get_package_insert_definitions().intent_policy,
+            on_logic_sources=publish,
+        )
+    assert set(calls) == {"interaction", "adverse_events", "indications"}
+    assert len(calls) == 3  # final retrieval reuses already-published searches
+    assert len(result.sources) == 4  # one shared + one for each classification
+    assert len(published) == 1
+    assert published[0] == result.sources

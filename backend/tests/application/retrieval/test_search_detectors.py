@@ -18,8 +18,15 @@ class SearchDetectorTests(unittest.TestCase):
             "副作用について教えて", get_package_insert_definitions().intent_policy
         )
 
-        self.assertIsNotNone(target)
-        assert target is not None
+        self.assertEqual(
+            {item.intent.value for item in target if item.intent is not None},
+            {"adverse_events", "indications"},
+        )
+        target = next(
+            item
+            for item in target
+            if item.intent is not None and item.intent.value == "adverse_events"
+        )
         self.assertEqual(target.source, "logic")
         assert target.intent is not None
         self.assertEqual(target.intent.value, "adverse_events")
@@ -50,8 +57,8 @@ class SearchDetectorTests(unittest.TestCase):
             get_package_insert_definitions().intent_policy,
         )
 
-        self.assertIsNotNone(target)
-        assert target is not None
+        self.assertEqual(len(target), 1)
+        target = target[0]
         self.assertEqual(target.source, "logic")
         assert target.intent is not None
         self.assertEqual(target.intent.value, "interaction")
