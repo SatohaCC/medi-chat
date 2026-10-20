@@ -114,7 +114,11 @@ medicineの販売名・一般名・英名・読み名称はそれぞれ `BrandNa
 任意名称の欠落・空文字・空白だけの値は取り込み境界で `None` に変換し、数値等は文字列化せず拒否します。Applicationの読み取り投影は `.value` と従来の空文字を公開します。照合用の正規化は原表記とは分けて導出します。`YjCode` は既存ID基底のNFKC/trim後に12文字ASCII英数字を要求し、コードの実在性は保証しません。形式制約はID基底の `value_pattern` で宣言し、公開IDモジュールから例外モジュールへ依存しません。
 
 PresentationはYJコードを `str` として受け取り、必須・配列件数・重複等の入力契約を検証します。YJ固有の形式制約は重ねず、Applicationの検索・根拠取得入口で `parse_yj_codes()` がDomain Primitiveへ変換します。不正値は `InvalidMedicineInput` へ変換し、RESTは422、WebSocketは接続を維持したエラー応答を返します。カタログ内部は `Sequence[YjCode]` のみを扱い、文字列からの暗黙変換を行いません。
-添付文書Primitiveは直接継承して固有の例外型・形式制約だけを追加します。
+attachmentの販売名・英名・正式項目名・改訂ラベル・版表記も原表記を保持します。本文の `AttachmentText` は有効な空本文を保持し、非空の名称とは区別します。`RevisionYearMonth` は正規化後のASCII年月（0001年～9999年、01月～12月）を検証します。
+
+`AttachmentSourceOrder` は0以上の整数を表し、boolを拒否します。VOの文脈比較には出現順を含めず、XML decoder・永続化mapper・検索投影で明示変換します。保存JSONの `source_order` は従来の整数/Noneです。VOと `AttachmentDocument` の入口は具象型、Optional、tuple/frozensetとその全要素を検証し、重複・親子関係等の既存不変条件も維持します。
+
+登録時のYJ形式は公開 `YjCode` へ集約し、`RegistrationVersion` は型と非空集合を検証します。アップロードSHAもPresentationではstrとして受け取り、Applicationの `UploadSpec` が `AttachmentSha256` で検証・正規化します。不正入力は既存の入力エラー形式へ変換します。ファイルサイズ等の通信上の制約は維持します。
 添付文書の文字列Primitiveと検索確率も共通生成処理から `validate()` を呼び、
 各コンテキストの制約だけを追加します。Enumの正規化基底もfoundationに置きます。
 コレクションを含むモデルは、不変なタプルとして保持します。

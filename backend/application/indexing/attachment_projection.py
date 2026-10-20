@@ -134,7 +134,13 @@ def project_attachment(document: AttachmentDocument) -> tuple[SearchUnit, ...]:
             for block in member.body.blocks
         ]
         if all(block.context.source_order is not None for _, block in ordered):
-            ordered.sort(key=lambda item: item[1].context.source_order or 0)
+            ordered.sort(
+                key=lambda item: (
+                    item[1].context.source_order.value
+                    if item[1].context.source_order is not None
+                    else 0
+                )
+            )
         blocks = tuple(
             replace(
                 projected,

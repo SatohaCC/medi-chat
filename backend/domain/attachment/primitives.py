@@ -13,7 +13,16 @@ from ..foundation.primitives.primitives import (
 
 
 @dataclass(frozen=True, slots=True)
-class RevisionSourceLabel(BaseString):
+class _OriginalLabel(DomainPrimitive[str]):
+    """非空の原表記。全半角・空白を勝手に変更しない。"""
+
+    def validate(self) -> None:
+        if not isinstance(self.value, str) or not self.value.strip():
+            raise DomainValidationError("original label must be nonempty text")
+
+
+@dataclass(frozen=True, slots=True)
+class RevisionSourceLabel(_OriginalLabel):
     """改訂情報の出典ラベル。"""
 
 
@@ -23,14 +32,16 @@ class RevisionYearMonth(BaseString):
 
     def validate(self) -> None:
         super().validate()
-        if re.fullmatch(r"\d{4}-(?:0[1-9]|1[0-2])", self.value) is None:
+        if re.fullmatch(
+            r"[0-9]{4}-(?:0[1-9]|1[0-2])", self.value
+        ) is None or self.value.startswith("0000-"):
             raise DomainValidationError(
                 f"RevisionYearMonth must be YYYY-MM: {self.value!r}"
             )
 
 
 @dataclass(frozen=True, slots=True)
-class RevisionVersion(BaseString):
+class RevisionVersion(_OriginalLabel):
     """添付文書の版表記。"""
 
 
@@ -71,17 +82,17 @@ class DocumentVersionId(BaseString):
 
 
 @dataclass(frozen=True, slots=True)
-class AttachmentBrandName(BaseString):
+class AttachmentBrandName(_OriginalLabel):
     """添付文書に記載された販売名。"""
 
 
 @dataclass(frozen=True, slots=True)
-class AttachmentEnglishName(BaseString):
+class AttachmentEnglishName(_OriginalLabel):
     """添付文書に記載された英語名。"""
 
 
 @dataclass(frozen=True, slots=True)
-class AttachmentSectionTitle(BaseString):
+class AttachmentSectionTitle(_OriginalLabel):
     """添付文書の正式な項目名。"""
 
 
@@ -153,3 +164,12 @@ class AttachmentCellSpan(DomainPrimitive[int]):
     def validate(self) -> None:
         if type(self.value) is not int or self.value < 1:
             raise DomainValidationError("cell span must be a positive integer")
+
+
+@dataclass(frozen=True, slots=True)
+class AttachmentSourceOrder(DomainPrimitive[int]):
+    """原本内の0始まりの出現順。"""
+
+    def validate(self) -> None:
+        if type(self.value) is not int or self.value < 0:
+            raise DomainValidationError("source order must be a nonnegative integer")
