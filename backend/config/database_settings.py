@@ -12,6 +12,10 @@ from sqlalchemy.exc import ArgumentError
 class PostgresDatabaseSettings:
     database_url: str = field(repr=False)
 
+    @property
+    def is_local(self) -> bool:
+        return make_url(self.database_url).host in {"localhost", "127.0.0.1", "::1"}
+
 
 def resolve_postgres_database_settings(
     *, database_url: str | None = None, environ: Mapping[str, str] | None = None

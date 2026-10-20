@@ -15,7 +15,7 @@ export async function searchPackageInserts(
   }
 
   const url = `${base}/api/search?${params.toString()}`;
-  const res = await fetch(url);
+  const res = await fetch(url, { credentials: "include" });
   if (!res.ok) {
     let errorMsg = `検索エラー (${res.status})`;
     try {

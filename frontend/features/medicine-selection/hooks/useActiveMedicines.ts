@@ -5,7 +5,7 @@ import { backendBaseUrl } from "../../../shared/api/endpoints";
 import { ActiveMedicineCatalog } from "../api/activeMedicineCatalog";
 
 const catalog = new ActiveMedicineCatalog(
-  (url, options) => fetch(url, options),
+  (url, options) => fetch(url, { ...options, credentials: "include" }),
   backendBaseUrl(),
 );
 const initial = catalog.snapshot;

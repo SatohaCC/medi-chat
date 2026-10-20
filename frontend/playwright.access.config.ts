@@ -1,0 +1,24 @@
+import { defineConfig, devices } from "@playwright/test";
+
+export default defineConfig({
+  testDir: "./e2e-access",
+  outputDir: "./test-results/access",
+  workers: 1,
+  retries: 0,
+  use: { baseURL: "http://127.0.0.1:3120", trace: "retain-on-failure" },
+  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  webServer: {
+    command: "pnpm exec next dev --hostname 127.0.0.1 --port 3120",
+    url: "http://127.0.0.1:3120/favicon.ico",
+    reuseExistingServer: false,
+    timeout: 120_000,
+    env: {
+      APP_SECRET_KEY: "test-access-key-for-issue-29-only-123456",
+      VERCEL: "0",
+      MEDI_CHAT_NEXT_DIST_DIR: ".next-e2e-access",
+      NEXT_PUBLIC_API_URL: "http://127.0.0.1:3120",
+      NEXT_PUBLIC_WS_URL: "ws://127.0.0.1:3120/api/ws",
+      NEXT_TELEMETRY_DISABLED: "1",
+    },
+  },
+});

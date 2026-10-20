@@ -50,6 +50,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: uv sync --project backend --locked
       - run: pnpm vercel:requirements:check
+      - run: node --experimental-strip-types --test frontend/shared/server/accessToken.test.mjs scripts/dev-backend.test.mjs scripts/root-environment.test.mjs
       - name: Initialize this job's disposable service with separated roles
         env:
           POSTGRES_USER: postgres
@@ -64,6 +65,10 @@ jobs:
         run: >-
           pnpm --filter backend exec uv run --locked pytest
           tests/infrastructure/persistence/test_postgres_storage.py
+          tests/presentation/test_access_control.py
+          tests/integration/test_private_link_api.py
+          tests/integration/test_configured_e2e_gate.py
+          tests/infrastructure/config/test_dev_logging.py
           tests/infrastructure/persistence/test_postgres_workers.py
           tests/infrastructure/persistence/test_postgres_fixture_ownership.py
           tests/integration/test_postgres_browser_fixture.py

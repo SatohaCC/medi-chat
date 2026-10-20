@@ -34,6 +34,7 @@ Python Functionの最大実行時間は300秒。`functions.excludeFiles`と`.ver
 MEDI_CHAT_DATABASE_HOSTS=ep-YOUR-ENDPOINT.YOUR-REGION.aws.neon.tech
 MEDI_CHAT_DATABASE_URL=postgresql+psycopg://APP_ROLE:PASSWORD@ep-YOUR-ENDPOINT.YOUR-REGION.aws.neon.tech/DB_NAME?sslmode=require&channel_binding=require
 PYTHON_DOTENV_DISABLED=1
+APP_SECRET_KEY=REPLACE_WITH_A_RANDOM_PRIVATE_VALUE_AT_LEAST_32_BYTES
 ALLOWED_ORIGINS=https://YOUR-FRONTEND.vercel.app
 ```
 
@@ -63,6 +64,8 @@ pnpm --filter backend db:migrate
 - XML・メタデータ・全体ハッシュの不正、上限超過、改訂競合など確定的な取り込み失敗では、セッションと部分bytesを削除して取り込み枠を解放する。未送信部分がある409と一時的な保存障害・取消では再試行用に保持する。
 
 ## デプロイ時に残る作業
+
+公開前に[秘密URLのアクセス制限](private-link-access.md)の設定とPreview検証を完了する。キー未設定のVercel環境ではアプリを起動しない。
 
 1. Vercel MarketplaceでNeonを作成し、ProductionとPreviewのDBを分離する。
 2. GitリポジトリをRoot Directory `.`でImportする。ルートのServices設定を使い、DB接続情報・独自ドメインのOriginを設定する。

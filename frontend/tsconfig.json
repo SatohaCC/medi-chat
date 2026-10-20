@@ -36,7 +36,9 @@
     ".next-e2e-build/types/**/*.ts",
     ".next-e2e-build/dev/types/**/*.ts",
     ".next-ime-manual/types/**/*.ts",
-    ".next-ime-manual/dev/types/**/*.ts"
+    ".next-ime-manual/dev/types/**/*.ts",
+    ".next-e2e-access/types/**/*.ts",
+    ".next-e2e-access/dev/types/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }

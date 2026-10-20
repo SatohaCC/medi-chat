@@ -12,7 +12,7 @@ Next.js と FastAPI をベースにした、PMDA（医薬品医療機器総合�
 
 1. Docker Desktopを起動し、rootの`.env.postgres.example`を`.env.postgres`へコピーして管理・migration owner・runtimeの別々のパスワードを設定します。`docker compose --env-file .env.postgres up -d --wait`でPostgreSQL 18をloopback `127.0.0.1:15432`に起動します。
 2. fresh named volumeの初回だけ`scripts/postgres/init.sh`が`medi_chat_dev`/`medi_chat_test`と`medi_chat_owner`/`medi_chat_app`を作ります。両roleは非superuser・DB/role作成不可、ownerだけがschema DDLを担当し、runtimeはDMLを使います。既存volumeでは初期化scriptは再実行されません。既存DBを初期化するためのvolume削除は行わないでください。
-3. `backend/.env.example`のPG URL例に従い、owner/runtime/testの接続先をローカル環境変数へ設定します。パスワードはURL encodeします。管理者接続はアプリへ渡しません。CLIの`--database-env`はURLを保持する環境変数名を明示します。
+3. `.env.example`のPG URL例に従い、owner/runtime/testの接続先をローカル環境変数へ設定します。パスワードはURL encodeします。管理者接続はアプリへ渡しません。CLIの`--database-env`はURLを保持する環境変数名を明示します。
 4. owner URLを`MEDI_CHAT_MIGRATION_DATABASE_URL`へ設定し、rootから`pnpm db:migrate`を明示実行します。接続URLをコマンド引数へ貼り付ける必要はありません。通常起動・publisherはDDLを実行しません。
 5. `pnpm db:initialize`で空DBへXML/図を登録します。図の参照先欠損/危険path/symlinkを含む初期登録は拒否し、非空DBは置換しません。既存原本・SQLite・生成物は保持します。
 6. 保持原本の明示exportは同CLIの`export --version-id <document_id:sha256> --output-dir <新規出力先>`、清掃は`maintenance`です。exportは`source.xml`と`figures/`へ元bytesを出し、stdoutに元filename/hash/byte数を返します。清掃後はtombstoneだけを保持し、旧版再送でpayloadを復活させません。
@@ -65,8 +65,9 @@ medi-chat/
 │   ├── tests/            # API・WebSocket・永続化・マイグレーション・アーキテクチャ境界の自動テスト
 │   ├── pyproject.toml    # Python 依存設定・Ruff・Import Linter（全24契約）
 │   ├── pylock.toml       # uv.lock から uv export で生成する Python ロックファイル
-│   ├── package.json      # pnpm 連携スクリプト（dev, test, lint, format）
-│   └── .env.local        # APIキー環境変数（GEMINI_API_KEY, OPENAI_API_KEY）
+│   └── package.json      # pnpm 連携スクリプト（dev, test, lint, format）
+│
+├── .env.local            # 全サービス共通のローカル設定（Git管理外）
 │
 ├── data/pmda/           # 原本・構造化成果物・保管版
 │   ├── originals/       # 原本XML・図
@@ -96,7 +97,7 @@ pnpm install
 
 ### 2. 環境変数の設定
 
-`backend/.env.local` に API キーを設定します：
+`.env.local` に API キーを設定します：
 
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here

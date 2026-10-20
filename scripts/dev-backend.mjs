@@ -20,9 +20,11 @@ export function createSupervisor({
     "--port",
     "8000",
     "--reload",
+    "--log-config",
+    "../scripts/uvicorn-dev-logging.json",
   ],
   cwd = BACKEND_DIR,
-  healthUrl = "http://127.0.0.1:8000/api",
+  healthUrl = "http://127.0.0.1:8000/api?__medi_chat_dev_monitor=1",
   healthCheckIntervalMs = 1500,
   healthFailureThreshold = 3,
   startupTimeoutMs = 15000,
@@ -69,6 +71,7 @@ export function createSupervisor({
       let isReady = false;
       let consecutiveFailures = 0;
       let monitorTimer = null;
+      let healthRestartRequested = false;
 
       const exitResult = await new Promise((resolvePromise) => {
         let completed = false;
@@ -119,6 +122,10 @@ export function createSupervisor({
               clearTimeout(timeoutId);
               if (res.ok) {
                 healthy = true;
+              } else if (res.status === 401) {
+                // A protected, running server rejects this unauthenticated probe.
+                const body = await res.json().catch(() => null);
+                healthy = body?.detail?.code === "access_required";
               }
             } catch {
               healthy = false;
@@ -142,6 +149,7 @@ export function createSupervisor({
                   `[Backend Monitor] 起動タイムアウト: サーバーが${Math.round(startupTimeoutMs / 1000)}秒以内に応答可能になりませんでした。再起動します...`,
                 );
                 const childToKill = activeChild;
+                healthRestartRequested = true;
                 killProcess(childToKill);
               }
             } else {
@@ -155,6 +163,7 @@ export function createSupervisor({
                   `[Backend Monitor] サーバー応答途絶: ヘルスチェックが${healthFailureThreshold}回連続で失敗しました。再起動します...`,
                 );
                 const childToKill = activeChild;
+                healthRestartRequested = true;
                 killProcess(childToKill);
               }
             }
@@ -164,8 +173,9 @@ export function createSupervisor({
 
       if (
         !shouldRestart ||
-        exitResult.signal === "SIGINT" ||
-        exitResult.signal === "SIGTERM"
+        // On POSIX, our health-check restart also terminates the child with SIGTERM.
+        (!healthRestartRequested &&
+          (exitResult.signal === "SIGINT" || exitResult.signal === "SIGTERM"))
       ) {
         break;
       }

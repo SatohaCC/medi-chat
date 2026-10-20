@@ -14,6 +14,7 @@ from sqlalchemy import delete, insert, select, text
 from sqlalchemy.exc import SQLAlchemyError
 
 from backend.application.attachment_import.import_errors import AttachmentImportError
+from backend.config.runtime_environment import load_runtime_environment
 from backend.domain.foundation.json_types import JsonValue
 from backend.infrastructure.persistence import postgres_schema as s
 from backend.infrastructure.persistence.attachment_document_mapping import (
@@ -197,6 +198,7 @@ def rebuild_projections(engine, *, schema: str, confirm_schema: str):
 
 
 def main() -> int:
+    load_runtime_environment()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--database-env",
