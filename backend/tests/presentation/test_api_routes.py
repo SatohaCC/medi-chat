@@ -448,14 +448,6 @@ class ChatApiRouteTests(unittest.TestCase):
             {"630004_3339003F5020_1_08"},
         )
 
-    def test_medicine_lookup_resolves_brand_and_yj_code(self) -> None:
-        response = self.client.get("/api/medicines", params={"query": "イグザレルト"})
-
-        self.assertEqual(response.status_code, 200)
-        items = response.json()["items"]
-        self.assertEqual(len(items), 1)
-        self.assertIn("3339003F5020", items[0]["yj_codes"])
-
     def test_medicine_catalog_reads_all_products_from_structured_documents(
         self,
     ) -> None:
@@ -466,16 +458,6 @@ class ChatApiRouteTests(unittest.TestCase):
         expected_codes = set(CATALOGUE["yj_codes"])
         actual_codes = {code for item in items for code in item["yj_codes"]}
         self.assertEqual(actual_codes, expected_codes)
-
-    def test_specific_generic_product_name_disambiguates_same_ingredient(self) -> None:
-        response = self.client.get(
-            "/api/medicines",
-            params={"query": "イトラコナゾールカプセル50mg「SW」"},
-        )
-
-        self.assertEqual(response.status_code, 200)
-        items = response.json()["items"]
-        self.assertEqual(len(items), 1)
 
     def test_contraindication_query_returns_section_2_not_interaction_10_1(
         self,
@@ -582,13 +564,6 @@ class ChatApiRouteTests(unittest.TestCase):
         self.assertIn("4", {source["section"]["code"] for source in payload["sources"]})
 
     def test_amaryl_brand_name_lookup_and_override_mismatched_yj(self) -> None:
-        # 1. Verify /api/medicines resolves "アマリール"
-        lookup = self.client.get("/api/medicines", params={"query": "アマリール"})
-        self.assertEqual(lookup.status_code, 200)
-        items = lookup.json()["items"]
-        self.assertEqual(len(items), 1)
-        self.assertIn("3961008F1020", items[0]["yj_codes"])
-
         # 2. A direct name conflict keeps the explicitly selected Xarelto chip.
         response = self.client.post(
             "/api/chat",

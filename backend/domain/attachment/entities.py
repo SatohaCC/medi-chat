@@ -51,8 +51,3 @@ class AttachmentDocument:
             raise AttachmentDomainError("section parent must exist in the document")
         if any(section.parent_code is not None for section in self.sections):
             raise AttachmentDomainError("document root sections must be major sections")
-
-    @property
-    def current_revision(self) -> AttachmentRevision | None:
-        """原本の並び順で先頭にある現行改訂を返す。"""
-        return self.revisions[0] if self.revisions else None

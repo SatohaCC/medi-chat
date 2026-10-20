@@ -250,7 +250,6 @@ type = "forbidden"
 source_modules = [
     "backend.infrastructure.evidence_mapping",
     "backend.infrastructure.index_payloads",
-    "backend.infrastructure.json_payloads",
 ]
 forbidden_modules = [
     "backend.infrastructure.*",

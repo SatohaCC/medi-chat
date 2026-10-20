@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import replace
-
 import pytest
 from backend.application.medicine.product_catalog import MedicineCatalog, _ProductGroup
 from backend.application.medicine.product_models import RegisteredMedicine
@@ -16,7 +14,6 @@ from backend.domain.attachment.value_objects import (
 from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.exceptions import MedicineDomainError
 from backend.domain.medicine.identifiers import YjCode
-from backend.domain.medicine.services import get_weighted_aliases
 
 
 @pytest.fixture
@@ -56,23 +53,6 @@ def test_group_deduplicates_initial_and_added_products_and_aliases(
     assert group.medicines == [medicine]
 
 
-@pytest.mark.parametrize("form", ["錠", "カプセル", "テープ", "点眼液"])
-def test_alias_service_preserves_names_and_priority_for_dosage_forms(
-    registered_medicines, form
-):
-    medicine = replace(
-        registered_medicines[0],
-        medicine=replace(
-            registered_medicines[0].medicine, brand_name=f"アルファ{form}10mg"
-        ),
-    )
-    aliases = dict(get_weighted_aliases(medicine.medicine))
-    assert aliases["アルファ"] == 85
-    assert aliases[f"アルファ{form}10mg"] == 90
-    assert aliases["1234567a0000"] == 100
-    assert medicine.brand_name == f"アルファ{form}10mg"
-
-
 @pytest.mark.parametrize("on_construction", [True, False])
 def test_group_rejects_other_ingredient_without_changing_products(
     registered_medicines, on_construction
@@ -97,34 +77,23 @@ def test_group_rejects_other_ingredient_without_changing_products(
 
 
 @pytest.mark.parametrize(
-    ("message", "codes", "expected_codes", "covered"),
+    ("codes", "expected_codes"),
     [
-        ("アルファの副作用", ["1234567A0000"], ["1234567A0000"], True),
-        ("ベータの副作用", ["1234567A0000"], ["1234567A0000"], True),
-        ("副作用について", ["1234567A0000", "0000000A0000"], ["1234567A0000"], False),
-        ("副作用について", ["0000000A0000"], [], False),
-        (
-            "副作用について",
-            ["1234567A0000", "1234567A0001"],
-            ["1234567A0000", "1234567A0001"],
-            True,
-        ),
-        ("アルファの副作用", [], [], True),
-        ("副作用について", [], [], True),
-        ("副作用について", ["1234567A0000", "1234567A0000"], ["1234567A0000"], True),
+        (["1234567A0000"], ["1234567A0000"]),
+        (["1234567A0000", "0000000A0000"], ["1234567A0000"]),
+        (["0000000A0000"], []),
+        (["1234567A0000", "1234567A0001"], ["1234567A0000", "1234567A0001"]),
+        ([], []),
+        (["1234567A0000", "1234567A0000"], ["1234567A0000"]),
     ],
 )
 def test_指定コードだけで対象製品を確定する(
-    message: str,
     codes: list[str],
     expected_codes: list[str],
-    covered: bool,
     registered_medicines: tuple[RegisteredMedicine, ...],
 ) -> None:
-    catalog = MedicineCatalog(registered_medicines)
-    groups = catalog.match_yj_codes(codes)
+    groups = MedicineCatalog(registered_medicines).match_yj_codes(codes)
     assert [code for group in groups for code in group.yj_codes] == expected_codes
-    assert catalog.covers_requested_products(groups, codes) is covered
 
 
 def test_一般名aliasと薬剤全情報を保持する() -> None:

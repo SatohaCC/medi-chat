@@ -16,10 +16,6 @@ def chat_message_from_api(value: ApiChatMessage) -> ChatMessage:
     return ChatMessage(role=value.role, content=value.content)
 
 
-def chat_message_to_api(value: ChatMessage) -> ApiChatMessage:
-    return ApiChatMessage(role=value.role, content=value.content)
-
-
 def chat_response_to_api(value: ChatResponse) -> ApiChatResponse:
     return ApiChatResponse.model_validate(
         {

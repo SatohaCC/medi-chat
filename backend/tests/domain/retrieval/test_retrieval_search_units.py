@@ -8,65 +8,9 @@ from backend.domain.retrieval.identifiers import SearchUnitId
 from backend.domain.retrieval.primitives import (
     EvidenceContextLabel,
     SearchUnitKind,
-    SearchUnitProductCode,
     SearchUnitSectionCode,
     SearchUnitText,
 )
-from backend.domain.retrieval.services import select_units
-from backend.domain.retrieval.value_objects import SearchUnitCriteria
-
-
-def test_attachment_search_criteria_deduplicate_and_service_filters_units() -> None:
-    criteria = SearchUnitCriteria(
-        section_codes=frozenset(
-            (SearchUnitSectionCode("1"), SearchUnitSectionCode("1"))
-        ),
-        product_codes=frozenset(
-            (
-                SearchUnitProductCode("1141007F1063"),
-                SearchUnitProductCode("1141007F1063"),
-            )
-        ),
-    )
-    units = (
-        SearchUnit(
-            unit_id=SearchUnitId("unit-1"),
-            document_id=DocumentId("doc-001"),
-            section_code=SearchUnitSectionCode("1"),
-            kind=SearchUnitKind("item"),
-            text=SearchUnitText("肝障害"),
-            product_codes=(SearchUnitProductCode("1141007F1063"),),
-        ),
-        SearchUnit(
-            unit_id=SearchUnitId("unit-2"),
-            document_id=DocumentId("doc-001"),
-            section_code=SearchUnitSectionCode("2"),
-            kind=SearchUnitKind("item"),
-            text=SearchUnitText("別項目"),
-            product_codes=(SearchUnitProductCode("1141007F1063"),),
-        ),
-    )
-
-    assert criteria.section_codes == frozenset({SearchUnitSectionCode("1")})
-    assert criteria.product_codes == frozenset({SearchUnitProductCode("1141007F1063")})
-    assert select_units(units, criteria) == (units[0],)
-
-
-def test_search_criteria_values_are_independent_of_condition_order() -> None:
-    first = SearchUnitCriteria(
-        section_codes=frozenset(
-            (SearchUnitSectionCode("1"), SearchUnitSectionCode("2"))
-        ),
-    )
-    second = SearchUnitCriteria(
-        section_codes=frozenset(
-            (SearchUnitSectionCode("2"), SearchUnitSectionCode("1"))
-        ),
-    )
-    assert first == second
-    assert hash(first) == hash(second)
-    assert SearchUnitCriteria().section_codes == frozenset()
-    assert SearchUnitCriteria().product_codes == frozenset()
 
 
 def test_search_unit_keeps_context_label_order_and_duplicates():

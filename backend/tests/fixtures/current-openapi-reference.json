@@ -87,27 +87,8 @@
             "catalog"
           ],
           "summary": "Medicines",
-          "description": "入力クエリに合致する医薬品、または未指定時は全医薬品カタログを返却する",
+          "description": "全医薬品カタログを返却する",
           "operationId": "medicines_api_medicines_get",
-          "parameters": [
-            {
-              "name": "query",
-              "in": "query",
-              "required": false,
-              "schema": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                    "maxLength": 200
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "title": "Query"
-              }
-            }
-          ],
           "responses": {
             "200": {
               "description": "Successful Response",
@@ -115,16 +96,6 @@
                 "application/json": {
                   "schema": {
                     "$ref": "#/components/schemas/MedicineListResponse"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Validation Error",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/HTTPValidationError"
                   }
                 }
               }

@@ -81,18 +81,10 @@ async def test_rest_and_openapi_contracts_match_baseline(
         items = res_med_default.json()["items"]
         assert len(items) >= 1
 
-        # /api/medicines 通常クエリ
-        res_med_query = await client.get("/api/medicines?query=テスト薬")
-        assert res_med_query.status_code == 200
-        assert len(res_med_query.json()["items"]) >= 1
-
-        # /api/medicines 200文字境界
-        res_med_200 = await client.get(f"/api/medicines?query={'a' * 200}")
-        assert res_med_200.status_code == 200
-
-        # /api/medicines 201文字超過 -> 422
-        res_med_201 = await client.get(f"/api/medicines?query={'a' * 201}")
-        assert res_med_201.status_code == 422
+        parameters = actual_openapi["paths"]["/api/medicines"]["get"].get(
+            "parameters", []
+        )
+        assert not any(parameter["name"] == "query" for parameter in parameters)
 
         # /api/chat 未知YJでの確認応答
         res_chat = await client.post(

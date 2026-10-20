@@ -205,8 +205,6 @@ def test_attachment_document_keeps_immutable_value_objects_and_invariants() -> N
     document = _document()
 
     assert document.document_id.value == "doc-001"
-    assert document.current_revision is not None
-    assert document.current_revision.version.value == "第5版"
     with pytest.raises((FrozenInstanceError, AttributeError)):
         document.document_id = DocumentId("changed")  # type: ignore[misc]
 

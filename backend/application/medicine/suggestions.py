@@ -1,4 +1,4 @@
-"""フォーム入力から医薬品候補を提示する。根拠検索とは独立して扱う。"""
+"""登録済み医薬品の候補一覧を提示する。根拠検索とは独立して扱う。"""
 
 from __future__ import annotations
 
@@ -7,22 +7,19 @@ from dataclasses import dataclass
 
 from ...domain.attachment.identifiers import DocumentId
 from ...domain.medicine.identifiers import YjCode
-from ...domain.medicine.primitives import ProductGroupId
-from ...domain.medicine.services import best_alias_priorities, get_weighted_aliases
 from ...domain.shared.services import normalize_match_text
 from .product_models import RegisteredMedicine, SearchGenerationId
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class SuggestionProduct:
-    """候補提示に必要な名称・公開ID・照合別名の入力スナップショット。"""
+    """候補提示に必要な名称・公開IDの入力スナップショット。"""
 
     group_name: str
     generic_name: str
     brand_name: str
     yj_code: YjCode | None
     document_id: DocumentId
-    aliases: tuple[tuple[str, int], ...]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -33,11 +30,10 @@ class MedicineSuggestion:
     brand_names: tuple[str, ...]
     yj_codes: tuple[YjCode, ...]
     document_ids: tuple[DocumentId, ...]
-    matched_aliases: tuple[str, ...] = ()
 
 
 class MedicineSuggester:
-    """読み取り専用の候補データから候補一覧・名称照合結果を返す。"""
+    """読み取り専用の候補データから全候補一覧を返す。"""
 
     def __init__(
         self,
@@ -63,70 +59,40 @@ class MedicineSuggester:
                     brand_name=product.brand_name,
                     yj_code=product.yj_code,
                     document_id=product.document_id,
-                    aliases=tuple(get_weighted_aliases(product.medicine)),
                 )
                 for product in products
             ),
             generation_id=generation_id,
         )
 
-    def suggest(self, query: str | None = None) -> tuple[MedicineSuggestion, ...]:
-        normalized = normalize_match_text(query or "")
-        if not query or not query.strip():
-            groups = self._group((product, "") for product in self._products)
-            return tuple(
-                sorted(
-                    groups.values(),
-                    key=lambda group: (
-                        normalize_match_text(
-                            group.brand_names[0]
-                            if group.brand_names
-                            else group.generic_name
-                        ),
-                        tuple(code.value for code in group.yj_codes),
+    def list_all(self) -> tuple[MedicineSuggestion, ...]:
+        """全登録製品を一般名グループにまとめ、安定した順序で返す。"""
+        groups = self._group(self._products)
+        return tuple(
+            sorted(
+                groups.values(),
+                key=lambda group: (
+                    normalize_match_text(
+                        group.brand_names[0]
+                        if group.brand_names
+                        else group.generic_name
                     ),
-                )
+                    tuple(code.value for code in group.yj_codes),
+                ),
             )
-
-        if not normalized:
-            return ()
-
-        matches: list[tuple[int, int, int, SuggestionProduct, str, int]] = []
-        for index, product in enumerate(self._products):
-            for alias_index, (alias, priority) in enumerate(product.aliases):
-                start = normalized.find(alias)
-                if start >= 0:
-                    matches.append(
-                        (start, index, alias_index, product, alias, priority)
-                    )
-        best = best_alias_priorities(
-            (ProductGroupId(product.group_name), priority)
-            for _, _, _, product, _, priority in matches
         )
-        positions: dict[str, int] = {}
-        for start, _, _, product, _, _ in matches:
-            positions[product.group_name] = min(
-                positions.get(product.group_name, start), start
-            )
-        matches.sort(key=lambda match: (match[0] + len(match[4]), match[1], match[2]))
-        groups = self._group(
-            (product, alias)
-            for _, _, _, product, alias, priority in matches
-            if priority == best[ProductGroupId(product.group_name)]
-        )
-        return tuple(groups[key] for key in sorted(groups, key=positions.__getitem__))
 
     @staticmethod
     def _group(
-        matches: Iterable[tuple[SuggestionProduct, str]],
+        matches: Iterable[SuggestionProduct],
     ) -> dict[str, MedicineSuggestion]:
-        grouped: dict[str, list[tuple[SuggestionProduct, str]]] = {}
-        for product, alias in matches:
-            grouped.setdefault(product.group_name, []).append((product, alias))
+        grouped: dict[str, list[SuggestionProduct]] = {}
+        for product in matches:
+            grouped.setdefault(product.group_name, []).append(product)
         results: dict[str, MedicineSuggestion] = {}
         for key, products in grouped.items():
             unique: dict[tuple[DocumentId, YjCode | None], SuggestionProduct] = {}
-            for product, _ in products:
+            for product in products:
                 unique.setdefault((product.document_id, product.yj_code), product)
             values = tuple(unique.values())
             results[key] = MedicineSuggestion(
@@ -145,9 +111,6 @@ class MedicineSuggester:
                 ),
                 document_ids=tuple(
                     dict.fromkeys(product.document_id for product in values)
-                ),
-                matched_aliases=tuple(
-                    dict.fromkeys(alias for _, alias in products if alias)
                 ),
             )
         return results

@@ -29,13 +29,13 @@ RESTとWebSocketは重複のない対象YJコードを1～50件受け付けま�
 
 | 配置 | 責務 |
 | --- | --- |
-| `domain/attachment` | 添付文書 bounded context。`primitives.py`、`value_objects.py`、`entities.py`、`repositories.py`、`services.py`、`exceptions.py` に責務別の正本を置く |
-| `domain/medicine` | 医薬品の名称・識別子・コード対応表、別名生成・照合優先度、照合結果を所有する |
+| `domain/attachment` | 添付文書 bounded context。`primitives.py`、`value_objects.py`、`entities.py`、`services.py`、`exceptions.py` に責務別の正本を置く |
+| `domain/medicine` | 医薬品の名称・識別子、照合結果を所有する |
 | `domain/retrieval` | 検索 bounded context。検索Primitive、検索条件、意図選択、根拠・取得経路の統合、根拠取得ポート、検索ポリシーを置く |
 | `domain/foundation` | 業務非依存のPrimitive、Value Object、Entity/Aggregate Rootの基底、宣言型ガード、例外基底 |
 | `domain/shared` | 複数コンテキストで共有する汎用正規化処理を置く。YJコードはmedicineが所有する |
 | `application/chat` | `ChatApplicationService` を中心に、会話から質問を取り出し、retrievalの結果を使って回答を準備・生成する。プロンプトと所有stream終了を担当する |
-| `application/medicine` | 医薬品照合カタログ、文書参照との投影、フォームの医薬品候補提示（`MedicineSuggester.from_registered_medicines` による別名重み付け投影を含む）。候補提示は根拠検索に依存しない |
+| `application/medicine` | 医薬品照合カタログ、文書参照との投影、フォームの医薬品候補提示（`MedicineSuggester.from_registered_medicines` による全候補の投影）。候補提示は根拠検索に依存しない |
 | `application/retrieval` | 選択済みYJコードだけから医薬品を解決し、検索条件を生成して根拠を取得・統合する。WebSocketでは固定キーワード・形態素解析の各検出完了時にローカル根拠を累積配信し、Jev完了後に全検出条件の統合根拠で更新する。固定キーワードの配信は形態素解析を待たない。登録済み製品が選択されていない場合は先行配信しない。RESTと回答生成は全検出完了後の根拠を使う |
 | `application/indexing` | 索引構築のユースケース・入出力契約 |
 | `presentation` | Pydantic公開DTO、JSON変換、`AppChatService`（DTO変換アダプター）、REST/WSルーター、`dependencies.py`（全FastAPI `Depends` 関数の集約）。`domain` および `infrastructure` には一切依存しない |
@@ -114,7 +114,7 @@ Entity / Value Object は型付け済みの値をコンストラクタへ渡し�
 コレクションを含むモデルは、不変なタプルとして保持します。
 
 
-エンティティ（Medicine、SearchUnit等）は各コンテキストで固有の識別子・不変条件・
+エンティティ（MedicineProduct、SearchUnit等）は各コンテキストで固有の識別子・不変条件・
 比較操作を持つドメインモデルとして定義します。
 一意識別子には `EntityUUID`（Python 3.14の標準 `uuid.uuid7()` によるUUIDv7採番）や、
 `EntityStringId` を利用できます。
@@ -193,13 +193,12 @@ backend/
 │   ├── package_insert_definitions/ # 単一JSONカタログloaderと各adapter用definition_settings
 │   ├── persistence/     # Core schema、Reader/Writer、GenerationRuntime、Publisher、workers
 │   ├── pmda_xml/        # PMDA XML decoder / artifact encoder
-│   ├── sources/         # FileIndexSourceReader、MedicineCodeTableReader
+│   ├── sources/         # FileIndexSourceReader
 │   ├── llm/             # SDK provider / fallback
 │   ├── composition/     # app_lifespan(DI配線)、index verifier、persistence lifespan
 │   ├── cli/             # manage_postgres、structure_pmda_xml
 │   ├── evidence_mapping.py
-│   ├── index_payloads.py # XML非依存のJSON/検索単位payload変換
-│   └── json_payloads.py
+│   └── index_payloads.py # XML非依存のJSON/検索単位payload変換
 ├── config/              # database_settings、generation_settings
 ├── migrations/          # env.pyとversions
 └── tests/               # 現在形式の生成・保存・検索と未管理DB拒否を検証
@@ -286,14 +285,8 @@ pnpm dev:backend
 
 ### 医薬品と添付文書の責務
 
-`medicine/entities.py` の `Medicine` は医薬品コード対応表の一製品を表し、YJコードを必須IDとします。
-レセ電・一般名コード、名称2種類、一般名処方の標準的記載、適用・廃止日を保持します。
-添付文書ID・URL・改訂情報や、文書から導出した成分IDを持ちません。
-`MedicineCodeTableReader` はExcelの10列を読み、日付の `99999999` と任意欄の空値を `None` に変換します。
-名称は原文を保持し、一般名処方の標準的記載を成分名として扱いません。
-既存チャットの索引は引き続き添付文書掲載情報を使います。
 `domain/medicine/entities.py` の `MedicineProduct` が医薬品名称・YJコードを保持し、
-`domain/medicine/services.py` が別名生成・優先度選択を所有します。
+候補一覧の取得では名称の別名生成や重み付けを行いません。
 照合用の `ProductGroupId` はmedicineが所有し、薬理学的な成分同一性を保証しません。
 `MedicineMatch` は文書参照を含まない照合結果です。
 attachmentは文書の原文表記・製品参照・構造・出典・改訂・登録を所有します。
@@ -304,7 +297,7 @@ attachmentは文書の原文表記・製品参照・構造・出典・改訂・�
 チャット本文からの名称推測やTrieの構築は行いません。
 DBとJSONの保存形式は維持し、Readerで明示的に両モデルへ変換します。
 フォームの候補提示は `application/medicine/suggestions.py` の `MedicineSuggester` が担当します。
-現在の候補データは添付文書掲載製品です。起動時に公開ID・名称・別名だけを
+現在の候補データは添付文書掲載製品です。起動時に公開ID・名称だけを
 候補提示用の入力スナップショットへ変換し、添付文書モデルや根拠検索サービスを直接保持しません。
 `MedicineCatalog` は回答準備の製品解決に限定し、フォームのサジェスト操作は持ちません。
 医薬品マスターを候補データへ接続する処理は、今回追加していません。
@@ -415,4 +408,4 @@ tests/
 
 ## チャットの対象医薬品
 
-チャットは`@医薬品`で確定した`product_yj_codes`だけを検索対象にします。本文にある薬名やYJコードから対象を追加・変更しません。名称からの別名生成・重み付けは医薬品選択の候補検索で使用します。チャットの本文キーワード抽出では、選択製品の登録名を除外します。
+チャットは`@医薬品`で確定した`product_yj_codes`だけを検索対象にします。本文にある薬名やYJコードから対象を追加・変更しません。@医薬品の候補絞り込みはブラウザ側で行い、バックエンドは全候補一覧を返します。チャットの本文キーワード抽出では、選択製品の登録名を除外します。
