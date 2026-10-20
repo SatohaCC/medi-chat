@@ -2,8 +2,13 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createSupervisor } from "./dev-backend.mjs";
 
-test("supervisor accepts the access gate's 401 as a live server", async (t) => {
-  t.mock.method(globalThis, "fetch", async () => new Response(JSON.stringify({ detail: { code: "access_required" } }), { status: 401 }));
+test("supervisor identifies quiet probes and accepts the access gate's 401", async (t) => {
+  let probes = 0;
+  t.mock.method(globalThis, "fetch", async (url) => {
+    assert.equal(url, "http://127.0.0.1:8000/api?__medi_chat_dev_monitor=1");
+    probes++;
+    return new Response(JSON.stringify({ detail: { code: "access_required" } }), { status: 401 });
+  });
   let restarts = 0;
   const supervisor = createSupervisor({
     command: process.execPath,
@@ -15,6 +20,7 @@ test("supervisor accepts the access gate's 401 as a live server", async (t) => {
   });
   await supervisor.start();
   assert.equal(restarts, 0);
+  assert.ok(probes > 0);
 });
 
 test("supervisor does not restart on clean exit (code 0)", async () => {

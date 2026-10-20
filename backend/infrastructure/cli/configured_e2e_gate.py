@@ -1,16 +1,20 @@
 """Read-only configured PostgreSQL readiness and owned OS health probe."""
 
 import argparse
+import hashlib
+import hmac
 import json
 import os
+import secrets
 import socket
 import subprocess
 import sys
 import tempfile
 import time
 from urllib.error import URLError
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
+from ...config.access_settings import read_access_secret
 from ...config.database_settings import (
     PostgresDatabaseSettings,
     resolve_postgres_database_settings,
@@ -70,6 +74,14 @@ def run_gate(
         "PYTHONUTF8": "1",
         "PYTHON_DOTENV_DISABLED": "1",
     }
+    secret = read_access_secret(environment, required=not settings.is_local)
+    headers = {}
+    if secret:
+        unsigned = f"v1.{int(time.time()) + 300}.{secrets.token_hex(16)}"
+        signature = hmac.new(
+            secret.encode(), f"medi-chat-access:{unsigned}".encode(), hashlib.sha256
+        ).hexdigest()
+        headers["Cookie"] = f"medi_chat_access={unsigned}.{signature}"
     with tempfile.TemporaryFile(mode="w+b") as log:
         process = subprocess.Popen(
             [
@@ -97,7 +109,8 @@ def run_gate(
                     )
                 try:
                     with urlopen(
-                        f"http://127.0.0.1:{port}/health", timeout=1
+                        Request(f"http://127.0.0.1:{port}/health", headers=headers),
+                        timeout=1,
                     ) as response:
                         health = json.load(response)
                     if health.get("status") == "ok":

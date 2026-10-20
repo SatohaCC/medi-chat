@@ -159,7 +159,14 @@ def test_occupied_port_is_not_taken_over(pg_engines, pg_publisher):
         assert sentinel.getsockname()[1] == port
 
 
-def test_pg048_actual_configured_probe_reads_only_health(pg_engines, pg_publisher):
+@pytest.mark.parametrize("protected", [False, True])
+def test_pg048_actual_configured_probe_reads_only_health(
+    pg_engines, pg_publisher, monkeypatch, protected
+):
+    if protected:
+        monkeypatch.setenv("APP_SECRET_KEY", "test-configured-probe-key-only-123456789")
+    else:
+        monkeypatch.delenv("APP_SECRET_KEY", raising=False)
     receipt = publish(pg_publisher, source("テストconfigured"))
     before = snapshot(pg_engines[0])
     result = run_gate(settings(), schema=pg_engines[2], port=3216)
