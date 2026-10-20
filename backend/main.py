@@ -10,6 +10,7 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .config.access_settings import read_access_secret
 from .config.database_settings import resolve_postgres_database_settings
 from .config.origin_settings import read_allowed_origins
 from .config.runtime_environment import load_runtime_environment
@@ -22,6 +23,7 @@ from .infrastructure.morphology.keyword_extraction import get_janome_tokenizer
 from .infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,
 )
+from .presentation.access_control import AccessControlMiddleware
 from .presentation.chat_service import AppChatService
 
 # ローカル環境変数の読み込み
@@ -50,6 +52,7 @@ def create_app(
     ):
         raise ValueError("Legacy runtime file settings are not supported")
     settings = resolve_postgres_database_settings(database_url=database_url)
+    access_secret = read_access_secret(required=not settings.is_local)
     lifespan = create_app_lifespan(
         definitions=definitions,
         settings=settings,
@@ -72,6 +75,7 @@ def create_app(
 
     # Next.js フロントエンド向けの CORS 設定
     allowed_origins = read_allowed_origins()
+    application.add_middleware(AccessControlMiddleware, secret=access_secret)
     application.add_middleware(
         CORSMiddleware,
         allow_origins=allowed_origins,

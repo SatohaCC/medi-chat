@@ -5,7 +5,7 @@ import os
 from dotenv import dotenv_values
 from dotenv.variables import parse_variables
 
-from ..project_paths import BACKEND_DIR, PROJECT_ROOT
+from ..project_paths import PROJECT_ROOT
 
 
 def load_runtime_environment() -> None:
@@ -17,12 +17,7 @@ def load_runtime_environment() -> None:
     }:
         return
     values: dict[str, str | None] = {}
-    for path in (
-        PROJECT_ROOT / ".env",
-        BACKEND_DIR / ".env",
-        BACKEND_DIR / ".env.local",
-        PROJECT_ROOT / ".env.local",
-    ):
+    for path in (PROJECT_ROOT / ".env.local",):
         for name, value in dotenv_values(path, interpolate=False).items():
             environment = {**values, **os.environ}
             values[name] = (

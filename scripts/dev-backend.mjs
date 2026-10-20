@@ -119,6 +119,10 @@ export function createSupervisor({
               clearTimeout(timeoutId);
               if (res.ok) {
                 healthy = true;
+              } else if (res.status === 401) {
+                // A protected, running server rejects this unauthenticated probe.
+                const body = await res.json().catch(() => null);
+                healthy = body?.detail?.code === "access_required";
               }
             } catch {
               healthy = false;

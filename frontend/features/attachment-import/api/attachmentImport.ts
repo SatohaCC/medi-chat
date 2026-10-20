@@ -10,7 +10,7 @@ export async function listAttachmentImports(
 ): Promise<AttachmentImportPage> {
   const response = await fetch(
     `${backendBaseUrl()}/api/attachment-imports?limit=20&offset=${offset}`,
-    { cache: "no-store", signal },
+    { cache: "no-store", signal, credentials: "include" },
   );
   if (!response.ok) throw new Error("取り込み済みXMLの一覧を取得できませんでした。");
   return response.json();
@@ -24,6 +24,7 @@ export async function importAttachment(file: File): Promise<AttachmentImportResu
   form.append("file", file);
   const response = await fetch(`${backendBaseUrl()}/api/attachment-imports`, {
     method: "POST",
+    credentials: "include",
     body: form,
   });
   if (!response.ok) {
@@ -38,6 +39,7 @@ export async function importAttachment(file: File): Promise<AttachmentImportResu
 async function uploadRequest(path: string, body?: BodyInit, contentType?: string) {
   const response = await fetch(`${backendBaseUrl()}/api/attachment-imports${path}`, {
     method: "POST",
+    credentials: "include",
     headers: contentType ? { "Content-Type": contentType } : undefined,
     body,
   });
