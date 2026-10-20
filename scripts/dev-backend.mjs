@@ -71,6 +71,7 @@ export function createSupervisor({
       let isReady = false;
       let consecutiveFailures = 0;
       let monitorTimer = null;
+      let healthRestartRequested = false;
 
       const exitResult = await new Promise((resolvePromise) => {
         let completed = false;
@@ -148,6 +149,7 @@ export function createSupervisor({
                   `[Backend Monitor] 起動タイムアウト: サーバーが${Math.round(startupTimeoutMs / 1000)}秒以内に応答可能になりませんでした。再起動します...`,
                 );
                 const childToKill = activeChild;
+                healthRestartRequested = true;
                 killProcess(childToKill);
               }
             } else {
@@ -161,6 +163,7 @@ export function createSupervisor({
                   `[Backend Monitor] サーバー応答途絶: ヘルスチェックが${healthFailureThreshold}回連続で失敗しました。再起動します...`,
                 );
                 const childToKill = activeChild;
+                healthRestartRequested = true;
                 killProcess(childToKill);
               }
             }
@@ -170,8 +173,9 @@ export function createSupervisor({
 
       if (
         !shouldRestart ||
-        exitResult.signal === "SIGINT" ||
-        exitResult.signal === "SIGTERM"
+        // On POSIX, our health-check restart also terminates the child with SIGTERM.
+        (!healthRestartRequested &&
+          (exitResult.signal === "SIGINT" || exitResult.signal === "SIGTERM"))
       ) {
         break;
       }

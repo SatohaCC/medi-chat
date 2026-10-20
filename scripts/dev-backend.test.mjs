@@ -115,3 +115,34 @@ test("supervisor detects unresponsive server via healthUrl and restarts", async 
   await supervisor.start();
   assert.equal(restarts, 1);
 });
+
+test("supervisor restarts after a ready server stops responding", async (t) => {
+  let probes = 0;
+  t.mock.method(globalThis, "fetch", async () => new Response("", { status: ++probes === 1 ? 200 : 503 }));
+  let restarts = 0;
+  const supervisor = createSupervisor({
+    command: process.execPath,
+    args: ["-e", "setInterval(() => {}, 1000)"],
+    healthCheckIntervalMs: 20,
+    healthFailureThreshold: 2,
+    initialDelayMs: 1,
+    onRestart: () => { restarts++; supervisor.stop(); },
+  });
+  await supervisor.start();
+  assert.equal(restarts, 1);
+  assert.ok(probes >= 3);
+});
+
+for (const signal of ["SIGINT", "SIGTERM"]) {
+  test(`external ${signal} stops the supervisor without restarting`, { skip: process.platform === "win32" }, async () => {
+    let restarts = 0;
+    const supervisor = createSupervisor({
+      command: process.execPath,
+      args: ["-e", `process.kill(process.pid, '${signal}')`],
+      healthUrl: null,
+      onRestart: () => { restarts++; supervisor.stop(); },
+    });
+    await supervisor.start();
+    assert.equal(restarts, 0);
+  });
+}
