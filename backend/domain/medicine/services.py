@@ -2,7 +2,7 @@
 
 import re
 import unicodedata
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable
 
 from ..shared.services import normalize_match_text
 from .entities import MedicineProduct
@@ -109,17 +109,6 @@ def get_weighted_aliases(medicine: MedicineProduct) -> list[tuple[str, int]]:
         if len(normalized) >= 3:
             deduplicated[normalized] = max(priority, deduplicated.get(normalized, 0))
     return list(deduplicated.items())
-
-
-def collect_aliases(medicines: Sequence[MedicineProduct]) -> list[str]:
-    """製品の照合別名を、最初に現れた順で重複なく返す。"""
-    return list(
-        dict.fromkeys(
-            alias
-            for medicine in medicines
-            for alias, _ in get_weighted_aliases(medicine)
-        )
-    )
 
 
 def best_alias_priorities(

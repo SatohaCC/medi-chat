@@ -13,7 +13,6 @@ from xml.etree import ElementTree as ET
 from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
 from backend.domain.retrieval.primitives import IntentName, Probability
 from backend.domain.retrieval.value_objects import IntentCandidate
-from backend.tests.application.chat.test_product_identity_responses import CONFIRMATIONS
 from backend.tests.integration.test_interaction_xml_oracle import (
     ORACLE,
     assert_prompt_oracle,
@@ -218,9 +217,9 @@ class ChatApiRouteTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertTrue(payload["needs_clarification"])
-        self.assertEqual(payload["retrieval_strategy"], "unresolved_counterpart")
-        self.assertEqual(payload["sources"], [])
+        self.assertFalse(payload["needs_clarification"])
+        self.assertEqual(payload["retrieval_strategy"], "three_detectors")
+        self.assertTrue(payload["sources"])
         self.assertEqual(payload["resolved_medicines"][0]["yj_codes"], ["3339003F5020"])
 
     def test_adverse_event_question_filters_to_adverse_event_sections(self) -> None:
@@ -414,7 +413,7 @@ class ChatApiRouteTests(unittest.TestCase):
             "指定されたYJコードのすべてに対応する電子添文が、現在の検索データにありません。",
         )
 
-    def test_pair_interaction_requires_yj_code_for_each_product(self) -> None:
+    def test_unselected_name_does_not_add_another_product(self) -> None:
         response = self.client.post(
             "/api/chat",
             json={
@@ -425,13 +424,9 @@ class ChatApiRouteTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertTrue(payload["needs_clarification"])
-        self.assertEqual(payload["retrieval_strategy"], "pair_yj_codes_required")
-        self.assertEqual(payload["sources"], [])
-        self.assertEqual(payload["answer"], CONFIRMATIONS["pair_yj_codes_required"][0])
-        self.assertEqual(
-            payload["notices"], [CONFIRMATIONS["pair_yj_codes_required"][1]]
-        )
+        self.assertFalse(payload["needs_clarification"])
+        self.assertEqual(payload["retrieval_strategy"], "three_detectors")
+        self.assertTrue(payload["sources"])
         self.assertEqual(payload["resolved_medicines"][0]["yj_codes"], ["3339003F5020"])
         self._assert_interaction_xml_contract(pair=True)
 
@@ -565,7 +560,9 @@ class ChatApiRouteTests(unittest.TestCase):
         payload = response.json()
         self.assertEqual(payload["intent"], "indications")
         self.assertGreater(len(payload["sources"]), 0)
-        first_source = payload["sources"][0]
+        first_source = next(
+            source for source in payload["sources"] if source["section"]["code"] == "4"
+        )
         self.assertEqual(first_source["section"]["code"], "4")
         self.assertIn("2型糖尿病", first_source["excerpt"])
 
@@ -582,7 +579,7 @@ class ChatApiRouteTests(unittest.TestCase):
         payload = response.json()
         self.assertEqual(payload["intent"], "indications")
         self.assertGreater(len(payload["sources"]), 0)
-        self.assertEqual(payload["sources"][0]["section"]["code"], "4")
+        self.assertIn("4", {source["section"]["code"] for source in payload["sources"]})
 
     def test_amaryl_brand_name_lookup_and_override_mismatched_yj(self) -> None:
         # 1. Verify /api/medicines resolves "アマリール"
@@ -604,15 +601,9 @@ class ChatApiRouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         payload = response.json()
         self.assertEqual(payload["intent"], "indications")
-        self.assertEqual(payload["retrieval_strategy"], "product_identity_conflict")
-        self.assertTrue(payload["needs_clarification"])
-        self.assertEqual(payload["sources"], [])
-        self.assertEqual(
-            payload["answer"], CONFIRMATIONS["product_identity_conflict"][0]
-        )
-        self.assertEqual(
-            payload["notices"], [CONFIRMATIONS["product_identity_conflict"][1]]
-        )
+        self.assertEqual(payload["retrieval_strategy"], "three_detectors")
+        self.assertFalse(payload["needs_clarification"])
+        self.assertTrue(payload["sources"])
         self.assertEqual(payload["resolved_medicines"][0]["yj_codes"], ["3339003F5020"])
         self.assertEqual(
             payload["resolved_medicines"][0]["generic_name"], "リバーロキサバン"
@@ -632,8 +623,11 @@ class ChatApiRouteTests(unittest.TestCase):
         self.assertFalse(payload["needs_clarification"])
         self.assertEqual(payload["retrieval_strategy"], "three_detectors")
         self.assertGreater(len(payload["sources"]), 0)
-        self.assertEqual(payload["sources"][0]["section"]["code"], "4")
-        self.assertIn("2型糖尿病", payload["sources"][0]["excerpt"])
+        self.assertIn("4", {source["section"]["code"] for source in payload["sources"]})
+        indication = next(
+            source for source in payload["sources"] if source["section"]["code"] == "4"
+        )
+        self.assertIn("2型糖尿病", indication["excerpt"])
         self.assertEqual(
             payload["resolved_medicines"][0]["generic_name"], "グリメピリド"
         )

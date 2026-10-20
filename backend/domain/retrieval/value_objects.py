@@ -19,33 +19,12 @@ from .primitives import (
     IntentKeywordText,
     IntentName,
     Probability,
-    QuestionProductName,
     SearchKeyword,
     SearchSectionCode,
     SearchUnitProductCode,
     SearchUnitSectionCode,
     SearchUnitText,
 )
-
-
-@dataclass(frozen=True, slots=True)
-class ProductQuestion:
-    """質問文から抽出した1剤または2剤の対象医薬品名スロット。"""
-
-    names: tuple[QuestionProductName, ...]
-
-    def __post_init__(self) -> None:
-        if (
-            not isinstance(self.names, tuple)
-            or len(self.names) not in (1, 2)
-            or any(
-                not isinstance(name, QuestionProductName) or not name.value.strip()
-                for name in self.names
-            )
-        ):
-            raise DomainValidationError(
-                "product question requires one or two nonempty typed names"
-            )
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

@@ -7,7 +7,7 @@ from backend.application.medicine.product_models import ResolvedMedicine
 from ...domain.attachment.identifiers import DocumentId
 from ...domain.foundation.json_types import JsonValue
 from ...domain.retrieval.identifiers import SearchUnitId
-from ...domain.retrieval.primitives import DetectionSource, ProductIdentityReason
+from ...domain.retrieval.primitives import DetectionSource
 from ...domain.retrieval.value_objects import (
     DocumentRevision,
     Evidence,
@@ -30,7 +30,6 @@ class RetrievalResult:
     notices: list[str] = field(default_factory=list)
     jev_response: dict[str, JsonValue] | None = None
     qualifying_intents: tuple[str, ...] = ()
-    product_identity_reason: ProductIdentityReason | None = None
 
 
 __all__ = [
@@ -42,7 +41,6 @@ __all__ = [
     "EvidenceReference",
     "EvidenceSection",
     "IntentPolicy",
-    "ProductIdentityReason",
     "RetrievalResult",
     "SearchUnitId",
 ]
