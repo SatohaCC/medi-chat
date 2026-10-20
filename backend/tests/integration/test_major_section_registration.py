@@ -51,7 +51,7 @@ async def test_saved_major_section_keeps_children_after_restart_and_search(
     try:
         async with runtime.acquire() as snapshot:
             catalog = MedicineCatalog(await snapshot.medicine_reader.read_medicines())
-            medicines = tuple(catalog.resolve_medicines("", ["111111111111"]))
+            medicines = tuple(catalog.match_yj_codes(["111111111111"]))
             for reader in (snapshot.evidence_reader,):
                 for keywords in ((), (SearchKeyword("対象薬剤"),)):
                     evidence = await reader.search(

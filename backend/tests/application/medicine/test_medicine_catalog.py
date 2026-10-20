@@ -16,7 +16,7 @@ from backend.domain.attachment.value_objects import (
 from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.exceptions import MedicineDomainError
 from backend.domain.medicine.identifiers import YjCode
-from backend.domain.medicine.services import collect_aliases, get_weighted_aliases
+from backend.domain.medicine.services import get_weighted_aliases
 
 
 @pytest.fixture
@@ -46,19 +46,14 @@ def test_group_deduplicates_initial_and_added_products_and_aliases(
 ):
     medicine = registered_medicines[0]
     products = [medicine, medicine]
-    aliases = ["アルファ", "アルファ"]
     group = _ProductGroup(
         ingredient_id=medicine.ingredient_id,
         generic_name=medicine.generic_name,
         medicines=products,
-        matched_aliases=aliases,
     )
     products.clear()
-    aliases.clear()
     group.add_medicine(medicine)
-    group.add_matched_alias("アルファ")
     assert group.medicines == [medicine]
-    assert group.matched_aliases == ["アルファ"]
 
 
 @pytest.mark.parametrize("form", ["錠", "カプセル", "テープ", "点眼液"])
@@ -75,7 +70,6 @@ def test_alias_service_preserves_names_and_priority_for_dosage_forms(
     assert aliases["アルファ"] == 85
     assert aliases[f"アルファ{form}10mg"] == 90
     assert aliases["1234567a0000"] == 100
-    assert collect_aliases([medicine.medicine, medicine.medicine]) == list(aliases)
     assert medicine.brand_name == f"アルファ{form}10mg"
 
 
@@ -115,12 +109,12 @@ def test_group_rejects_other_ingredient_without_changing_products(
             ["1234567A0000", "1234567A0001"],
             True,
         ),
-        ("アルファの副作用", [], ["1234567A0000"], True),
+        ("アルファの副作用", [], [], True),
         ("副作用について", [], [], True),
         ("副作用について", ["1234567A0000", "1234567A0000"], ["1234567A0000"], True),
     ],
 )
-def test_文中薬剤名と指定コードの優先順位を維持する(
+def test_指定コードだけで対象製品を確定する(
     message: str,
     codes: list[str],
     expected_codes: list[str],
@@ -128,7 +122,7 @@ def test_文中薬剤名と指定コードの優先順位を維持する(
     registered_medicines: tuple[RegisteredMedicine, ...],
 ) -> None:
     catalog = MedicineCatalog(registered_medicines)
-    groups = catalog.resolve_medicines(message, codes)
+    groups = catalog.match_yj_codes(codes)
     assert [code for group in groups for code in group.yj_codes] == expected_codes
     assert catalog.covers_requested_products(groups, codes) is covered
 
@@ -156,17 +150,17 @@ def test_一般名aliasと薬剤全情報を保持する() -> None:
     )
     medicines = (expected,)
     catalog = MedicineCatalog(medicines)
-    groups = catalog.resolve_medicines("固有成分名の副作用", [])
+    groups = catalog.match_yj_codes(["1234567A0002"])
     assert len(groups) == 1
     assert groups[0].yj_codes == ("1234567A0002",)
-    assert groups[0].matched_aliases == ("固有成分名",)
-    assert "固有成分名" in catalog.aliases_for_yj_codes(groups[0].yj_codes)
+    assert groups[0].matched_aliases == ()
+    assert "固有成分名" in catalog.names_for_yj_codes(groups[0].yj_codes)
     assert groups[0].brand_names == (expected.brand_name,)
     assert groups[0].generic_name == expected.generic_name
     assert groups[0].document_ids == (expected.document_id.value,)
 
 
-def test_aliases_for_yj_codes_includes_raw_names_and_brackets() -> None:
+def test_names_for_yj_codes_includes_raw_names_and_brackets() -> None:
     expected = RegisteredMedicine(
         medicine=MedicineProduct(
             yj_code=YjCode("6179001F1025"),
@@ -183,6 +177,6 @@ def test_aliases_for_yj_codes_includes_raw_names_and_brackets() -> None:
     )
     medicines = (expected,)
     catalog = MedicineCatalog(medicines)
-    aliases = catalog.aliases_for_yj_codes(["6179001F1025"])
+    aliases = catalog.names_for_yj_codes(["6179001F1025"])
     assert "イトラコナゾールカプセル50mg「SW」" in aliases
     assert "SW" in aliases

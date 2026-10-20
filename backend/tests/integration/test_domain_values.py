@@ -78,16 +78,12 @@ def test_medicine_group_keeps_aggregate_state_private():
         ingredient_id=ProductGroupId("成分"),
         generic_name="成分",
         medicines=[medicine],
-        matched_aliases=["商品"],
     )
 
     exposed_medicines = group.medicines
-    exposed_aliases = group.matched_aliases
     exposed_medicines.clear()
-    exposed_aliases.clear()
 
     assert group.medicines == [medicine]
-    assert group.matched_aliases == ["商品"]
 
 
 def test_medicine_revision_is_independent_of_input_and_public_output():

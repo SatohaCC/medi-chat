@@ -75,7 +75,7 @@ export function SearchGuideScreen() {
             <p {...stylex.props(styles.eyebrow)}>検索の仕組み</p>
             <h1 {...stylex.props(styles.title)}>3つの方法で、添付文書の根拠を探す</h1>
             <p>
-              チャットでは、質問の言葉と意図を別々の方法で調べ、対象医薬品の登録済み添付文書から回答に使う根拠を集めます。
+              チャットでは、@医薬品で選択した製品を対象に、質問の言葉と意図を別々の方法で調べ、登録済み添付文書から回答に使う根拠を集めます。質問文に薬名を書くだけでは、検索対象を追加・変更しません。
             </p>
           </div>
           <ol {...stylex.props(styles.flow)} aria-label="質問から回答までの流れ">

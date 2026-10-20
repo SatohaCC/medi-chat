@@ -4,7 +4,6 @@ from collections.abc import Sequence
 
 from backend.application.medicine.product_contracts import RegisteredMedicineReader
 
-from ...domain.retrieval.primitives import ProductIdentityReason
 from ...domain.retrieval.repositories import EvidenceRepository
 from ...domain.retrieval.value_objects import Evidence, IntentPolicy
 from ..retrieval.intent_contracts import IntentClassifier
@@ -12,21 +11,6 @@ from ..retrieval.keyword_contracts import KeywordExtractor
 from ..retrieval.retrieve_evidence import SourcesCallback, retrieve_evidence
 from ..retrieval.snapshot_contracts import RetrievalSnapshotProvider
 from .chat_models import ChatMessage, ChatResponse
-
-_PRODUCT_CONFIRMATIONS = {
-    ProductIdentityReason.CONFLICT: (
-        "質問の医薬品名と選択されたYJコードが一致していません。対象製品を確認し、YJコードを選択し直してください。",
-        "質問の名称をもとに、選択されたYJコードを変更していません。",
-    ),
-    ProductIdentityReason.PAIR_REQUIRED: (
-        "飲み合わせを確認する両方の医薬品のYJコードを選択してください。",
-        "比較相手のYJコードを名称から自動補完していません。",
-    ),
-    ProductIdentityReason.UNRESOLVED: (
-        "比較相手の医薬品を同定できません。相手の名称とYJコードを確認してください。",
-        "比較相手を同定するまで、併用可否は回答できません。",
-    ),
-}
 
 
 async def prepare_reply(
@@ -55,15 +39,12 @@ async def prepare_reply(
         snapshot_provider=snapshot_provider,
         on_logic_sources=on_logic_sources,
     )
-    confirmation = (
-        _PRODUCT_CONFIRMATIONS[result.product_identity_reason]
-        if result.product_identity_reason is not None
-        else None
-    )
-    if confirmation is not None:
-        answer = confirmation[0]
-    elif result.needs_clarification:
-        answer = "指定されたYJコードのすべてに対応する電子添文が、現在の検索データにありません。"
+    if result.needs_clarification:
+        answer = (
+            "対象医薬品を@医薬品から選択してください。"
+            if not product_yj_codes
+            else "指定されたYJコードのすべてに対応する電子添文が、現在の検索データにありません。"
+        )
     else:
         answer = _summarize_evidence(result.sources)
     return ChatResponse(
@@ -73,7 +54,7 @@ async def prepare_reply(
         resolved_medicines=result.resolved_medicines,
         sources=result.sources,
         needs_clarification=result.needs_clarification,
-        notices=[confirmation[1]] if confirmation is not None else result.notices,
+        notices=result.notices,
         jev_response=result.jev_response,
         qualifying_intents=result.qualifying_intents,
     )

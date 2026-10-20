@@ -36,7 +36,7 @@ RESTとWebSocketは重複のない対象YJコードを1～50件受け付けま�
 | `domain/shared` | 複数コンテキストで共有する汎用正規化処理を置く。YJコードはmedicineが所有する |
 | `application/chat` | `ChatApplicationService` を中心に、会話から質問を取り出し、retrievalの結果を使って回答を準備・生成する。プロンプトと所有stream終了を担当する |
 | `application/medicine` | 医薬品照合カタログ、文書参照との投影、フォームの医薬品候補提示（`MedicineSuggester.from_registered_medicines` による別名重み付け投影を含む）。候補提示は根拠検索に依存しない |
-| `application/retrieval` | 質問とYJコードから医薬品を解決し、検索条件を生成して根拠を取得・統合する。WebSocketでは固定キーワード・形態素解析の各検出完了時にローカル根拠を累積配信し、Jev完了後に全検出条件の統合根拠で更新する。固定キーワードの配信は形態素解析を待たない。製品確認が必要な場合は先行配信しない。RESTと回答生成は全検出完了後の根拠を使う |
+| `application/retrieval` | 選択済みYJコードだけから医薬品を解決し、検索条件を生成して根拠を取得・統合する。WebSocketでは固定キーワード・形態素解析の各検出完了時にローカル根拠を累積配信し、Jev完了後に全検出条件の統合根拠で更新する。固定キーワードの配信は形態素解析を待たない。登録済み製品が選択されていない場合は先行配信しない。RESTと回答生成は全検出完了後の根拠を使う |
 | `application/indexing` | 索引構築のユースケース・入出力契約 |
 | `presentation` | Pydantic公開DTO、JSON変換、`AppChatService`（DTO変換アダプター）、REST/WSルーター、`dependencies.py`（全FastAPI `Depends` 関数の集約）。`domain` および `infrastructure` には一切依存しない |
 | `infrastructure` | SDK JSON解釈、JSON読取、Janome、SQLAlchemy Reader/Writer、Alembic runner、共通payload変換（`index_payloads.py`、`evidence_mapping.py`） |
@@ -299,9 +299,9 @@ pnpm dev:backend
 attachmentは文書の原文表記・製品参照・構造・出典・改訂・登録を所有します。
 `MedicineDocumentReference` が文書ID・URL・改訂を保持し、Applicationの
 `RegisteredMedicine` が医薬品と文書参照を結びます。
-`application/medicine/product_catalog.py` の `MedicineCatalog` がTrieとYJ索引を持ち、
-medicineの規則を呼び出します。指定YJの優先と文書付き `ResolvedMedicine` の組立は
-Applicationの責務です。YJ・一般名がない旧入力の文書IDによる区別もこの層に留めます。
+`application/medicine/product_catalog.py` の `MedicineCatalog` はYJ索引だけを持ち、
+選択済みYJコードの照合と文書付き `ResolvedMedicine` の組立を担当します。
+チャット本文からの名称推測やTrieの構築は行いません。
 DBとJSONの保存形式は維持し、Readerで明示的に両モデルへ変換します。
 フォームの候補提示は `application/medicine/suggestions.py` の `MedicineSuggester` が担当します。
 現在の候補データは添付文書掲載製品です。起動時に公開ID・名称・別名だけを
@@ -412,3 +412,7 @@ tests/
 全体は`pnpm test:backend`、限定実行は例えば`uv run --project backend --locked pytest backend/tests/domain`や`uv run --project backend --locked pytest backend/tests/presentation`を使います。DTO逆変換の通常lintは`tests/architecture/test_architecture_dependencies.py`を参照します。
 
 複数層の契約が同居する既存モジュールは、期待値やfixtureのスコープを変えずに`integration`へ配置しています。既存のテスト間importは新しい正本パスへ更新し、旧パスの再公開は残しません。新しく共通補助処理を増やす場合は`support`へ置きます。共有パスは`support/paths.py`から取得し、各テストのディレクトリ深度や実行時のcwdに依存させません。
+
+## チャットの対象医薬品
+
+チャットは`@医薬品`で確定した`product_yj_codes`だけを検索対象にします。本文にある薬名やYJコードから対象を追加・変更しません。名称からの別名生成・重み付けは医薬品選択の候補検索で使用します。チャットの本文キーワード抽出では、選択製品の登録名を除外します。

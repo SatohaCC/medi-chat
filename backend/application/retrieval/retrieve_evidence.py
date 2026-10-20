@@ -8,15 +8,12 @@ from backend.application.medicine.product_catalog import MedicineCatalog
 from backend.application.medicine.product_contracts import RegisteredMedicineReader
 from backend.application.medicine.product_models import ResolvedMedicine
 
-from ...domain.medicine.identifiers import YjCode
 from ...domain.retrieval.repositories import EvidenceRepository
 from ...domain.retrieval.services import (
     detect_fixed_keyword_criteria as _detect_fixed_keyword_criteria,
 )
 from ...domain.retrieval.services import (
     merge_evidence,
-    product_identity_reason,
-    recognize_product_questions,
 )
 from ...domain.retrieval.value_objects import Evidence, IntentPolicy, SearchCriteria
 from .intent_contracts import IntentClassifier, IntentRequest
@@ -55,34 +52,14 @@ async def retrieve_evidence(
                 on_logic_sources=on_logic_sources,
             )
     medicine_catalog = MedicineCatalog(await medicine_reader.read_medicines())
-    resolved = medicine_catalog.resolve_medicines(message, product_yj_codes)
+    resolved = medicine_catalog.match_yj_codes(product_yj_codes)
     needs_clarification = not resolved
-    all_target_codes = list(
-        dict.fromkeys(
-            [*product_yj_codes, *(code for item in resolved for code in item.yj_codes)]
-        )
-    )
-    excluded_terms = medicine_catalog.aliases_for_yj_codes(all_target_codes)
-    reason = None
-    if not needs_clarification:
-        questions = recognize_product_questions(
-            message, medicine_catalog.original_product_names()
-        )
-        reason = product_identity_reason(
-            tuple(
-                tuple(
-                    medicine_catalog.question_name_candidates(name.value)
-                    for name in question.names
-                )
-                for question in questions
-            ),
-            frozenset(YjCode.from_value(code) for code in product_yj_codes),
-        )
+    excluded_terms = medicine_catalog.names_for_yj_codes(product_yj_codes)
 
     search_batches: dict[SearchCriteria, tuple[Evidence, ...]] = {}
 
     async def publish_logic(criteria: list[SearchCriteria]) -> None:
-        if on_logic_sources is not None and not needs_clarification and reason is None:
+        if on_logic_sources is not None and not needs_clarification:
             sources = await _search_evidence(
                 evidence_reader, tuple(resolved), criteria, cache=search_batches
             )
@@ -120,16 +97,6 @@ async def retrieve_evidence(
             ],
             jev_response=deepcopy(jev_response),
             qualifying_intents=qualifying_intents,
-        )
-    if reason is not None:
-        return RetrievalResult(
-            intent=intent,
-            retrieval_strategy=reason.value,
-            resolved_medicines=resolved,
-            needs_clarification=True,
-            jev_response=deepcopy(jev_response),
-            qualifying_intents=qualifying_intents,
-            product_identity_reason=reason,
         )
     sources = await _search_evidence(
         evidence_reader, tuple(resolved), criteria, cache=search_batches

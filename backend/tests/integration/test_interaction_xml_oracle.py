@@ -487,9 +487,7 @@ async def test_tc121_complete_six_tables_and_original_reference_destinations(
     try:
         async with runtime.acquire() as snapshot:
             catalog = MedicineCatalog(await snapshot.medicine_reader.read_medicines())
-            selected = tuple(
-                catalog.resolve_medicines("", [doc[2] for doc in DOCUMENTS])
-            )
+            selected = tuple(catalog.match_yj_codes([doc[2] for doc in DOCUMENTS]))
             sources = await snapshot.evidence_reader.search(
                 SearchCriteria(
                     source=DetectionSource.LOGIC,
