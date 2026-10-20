@@ -122,7 +122,6 @@ EXTERNAL_ADAPTER_PACKAGES = {"llm", "intent", "morphology", "pmda_xml"}
 INFRASTRUCTURE_ROOT_PAYLOAD_MODULES = {
     "evidence_mapping",
     "index_payloads",
-    "json_payloads",
 }
 ALLOWED_INFRASTRUCTURE_PACKAGES = {
     "cli",
@@ -139,7 +138,6 @@ ALLOWED_INFRASTRUCTURE_ROOT_FILES = {
     "__init__.py",
     "evidence_mapping.py",
     "index_payloads.py",
-    "json_payloads.py",
 }
 
 
@@ -810,7 +808,7 @@ def test_domain_models_have_explicit_primitive_entity_value_object_ownership() -
         "BaseFiniteFloat": "backend.domain.foundation.primitives.primitives",
         "DocumentId": "backend.domain.attachment.identifiers",
         "ProductGroupId": "backend.domain.medicine.primitives",
-        "Medicine": "backend.domain.medicine.entities",
+        "MedicineProduct": "backend.domain.medicine.entities",
         "IntentName": "backend.domain.retrieval.primitives",
         "PmdaUrl": "backend.domain.attachment.primitives",
         "Probability": "backend.domain.retrieval.primitives",
@@ -1012,21 +1010,21 @@ def test_domain_has_no_compatibility_facades() -> None:
         ),
         (
             "backend.presentation.chat_service",
-            'def f(x: "backend.domain.medicine.entities.Medicine") -> None:\n    pass\n',
+            'def f(x: "backend.domain.medicine.entities.MedicineProduct") -> None:\n    pass\n',
             1,
-            "annotation backend.domain.medicine.entities.Medicine",
+            "annotation backend.domain.medicine.entities.MedicineProduct",
         ),
         (
             "backend.domain.retrieval.services",
-            "from ..medicine.entities import Medicine\n",
+            "from ..medicine.entities import MedicineProduct\n",
             1,
-            "import backend.domain.medicine.entities.Medicine",
+            "import backend.domain.medicine.entities.MedicineProduct",
         ),
         (
             "backend.domain.retrieval.services",
-            'def f(x: "backend.domain.medicine.entities.Medicine") -> None:\n    pass\n',
+            'def f(x: "backend.domain.medicine.entities.MedicineProduct") -> None:\n    pass\n',
             1,
-            "annotation backend.domain.medicine.entities.Medicine",
+            "annotation backend.domain.medicine.entities.MedicineProduct",
         ),
         (
             "backend.domain.foundation.primitives.base",

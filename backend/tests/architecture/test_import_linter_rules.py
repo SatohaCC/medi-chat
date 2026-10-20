@@ -161,7 +161,6 @@ def test_import_linter_enforces_configured_contracts(tmp_path, sources, broken):
     for stub in (
         "infrastructure/evidence_mapping.py",
         "infrastructure/index_payloads.py",
-        "infrastructure/json_payloads.py",
         "presentation/chat_models.py",
         "presentation/chat_dto_mapper.py",
         "presentation/chat_service.py",

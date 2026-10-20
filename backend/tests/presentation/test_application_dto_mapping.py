@@ -18,7 +18,6 @@ from backend.domain.retrieval.primitives import DetectionSource
 from backend.domain.retrieval.value_objects import Evidence
 from backend.presentation.chat_dto_mapper import (
     chat_message_from_api,
-    chat_message_to_api,
     chat_response_to_api,
 )
 from backend.presentation.chat_models import ChatMessage as ApiChatMessage
@@ -225,12 +224,6 @@ def test_directional_dto_mapping_preserves_public_information(
             _assert_pure_value(message)
             assert message.role == role
             assert message.content == content
-            restored_message = chat_message_to_api(message)
-            assert type(restored_message) is ApiChatMessage
-            assert restored_message.model_dump(mode="json") == {
-                "role": role,
-                "content": content,
-            }
         return
 
     if scenario == "unresolved":

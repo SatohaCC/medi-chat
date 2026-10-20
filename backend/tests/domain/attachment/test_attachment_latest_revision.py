@@ -60,17 +60,3 @@ def test_registration_requires_revision_and_uses_latest_month_not_xml_order():
     assert registration_version(
         replace(document, revisions=(earlier, later))
     ).revised_at == RevisionYearMonth("2026-01")
-
-
-@pytest.mark.parametrize(
-    "revisions", [[], [{"year_month": None}], [{"year_month": "2026-99"}], [{}]]
-)
-def test_legacy_receipt_without_valid_revision_requires_explicit_migration(revisions):
-    import json
-
-    from backend.application.attachment_import.import_errors import ImportConflict
-    from backend.infrastructure.persistence.revision_selection import stored_version
-
-    with pytest.raises(ImportConflict) as failure:
-        stored_version({"result_json": json.dumps({"revisions": revisions})})
-    assert failure.value.code == "revision_policy_migration_required"

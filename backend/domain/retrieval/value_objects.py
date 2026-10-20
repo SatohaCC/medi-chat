@@ -233,14 +233,6 @@ class EvidenceDocument:
     pmda_url: EvidenceSourceUrl | None = None
 
 
-@dataclass(frozen=True, slots=True)
-class SearchUnitCriteria:
-    """項目・製品で検索単位を絞る、順序に意味を持たない条件。"""
-
-    section_codes: frozenset[SearchUnitSectionCode] = frozenset()
-    product_codes: frozenset[SearchUnitProductCode] = frozenset()
-
-
 @dataclass(frozen=True, slots=True, kw_only=True)
 class Evidence:
     """回答に使う原文・出典・取得経路の不変なスナップショット。"""

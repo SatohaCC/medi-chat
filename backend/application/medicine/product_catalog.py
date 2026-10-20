@@ -112,15 +112,6 @@ class MedicineCatalog:
         return list(groups.values())
 
     @staticmethod
-    def covers_requested_products(
-        groups: Sequence[ResolvedMedicine], codes: Sequence[str]
-    ) -> bool:
-        """解決結果が指定された製品コードをすべて含むか判定する。"""
-        resolved_codes = {code for group in groups for code in group.yj_codes}
-        requested_codes = {YjCode.from_value(value).value for value in codes}
-        return not requested_codes or requested_codes.issubset(resolved_codes)
-
-    @staticmethod
     def _match_result(group: _ProductGroup) -> ResolvedMedicine:
         return ResolvedMedicine(
             medicine=DomainMedicineMatch(

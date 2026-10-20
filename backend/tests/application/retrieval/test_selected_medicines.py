@@ -22,13 +22,7 @@ class NoKeywords:
 @pytest.mark.parametrize(
     "message", ["商品の副作用", "ロキソニンの副作用", "商品と未知薬の併用"]
 )
-async def test_selected_codes_alone_determine_targets(message, monkeypatch):
-    def forbidden(*args, **kwargs):
-        raise AssertionError("Chat must not generate weighted aliases")
-
-    monkeypatch.setattr(
-        "backend.domain.medicine.services.get_weighted_aliases", forbidden
-    )
+async def test_selected_codes_alone_determine_targets(message):
     searched = []
 
     class Reader:

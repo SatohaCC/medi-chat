@@ -7,7 +7,6 @@ from typing import Protocol
 
 from ..medicine.identifiers import YjCode
 from ..shared.services import normalize_match_text
-from .entities import SearchUnit
 from .identifiers import SearchUnitId
 from .primitives import (
     DetectionSource,
@@ -24,7 +23,6 @@ from .value_objects import (
     IntentPolicy,
     IntentSelection,
     SearchCriteria,
-    SearchUnitCriteria,
     TextSearchPolicy,
 )
 
@@ -155,34 +153,6 @@ def build_evidence(
 def section_code_matches(stored: str, requested: str) -> bool:
     """要求された項目自身か、その配下の番号かを判定する。"""
     return stored == requested or stored.startswith(requested + ".")
-
-
-def select_units(
-    units: Iterable[SearchUnit],
-    criteria: SearchUnitCriteria,
-) -> tuple[SearchUnit, ...]:
-    """検索単位を項目・製品条件で絞り、入力順を保った結果を返す。"""
-    selected: list[SearchUnit] = []
-    section_codes = {code.value for code in criteria.section_codes}
-    product_codes = criteria.product_codes
-    for unit in units:
-        if section_codes and not any(
-            section_code_matches(member, code)
-            for code in section_codes
-            for member in (
-                unit.section_code.value,
-                *(
-                    block.context.section_code.value
-                    for block in unit.blocks
-                    if block.context.section_code is not None
-                ),
-            )
-        ):
-            continue
-        if product_codes and not product_codes.intersection(unit.product_codes):
-            continue
-        selected.append(unit)
-    return tuple(selected)
 
 
 class ProductIdentity(Protocol):

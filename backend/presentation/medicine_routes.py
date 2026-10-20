@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from ..application.medicine.autocomplete import read_autocomplete_catalog
@@ -27,9 +27,8 @@ router = APIRouter(tags=["catalog"])
 @router.get("/api/medicines", response_model=MedicineListResponse, name="medicines")
 def list_medicines(
     suggester: Annotated[MedicineSuggester, Depends(get_medicine_suggester)],
-    query: Annotated[str | None, Query(max_length=200)] = None,
 ) -> MedicineListResponse:
-    """入力クエリに合致する医薬品、または未指定時は全医薬品カタログを返却する"""
+    """全医薬品カタログを返却する"""
     if suggester.generation_id is None:
         raise HTTPException(503, "Medicine generation is not ready")
     return MedicineListResponse(
@@ -40,9 +39,8 @@ def list_medicines(
                 brand_names=list(item.brand_names),
                 yj_codes=[code.value for code in item.yj_codes],
                 document_ids=[code.value for code in item.document_ids],
-                matched_aliases=list(item.matched_aliases),
             )
-            for item in suggester.suggest(query)
+            for item in suggester.list_all()
         ],
     )
 
