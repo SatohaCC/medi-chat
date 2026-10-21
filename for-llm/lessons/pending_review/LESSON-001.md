@@ -39,7 +39,7 @@ PR #4の初期実装では新規の段階配信テストを追加したが、既
 
 ## 対策の検証
 
-- [公開契約テスト](../../../backend/tests/integration/test_product_identity_public.py)で先行・統合の両スナップショットと同接続次要求を検証する。
+- 公開契約テスト（記録時の `backend/tests/integration/test_product_identity_public.py`。現行ツリーでは削除済み）で先行・統合の両スナップショットと同接続次要求を検証する。
 - [段階配信テスト](../../../backend/tests/integration/test_progressive_retrieval.py)で3条件が各1回だけ検索され、新しい要求では再検索されることを確認する。
 - レビュー対応差分で公開契約・段階配信・製品同定・REST/WS・世代管理・依存方向のpytest 153件成功。要求間の再検索を追加確認後、段階配信11件を再実行して成功。型検査、変更ファイルのRuff lint/format、差分確認も成功。backend全体のテストではない。
 - 外部Jev・回答LLMはテストダブル。実通信・ブラウザ・実環境の表示時間は未検証。

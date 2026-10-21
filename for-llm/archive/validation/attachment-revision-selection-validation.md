@@ -50,7 +50,7 @@ HEADのコードを独立ディレクトリへ展開し、同じ原本・fixture
 
 backend全体のformat確認は今回未変更の9ファイルで失敗。担当外の整形は行っていない。
 Windowsの登録IOに関する既存の観察は
-`agent-lessons/pending_review/LESSON-004.md` にあるが、未承認のため規約としては適用していない。
+`for-llm/lessons/pending_review/LESSON-004.md` にあるが、未承認のため規約としては適用していない。
 
 ## 運用への適用
 

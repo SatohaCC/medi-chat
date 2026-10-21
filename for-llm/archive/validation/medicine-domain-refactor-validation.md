@@ -17,7 +17,7 @@ DBスキーマ・保存形式・公開JSON・運用索引は変更していな�
 - 変更したPythonファイル60件のformat確認と `git diff --check`: 通過。
 - 現行とHEADの `create_app().openapi()` を別processで比較し、完全一致。
 
-標準コマンドは `docs/agent-guides/validation.md` を参照。
+標準コマンドは `for-llm/guides/validation.md` を参照。
 uvのキャッシュアクセス拒否後、既存の `backend/.venv/Scripts/python.exe` を直接使用した。
 SQLiteを使う検証はサンドボックス外、試験専用TEMP/TMP・basetempで実行した。
 実LLM通信・ブラウザE2E・運用DBの更新は行っていない。
@@ -46,4 +46,4 @@ HEADの登録・取消比較も48 passed / 2 failedで、保存IOと試験用フ
 backend全体のformat確認は、今回未変更の9ファイルが現在のRuff設定で整形対象となり失敗。
 担当外の整形は行っていない。
 
-登録IOの観察は `agent-lessons/pending_review/LESSON-004.md` に承認待ちとして記録した。
+登録IOの観察は `for-llm/lessons/pending_review/LESSON-004.md` に承認待ちとして記録した。

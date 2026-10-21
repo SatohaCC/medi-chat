@@ -17,7 +17,7 @@ Python/SQLiteで定めた安定順序をPostgreSQLのORDER BYへ移す場合、�
 
 PG18のlibc/en_US.utf8では、A/B/a/b/亜の順序が既存Pythonのsortedと異なった。医薬品一覧と同順位検索の独立期待で2件のassert Redを確認し、対象ORDER BYの明示C照合で関連35件がGreenになった。3文書だけの初回例は版hashの偶然でGreenとなり、十分な再現例ではなかった。
 
-- 証拠: `for-llm/progress/20261018-vercel-migration-evidence/pg4/collation-green.log`、同ディレクトリのcollation Redログ。
+- 証拠: `for-llm/work/20261018-vercel-migration/evidence/pg4/collation-green.log`、同ディレクトリのcollation Redログ。
 - 回帰: `backend/tests/integration/test_postgres_search.py::test_pg028_public_corpus_and_equal_rank_use_legacy_codepoint_order`。
 - PR/commit: 未作成。
 

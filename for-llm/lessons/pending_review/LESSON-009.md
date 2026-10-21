@@ -17,7 +17,7 @@ Windowsのvenv PythonをPopenで起動し、そのPIDでRSSやnative eventを測
 
 Python3.14 venvのPopen.pidとuvicornが記録したos.getpidが異なり、初回2回の性能計測でpool event抽出が空となった。HTTP検索は成功し、実processのcheckout/checkinはログに存在した。これは測定器の欠陥であり、製品のpool漏れ・性能Redとは扱っていない。
 
-- 証拠: `for-llm/progress/20261018-vercel-migration-evidence/pg5/run-01.log`、`run-02.log`と各metricsログ。
+- 証拠: `for-llm/work/20261018-vercel-migration/evidence/pg5/run-01.log`、`run-02.log`と各metricsログ。
 - 初回実PIDの終了確認: 同ディレクトリ`initial-owned-process-cleanup.json`。孤児残留は観測していない。
 - 修正後: `run-04/measurements.json`、14サンプルの実PID/RSS/所有pool回収を確認。
 - PR/commit: 未作成。

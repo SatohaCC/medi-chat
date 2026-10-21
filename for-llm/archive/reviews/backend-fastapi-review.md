@@ -147,7 +147,7 @@ JSON解析エラーを受信ループ内で捕捉し、入力エラーを返し�
 
 ## 参照
 
-- [FastAPIスキル](../.agents/skills/fastapi/SKILL.md)
+- レビュー時に参照したFastAPIスキル: `.agents/skills/fastapi/SKILL.md`（現行ツリーには存在しない）
 - [FastAPI: 非同期処理と通常の関数呼び出し](https://fastapi.tiangolo.com/async/#other-utility-functions)
 - [FastAPI: lifespan](https://fastapi.tiangolo.com/advanced/events/)
 - [Google Gen AI SDK: クライアントの終了処理](https://googleapis.github.io/python-genai/#close-a-client)

@@ -216,7 +216,7 @@ pnpm --filter frontend test:ime:manual
 
 ## 10. 参照
 
-- [S2 Next.js導入ガイド](../../.agents/skills/react-spectrum-s2/references/guides/getting-started.md)
+- [S2 Next.js導入ガイド](../../../.agents/skills/react-spectrum-s2/references/guides/getting-started.md)
 - [React Spectrum AI Components](https://react-spectrum.adobe.com/ai-components)
-- [frontend規約](../../docs/agent-guides/frontend.md)
-- [検証規約](../../docs/agent-guides/validation.md)
+- [frontend規約](../../guides/frontend.md)
+- [検証規約](../../guides/validation.md)
