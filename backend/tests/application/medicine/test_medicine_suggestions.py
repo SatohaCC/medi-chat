@@ -22,16 +22,19 @@ def product(brand, code, group="テスト成分"):
 
 
 def test_catalogue_preserves_all_products_and_deduplicates_references():
-    alpha = product("テストアルファ", "A")
-    beta = product("テストベータ", "B")
-    gamma = product("テストガンマ", "C", "テスト別成分")
+    alpha = product("テストアルファ", "1234567A0000")
+    beta = product("テストベータ", "1234567A0001")
+    gamma = product("テストガンマ", "1234567A0002", "テスト別成分")
     result = MedicineSuggester((gamma, alpha, beta, alpha)).list_all()
     assert [item.brand_names for item in result] == [
         ("テストアルファ", "テストベータ"),
         ("テストガンマ",),
     ]
-    assert result[0].yj_codes == (YjCode("A"), YjCode("B"))
-    assert result[0].document_ids == (DocumentId("doc:A"), DocumentId("doc:B"))
+    assert result[0].yj_codes == (YjCode("1234567A0000"), YjCode("1234567A0001"))
+    assert result[0].document_ids == (
+        DocumentId("doc:1234567A0000"),
+        DocumentId("doc:1234567A0001"),
+    )
     with pytest.raises(FrozenInstanceError):
         field_name = "generic_name"
         setattr(result[0], field_name, "変更")

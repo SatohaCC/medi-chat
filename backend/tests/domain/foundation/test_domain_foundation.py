@@ -3,6 +3,13 @@
 import uuid
 
 import pytest
+from backend.application.retrieval.search_models import IntentCandidate, SearchCriteria
+from backend.application.retrieval.search_values import (
+    DetectionSource,
+    IntentName,
+    Probability,
+    SearchKeyword,
+)
 from backend.domain.attachment.exceptions import AttachmentDomainError
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.foundation.exceptions import (
@@ -14,13 +21,6 @@ from backend.domain.foundation.primitives.identifiers import (
     EntityUUID,
 )
 from backend.domain.foundation.primitives.primitives import BaseString
-from backend.domain.retrieval.primitives import (
-    DetectionSource,
-    IntentName,
-    Probability,
-    SearchKeyword,
-)
-from backend.domain.retrieval.value_objects import IntentCandidate, SearchCriteria
 
 
 class RecordId(EntityStringId):

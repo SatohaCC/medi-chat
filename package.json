@@ -3,6 +3,9 @@
   "version": "0.2.0",
   "private": true,
   "packageManager": "pnpm@12.6.0",
+  "engines": {
+    "node": "24.x"
+  },
   "description": "PMDA package inserts search and AI real-time streaming chat system.",
   "scripts": {
     "vercel:requirements": "node scripts/export-vercel-requirements.mjs",

@@ -12,7 +12,14 @@ from backend.domain.attachment.value_objects import (
 )
 from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.identifiers import YjCode
-from backend.domain.medicine.primitives import ProductGroupId
+from backend.domain.medicine.primitives import (
+    BrandName,
+    EnglishName,
+    GenericName,
+    HiraganaName,
+    ProductGroupId,
+)
+from backend.domain.medicine.value_objects import MedicineNames
 
 
 def registered(
@@ -25,10 +32,12 @@ def registered(
     return RegisteredMedicine(
         medicine=MedicineProduct(
             yj_code=YjCode(code) if code else None,
-            brand_name=name,
-            generic_name=generic,
-            english_name="Alpha tablets 10mg",
-            hiragana_name="あるふぁじょう",
+            names=MedicineNames(
+                brand_name=BrandName(name) if name else None,
+                generic_name=GenericName(generic) if generic else None,
+                english_name=EnglishName("Alpha tablets 10mg"),
+                hiragana_name=HiraganaName("あるふぁじょう"),
+            ),
         ),
         reference=MedicineDocumentReference(
             document_id=DocumentId(document_id),
@@ -42,18 +51,15 @@ def test_medicine_policy_needs_no_document_or_code_table():
     product = registered("doc").medicine
     assert {f.name for f in fields(product)} == {
         "yj_code",
-        "brand_name",
-        "generic_name",
-        "english_name",
-        "hiragana_name",
+        "names",
     }
-    assert product.brand_name == "アルファ錠10mg"
+    assert product.names.brand_name == BrandName("アルファ錠10mg")
     assert product.match_group_id == ProductGroupId("成分")
 
 
 def test_same_product_preserves_multiple_document_references():
     catalog = MedicineCatalog((registered("doc-a"), registered("doc-b")))
-    result = catalog.match_yj_codes(["1234567A0000"])
+    result = catalog.match_yj_codes((YjCode("1234567A0000"),))
     assert len(result) == 1
     assert result[0].yj_codes == ("1234567A0000",)
     assert result[0].document_ids == ("doc-a", "doc-b")

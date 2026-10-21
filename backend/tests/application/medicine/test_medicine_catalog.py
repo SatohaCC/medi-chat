@@ -14,6 +14,13 @@ from backend.domain.attachment.value_objects import (
 from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.exceptions import MedicineDomainError
 from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.primitives import (
+    BrandName,
+    EnglishName,
+    GenericName,
+    HiraganaName,
+)
+from backend.domain.medicine.value_objects import MedicineNames
 
 
 @pytest.fixture
@@ -22,10 +29,12 @@ def registered_medicines() -> tuple[RegisteredMedicine, ...]:
         RegisteredMedicine(
             medicine=MedicineProduct(
                 yj_code=YjCode(f"1234567A000{index}"),
-                brand_name=name,
-                generic_name=name + "成分",
-                english_name="",
-                hiragana_name="",
+                names=MedicineNames(
+                    brand_name=BrandName(name) if name else None,
+                    generic_name=GenericName(name + "成分") if name + "成分" else None,
+                    english_name=None,
+                    hiragana_name=None,
+                ),
             ),
             reference=MedicineDocumentReference(
                 document_id=DocumentId(f"doc{index}"),
@@ -92,7 +101,9 @@ def test_指定コードだけで対象製品を確定する(
     expected_codes: list[str],
     registered_medicines: tuple[RegisteredMedicine, ...],
 ) -> None:
-    groups = MedicineCatalog(registered_medicines).match_yj_codes(codes)
+    groups = MedicineCatalog(registered_medicines).match_yj_codes(
+        tuple(YjCode(code) for code in codes)
+    )
     assert [code for group in groups for code in group.yj_codes] == expected_codes
 
 
@@ -100,10 +111,12 @@ def test_一般名aliasと薬剤全情報を保持する() -> None:
     expected = RegisteredMedicine(
         medicine=MedicineProduct(
             yj_code=YjCode("1234567A0002"),
-            brand_name="商品ガンマ",
-            generic_name="固有成分名",
-            english_name="DistinctCompound",
-            hiragana_name="しょうひんがんま",
+            names=MedicineNames(
+                brand_name=BrandName("商品ガンマ"),
+                generic_name=GenericName("固有成分名"),
+                english_name=EnglishName("DistinctCompound"),
+                hiragana_name=HiraganaName("しょうひんがんま"),
+            ),
         ),
         reference=MedicineDocumentReference(
             document_id=DocumentId("alias-doc"),
@@ -119,11 +132,13 @@ def test_一般名aliasと薬剤全情報を保持する() -> None:
     )
     medicines = (expected,)
     catalog = MedicineCatalog(medicines)
-    groups = catalog.match_yj_codes(["1234567A0002"])
+    groups = catalog.match_yj_codes((YjCode("1234567A0002"),))
     assert len(groups) == 1
     assert groups[0].yj_codes == ("1234567A0002",)
     assert groups[0].matched_aliases == ()
-    assert "固有成分名" in catalog.names_for_yj_codes(groups[0].yj_codes)
+    assert "固有成分名" in catalog.names_for_yj_codes(
+        tuple(YjCode(code) for code in groups[0].yj_codes)
+    )
     assert groups[0].brand_names == (expected.brand_name,)
     assert groups[0].generic_name == expected.generic_name
     assert groups[0].document_ids == (expected.document_id.value,)
@@ -133,10 +148,12 @@ def test_names_for_yj_codes_includes_raw_names_and_brackets() -> None:
     expected = RegisteredMedicine(
         medicine=MedicineProduct(
             yj_code=YjCode("6179001F1025"),
-            brand_name="イトラコナゾールカプセル50mg「SW」",
-            generic_name="イトラコナゾールカプセル",
-            english_name="",
-            hiragana_name="",
+            names=MedicineNames(
+                brand_name=BrandName("イトラコナゾールカプセル50mg「SW」"),
+                generic_name=GenericName("イトラコナゾールカプセル"),
+                english_name=None,
+                hiragana_name=None,
+            ),
         ),
         reference=MedicineDocumentReference(
             document_id=DocumentId("doc-sw"),
@@ -146,6 +163,6 @@ def test_names_for_yj_codes_includes_raw_names_and_brackets() -> None:
     )
     medicines = (expected,)
     catalog = MedicineCatalog(medicines)
-    aliases = catalog.names_for_yj_codes(["6179001F1025"])
+    aliases = catalog.names_for_yj_codes((YjCode("6179001F1025"),))
     assert "イトラコナゾールカプセル50mg「SW」" in aliases
     assert "SW" in aliases

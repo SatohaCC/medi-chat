@@ -18,15 +18,15 @@ from backend.application.medicine.product_models import (
     SearchGenerationId,
 )
 from backend.application.medicine.suggestions import MedicineSuggester
-from backend.application.retrieval.snapshot_contracts import RetrievalSnapshot
-from backend.domain.foundation.json_types import JsonValue
-from backend.domain.medicine.identifiers import YjCode
-from backend.domain.retrieval.repositories import EvidenceSearchTarget
-from backend.domain.retrieval.value_objects import (
+from backend.application.retrieval.evidence_contracts import EvidenceSearchTarget
+from backend.application.retrieval.search_models import (
     Evidence,
     SearchCriteria,
     TextSearchPolicy,
 )
+from backend.application.retrieval.snapshot_contracts import RetrievalSnapshot
+from backend.domain.foundation.json_types import JsonValue
+from backend.domain.medicine.identifiers import YjCode
 from backend.domain.shared.services import normalize_match_text, normalize_search_text
 from backend.infrastructure.evidence_mapping import (
     build_evidence,

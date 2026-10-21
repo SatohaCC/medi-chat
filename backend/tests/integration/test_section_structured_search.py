@@ -2,14 +2,14 @@
 
 import asyncio
 
+from backend.application.indexing.search_values import SearchSectionCode
 from backend.application.medicine.product_models import ResolvedMedicine
+from backend.application.retrieval.evidence_payloads import evidence_payload
+from backend.application.retrieval.search_models import SearchCriteria
+from backend.application.retrieval.search_values import DetectionSource, SearchKeyword
+from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.primitives import BrandName, MatchedAlias
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
-from backend.domain.retrieval.primitives import (
-    DetectionSource,
-    SearchKeyword,
-    SearchSectionCode,
-)
-from backend.domain.retrieval.value_objects import SearchCriteria
 from backend.infrastructure.persistence.postgres_runtime import PostgresRuntime
 from backend.infrastructure.persistence.read_workers import ReadWorkers
 from backend.tests.integration.test_postgres_registration import (
@@ -32,7 +32,12 @@ def test_generated_section_is_one_postgres_hit_with_table_and_original_revision(
     try:
         medicines = (
             ResolvedMedicine(
-                medicine=DomainMedicineMatch("", (), ("3339003F5020",), ()),
+                medicine=DomainMedicineMatch(
+                    generic_name=None,
+                    brand_names=tuple(BrandName(value) for value in ()),
+                    yj_codes=tuple(YjCode(value) for value in ("3339003F5020",)),
+                    matched_aliases=tuple(MatchedAlias(value) for value in ()),
+                ),
                 document_ids=(source.stem,),
             ),
         )
@@ -71,11 +76,11 @@ def test_generated_section_is_one_postgres_hit_with_table_and_original_revision(
 
         whole, keyword, adverse = asyncio.run(read())
         assert len(whole) == 1
-        payload = whole[0].to_dict()
+        payload = evidence_payload(whole[0])
         assert payload["unit_id"] == f"{source.stem}:{receipt.source_sha256}:10"
-        assert "リトナビル" in whole[0].excerpt
-        assert "<table>" in whole[0].excerpt
-        assert whole[0].excerpt.count("<tr>") == 15
+        assert "リトナビル" in whole[0].excerpt.value
+        assert "<table>" in whole[0].excerpt.value
+        assert whole[0].excerpt.value.count("<tr>") == 15
         assert payload["document_revision"] == {
             "source_label": "今回",
             "year_month": "2025-11",
@@ -86,9 +91,9 @@ def test_generated_section_is_one_postgres_hit_with_table_and_original_revision(
         }
         assert len(adverse) == 1
         assert adverse[0].unit_id.value == f"{source.stem}:{receipt.source_sha256}:11"
-        assert adverse[0].excerpt.count("<table>") == 1
-        assert adverse[0].excerpt.count("<tr>") == 34
-        assert "精神神経系" in adverse[0].excerpt
-        assert "頻度不明" in adverse[0].excerpt
+        assert adverse[0].excerpt.value.count("<table>") == 1
+        assert adverse[0].excerpt.value.count("<tr>") == 34
+        assert "精神神経系" in adverse[0].excerpt.value
+        assert "頻度不明" in adverse[0].excerpt.value
     finally:
         assert pg_publisher.engine.pool.checkedout() == 0

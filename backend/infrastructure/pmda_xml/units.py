@@ -7,7 +7,8 @@ import re
 import xml.etree.ElementTree as ET
 from typing import Any
 
-from ...domain.retrieval.services import format_scoped_text
+from backend.application.indexing.text_projection import format_scoped_text
+
 from ..package_insert_definitions.loader import get_package_insert_definitions
 from .definition_settings import PmdaXmlSettings
 from .sections import nearest_section

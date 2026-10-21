@@ -4,18 +4,26 @@ from copy import deepcopy
 from dataclasses import replace
 
 import pytest
-from backend.domain.foundation.json_types import JsonValue
-from backend.domain.medicine.identifiers import YjCode
-from backend.domain.retrieval.primitives import (
+from backend.application.indexing.search_values import EvidenceContextLabel
+from backend.application.retrieval.evidence_payloads import evidence_payload
+from backend.application.retrieval.search_models import (
+    EvidenceDocument,
+    EvidenceProduct,
+)
+from backend.application.retrieval.search_policy import (
+    build_evidence as format_evidence,
+)
+from backend.application.retrieval.search_values import (
     EvidenceBrandName,
-    EvidenceContextLabel,
+    EvidenceExcerpt,
     EvidenceGenericName,
+    EvidenceProductName,
     EvidenceSourceUrl,
 )
-from backend.domain.retrieval.services import build_evidence as format_evidence
-from backend.domain.retrieval.value_objects import EvidenceDocument, EvidenceProduct
+from backend.domain.foundation.json_types import JsonValue
+from backend.domain.medicine.identifiers import YjCode
 from backend.infrastructure.evidence_mapping import build_evidence
-from backend.tests.domain.retrieval.test_evidence_collection import make_evidence
+from backend.tests.application.retrieval.test_evidence_collection import make_evidence
 
 
 def test_section_evidence_gets_current_revision_from_document_metadata():
@@ -38,7 +46,7 @@ def test_section_evidence_gets_current_revision_from_document_metadata():
         },
         "logic",
     )
-    assert evidence.to_dict()["document_revision"] == current
+    assert evidence_payload(evidence)["document_revision"] == current
 
 
 @pytest.mark.parametrize(
@@ -46,10 +54,14 @@ def test_section_evidence_gets_current_revision_from_document_metadata():
     [
         ("成分原文", [{"yj_code": None, "brand_name": ""}], "成分原文"),
         ("", [], "自由な文書ID"),
-        ("成分原文", [{"yj_code": "自由コード", "brand_name": "商品原文"}], "商品原文"),
+        (
+            "成分原文",
+            [{"yj_code": "1234567A0000", "brand_name": "商品原文"}],
+            "商品原文",
+        ),
         (
             " Ａ成分① ",
-            [{"yj_code": "自由コード", "brand_name": " Ｂ商品② "}],
+            [{"yj_code": "1234567A0000", "brand_name": " Ｂ商品② "}],
             " Ｂ商品② ",
         ),
         (" Ａ成分① ", [{"yj_code": None, "brand_name": ""}], " Ａ成分① "),
@@ -62,7 +74,7 @@ def test_allowed_values_and_original_information_are_preserved(
     unit = {
         "unit_id": "自由な根拠ID",
         "document_key": "自由な文書ID",
-        "product_yj_codes": ["自由コード"],
+        "product_yj_codes": ["1234567A0000"],
         "document_revision": {},
         "section": {},
         "text": "原文\n改行",
@@ -75,12 +87,12 @@ def test_allowed_values_and_original_information_are_preserved(
     }
     before = deepcopy((unit, document))
     evidence = build_evidence(unit, document, "logic")
-    assert evidence.to_dict() == {
+    assert evidence_payload(evidence) == {
         "unit_id": "自由な根拠ID",
         "document_id": "自由な文書ID",
         "product_name": name,
         "generic_name": generic,
-        "product_yj_codes": ["自由コード"],
+        "product_yj_codes": ["1234567A0000"],
         "document_revision": {},
         "section": {},
         "kind": "",
@@ -129,8 +141,8 @@ def test_scope_and_unit_url_have_existing_priority():
         {"source": {"pmda_url": "https://example.test/document"}},
         "keyword",
     )
-    assert evidence.excerpt == "原見出し\n本文"
-    assert evidence.url == "https://example.test/unit"
+    assert evidence.excerpt.value == "原見出し\n本文"
+    assert evidence.url == EvidenceSourceUrl("https://example.test/unit")
 
 
 def test_unused_invalid_document_url_and_unselected_brand_are_not_newly_rejected():
@@ -138,37 +150,37 @@ def test_unused_invalid_document_url_and_unselected_brand_are_not_newly_rejected
         {
             "unit_id": "id",
             "document_key": "doc",
-            "product_yj_codes": ["selected"],
+            "product_yj_codes": ["1234567A0000"],
             "source": {"url": "unit-url"},
         },
         {
             "source": ["unused wrong type"],
             "document": {
                 "products": [
-                    {"yj_code": "selected", "brand_name": "選択原文"},
-                    {"yj_code": "unselected", "brand_name": ["unused wrong type"]},
+                    {"yj_code": "1234567A0000", "brand_name": "選択原文"},
+                    {"yj_code": "1234567A0001", "brand_name": ["unused wrong type"]},
                 ]
             },
         },
         "logic",
     )
-    assert evidence.product_name == "選択原文"
-    assert evidence.url == "unit-url"
+    assert evidence.product_name == EvidenceProductName("選択原文")
+    assert evidence.url == EvidenceSourceUrl("unit-url")
 
 
 def test_domain_formats_typed_original_values_without_io():
-    original = replace(make_evidence(), excerpt="本文", url="")
+    original = replace(make_evidence(), excerpt=EvidenceExcerpt("本文"), url=None)
     document = EvidenceDocument(
         EvidenceGenericName("原成分"),
         (EvidenceProduct(YjCode("1234567A0000"), EvidenceBrandName("原商品")),),
         EvidenceSourceUrl("document-url"),
     )
     formatted = format_evidence(original, document, (EvidenceContextLabel("成人"),))
-    assert formatted.product_name == "原商品"
-    assert formatted.generic_name == "原成分"
-    assert formatted.excerpt == "〈成人〉 本文"
-    assert formatted.url == "document-url"
-    assert original.excerpt == "本文"
+    assert formatted.product_name == EvidenceProductName("原商品")
+    assert formatted.generic_name == EvidenceGenericName("原成分")
+    assert formatted.excerpt.value == "〈成人〉 本文"
+    assert formatted.url == EvidenceSourceUrl("document-url")
+    assert original.excerpt.value == "本文"
 
 
 def test_mapping_normalizes_labels_without_changing_original_characters_or_order():
@@ -182,7 +194,7 @@ def test_mapping_normalizes_labels_without_changing_original_characters_or_order
         {},
         "logic",
     )
-    assert evidence.excerpt == "〈Ａ①〉 〈成人〉 〈Ａ①〉 本文"
+    assert evidence.excerpt.value == "〈Ａ①〉 〈成人〉 〈Ａ①〉 本文"
 
 
 @pytest.mark.parametrize("label", ["", "  "])
@@ -209,16 +221,20 @@ def test_product_code_is_validated_at_json_boundary(code):
 
 def test_product_selection_uses_normalized_ids_and_keeps_unselected_brand_unread():
     evidence = build_evidence(
-        {"unit_id": "id", "document_key": "doc", "product_yj_codes": ["Ａ"]},
+        {
+            "unit_id": "id",
+            "document_key": "doc",
+            "product_yj_codes": ["１２３４５６７Ａ００００"],
+        },
         {
             "document": {
                 "products": [
-                    {"yj_code": "A", "brand_name": "選択商品"},
-                    {"yj_code": "B", "brand_name": ["未選択"]},
+                    {"yj_code": "1234567A0000", "brand_name": "選択商品"},
+                    {"yj_code": "1234567A0001", "brand_name": ["未選択"]},
                 ]
             }
         },
         "logic",
     )
-    assert evidence.product_name == "選択商品"
-    assert evidence.product_yj_codes == (YjCode("A"),)
+    assert evidence.product_name == EvidenceProductName("選択商品")
+    assert evidence.product_yj_codes == (YjCode("1234567A0000"),)

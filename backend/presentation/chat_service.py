@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
 
 from backend.application.medicine.product_contracts import RegisteredMedicineReader
+from backend.application.retrieval.search_models import Evidence, IntentPolicy
 
 from ..application.chat.answer_prompt_policy import AnswerPromptPolicy
 from ..application.chat.chat_models import ChatResponse as ApplicationChatResponse
@@ -13,7 +14,6 @@ from ..application.chat.llm_contracts import LLMProvider
 from ..application.chat.stream_closing import closing_stream
 from ..application.retrieval.intent_contracts import IntentClassifier
 from ..application.retrieval.keyword_contracts import KeywordExtractor
-from ..application.retrieval.retrieval_models import Evidence, IntentPolicy
 from ..application.retrieval.snapshot_contracts import (
     EvidenceRepository,
     RetrievalSnapshotProvider,

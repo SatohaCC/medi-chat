@@ -4,8 +4,9 @@ from dataclasses import dataclass
 
 import httpx
 import pytest
-from backend.domain.retrieval.primitives import DetectionSource, SearchSectionCode
-from backend.domain.retrieval.value_objects import SearchCriteria
+from backend.application.indexing.search_values import SearchSectionCode
+from backend.application.retrieval.search_models import SearchCriteria
+from backend.application.retrieval.search_values import DetectionSource
 from backend.tests.integration.test_generation_readonly import digest
 from backend.tests.support.attachment_import_fixtures import xml_source
 from backend.tests.support.postgres_fixtures import pg_api as pg_api
@@ -42,7 +43,7 @@ async def test_http_import_and_restart_preserve_search_snapshot(pg_api, pg_engin
         ):
             found = await search(app, criteria, (known,))
             assert len(found) == 1
-            assert all(f"記載{i}" in found[0].excerpt for i in range(3))
+            assert all(f"記載{i}" in found[0].excerpt.value for i in range(3))
             if iteration == 0:
                 previous = found
                 invalid = await client.post(
@@ -75,7 +76,7 @@ async def test_http_import_and_restart_preserve_search_snapshot(pg_api, pg_engin
                 unknown = SearchTarget((result["document_id"],), ("111111111111",))
                 imported = await search(app, criteria, (unknown,))
                 assert len(imported) == 1
-                assert "新薬の副作用" in imported[0].excerpt
+                assert "新薬の副作用" in imported[0].excerpt.value
                 assert await search(app, criteria, (known,)) == previous
                 saved = digest(pg_engines[0])
             else:

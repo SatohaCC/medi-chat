@@ -7,14 +7,17 @@ from dataclasses import fields, is_dataclass
 
 import httpx
 import pytest
+from backend.application.indexing.search_values import SearchSectionCode
 from backend.application.medicine.product_models import (
     RegisteredMedicine,
     ResolvedMedicine,
 )
+from backend.application.retrieval.search_models import SearchCriteria
+from backend.application.retrieval.search_values import DetectionSource
 from backend.domain.foundation.primitives.primitives import BaseFiniteFloat, BaseString
+from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.primitives import BrandName, GenericName, MatchedAlias
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
-from backend.domain.retrieval.primitives import DetectionSource, SearchSectionCode
-from backend.domain.retrieval.value_objects import SearchCriteria
 from backend.infrastructure.persistence.read_workers import ReadWorkers
 from backend.tests.support.postgres_fixtures import pg_api as pg_api
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
@@ -96,7 +99,14 @@ async def test_api_and_ws_respond_while_search_is_blocked(
                 (
                     ResolvedMedicine(
                         medicine=DomainMedicineMatch(
-                            "テスト成分", ("テスト薬",), ("1234567A0000",), ()
+                            generic_name=GenericName("テスト成分"),
+                            brand_names=tuple(
+                                BrandName(value) for value in ("テスト薬",)
+                            ),
+                            yj_codes=tuple(
+                                YjCode(value) for value in ("1234567A0000",)
+                            ),
+                            matched_aliases=tuple(MatchedAlias(value) for value in ()),
                         ),
                         document_ids=("test_001",),
                     ),
@@ -132,7 +142,7 @@ async def test_api_and_ws_respond_while_search_is_blocked(
         release.set()
         result = await asyncio.wait_for(search_task, timeout=10)
         assert [item.section["code"] for item in result] == ["11"]
-        assert all(f"記載{index}" in result[0].excerpt for index in range(3))
+        assert all(f"記載{index}" in result[0].excerpt.value for index in range(3))
     finally:
         release.set()
         probes_completed.set()
@@ -148,8 +158,16 @@ async def test_api_and_ws_respond_while_search_is_blocked(
 
 def _assert_plain(value: object) -> None:
     if is_dataclass(value) and not isinstance(value, type):
-        assert type(value) is RegisteredMedicine or type(value).__module__.startswith(
-            "backend.domain."
+        assert (
+            type(value) is RegisteredMedicine
+            or type(value).__module__.startswith("backend.domain.")
+            or type(value).__module__
+            in {
+                "backend.application.indexing.search_models",
+                "backend.application.indexing.search_values",
+                "backend.application.retrieval.search_models",
+                "backend.application.retrieval.search_values",
+            }
         )
         for field in fields(value):
             _assert_plain(getattr(value, field.name))
@@ -234,10 +252,16 @@ async def test_pg027_workers_own_connections_and_return_plain_values(pg_api, ope
                             (
                                 ResolvedMedicine(
                                     medicine=DomainMedicineMatch(
-                                        "テスト成分",
-                                        ("テスト薬",),
-                                        ("1234567A0000",),
-                                        (),
+                                        generic_name=GenericName("テスト成分"),
+                                        brand_names=tuple(
+                                            BrandName(value) for value in ("テスト薬",)
+                                        ),
+                                        yj_codes=tuple(
+                                            YjCode(value) for value in ("1234567A0000",)
+                                        ),
+                                        matched_aliases=tuple(
+                                            MatchedAlias(value) for value in ()
+                                        ),
                                     ),
                                     document_ids=("test_001",),
                                 ),

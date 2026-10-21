@@ -42,7 +42,7 @@ jobs:
           version: 12.6.0
       - uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version-file: ".nvmrc"
           cache: pnpm
       - uses: astral-sh/setup-uv@v6
         with:
@@ -77,10 +77,16 @@ jobs:
           tests/integration/test_upload_http.py
           tests/integration/test_postgres_readiness.py
           tests/integration/test_postgres_snapshot.py
+          tests/integration/test_postgres_storybook_export.py
           tests/integration/test_postgres_process_failure.py
           tests/integration/test_postgres_registration.py::test_pg003_005_real_migration_and_runtime_permissions
           tests/integration/test_postgres_search.py::test_pg028_public_corpus_and_equal_rank_use_legacy_codepoint_order
           --basetemp "${{ runner.temp }}/ci-postgres-contracts" -q
+      - name: Input boundary regression
+        run: >-
+          pnpm --filter backend exec uv run --locked pytest
+          tests/application/medicine/test_input_values.py
+          tests/presentation/test_medicine_input_validation.py -q
       - name: Architecture, lint and Python types
         run: |
           pnpm --filter backend lint

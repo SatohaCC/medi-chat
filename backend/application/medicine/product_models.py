@@ -31,19 +31,35 @@ class RegisteredMedicine:
 
     @property
     def brand_name(self) -> str:
-        return self.medicine.brand_name
+        return (
+            self.medicine.names.brand_name.value
+            if self.medicine.names.brand_name is not None
+            else ""
+        )
 
     @property
     def generic_name(self) -> str:
-        return self.medicine.generic_name
+        return (
+            self.medicine.names.generic_name.value
+            if self.medicine.names.generic_name is not None
+            else ""
+        )
 
     @property
     def english_name(self) -> str:
-        return self.medicine.english_name
+        return (
+            self.medicine.names.english_name.value
+            if self.medicine.names.english_name is not None
+            else ""
+        )
 
     @property
     def hiragana_name(self) -> str:
-        return self.medicine.hiragana_name
+        return (
+            self.medicine.names.hiragana_name.value
+            if self.medicine.names.hiragana_name is not None
+            else ""
+        )
 
     @property
     def document_id(self) -> DocumentId:
@@ -70,19 +86,23 @@ class ResolvedMedicine:
 
     @property
     def generic_name(self) -> str:
-        return self.medicine.generic_name
+        return (
+            self.medicine.generic_name.value
+            if self.medicine.generic_name is not None
+            else ""
+        )
 
     @property
     def brand_names(self) -> tuple[str, ...]:
-        return self.medicine.brand_names
+        return tuple(value.value for value in self.medicine.brand_names)
 
     @property
     def yj_codes(self) -> tuple[str, ...]:
-        return self.medicine.yj_codes
+        return tuple(value.value for value in self.medicine.yj_codes)
 
     @property
     def matched_aliases(self) -> tuple[str, ...]:
-        return self.medicine.matched_aliases
+        return tuple(value.value for value in self.medicine.matched_aliases)
 
 
 __all__ = [

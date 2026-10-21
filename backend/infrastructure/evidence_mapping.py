@@ -2,24 +2,13 @@
 
 from dataclasses import dataclass
 
-from ..domain.attachment.identifiers import DocumentId
-from ..domain.foundation.json_types import JsonValue
-from ..domain.medicine.identifiers import YjCode
-from ..domain.retrieval.identifiers import SearchUnitId
-from ..domain.retrieval.primitives import (
-    DetectionSource,
-    EvidenceBrandName,
+from backend.application.indexing.search_models import DocumentRevision
+from backend.application.indexing.search_values import (
     EvidenceContextLabel,
-    EvidenceGenericName,
-    EvidenceSourceUrl,
+    SearchUnitId,
+    SearchUnitKind,
 )
-from ..domain.retrieval.services import (
-    build_evidence as format_evidence,
-)
-from ..domain.retrieval.services import is_scope_heading_only as scope_heading_only
-from ..domain.retrieval.services import select_products
-from ..domain.retrieval.value_objects import (
-    DocumentRevision,
+from backend.application.retrieval.search_models import (
     Evidence,
     EvidenceColumns,
     EvidenceDocument,
@@ -28,6 +17,24 @@ from ..domain.retrieval.value_objects import (
     EvidenceSection,
     TextSearchPolicy,
 )
+from backend.application.retrieval.search_policy import (
+    build_evidence as format_evidence,
+)
+from backend.application.retrieval.search_policy import (
+    is_scope_heading_only as scope_heading_only,
+)
+from backend.application.retrieval.search_policy import select_products
+from backend.application.retrieval.search_values import (
+    DetectionSource,
+    EvidenceBrandName,
+    EvidenceExcerpt,
+    EvidenceGenericName,
+    EvidenceSourceUrl,
+)
+
+from ..domain.attachment.identifiers import DocumentId
+from ..domain.foundation.json_types import JsonValue
+from ..domain.medicine.identifiers import YjCode
 
 
 def _object(value: JsonValue) -> dict[str, JsonValue]:
@@ -40,6 +47,13 @@ def _string(value: JsonValue) -> str:
     if not isinstance(value, str):
         raise TypeError("Expected a JSON string")
     return value
+
+
+def _optional_text(value: JsonValue) -> str | None:
+    if value is None:
+        return None
+    text = _string(value)
+    return text if text.strip() else None
 
 
 def _strings(value: JsonValue) -> list[str]:
@@ -91,9 +105,9 @@ def build_evidence(
         codes,
     )
     unit_url = _object(unit.get("source") or {}).get("url")
-    generic_name = _string(metadata.get("generic_name") or "")
+    generic_name = _optional_text(metadata.get("generic_name"))
     pmda_url = (
-        _string(_object(document_payload.get("source") or {}).get("pmda_url") or "")
+        _optional_text(_object(document_payload.get("source") or {}).get("pmda_url"))
         if not unit_url
         else ""
     )
@@ -103,7 +117,7 @@ def build_evidence(
             EvidenceProduct(
                 yj_code=item.yj_code,
                 brand_name=EvidenceBrandName(name)
-                if (name := _string(item.payload.get("brand_name") or ""))
+                if (name := _optional_text(item.payload.get("brand_name")))
                 else None,
             )
             for item in selected
@@ -121,20 +135,24 @@ def build_evidence(
     raw_unit = Evidence(
         unit_id=SearchUnitId(_string(unit["unit_id"])),
         document_id=DocumentId(document_id),
-        product_name="",
-        generic_name="",
+        product_name=None,
+        generic_name=None,
         product_yj_codes=codes,
         document_revision=DocumentRevision(_object(revision or {})),
         section=EvidenceSection(_string_object(unit.get("section") or {})),
-        kind=_string(unit.get("kind") or ""),
-        excerpt=_string(unit.get("text") or ""),
+        kind=SearchUnitKind(kind)
+        if (kind := _optional_text(unit.get("kind"))) is not None
+        else None,
+        excerpt=EvidenceExcerpt(_string(unit.get("text", ""))),
         columns=EvidenceColumns(_string_object(columns))
         if columns is not None
         else None,
         references=tuple(
             EvidenceReference(ref) for ref in _objects(unit.get("references") or [])
         ),
-        url=_string(unit_url or ""),
+        url=EvidenceSourceUrl(url)
+        if (url := _optional_text(unit_url)) is not None
+        else None,
         retrieved_by=frozenset({DetectionSource(retrieved_by)}),
     )
     return format_evidence(

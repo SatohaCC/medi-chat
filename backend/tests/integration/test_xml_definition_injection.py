@@ -9,10 +9,13 @@ from importlib import import_module
 import httpx
 import pytest
 from backend.application.indexing.attachment_projection import project_attachment
+from backend.application.indexing.search_values import SearchSectionCode
 from backend.application.medicine.product_models import ResolvedMedicine
+from backend.application.retrieval.search_models import SearchCriteria
+from backend.application.retrieval.search_values import DetectionSource
+from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.primitives import BrandName, MatchedAlias
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
-from backend.domain.retrieval.primitives import DetectionSource, SearchSectionCode
-from backend.domain.retrieval.value_objects import SearchCriteria
 from backend.infrastructure.package_insert_definitions import loader
 from backend.infrastructure.persistence import postgres_schema as schema
 from backend.infrastructure.persistence.postgres_registration import (
@@ -132,13 +135,22 @@ async def test_tc19_all_entries_keep_injected_definition_without_reload(
                     ),
                     (
                         ResolvedMedicine(
-                            medicine=DomainMedicineMatch("", (), ("111111111111",), ()),
+                            medicine=DomainMedicineMatch(
+                                generic_name=None,
+                                brand_names=tuple(BrandName(value) for value in ()),
+                                yj_codes=tuple(
+                                    YjCode(value) for value in ("111111111111",)
+                                ),
+                                matched_aliases=tuple(
+                                    MatchedAlias(value) for value in ()
+                                ),
+                            ),
                             document_ids=("000001_test",),
                         ),
                     ),
                 )
             assert {row.section["code"] for row in evidence} == {"27", "10"}
-            combined = "".join(row.excerpt for row in evidence)
+            combined = "".join(row.excerpt.value for row in evidence)
             assert "追補の原文本文" in combined and "相手薬の原文" in combined
             assert all(
                 row.unit_id.value.startswith(
@@ -172,14 +184,21 @@ async def test_tc19_all_entries_keep_injected_definition_without_reload(
                         (
                             ResolvedMedicine(
                                 medicine=DomainMedicineMatch(
-                                    "", (), ("111111111111",), ()
+                                    generic_name=None,
+                                    brand_names=tuple(BrandName(value) for value in ()),
+                                    yj_codes=tuple(
+                                        YjCode(value) for value in ("111111111111",)
+                                    ),
+                                    matched_aliases=tuple(
+                                        MatchedAlias(value) for value in ()
+                                    ),
                                 ),
                                 document_ids=("000001_test",),
                             ),
                         ),
                     )
                     assert {row.section["code"] for row in evidence} == {"27", "10"}
-                    combined = "".join(row.excerpt for row in evidence)
+                    combined = "".join(row.excerpt.value for row in evidence)
                     assert "追補の原文本文" in combined
                     assert "相手薬の原文" in combined
                     assert all(
@@ -302,7 +321,12 @@ async def test_tc21_injected_heading_policy_reaches_old_scope_and_new_request(
     )
     target = (
         ResolvedMedicine(
-            medicine=DomainMedicineMatch("", (), ("111111111111",), ()),
+            medicine=DomainMedicineMatch(
+                generic_name=None,
+                brand_names=tuple(BrandName(value) for value in ()),
+                yj_codes=tuple(YjCode(value) for value in ("111111111111",)),
+                matched_aliases=tuple(MatchedAlias(value) for value in ()),
+            ),
             document_ids=("000001_test",),
         ),
     )
@@ -312,7 +336,7 @@ async def test_tc21_injected_heading_policy_reaches_old_scope_and_new_request(
             assert old_snapshot.generation_id.value == first.generation_id
             old_rows = await old_snapshot.evidence_reader.search(criteria, target)
             assert [row.section["code"] for row in old_rows] == ["1", "2"]
-            assert [row.excerpt for row in old_rows] == [
+            assert [row.excerpt.value for row in old_rows] == [
                 '<h3 data-section-code="1">1 警告</h3><p>特別見出し</p>',
                 '<h3 data-section-code="2">2 禁忌</h3><p>旧保持原文</p>',
             ]
@@ -324,7 +348,7 @@ async def test_tc21_injected_heading_policy_reaches_old_scope_and_new_request(
                 assert new_snapshot.generation_id.value == latest.generation_id
                 new_rows = await new_snapshot.evidence_reader.search(criteria, target)
                 assert [row.section["code"] for row in new_rows] == ["1", "2"]
-                assert [row.excerpt for row in new_rows] == [
+                assert [row.excerpt.value for row in new_rows] == [
                     '<h3 data-section-code="1">1 警告</h3><p>特別見出し</p>',
                     '<h3 data-section-code="2">2 禁忌</h3><p>新保持原文</p>',
                 ]
@@ -344,7 +368,7 @@ async def test_tc21_injected_heading_policy_reaches_old_scope_and_new_request(
             kind == "section" and observed_policy is policy and result is False
             for _, kind, observed_policy, result in judgments
         )
-        assert [row.excerpt for row in old_rows] == [
+        assert [row.excerpt.value for row in old_rows] == [
             '<h3 data-section-code="1">1 警告</h3><p>特別見出し</p>',
             '<h3 data-section-code="2">2 禁忌</h3><p>旧保持原文</p>',
         ]

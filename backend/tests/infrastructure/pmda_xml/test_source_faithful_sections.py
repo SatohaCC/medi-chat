@@ -7,9 +7,9 @@ from backend.application.indexing.attachment_projection import (
     project_active_attachment,
     project_attachment,
 )
+from backend.application.indexing.search_models import SearchParagraph, SearchTableBlock
 from backend.domain.attachment.value_objects import AttachmentTableBlock
 from backend.domain.medicine.identifiers import YjCode
-from backend.domain.retrieval.value_objects import SearchParagraph, SearchTableBlock
 from backend.infrastructure.index_payloads import (
     build_index_document,
     encode_registered_units,

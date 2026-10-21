@@ -112,8 +112,8 @@ ALLOWED_DOMAIN_INTERNAL_DEPENDENCIES: dict[str, set[str]] = {
 
 
 ALLOWED_APPLICATION_CONTEXT_DEPENDENCIES: dict[str, set[str]] = {
-    "chat": {"retrieval", "medicine"},
-    "retrieval": {"medicine"},
+    "chat": {"retrieval", "medicine", "indexing"},
+    "retrieval": {"medicine", "indexing"},
     "attachment_import": {"indexing"},
     "indexing": {"medicine"},
     "medicine": set(),
@@ -237,14 +237,19 @@ def _allowed_module(module: str, *, caller: str) -> bool:
                 return False
         if len(caller_parts) >= 4:
             caller_mod = caller_parts[3]
+            if caller_mod.endswith("_values") and (
+                len(module_parts) < 4 or not module_parts[3].endswith("_values")
+            ):
+                return False
             if caller_mod.endswith("_models") and (
-                len(module_parts) < 4 or not module_parts[3].endswith("_models")
+                len(module_parts) < 4
+                or not module_parts[3].endswith(("_models", "_values"))
             ):
                 return False
             if caller_mod.endswith("_contracts") and (
                 len(module_parts) < 4
                 or not (
-                    module_parts[3].endswith("_models")
+                    module_parts[3].endswith(("_models", "_values"))
                     or module_parts[3].endswith("_contracts")
                 )
             ):
@@ -378,7 +383,7 @@ def test_public_identifiers_only_depend_on_stdlib_and_id_base(
 ) -> None:
     violations = find_inner_layer_violations(
         source,
-        module_name="backend.domain.retrieval.identifiers",
+        module_name="backend.domain.attachment.identifiers",
         filename="identifiers_fixture.py",
     )
     assert bool(violations) is not allowed, violations
@@ -709,8 +714,8 @@ def test_new_public_module_paths_are_importable_without_legacy_packages() -> Non
             id="type_checking_import",
         ),
         pytest.param(
-            "from backend.domain.retrieval.value_objects import IntentPolicy\n"
-            "from backend.domain.retrieval.services import format_scoped_text\n",
+            "from backend.domain.attachment.value_objects import IntentPolicy\n"
+            "from backend.domain.attachment.services import format_scoped_text\n",
             None,
             id="owned_domain_imports",
         ),
@@ -775,7 +780,7 @@ def test_domain_cannot_depend_on_application(source: str) -> None:
     "module_name", ["backend.domain.fixture", "backend.application.fixture"]
 )
 def test_pure_owned_models_and_formatting_are_allowed(module_name: str) -> None:
-    source = "from backend.domain.retrieval.value_objects import IntentPolicy\nfrom backend.domain.retrieval.services import section_code_sort_key\n"
+    source = "from backend.domain.attachment.value_objects import IntentPolicy\nfrom backend.domain.attachment.services import section_code_sort_key\n"
     assert (
         find_inner_layer_violations(
             source, module_name=module_name, filename="shared_fixture.py"
@@ -809,31 +814,31 @@ def test_domain_models_have_explicit_primitive_entity_value_object_ownership() -
         "DocumentId": "backend.domain.attachment.identifiers",
         "ProductGroupId": "backend.domain.medicine.primitives",
         "MedicineProduct": "backend.domain.medicine.entities",
-        "IntentName": "backend.domain.retrieval.primitives",
+        "IntentName": "backend.application.retrieval.search_values",
         "PmdaUrl": "backend.domain.attachment.primitives",
-        "Probability": "backend.domain.retrieval.primitives",
-        "SearchKeyword": "backend.domain.retrieval.primitives",
+        "Probability": "backend.application.retrieval.search_values",
+        "SearchKeyword": "backend.application.retrieval.search_values",
         "SectionCode": "backend.domain.attachment.primitives",
-        "SearchUnitId": "backend.domain.retrieval.identifiers",
+        "SearchUnitId": "backend.application.indexing.search_values",
         "YjCode": "backend.domain.medicine.identifiers",
         "JsonValue": "backend.domain.foundation.json_types",
-        "DetectionSource": "backend.domain.retrieval.primitives",
-        "DocumentRevision": "backend.domain.retrieval.value_objects",
+        "DetectionSource": "backend.application.retrieval.search_values",
+        "DocumentRevision": "backend.application.indexing.search_models",
         "ResolvedMedicine": "backend.application.medicine.product_models",
-        "SearchCriteria": "backend.domain.retrieval.value_objects",
-        "IntentCandidate": "backend.domain.retrieval.value_objects",
-        "IntentSelection": "backend.domain.retrieval.value_objects",
-        "EvidenceReference": "backend.domain.retrieval.value_objects",
-        "EvidenceSection": "backend.domain.retrieval.value_objects",
-        "EvidenceColumns": "backend.domain.retrieval.value_objects",
+        "SearchCriteria": "backend.application.retrieval.search_models",
+        "IntentCandidate": "backend.application.retrieval.search_models",
+        "IntentSelection": "backend.application.retrieval.search_models",
+        "EvidenceReference": "backend.application.retrieval.search_models",
+        "EvidenceSection": "backend.application.retrieval.search_models",
+        "EvidenceColumns": "backend.application.retrieval.search_models",
         "RegisteredMedicine": "backend.application.medicine.product_models",
-        "Evidence": "backend.domain.retrieval.value_objects",
-        "IntentKeywordText": "backend.domain.retrieval.primitives",
-        "merge_evidence": "backend.domain.retrieval.services",
-        "build_keyword_search_criteria": "backend.domain.retrieval.services",
+        "Evidence": "backend.application.retrieval.search_models",
+        "IntentKeywordText": "backend.application.retrieval.search_values",
+        "merge_evidence": "backend.application.retrieval.search_policy",
+        "build_keyword_search_criteria": "backend.application.retrieval.search_policy",
         "katakana_to_hiragana": "backend.domain.shared.services",
         "RegisteredMedicineReader": "backend.application.medicine.product_contracts",
-        "EvidenceRepository": "backend.domain.retrieval.repositories",
+        "EvidenceRepository": "backend.application.retrieval.evidence_contracts",
         "MedicineCatalog": "backend.application.medicine.product_catalog",
         "DomainException": "backend.domain.foundation.exceptions",
         "DomainValidationError": "backend.domain.foundation.exceptions",
@@ -913,22 +918,22 @@ def test_domain_has_no_compatibility_facades() -> None:
             "IO os.getenv",
         ),
         (
-            "backend.domain.retrieval.primitives",
+            "backend.domain.attachment.primitives",
             "from .value_objects import SearchCriteria\n",
             1,
-            "import backend.domain.retrieval.value_objects.SearchCriteria",
+            "import backend.domain.attachment.value_objects.SearchCriteria",
         ),
         (
-            "backend.domain.retrieval.value_objects",
+            "backend.domain.attachment.value_objects",
             "from .entities import SearchUnit\n",
             1,
-            "import backend.domain.retrieval.entities.SearchUnit",
+            "import backend.domain.attachment.entities.SearchUnit",
         ),
         (
-            "backend.domain.retrieval.entities",
+            "backend.domain.attachment.entities",
             "from .services import merge_evidence\n",
             1,
-            "import backend.domain.retrieval.services.merge_evidence",
+            "import backend.domain.attachment.services.merge_evidence",
         ),
         (
             "backend.application.medicine.suggestions",
@@ -950,9 +955,9 @@ def test_domain_has_no_compatibility_facades() -> None:
         ),
         (
             "backend.presentation.search_routes",
-            "from ..domain.retrieval.repositories import EvidenceRepository\n",
+            "from ..domain.attachment.repositories import EvidenceRepository\n",
             1,
-            "import backend.domain.retrieval.repositories.EvidenceRepository",
+            "import backend.domain.attachment.repositories.EvidenceRepository",
         ),
         (
             "backend.infrastructure.persistence.postgres_registration",
@@ -961,10 +966,10 @@ def test_domain_has_no_compatibility_facades() -> None:
             "import backend.infrastructure.composition.app_lifespan.create_app_lifespan",
         ),
         (
-            "backend.domain.retrieval.primitives",
+            "backend.domain.attachment.primitives",
             "from . import value_objects\n",
             1,
-            "import backend.domain.retrieval.value_objects",
+            "import backend.domain.attachment.value_objects",
         ),
         (
             "backend.application.medicine.suggestions",
@@ -986,9 +991,9 @@ def test_domain_has_no_compatibility_facades() -> None:
         ),
         (
             "backend.presentation.search_routes",
-            "from ..domain.retrieval import repositories\n",
+            "from ..domain.attachment import repositories\n",
             1,
-            "import backend.domain.retrieval.repositories",
+            "import backend.domain.attachment.repositories",
         ),
         (
             "backend.infrastructure.persistence.postgres_registration",
@@ -998,15 +1003,15 @@ def test_domain_has_no_compatibility_facades() -> None:
         ),
         (
             "backend.presentation.request_logging",
-            "from ..domain.retrieval.value_objects import Evidence\n",
+            "from ..domain.attachment.value_objects import Evidence\n",
             1,
-            "import backend.domain.retrieval.value_objects.Evidence",
+            "import backend.domain.attachment.value_objects.Evidence",
         ),
         (
             "backend.presentation.request_logging",
-            'def f(x: "backend.domain.retrieval.value_objects.Evidence") -> None:\n    pass\n',
+            'def f(x: "backend.domain.attachment.value_objects.Evidence") -> None:\n    pass\n',
             1,
-            "annotation backend.domain.retrieval.value_objects.Evidence",
+            "annotation backend.domain.attachment.value_objects.Evidence",
         ),
         (
             "backend.presentation.chat_service",
@@ -1015,31 +1020,31 @@ def test_domain_has_no_compatibility_facades() -> None:
             "annotation backend.domain.medicine.entities.MedicineProduct",
         ),
         (
-            "backend.domain.retrieval.services",
+            "backend.domain.attachment.services",
             "from ..medicine.entities import MedicineProduct\n",
             1,
             "import backend.domain.medicine.entities.MedicineProduct",
         ),
         (
-            "backend.domain.retrieval.services",
+            "backend.domain.attachment.services",
             'def f(x: "backend.domain.medicine.entities.MedicineProduct") -> None:\n    pass\n',
             1,
             "annotation backend.domain.medicine.entities.MedicineProduct",
         ),
         (
             "backend.domain.foundation.primitives.base",
-            "from ...retrieval.primitives import SearchKeyword\n",
+            "from ...attachment.primitives import AttachmentText\n",
             1,
-            "import backend.domain.retrieval.primitives.SearchKeyword",
+            "import backend.domain.attachment.primitives.AttachmentText",
         ),
         (
             "backend.domain.shared.services",
-            'def f(x: "backend.domain.retrieval.primitives.SearchKeyword") -> None:\n    pass\n',
+            'def f(x: "backend.domain.attachment.primitives.AttachmentText") -> None:\n    pass\n',
             1,
-            "annotation backend.domain.retrieval.primitives.SearchKeyword",
+            "annotation backend.domain.attachment.primitives.AttachmentText",
         ),
         (
-            "backend.domain.retrieval.primitives",
+            "backend.domain.attachment.primitives",
             "from ..shared.services import normalize_match_text\n",
             1,
             "import backend.domain.shared.services.normalize_match_text",
@@ -1057,10 +1062,10 @@ def test_domain_has_no_compatibility_facades() -> None:
             "annotation backend.application.retrieval.snapshot_contracts.RetrievalSnapshotProvider",
         ),
         (
-            "backend.application.retrieval.retrieve_evidence",
-            "from ..indexing.attachment_projection import project_attachment\n",
+            "backend.application.indexing.attachment_projection",
+            "from ..retrieval.retrieve_evidence import retrieve_evidence\n",
             1,
-            "import backend.application.indexing.attachment_projection.project_attachment",
+            "import backend.application.retrieval.retrieve_evidence.retrieve_evidence",
         ),
         (
             "backend.infrastructure.persistence.postgres_registration",
@@ -1087,28 +1092,28 @@ def test_domain_has_no_compatibility_facades() -> None:
             "import backend",
         ),
         (
-            "backend.domain.retrieval.primitives",
-            "import backend.domain.retrieval.exceptions\nx: backend.domain.retrieval.value_objects.SearchCriteria\n",
+            "backend.domain.attachment.primitives",
+            "import backend.domain.attachment.exceptions\nx: backend.domain.attachment.value_objects.SearchCriteria\n",
             2,
-            "annotation backend.domain.retrieval.value_objects.SearchCriteria",
+            "annotation backend.domain.attachment.value_objects.SearchCriteria",
         ),
         (
-            "backend.domain.retrieval.primitives",
-            "import backend.domain.retrieval.exceptions\nx = backend.domain.retrieval.value_objects.SearchCriteria\n",
+            "backend.domain.attachment.primitives",
+            "import backend.domain.attachment.exceptions\nx = backend.domain.attachment.value_objects.SearchCriteria\n",
             2,
-            "import backend.domain.retrieval.value_objects.SearchCriteria",
+            "import backend.domain.attachment.value_objects.SearchCriteria",
         ),
         (
             "backend.presentation.chat_service",
-            "from ..domain.retrieval.repositories import EvidenceRepository\n",
+            "from ..domain.attachment.repositories import EvidenceRepository\n",
             1,
-            "import backend.domain.retrieval.repositories.EvidenceRepository",
+            "import backend.domain.attachment.repositories.EvidenceRepository",
         ),
         (
             "backend.presentation.evidence_models",
-            "from ..domain.retrieval.primitives import DetectionSource\n",
+            "from ..domain.attachment.primitives import DetectionSource\n",
             1,
-            "import backend.domain.retrieval.primitives.DetectionSource",
+            "import backend.domain.attachment.primitives.DetectionSource",
         ),
         (
             "backend.presentation.chat_models",
@@ -1199,7 +1204,7 @@ def test_import_linter_contracts_detect_submodule_violations() -> None:
     synthetic_violations = (
         (
             "Domain does not depend on outer layers",
-            "backend.domain.retrieval.services",
+            "backend.domain.attachment.services",
             "backend.application.chat.answer_question",
         ),
         (
@@ -1220,32 +1225,32 @@ def test_import_linter_contracts_detect_submodule_violations() -> None:
         (
             "Config does not depend on layers",
             "backend.config.runtime_settings",
-            "backend.domain.retrieval.services",
+            "backend.domain.attachment.services",
         ),
         (
             "Presentation does not depend on domain",
             "backend.presentation.search_routes",
-            "backend.domain.retrieval.services",
+            "backend.domain.attachment.services",
         ),
         (
             "Presentation does not depend on domain",
             "backend.presentation.search_routes",
-            "backend.domain.retrieval.value_objects",
+            "backend.domain.attachment.value_objects",
         ),
         (
             "Presentation does not depend on domain",
             "backend.presentation.chat_service",
-            "backend.domain.retrieval.repositories",
+            "backend.domain.attachment.repositories",
         ),
         (
             "Presentation does not depend on domain",
             "backend.presentation.evidence_models",
-            "backend.domain.retrieval.primitives",
+            "backend.domain.attachment.primitives",
         ),
         (
             "Presentation does not depend on domain",
             "backend.presentation.chat_dto_mapper",
-            "backend.domain.retrieval.value_objects",
+            "backend.domain.attachment.value_objects",
         ),
         (
             "Presentation does not depend on domain",
@@ -1299,8 +1304,8 @@ def test_import_linter_contracts_detect_submodule_violations() -> None:
         ),
         (
             "Application contexts follow directed pipeline boundaries",
-            "backend.application.retrieval.retrieve_evidence",
             "backend.application.indexing.attachment_projection",
+            "backend.application.retrieval.retrieve_evidence",
         ),
         (
             "Application contexts follow directed pipeline boundaries",
@@ -1344,43 +1349,43 @@ def test_import_linter_contracts_detect_submodule_violations() -> None:
         ),
         (
             "Domain contexts are independent",
-            "backend.domain.retrieval.services",
+            "backend.domain.attachment.services",
             "backend.domain.medicine.entities",
         ),
         (
             "Foundation does not depend on business vocabulary",
             "backend.domain.foundation.primitives.base",
-            "backend.domain.retrieval.primitives",
+            "backend.domain.attachment.primitives",
         ),
         (
             "Shared does not depend on business contexts",
             "backend.domain.shared.services",
-            "backend.domain.retrieval.primitives",
+            "backend.domain.attachment.primitives",
         ),
         (
             "Public identifiers do not expose business implementation",
-            "backend.domain.retrieval.identifiers",
-            "backend.domain.retrieval.primitives",
+            "backend.domain.attachment.identifiers",
+            "backend.domain.attachment.primitives",
         ),
         (
             "Domain primitives do not depend on value objects, entities, repositories, or services",
-            "backend.domain.retrieval.primitives",
-            "backend.domain.retrieval.value_objects",
+            "backend.domain.attachment.primitives",
+            "backend.domain.attachment.value_objects",
         ),
         (
             "Domain value objects do not depend on entities, repositories, or services",
-            "backend.domain.retrieval.value_objects",
-            "backend.domain.retrieval.entities",
+            "backend.domain.attachment.value_objects",
+            "backend.domain.attachment.entities",
         ),
         (
             "Domain entities do not depend on repositories or services",
-            "backend.domain.retrieval.entities",
-            "backend.domain.retrieval.services",
+            "backend.domain.attachment.entities",
+            "backend.domain.attachment.services",
         ),
         (
             "Domain repositories do not depend on services",
-            "backend.domain.retrieval.repositories",
-            "backend.domain.retrieval.services",
+            "backend.domain.attachment.repositories",
+            "backend.domain.attachment.services",
         ),
     )
 
@@ -1487,7 +1492,6 @@ def test_each_domain_context_exposes_exactly_one_public_identifier() -> None:
     expected = {
         "attachment": ["DocumentId"],
         "medicine": ["YjCode"],
-        "retrieval": ["SearchUnitId"],
     }
     actual: dict[str, list[str]] = {}
     for context_name in sorted(expected):
@@ -1616,3 +1620,56 @@ def test_response_dto_rule_detects_reverse_conversions(source, forbidden) -> Non
     )
     detected = any("response DTO" in violation for violation in violations)
     assert detected is forbidden
+
+
+def test_retrieval_is_owned_by_application_without_domain_facade():
+    assert not (BACKEND_ROOT / "domain" / "retrieval").joinpath("__init__.py").exists()
+    assert not list((BACKEND_ROOT / "domain" / "retrieval").glob("*.py"))
+    for directory in (
+        BACKEND_ROOT,
+        BACKEND_ROOT.parent / "frontend" / "scripts",
+        BACKEND_ROOT.parent / "scripts",
+    ):
+        for path in directory.rglob("*.py"):
+            if "tests" in path.relative_to(BACKEND_ROOT.parent).parts:
+                continue
+            assert "domain.retrieval" not in path.read_text(encoding="utf-8"), path
+
+
+@pytest.mark.parametrize(
+    "caller, target, allowed",
+    [
+        (
+            "backend.application.retrieval.search_models",
+            "backend.application.indexing.search_values.SearchUnitId",
+            True,
+        ),
+        (
+            "backend.application.indexing.search_models",
+            "backend.application.retrieval.search_models.Evidence",
+            False,
+        ),
+        (
+            "backend.application.retrieval.search_values",
+            "backend.application.retrieval.search_models.SearchCriteria",
+            False,
+        ),
+        (
+            "backend.domain.attachment.services",
+            "backend.application.retrieval.search_policy.merge_evidence",
+            False,
+        ),
+    ],
+)
+def test_search_application_ownership_boundaries(caller, target, allowed):
+    source = (
+        "from "
+        + target.rsplit(".", 1)[0]
+        + " import "
+        + target.rsplit(".", 1)[1]
+        + "\n"
+    )
+    violations = find_inner_layer_violations(
+        source, module_name=caller, filename="fixture.py"
+    )
+    assert (not violations) is allowed

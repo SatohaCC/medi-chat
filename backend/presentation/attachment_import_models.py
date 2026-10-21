@@ -9,7 +9,7 @@ class UploadRequest(BaseModel):
 
     filename: str = Field(min_length=1, max_length=255)
     byte_size: int = Field(ge=1, le=MAX_SOURCE_BYTES)
-    source_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    source_sha256: str
 
 
 class UploadResponse(BaseModel):

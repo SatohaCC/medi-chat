@@ -10,10 +10,13 @@ import threading
 import time
 
 import pytest
+from backend.application.indexing.search_values import SearchSectionCode
 from backend.application.medicine.product_models import ResolvedMedicine
+from backend.application.retrieval.search_models import SearchCriteria
+from backend.application.retrieval.search_values import DetectionSource
+from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.primitives import BrandName, MatchedAlias
 from backend.domain.medicine.value_objects import MedicineMatch
-from backend.domain.retrieval.primitives import DetectionSource, SearchSectionCode
-from backend.domain.retrieval.value_objects import SearchCriteria
 from backend.infrastructure.persistence import postgres_schema as s
 from backend.infrastructure.persistence.postgres_runtime import PostgresRuntime
 from backend.infrastructure.persistence.read_workers import ReadWorkers
@@ -29,7 +32,17 @@ from sqlalchemy.exc import DBAPIError
 
 
 def target(code="111111111111"):
-    return (ResolvedMedicine(MedicineMatch("", (), (code,), ()), ("000001_test",)),)
+    return (
+        ResolvedMedicine(
+            MedicineMatch(
+                generic_name=None,
+                brand_names=tuple(BrandName(value) for value in ()),
+                yj_codes=tuple(YjCode(value) for value in (code,)),
+                matched_aliases=tuple(MatchedAlias(value) for value in ()),
+            ),
+            ("000001_test",),
+        ),
+    )
 
 
 def warning_criteria():
@@ -97,12 +110,12 @@ async def test_pg023_scope_reads_old_rows_after_other_process_publication_and_de
                 warning_criteria(), target()
             )
             assert medicines[0].revision.to_dict()["year_month"] == "2026-10"
-            assert len(evidence) == 1 and "テスト旧根拠" in evidence[0].excerpt
+            assert len(evidence) == 1 and "テスト旧根拠" in evidence[0].excerpt.value
             assert evidence[0].document_revision.to_dict()["year_month"] == "2026-10"
         async with runtime.acquire() as current:
             assert current.generation_id.value == new["generation"]
             result = await current.evidence_reader.search(warning_criteria(), target())
-            assert len(result) == 1 and "テスト新根拠" in result[0].excerpt
+            assert len(result) == 1 and "テスト新根拠" in result[0].excerpt.value
         assert pg_engines[1].pool.checkedout() == 0
     finally:
         await workers.aclose()

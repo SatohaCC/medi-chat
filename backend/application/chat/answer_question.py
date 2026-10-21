@@ -3,9 +3,9 @@
 from collections.abc import Callable, Sequence
 
 from backend.application.medicine.product_contracts import RegisteredMedicineReader
+from backend.application.retrieval.evidence_contracts import EvidenceRepository
+from backend.application.retrieval.search_models import IntentPolicy
 
-from ...domain.retrieval.repositories import EvidenceRepository
-from ...domain.retrieval.value_objects import IntentPolicy
 from ..retrieval.intent_contracts import IntentClassifier
 from ..retrieval.keyword_contracts import KeywordExtractor
 from ..retrieval.snapshot_contracts import RetrievalSnapshotProvider

@@ -16,6 +16,7 @@ from backend.domain.attachment.primitives import (
     AttachmentProductCode,
     AttachmentSectionTitle,
     AttachmentSha256,
+    AttachmentSourceOrder,
     AttachmentText,
     AttachmentUrl,
     NumberedSectionCode,
@@ -50,7 +51,7 @@ def complete_document() -> AttachmentDocument:
     context = AttachmentContext(
         product_codes=(AttachmentProductCode("1234567A0000"),),
         labels=(AttachmentText(" テスト製品文脈\n"),),
-        source_order=19,
+        source_order=AttachmentSourceOrder(19),
     )
     reference = AttachmentReference(
         label=AttachmentText("参照1"),
@@ -108,7 +109,9 @@ def complete_document() -> AttachmentDocument:
                                 ),
                                 column_contexts=(
                                     context,
-                                    AttachmentContext(source_order=20),
+                                    AttachmentContext(
+                                        source_order=AttachmentSourceOrder(20)
+                                    ),
                                 ),
                                 rows=(
                                     (
@@ -169,14 +172,27 @@ def test_pg009_complete_structure_survives_json_roundtrip() -> None:
     )
     assert observe(restored) == observe(original)
     assert restored.sections[0].body is not None
-    assert restored.sections[0].body.blocks[0].context.source_order == 19
-    assert restored.reference_targets[0].context.source_order == 19
+    assert restored.sections[0].body.blocks[
+        0
+    ].context.source_order == AttachmentSourceOrder(19)
+    assert restored.reference_targets[0].context.source_order == AttachmentSourceOrder(
+        19
+    )
     assert payload["schema_version"] == 1
     assert payload["transformer_version"] == "attachment-domain.v1"
 
 
 @pytest.mark.parametrize(
-    "damage", ["schema", "transformer", "missing", "invariant", "reference"]
+    "damage",
+    [
+        "schema",
+        "transformer",
+        "missing",
+        "invariant",
+        "reference",
+        "source_order",
+        "heading",
+    ],
 )
 def test_pg010_corrupt_structure_is_rejected(damage: str) -> None:
     payload = deepcopy(document_to_payload(complete_document()))
@@ -188,6 +204,12 @@ def test_pg010_corrupt_structure_is_rejected(damage: str) -> None:
         del payload["document"]["source"]
     elif damage == "invariant":
         payload["document"]["sections"][0]["children"][0]["code"] = "11.1"
+    elif damage == "source_order":
+        payload["document"]["sections"][0]["body"]["blocks"][0]["context"][
+            "source_order"
+        ] = True
+    elif damage == "heading":
+        payload["document"]["sections"][0]["body"]["blocks"][0]["is_heading"] = 1
     else:
         payload["document"]["reference_targets"] = []
     with pytest.raises(ValueError):

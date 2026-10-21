@@ -12,28 +12,33 @@ from unittest.mock import AsyncMock
 
 import pytest
 from backend.application.chat.answer_prompt_builder import build_answer_system_prompt
+from backend.application.indexing.search_models import DocumentRevision
+from backend.application.indexing.search_values import SearchUnitId, SearchUnitKind
+from backend.application.indexing.text_projection import format_scoped_text
 from backend.application.medicine.product_models import ResolvedMedicine
 from backend.application.retrieval.intent_contracts import IntentRequest
-from backend.domain.attachment.identifiers import DocumentId
-from backend.domain.medicine.identifiers import YjCode
-from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
-from backend.domain.retrieval.identifiers import SearchUnitId
-from backend.domain.retrieval.primitives import (
-    DetectionSource,
-)
-from backend.domain.retrieval.services import (
-    detect_intents_from_keywords,
-    evidence_section_sort_key,
-    format_scoped_text,
-)
-from backend.domain.retrieval.value_objects import (
-    DocumentRevision,
+from backend.application.retrieval.search_models import (
     Evidence,
     EvidenceColumns,
     EvidenceReference,
     EvidenceSection,
 )
-from backend.domain.retrieval.value_objects import Evidence as ChatSource
+from backend.application.retrieval.search_models import Evidence as ChatSource
+from backend.application.retrieval.search_policy import (
+    detect_intents_from_keywords,
+    evidence_section_sort_key,
+)
+from backend.application.retrieval.search_values import (
+    DetectionSource,
+    EvidenceExcerpt,
+    EvidenceGenericName,
+    EvidenceProductName,
+    EvidenceSourceUrl,
+)
+from backend.domain.attachment.identifiers import DocumentId
+from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.primitives import BrandName, GenericName
+from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.infrastructure.evidence_mapping import build_evidence as evidence_from_unit
 from backend.infrastructure.intent.jev_classifier import JevIntentClassifier
 from backend.infrastructure.morphology.keyword_extraction import extract_search_keywords
@@ -73,16 +78,16 @@ def _source(**values: Any) -> ChatSource:
     return ChatSource(
         unit_id=SearchUnitId.from_value(values.pop("unit_id", "unit-1")),
         document_id=DocumentId("document-1"),
-        product_name="テスト製品",
-        generic_name="テスト成分",
+        product_name=EvidenceProductName("テスト製品"),
+        generic_name=EvidenceGenericName("テスト成分"),
         product_yj_codes=(YjCode("1234567A0000"),),
         document_revision=DocumentRevision(values.pop("document_revision", {})),
-        url=values.pop("url", "https://example.test/source"),
+        url=EvidenceSourceUrl(values.pop("url", "https://example.test/source")),
         section=EvidenceSection(
             values.pop("section", {"code": "1", "title": "原文の見出し"})
         ),
-        kind="item",
-        excerpt="原文の本文",
+        kind=SearchUnitKind("item"),
+        excerpt=EvidenceExcerpt("原文の本文"),
         columns=EvidenceColumns(columns) if columns is not None else None,
         references=tuple(EvidenceReference(ref) for ref in references),
         retrieved_by=frozenset({DetectionSource(retrieved_by)})
@@ -131,7 +136,7 @@ async def test_明示注入したカタログを再読込せず各利用先に�
         pytest.fail("明示注入後にバックエンドが共有カタログを再読込した")
 
     for module_name in (
-        "backend.domain.retrieval.services",
+        "backend.application.retrieval.search_policy",
         "backend.infrastructure.morphology.keyword_extraction",
         "backend.application.chat.answer_prompt_builder",
         "backend.infrastructure.intent.jev_classifier",
@@ -557,7 +562,9 @@ def test_専用指示の項目名を生成し根拠原文を保持する(
     activate_catalog(catalog_data)
     medicine = ResolvedMedicine(
         medicine=DomainMedicineMatch(
-            generic_name="成分", brand_names=("製品",), yj_codes=("1234567A0000",)
+            generic_name=GenericName("成分"),
+            brand_names=tuple(BrandName(value) for value in ("製品",)),
+            yj_codes=tuple(YjCode(value) for value in ("1234567A0000",)),
         ),
         document_ids=("document-1",),
     )
@@ -630,14 +637,14 @@ def test_根拠一覧の項目番号順を維持する(
         Evidence(
             unit_id=SearchUnitId(f"test_001:{index:03d}"),
             document_id=DocumentId("test_001"),
-            product_name="テスト薬",
-            generic_name="テスト成分",
+            product_name=EvidenceProductName("テスト薬"),
+            generic_name=EvidenceGenericName("テスト成分"),
             product_yj_codes=(YjCode("1234567A0000"),),
             document_revision=DocumentRevision({}),
             section=EvidenceSection({"code": code}),
-            kind="text",
-            excerpt="原文の本文",
-            url="https://example.test/package-insert",
+            kind=SearchUnitKind("text"),
+            excerpt=EvidenceExcerpt("原文の本文"),
+            url=EvidenceSourceUrl("https://example.test/package-insert"),
         )
         for index, code in enumerate(codes)
     ]

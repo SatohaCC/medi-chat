@@ -16,6 +16,7 @@ from ...domain.attachment.primitives import (
     AttachmentProductCode,
     AttachmentSectionTitle,
     AttachmentSha256,
+    AttachmentSourceOrder,
     AttachmentText,
     AttachmentUrl,
     NumberedSectionCode,
@@ -64,7 +65,9 @@ def _context(fragment: dict[str, Any]) -> AttachmentContext:
             AttachmentProductCode(code) for code in fragment["product_yj_codes"]
         ),
         labels=tuple(AttachmentText(label) for label in fragment["context_labels"]),
-        source_order=fragment.get("source_order"),
+        source_order=AttachmentSourceOrder(order)
+        if (order := fragment.get("source_order")) is not None
+        else None,
     )
 
 
@@ -107,7 +110,7 @@ def _blocks(
         adjacent = (
             previous_order is None
             or context.source_order is None
-            or context.source_order == previous_order + 1
+            or context.source_order.value == previous_order + 1
         )
         references = _references(fragment)
         key = None
@@ -236,7 +239,9 @@ def _blocks(
                 )
             )
         table_key = key
-        previous_order = context.source_order
+        previous_order = (
+            context.source_order.value if context.source_order is not None else None
+        )
     return tuple(blocks)
 
 

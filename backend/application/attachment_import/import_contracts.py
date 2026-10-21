@@ -1,8 +1,9 @@
 from collections.abc import Callable
 from typing import Protocol
 
+from backend.application.indexing.search_models import SearchUnit
+
 from ...domain.attachment.entities import AttachmentDocument
-from ...domain.retrieval.entities import SearchUnit
 from .import_models import ArtifactBundle, DecodedAttachment, ImportPage, ImportResult
 
 

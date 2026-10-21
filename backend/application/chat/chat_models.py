@@ -4,9 +4,9 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from backend.application.medicine.product_models import ResolvedMedicine
+from backend.application.retrieval.search_models import Evidence
 
 from ...domain.foundation.json_types import JsonValue
-from ...domain.retrieval.value_objects import Evidence
 
 
 @dataclass

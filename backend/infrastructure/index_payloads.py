@@ -4,9 +4,24 @@ import html
 import json
 from typing import Any
 
+from backend.application.indexing.search_models import (
+    SearchContentBlock,
+    SearchContentReference,
+    SearchParagraph,
+    SearchTableBlock,
+    SearchUnit,
+)
 from backend.application.medicine.product_models import RegisteredMedicine
+from backend.application.retrieval.search_policy import section_code_matches
 from backend.domain.attachment.value_objects import MedicineDocumentReference
 from backend.domain.medicine.entities import MedicineProduct
+from backend.domain.medicine.primitives import (
+    BrandName,
+    EnglishName,
+    GenericName,
+    HiraganaName,
+)
+from backend.domain.medicine.value_objects import MedicineNames
 
 from ..application.attachment_import.import_models import (
     ImportedProduct,
@@ -21,14 +36,6 @@ from ..domain.attachment.primitives import PmdaUrl
 from ..domain.attachment.value_objects import AttachmentProductRevision
 from ..domain.foundation.json_types import JsonValue
 from ..domain.medicine.identifiers import YjCode
-from ..domain.retrieval.entities import SearchUnit
-from ..domain.retrieval.services import section_code_matches
-from ..domain.retrieval.value_objects import (
-    SearchContentBlock,
-    SearchContentReference,
-    SearchParagraph,
-    SearchTableBlock,
-)
 from ..domain.shared.services import normalize_search_text
 
 MAX_ARTIFACT_BYTES = 32 * 1024 * 1024
@@ -134,7 +141,7 @@ def _block(block: SearchContentBlock) -> tuple[str, dict[str, Any]]:
             rows.append(
                 "<tr>"
                 + "".join(
-                    f'<td rowspan="{cell.rowspan}" colspan="{cell.colspan}">{html.escape(cell.text.value).replace(chr(10), "<br>")}</td>'
+                    f'<td rowspan="{cell.rowspan.value}" colspan="{cell.colspan.value}">{html.escape(cell.text.value).replace(chr(10), "<br>")}</td>'
                     for cell in row
                 )
                 + "</tr>"
@@ -143,9 +150,9 @@ def _block(block: SearchContentBlock) -> tuple[str, dict[str, Any]]:
                 [
                     {
                         "text": cell.text.value,
-                        "column": cell.column,
-                        "rowspan": cell.rowspan,
-                        "colspan": cell.colspan,
+                        "column": cell.column.value,
+                        "rowspan": cell.rowspan.value,
+                        "colspan": cell.colspan.value,
                         "product_yj_codes": [
                             code.value for code in cell.context.product_codes
                         ],
@@ -351,6 +358,14 @@ def _string(value: JsonValue) -> str:
     return value
 
 
+def _optional_name_text(value: JsonValue) -> str | None:
+    """任意名称の不在を識別し、実在する原表記は変更しない。"""
+    if value is None:
+        return None
+    text = _string(value)
+    return text if text.strip() else None
+
+
 def _objects(value: JsonValue) -> list[dict[str, JsonValue]]:
     if not isinstance(value, list):
         raise TypeError("Expected a JSON array")
@@ -405,10 +420,24 @@ def build_index_document(
             RegisteredMedicine(
                 medicine=MedicineProduct(
                     yj_code=YjCode(_string(yj_code)) if yj_code is not None else None,
-                    brand_name=_string(product.get("brand_name") or ""),
-                    generic_name=_string(metadata.get("generic_name") or ""),
-                    english_name=_string(product.get("english_name") or ""),
-                    hiragana_name=_string(product.get("hiragana_name") or ""),
+                    names=MedicineNames(
+                        brand_name=BrandName(name)
+                        if (name := _optional_name_text(product.get("brand_name")))
+                        is not None
+                        else None,
+                        generic_name=GenericName(name)
+                        if (name := _optional_name_text(metadata.get("generic_name")))
+                        is not None
+                        else None,
+                        english_name=EnglishName(name)
+                        if (name := _optional_name_text(product.get("english_name")))
+                        is not None
+                        else None,
+                        hiragana_name=HiraganaName(name)
+                        if (name := _optional_name_text(product.get("hiragana_name")))
+                        is not None
+                        else None,
+                    ),
                 ),
                 reference=MedicineDocumentReference(
                     document_id=DocumentId(document_id),

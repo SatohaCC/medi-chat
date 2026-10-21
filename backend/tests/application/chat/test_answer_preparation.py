@@ -12,6 +12,12 @@ from backend.application.medicine.product_models import RegisteredMedicine
 from backend.application.retrieval import retrieve_evidence as retrieval
 from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
 from backend.application.retrieval.jev_detector import JevDetectionResult
+from backend.application.retrieval.search_models import SearchCriteria
+from backend.application.retrieval.search_values import (
+    DetectionSource,
+    IntentName,
+    SearchKeyword,
+)
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.attachment.primitives import PmdaUrl
 from backend.domain.attachment.value_objects import (
@@ -20,16 +26,15 @@ from backend.domain.attachment.value_objects import (
 )
 from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.identifiers import YjCode
-from backend.domain.retrieval.primitives import (
-    DetectionSource,
-    IntentName,
-    SearchKeyword,
+from backend.domain.medicine.primitives import (
+    BrandName,
+    GenericName,
 )
-from backend.domain.retrieval.value_objects import SearchCriteria
+from backend.domain.medicine.value_objects import MedicineNames
 from backend.infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,
 )
-from backend.tests.domain.retrieval.test_evidence_collection import make_evidence
+from backend.tests.application.retrieval.test_evidence_collection import make_evidence
 
 
 class MedicineReader:
@@ -38,10 +43,12 @@ class MedicineReader:
             RegisteredMedicine(
                 medicine=MedicineProduct(
                     yj_code=YjCode("1234567A0000"),
-                    brand_name="商品",
-                    generic_name="成分",
-                    english_name="",
-                    hiragana_name="",
+                    names=MedicineNames(
+                        brand_name=BrandName("商品"),
+                        generic_name=GenericName("成分"),
+                        english_name=None,
+                        hiragana_name=None,
+                    ),
                 ),
                 reference=MedicineDocumentReference(
                     document_id=DocumentId("document"),
@@ -242,7 +249,7 @@ async def test_detector_completion_order_preserves_intent_and_first_content(
     assert reply.intent == ", ".join(names[source] for source in order)
     if collision:
         assert len(reply.sources) == 1
-        assert reply.sources[0].excerpt == f"{order[0]}の原文"
+        assert reply.sources[0].excerpt.value == f"{order[0]}の原文"
         assert reply.sources[0].retrieved_by == frozenset(["logic", "jev", "keyword"])
     else:
         assert [source.unit_id.value for source in reply.sources] == [
@@ -250,7 +257,7 @@ async def test_detector_completion_order_preserves_intent_and_first_content(
             "logic",
             "jev",
         ]
-        assert [source.excerpt for source in reply.sources] == [
+        assert [source.excerpt.value for source in reply.sources] == [
             "keywordの原文",
             "logicの原文",
             "jevの原文",
@@ -267,7 +274,7 @@ async def test_partially_unresolved_products_preserve_resolved_medicine_and_skip
     monkeypatch.setattr(retrieval, "detect_jev_criteria", jev)
     monkeypatch.setattr(retrieval, "detect_morphology_criteria", lambda *args: None)
     reader = OrderedEvidenceReader(False)
-    codes = ["1234567A0000", "unknown"]
+    codes = ["1234567A0000", "0000000A0000"]
     before = deepcopy(codes)
     reply = await preparation.prepare_reply(
         [ChatMessage(role="user", content="質問")],
@@ -286,7 +293,7 @@ async def test_partially_unresolved_products_preserve_resolved_medicine_and_skip
 
     all_unknown_reply = await preparation.prepare_reply(
         [ChatMessage(role="user", content="質問")],
-        ["unknown"],
+        ["0000000A0000"],
         medicine_reader=MedicineReader(),
         evidence_reader=reader,
         intent_classifier=UnusedIntentClassifier(),

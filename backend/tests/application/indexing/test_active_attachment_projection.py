@@ -3,6 +3,7 @@ import json
 from dataclasses import replace
 
 from backend.application.indexing.attachment_projection import project_active_attachment
+from backend.application.indexing.search_models import SearchTableBlock
 from backend.domain.attachment.primitives import (
     AttachmentProductCode,
     AttachmentSha256,
@@ -14,7 +15,6 @@ from backend.domain.attachment.value_objects import (
     AttachmentParagraph,
 )
 from backend.domain.medicine.identifiers import YjCode
-from backend.domain.retrieval.value_objects import SearchTableBlock
 from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
 from backend.infrastructure.pmda_xml.registration_artifacts import (
     encode_registered_units,
@@ -55,7 +55,7 @@ def test_tc092_xml_mixed_row_does_not_apply_first_child_scope_to_b_and_common():
     ]
     assert table.columns == ()  # Original first-row cells are not declared headings.
     assert [
-        [(c.text.value, c.column, c.rowspan, c.colspan) for c in row]
+        [(c.text.value, c.column.value, c.rowspan.value, c.colspan.value) for c in row]
         for row in table.rows
     ] == [
         [("B列", 0, 1, 1), ("共通列", 1, 1, 2)],

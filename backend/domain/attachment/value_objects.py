@@ -5,7 +5,6 @@ AttachmentRevision / Source / Product / Section は添付文書自体の構造�
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass, field
 
 from ..foundation.json_types import JsonValue
@@ -14,7 +13,6 @@ from ..medicine.identifiers import YjCode
 from .exceptions import (
     AttachmentDomainError,
     MissingOrInvalidYjError,
-    MissingRevisionError,
 )
 from .identifiers import DocumentId
 from .primitives import (
@@ -25,6 +23,7 @@ from .primitives import (
     AttachmentProductCode,
     AttachmentSectionTitle,
     AttachmentSha256,
+    AttachmentSourceOrder,
     AttachmentText,
     AttachmentUrl,
     DefinitionTitle,
@@ -71,33 +70,12 @@ class RegistrationVersion:
     revised_at: RevisionYearMonth
 
     def __post_init__(self) -> None:
-        if not isinstance(self.document_id, DocumentId) or not isinstance(
-            self.source_sha256, AttachmentSha256
-        ):
-            raise AttachmentDomainError(
-                "registration version requires typed document identity and source SHA256"
-            )
-        if (
-            not isinstance(self.yj_codes, frozenset)
-            or not self.yj_codes
-            or any(
-                not isinstance(code, YjCode)
-                or re.fullmatch(r"[0-9A-Z]{12}", code.value) is None
-                for code in self.yj_codes
-            )
-        ):
-            raise MissingOrInvalidYjError("missing_or_invalid_yj")
-        if not isinstance(self.revised_at, RevisionYearMonth):
-            raise MissingRevisionError("registration requires a revision month")
+        if not self.yj_codes:
+            raise MissingOrInvalidYjError("registration requires at least one YJ code")
 
     @property
     def version_id(self) -> DocumentVersionId:
         return DocumentVersionId(f"{self.document_id}:{self.source_sha256}")
-
-
-def _require_tuples(*values: object) -> None:
-    if any(not isinstance(value, tuple) for value in values):
-        raise AttachmentDomainError("content collections must be tuples")
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -121,14 +99,7 @@ class AttachmentContext:
     product_codes: tuple[AttachmentProductCode, ...] = ()
     labels: tuple[AttachmentText, ...] = ()
     # 文書全体での出現順。同じ文脈の隣接表行の結合判定には含めない。
-    source_order: int | None = field(default=None, compare=False)
-
-    def __post_init__(self) -> None:
-        _require_tuples(self.product_codes, self.labels)
-        if self.source_order is not None and (
-            type(self.source_order) is not int or self.source_order < 0
-        ):
-            raise AttachmentDomainError("source order must be a nonnegative integer")
+    source_order: AttachmentSourceOrder | None = field(default=None, compare=False)
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -151,9 +122,6 @@ class AttachmentTableCell:
     references: tuple[AttachmentReference, ...] = ()
     context: AttachmentContext = field(default_factory=AttachmentContext)
 
-    def __post_init__(self) -> None:
-        _require_tuples(self.references)
-
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class AttachmentTable:
@@ -164,7 +132,6 @@ class AttachmentTable:
     column_contexts: tuple[AttachmentContext, ...] = ()
 
     def __post_init__(self) -> None:
-        _require_tuples(self.columns, self.rows, self.column_contexts, *self.rows)
         if self.column_contexts and len(self.column_contexts) != len(self.columns):
             raise AttachmentDomainError("table column contexts must match headings")
 
@@ -176,18 +143,12 @@ class AttachmentParagraph:
     context: AttachmentContext = field(default_factory=AttachmentContext)
     references: tuple[AttachmentReference, ...] = ()
 
-    def __post_init__(self) -> None:
-        _require_tuples(self.references)
-
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class AttachmentTableBlock:
     table: AttachmentTable
     context: AttachmentContext = field(default_factory=AttachmentContext)
     references: tuple[AttachmentReference, ...] = ()
-
-    def __post_init__(self) -> None:
-        _require_tuples(self.references)
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -196,9 +157,6 @@ class AttachmentFigure:
     description: AttachmentText
     context: AttachmentContext = field(default_factory=AttachmentContext)
     references: tuple[AttachmentReference, ...] = ()
-
-    def __post_init__(self) -> None:
-        _require_tuples(self.references)
 
 
 type AttachmentBlock = AttachmentParagraph | AttachmentTableBlock | AttachmentFigure
@@ -210,9 +168,6 @@ class AttachmentBody:
 
     blocks: tuple[AttachmentBlock, ...] = ()
     text: AttachmentText | None = None
-
-    def __post_init__(self) -> None:
-        _require_tuples(self.blocks)
 
 
 # 添付文書自体: 改訂・原本の所在・掲載製品・項目階層
@@ -256,7 +211,6 @@ class AttachmentSection:
     children: tuple[AttachmentSection, ...] = ()
 
     def __post_init__(self) -> None:
-        _require_tuples(self.children)
         if any(child.parent_code != self.code for child in self.children):
             raise AttachmentDomainError(
                 "section children must have the owning parent code"

@@ -75,15 +75,15 @@ def test_attachment_url_rejects_non_string_with_domain_error(
         url_type(None)  # type: ignore[arg-type]
 
 
-def test_revision_normalizes_values_and_keeps_value_semantics() -> None:
+def test_revision_preserves_labels_and_normalizes_month() -> None:
     revision = AttachmentRevision(
         source_label=RevisionSourceLabel(" 今回 "),
         year_month=RevisionYearMonth(" ２０２６-０８ "),
         version=RevisionVersion(" 第５版 "),
     )
-    assert revision.source_label.value == "今回"
+    assert revision.source_label.value == " 今回 "
     assert revision.year_month.value == "2026-08"
-    assert revision.version.value == "第5版"
+    assert revision.version.value == " 第５版 "
     assert replace(revision) == revision
     with pytest.raises((FrozenInstanceError, AttributeError)):
         revision.version = RevisionVersion("第6版")  # type: ignore[misc]
@@ -162,8 +162,10 @@ def test_attachment_primitives_normalize_and_validate() -> None:
         AttachmentSectionTitle,
     ],
 )
-def test_attachment_text_primitives_normalize_and_reject_empty(primitive) -> None:
-    assert primitive(" Ａ ").value == "A"
+def test_attachment_text_primitives_preserve_original_and_reject_empty(
+    primitive,
+) -> None:
+    assert primitive(" Ａ ").value == " Ａ "
     with pytest.raises(DomainValidationError):
         primitive(" ")
     with pytest.raises(DomainValidationError):

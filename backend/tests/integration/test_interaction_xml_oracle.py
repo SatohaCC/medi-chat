@@ -11,16 +11,18 @@ from xml.etree import ElementTree as ET
 import pytest
 from backend.application.chat.answer_question import answer_question
 from backend.application.chat.chat_models import ChatMessage
+from backend.application.indexing.search_values import SearchSectionCode
 from backend.application.medicine.product_catalog import MedicineCatalog
+from backend.application.retrieval.evidence_payloads import evidence_payload
 from backend.application.retrieval.intent_contracts import IntentResult
 from backend.application.retrieval.retrieve_evidence import retrieve_evidence
-from backend.domain.retrieval.primitives import (
+from backend.application.retrieval.search_models import IntentCandidate, SearchCriteria
+from backend.application.retrieval.search_values import (
     DetectionSource,
     IntentName,
     Probability,
-    SearchSectionCode,
 )
-from backend.domain.retrieval.value_objects import IntentCandidate, SearchCriteria
+from backend.domain.medicine.identifiers import YjCode
 from backend.infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,
 )
@@ -97,7 +99,7 @@ class Cells(HTMLParser):
 
 
 def assert_source(source, document, code):
-    assert_public_source(source.to_dict(), document, code)
+    assert_public_source(evidence_payload(source), document, code)
 
 
 def assert_public_source(source, document, code):
@@ -487,7 +489,9 @@ async def test_tc121_complete_six_tables_and_original_reference_destinations(
     try:
         async with runtime.acquire() as snapshot:
             catalog = MedicineCatalog(await snapshot.medicine_reader.read_medicines())
-            selected = tuple(catalog.match_yj_codes([doc[2] for doc in DOCUMENTS]))
+            selected = tuple(
+                catalog.match_yj_codes(tuple(YjCode(doc[2]) for doc in DOCUMENTS))
+            )
             sources = await snapshot.evidence_reader.search(
                 SearchCriteria(
                     source=DetectionSource.LOGIC,

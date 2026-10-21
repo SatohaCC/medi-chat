@@ -1,3 +1,5 @@
+from backend.application.indexing.search_models import SearchUnit
+
 from ...application.attachment_import.import_errors import (
     ImportLimitExceeded,
     InvalidAttachment,
@@ -11,7 +13,6 @@ from ...application.attachment_import.import_models import (
     ImportWarning,
 )
 from ...domain.attachment.entities import AttachmentDocument
-from ...domain.retrieval.entities import SearchUnit
 from ..index_payloads import (
     MAX_ARTIFACT_BYTES,
     encode_registered_units,

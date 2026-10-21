@@ -1,9 +1,10 @@
 """TC08/10/15/21: explicit purpose policies never return to the definition source."""
 
 from dataclasses import replace
-from types import MappingProxyType
 
 import pytest
+from backend.application.retrieval.search_models import SymptomKeywordRule
+from backend.application.retrieval.search_values import SearchPolicyTerm
 from backend.domain.foundation.json_types import JsonValue
 
 
@@ -13,7 +14,8 @@ def test_tc15_mapping_uses_injected_heading_policy(monkeypatch) -> None:
 
     definitions = loader.get_package_insert_definitions()
     policy = replace(
-        definitions.text_search_policy, scope_heading_texts=frozenset({"特別見出し"})
+        definitions.text_search_policy,
+        scope_heading_texts=frozenset({SearchPolicyTerm("特別見出し")}),
     )
 
     def forbid(*args, **kwargs):
@@ -47,8 +49,14 @@ def test_janome_business_and_morphology_settings_are_independent(monkeypatch) ->
     business = JanomeKeywordExtractor(
         search_policy=replace(
             definitions.text_search_policy,
-            stop_words=definitions.text_search_policy.stop_words | {"改善"},
-            symptom_keywords_by_adjective=MappingProxyType({"眠い": ("眠気変更",)}),
+            stop_words=definitions.text_search_policy.stop_words
+            | {SearchPolicyTerm("改善")},
+            symptom_rules=(
+                SymptomKeywordRule(
+                    adjective=SearchPolicyTerm("眠い"),
+                    keywords=(SearchPolicyTerm("眠気変更"),),
+                ),
+            ),
         ),
         morphology_settings=definitions.morphology_settings,
     )

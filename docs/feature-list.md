@@ -47,12 +47,12 @@
 
 | ID | 機能 | 現在の内容 | 主な実装 |
 | --- | --- | --- | --- |
-| SEARCH-01 | ルールベース意図判定 | 禁忌、用法用量、妊婦、腎機能、副作用などをキーワードで判定する | `backend/domain/retrieval/services.py` |
+| SEARCH-01 | ルールベース意図判定 | 禁忌、用法用量、妊婦、腎機能、副作用などをキーワードで判定する | `backend/application/retrieval/search_policy.py` |
 | SEARCH-02 | セクション検索 | 意図をPMDAセクション番号に変換して検索する | `backend/infrastructure/persistence/evidence_reader.py` |
 | SEARCH-03 | 全文キーワード検索 | Janomeで質問からキーワードを抽出し、対象薬の文書全体を検索する | `backend/application/retrieval/morphology_detector.py`, `backend/infrastructure/morphology/janome_keyword_extractor.py` |
 | SEARCH-04 | 複数薬剤の相互作用検索 | 指定薬の相互作用セクションを通常の検索条件で取得する。2剤間専用の直接記載判定は現行実装に含まれない | `backend/application/chat/answer_preparation.py`, `backend/infrastructure/persistence/evidence_reader.py` |
 | SEARCH-05 | Jev意図判定 | AIで複数の候補意図・確信度を判定し、該当セクションを追加取得する | `backend/application/retrieval/jev_detector.py`, `backend/infrastructure/intent/jev_classifier.py` |
-| SEARCH-06 | 検索結果マージ | ルール、Jev、キーワードの結果をIDで重複排除し、取得元を表示する | `backend/domain/retrieval/entities.py` |
+| SEARCH-06 | 検索結果マージ | ルール、Jev、キーワードの結果をIDで重複排除し、取得元を表示する | `backend/application/retrieval/search_policy.py` |
 
 ### D. 回答生成
 

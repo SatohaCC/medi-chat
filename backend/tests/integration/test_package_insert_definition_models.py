@@ -104,7 +104,6 @@ def test_tc01_single_source_bytes_and_tc03_constructor_ownership() -> None:
 @pytest.mark.parametrize(
     "member",
     [
-        "text_search_policy.symptom_keywords_by_adjective",
         "answer_prompt_policy.intent_labels",
         "answer_prompt_policy.guidance",
         "xml_settings.sections_by_xml_tag",

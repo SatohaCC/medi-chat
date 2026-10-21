@@ -56,7 +56,12 @@ skills-lock.json
 .DS_Store
 Thumbs.db
 
-for-llm
+# Shared agent guidance is versioned; local task records remain private.
+/for-llm/*
+!/for-llm/README.md
+!/for-llm/guides/
+!/for-llm/lessons/
+!/for-llm/archive/
 
 # Package insert source/body datasets are supplied locally, not redistributed.
 /data/pmda/originals/

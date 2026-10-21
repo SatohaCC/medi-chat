@@ -16,7 +16,9 @@ def _context(value: v.AttachmentContext) -> dict[str, Any]:
     return {
         "product_codes": [code.value for code in value.product_codes],
         "labels": [label.value for label in value.labels],
-        "source_order": value.source_order,
+        "source_order": value.source_order.value
+        if value.source_order is not None
+        else None,
     }
 
 
@@ -26,7 +28,9 @@ def _read_context(value: dict[str, Any]) -> v.AttachmentContext:
             p.AttachmentProductCode(code) for code in value["product_codes"]
         ),
         labels=tuple(p.AttachmentText(label) for label in value["labels"]),
-        source_order=value["source_order"],
+        source_order=p.AttachmentSourceOrder(value["source_order"])
+        if value["source_order"] is not None
+        else None,
     )
 
 

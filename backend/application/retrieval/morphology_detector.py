@@ -2,8 +2,9 @@
 
 from collections.abc import Iterable
 
-from ...domain.retrieval.primitives import DetectionSource, SearchKeyword
-from ...domain.retrieval.value_objects import SearchCriteria
+from backend.application.retrieval.search_models import SearchCriteria
+from backend.application.retrieval.search_values import DetectionSource, SearchKeyword
+
 from .keyword_contracts import KeywordExtractor
 
 

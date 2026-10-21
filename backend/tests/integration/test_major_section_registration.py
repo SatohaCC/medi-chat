@@ -1,13 +1,11 @@
 """大項目データの実保存・再起動・PostgreSQL snapshot検索を検証する。"""
 
 import pytest
+from backend.application.indexing.search_values import SearchSectionCode
 from backend.application.medicine.product_catalog import MedicineCatalog
-from backend.domain.retrieval.primitives import (
-    DetectionSource,
-    SearchKeyword,
-    SearchSectionCode,
-)
-from backend.domain.retrieval.value_objects import SearchCriteria
+from backend.application.retrieval.search_models import SearchCriteria
+from backend.application.retrieval.search_values import DetectionSource, SearchKeyword
+from backend.domain.medicine.identifiers import YjCode
 from backend.infrastructure.persistence import postgres_schema as schema
 from backend.infrastructure.persistence.postgres_engine import create_postgres_engine
 from backend.infrastructure.persistence.postgres_runtime import PostgresRuntime
@@ -51,7 +49,7 @@ async def test_saved_major_section_keeps_children_after_restart_and_search(
     try:
         async with runtime.acquire() as snapshot:
             catalog = MedicineCatalog(await snapshot.medicine_reader.read_medicines())
-            medicines = tuple(catalog.match_yj_codes(["111111111111"]))
+            medicines = tuple(catalog.match_yj_codes((YjCode("111111111111"),)))
             for reader in (snapshot.evidence_reader,):
                 for keywords in ((), (SearchKeyword("対象薬剤"),)):
                     evidence = await reader.search(
@@ -65,9 +63,12 @@ async def test_saved_major_section_keeps_children_after_restart_and_search(
                     assert {item.section["code"] for item in evidence} == {"10"}
                     assert len({item.unit_id for item in evidence}) == 1
                     for item in evidence:
-                        assert "禁忌の対象薬剤" in item.excerpt
-                        assert "注意の対象薬剤" in item.excerpt
-                        assert "10.1" in item.excerpt and "10.2" in item.excerpt
+                        assert "禁忌の対象薬剤" in item.excerpt.value
+                        assert "注意の対象薬剤" in item.excerpt.value
+                        assert (
+                            "10.1" in item.excerpt.value
+                            and "10.2" in item.excerpt.value
+                        )
                 for absent in ("1", "10.3"):
                     assert (
                         await reader.search(

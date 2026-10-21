@@ -11,8 +11,8 @@ from unittest.mock import patch
 from xml.etree import ElementTree as ET
 
 from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
-from backend.domain.retrieval.primitives import IntentName, Probability
-from backend.domain.retrieval.value_objects import IntentCandidate
+from backend.application.retrieval.search_models import IntentCandidate
+from backend.application.retrieval.search_values import IntentName, Probability
 from backend.tests.integration.test_interaction_xml_oracle import (
     ORACLE,
     assert_prompt_oracle,

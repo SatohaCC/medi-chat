@@ -13,16 +13,39 @@ from backend.application.chat.answer_prompt_builder import build_answer_messages
 from backend.application.chat.answer_question import answer_question
 from backend.application.chat.answer_stream import stream_answer
 from backend.application.chat.chat_models import ChatMessage, ChatResponse
+from backend.application.indexing.search_models import DocumentRevision
+from backend.application.indexing.search_values import (
+    SearchSectionCode,
+    SearchUnitId,
+    SearchUnitKind,
+)
 from backend.application.medicine.product_models import (
     RegisteredMedicine,
     ResolvedMedicine,
 )
+from backend.application.retrieval.evidence_contracts import EvidenceSearchTarget
 from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
 from backend.application.retrieval.jev_detector import (
     JevDetectionResult,
     detect_jev_criteria,
 )
 from backend.application.retrieval.morphology_detector import detect_morphology_criteria
+from backend.application.retrieval.search_models import (
+    Evidence,
+    EvidenceSection,
+    IntentCandidate,
+    SearchCriteria,
+)
+from backend.application.retrieval.search_values import (
+    DetectionSource,
+    EvidenceExcerpt,
+    EvidenceGenericName,
+    EvidenceProductName,
+    EvidenceSourceUrl,
+    IntentName,
+    Probability,
+    SearchKeyword,
+)
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.attachment.primitives import PmdaUrl
 from backend.domain.attachment.value_objects import (
@@ -36,25 +59,13 @@ from backend.domain.foundation.primitives.primitives import (
 )
 from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.primitives import (
+    BrandName,
+    GenericName,
+    MatchedAlias,
+)
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
-from backend.domain.retrieval.identifiers import SearchUnitId
-from backend.domain.retrieval.primitives import (
-    DetectionSource,
-    IntentName,
-    Probability,
-    SearchKeyword,
-    SearchSectionCode,
-)
-from backend.domain.retrieval.repositories import (
-    EvidenceSearchTarget,
-)
-from backend.domain.retrieval.value_objects import (
-    DocumentRevision,
-    Evidence,
-    EvidenceSection,
-    IntentCandidate,
-    SearchCriteria,
-)
+from backend.domain.medicine.value_objects import MedicineNames
 from backend.infrastructure.intent.jev_classifier import JevIntentClassifier
 from backend.infrastructure.morphology.janome_keyword_extractor import (
     JanomeKeywordExtractor,
@@ -136,10 +147,12 @@ async def test_intent_classifier_contract(
         medicines=(
             ResolvedMedicine(
                 medicine=DomainMedicineMatch(
-                    generic_name="テスト成分",
-                    brand_names=("テスト錠",),
-                    yj_codes=("1234567A0000",),
-                    matched_aliases=("テスト錠",),
+                    generic_name=GenericName("テスト成分"),
+                    brand_names=tuple(BrandName(value) for value in ("テスト錠",)),
+                    yj_codes=tuple(YjCode(value) for value in ("1234567A0000",)),
+                    matched_aliases=tuple(
+                        MatchedAlias(value) for value in ("テスト錠",)
+                    ),
                 ),
                 document_ids=("document-1",),
             ),
@@ -301,10 +314,12 @@ def fixed_medicines():
         RegisteredMedicine(
             medicine=MedicineProduct(
                 yj_code=YjCode("1234567A0000"),
-                brand_name="テスト薬",
-                generic_name="テスト成分",
-                english_name="",
-                hiragana_name="",
+                names=MedicineNames(
+                    brand_name=BrandName("テスト薬"),
+                    generic_name=GenericName("テスト成分"),
+                    english_name=None,
+                    hiragana_name=None,
+                ),
             ),
             reference=MedicineDocumentReference(
                 document_id=DocumentId("test_001"),
@@ -352,9 +367,9 @@ def answer_preparation_case() -> AnswerPreparationCase:
         resolved_medicines=[
             ResolvedMedicine(
                 medicine=DomainMedicineMatch(
-                    generic_name="テスト成分",
-                    brand_names=("テスト薬",),
-                    yj_codes=("1234567A0000",),
+                    generic_name=GenericName("テスト成分"),
+                    brand_names=tuple(BrandName(value) for value in ("テスト薬",)),
+                    yj_codes=tuple(YjCode(value) for value in ("1234567A0000",)),
                 ),
                 document_ids=("test_001",),
             )
@@ -363,14 +378,14 @@ def answer_preparation_case() -> AnswerPreparationCase:
             Evidence(
                 unit_id=SearchUnitId(f"test_001:{index:03d}"),
                 document_id=DocumentId("test_001"),
-                product_name="テスト薬",
-                generic_name="テスト成分",
+                product_name=EvidenceProductName("テスト薬"),
+                generic_name=EvidenceGenericName("テスト成分"),
                 product_yj_codes=(YjCode("1234567A0000"),),
                 document_revision=DocumentRevision({}),
                 section=EvidenceSection({"code": "11.1", "title": "重大な副作用"}),
-                kind="text",
-                excerpt=f"頭痛に注意してください。記載{index}",
-                url="https://example.test/package-insert",
+                kind=SearchUnitKind("text"),
+                excerpt=EvidenceExcerpt(f"頭痛に注意してください。記載{index}"),
+                url=EvidenceSourceUrl("https://example.test/package-insert"),
                 retrieved_by=frozenset(DetectionSource),
             )
             for index in range(3)
@@ -479,6 +494,7 @@ def _assert_answer_values(value: object) -> None:
         ChatResponse,
         RegisteredMedicine,
         MedicineProduct,
+        MedicineNames,
         MedicineDocumentReference,
         ResolvedMedicine,
         DomainMedicineMatch,
@@ -501,6 +517,13 @@ def _assert_answer_values(value: object) -> None:
             (
                 BaseFiniteFloat,
                 BaseString,
+                BrandName,
+                GenericName,
+                MatchedAlias,
+                EvidenceProductName,
+                EvidenceGenericName,
+                EvidenceSourceUrl,
+                EvidenceExcerpt,
                 DetectionSource,
             ),
         ):

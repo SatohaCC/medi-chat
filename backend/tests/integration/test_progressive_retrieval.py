@@ -10,16 +10,16 @@ from backend.application.chat.answer_preparation import prepare_reply
 from backend.application.chat.chat_models import ChatMessage
 from backend.application.retrieval import retrieve_evidence as retrieval
 from backend.application.retrieval.jev_detector import JevDetectionResult
-from backend.application.retrieval.snapshot_contracts import (
-    RetrievalSnapshot,
-    SearchGenerationId,
-)
-from backend.domain.retrieval.primitives import (
+from backend.application.retrieval.search_models import SearchCriteria
+from backend.application.retrieval.search_values import (
     DetectionSource,
     IntentName,
     SearchKeyword,
 )
-from backend.domain.retrieval.value_objects import SearchCriteria
+from backend.application.retrieval.snapshot_contracts import (
+    RetrievalSnapshot,
+    SearchGenerationId,
+)
 from backend.infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,
 )
@@ -149,7 +149,7 @@ async def test_unresolved_products_do_not_publish_partial_evidence(monkeypatch):
     monkeypatch.setattr(retrieval, "detect_morphology_criteria", lambda *args: None)
     reply = await prepare_reply(
         [ChatMessage(role="user", content="質問")],
-        ["unknown"],
+        ["0000000A0000"],
         medicine_reader=MedicineReader(),
         evidence_reader=OrderedEvidenceReader(False),
         intent_classifier=UnusedIntentClassifier(),
@@ -368,7 +368,7 @@ def test_all_detectors_start_together_and_generation_waits_for_last(
     monkeypatch, jev_available, last_detector
 ):
     from backend.application.retrieval.intent_contracts import IntentResult
-    from backend.domain.retrieval.primitives import IntentName
+    from backend.application.retrieval.search_values import IntentName
 
     started = {name: threading.Event() for name in ("logic", "keyword", "jev")}
     release = {name: threading.Event() for name in started}

@@ -8,8 +8,8 @@ from backend.application.chat.answer_prompt_builder import build_answer_messages
 from backend.application.chat.chat_models import ChatMessage
 from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
 from backend.application.retrieval.jev_detector import detect_jev_criteria
-from backend.domain.retrieval.primitives import IntentName, Probability
-from backend.domain.retrieval.value_objects import IntentCandidate
+from backend.application.retrieval.search_models import IntentCandidate
+from backend.application.retrieval.search_values import IntentName, Probability
 from backend.infrastructure.intent.jev_intent_mapping import map_jev_intent_result
 from backend.infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,

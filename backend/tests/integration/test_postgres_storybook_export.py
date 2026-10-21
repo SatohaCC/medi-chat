@@ -3,10 +3,19 @@
 import runpy
 
 import pytest
+from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.primitives import BrandName, MatchedAlias
 from backend.tests.support.paths import PROJECT_ROOT
 from backend.tests.support.postgres_fixtures import pg_api as pg_api
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
 from backend.tests.support.postgres_observations import digest
+
+
+def test_storybook_exporter_loads_without_database():
+    exporter = runpy.run_path(
+        str(PROJECT_ROOT / "frontend/scripts/export-storybook-evidence.py")
+    )
+    assert callable(exporter["read_evidence"])
 
 
 @pytest.mark.asyncio
@@ -15,10 +24,11 @@ async def test_pg038_storybook_export_is_readonly_and_returns_public_evidence(
 ):
     import os
 
+    from backend.application.indexing.search_values import SearchSectionCode
     from backend.application.medicine.product_models import ResolvedMedicine
+    from backend.application.retrieval.search_models import SearchCriteria
+    from backend.application.retrieval.search_values import DetectionSource
     from backend.domain.medicine.value_objects import MedicineMatch
-    from backend.domain.retrieval.primitives import DetectionSource, SearchSectionCode
-    from backend.domain.retrieval.value_objects import SearchCriteria
     from backend.presentation.chat_dto_mapper import evidence_to_api
 
     app = pg_api()
@@ -33,7 +43,12 @@ async def test_pg038_storybook_export_is_readonly_and_returns_public_evidence(
             ),
             (
                 ResolvedMedicine(
-                    medicine=MedicineMatch("", (), ("1234567A0000",), ()),
+                    medicine=MedicineMatch(
+                        generic_name=None,
+                        brand_names=tuple(BrandName(value) for value in ()),
+                        yj_codes=tuple(YjCode(value) for value in ("1234567A0000",)),
+                        matched_aliases=tuple(MatchedAlias(value) for value in ()),
+                    ),
                     document_ids=("test_001",),
                 ),
             ),

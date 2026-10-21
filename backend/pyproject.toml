@@ -203,6 +203,8 @@ ignore_imports = [
     "backend.application.chat.** -> backend.application.retrieval.**",
     "backend.application.chat.** -> backend.application.medicine.**",
     "backend.application.retrieval.** -> backend.application.medicine.**",
+    "backend.application.retrieval.** -> backend.application.indexing.**",
+    "backend.application.chat.** -> backend.application.indexing.**",
     "backend.application.attachment_import.** -> backend.application.indexing.**",
     "backend.application.indexing.** -> backend.application.medicine.**",
 ]

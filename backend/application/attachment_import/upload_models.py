@@ -1,7 +1,9 @@
 """Bounded, immutable original-file upload metadata."""
 
-import re
 from dataclasses import dataclass
+
+from ...domain.attachment.primitives import AttachmentSha256
+from ...domain.foundation.exceptions import DomainValidationError
 
 CHUNK_BYTES = 3 * 1024 * 1024
 MAX_SOURCE_BYTES = 10 * 1024 * 1024
@@ -16,8 +18,11 @@ class UploadSpec:
     def __post_init__(self) -> None:
         if not 1 <= self.byte_size <= MAX_SOURCE_BYTES:
             raise ValueError("XML must contain between 1 byte and 10 MiB")
-        if not re.fullmatch(r"[0-9a-f]{64}", self.source_sha256):
-            raise ValueError("Invalid source SHA-256")
+        try:
+            digest = AttachmentSha256(self.source_sha256)
+        except DomainValidationError:
+            raise ValueError("Invalid source SHA-256") from None
+        object.__setattr__(self, "source_sha256", digest.value)
         if not self.filename or len(self.filename) > 255:
             raise ValueError("Invalid filename")
 

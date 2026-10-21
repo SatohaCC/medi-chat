@@ -7,15 +7,23 @@ from dataclasses import fields
 
 import pytest
 from backend.application.chat.chat_models import ChatMessage, ChatResponse
+from backend.application.indexing.search_values import SearchUnitKind
 from backend.application.medicine.product_models import ResolvedMedicine
+from backend.application.retrieval.search_models import Evidence
+from backend.application.retrieval.search_values import (
+    DetectionSource,
+    EvidenceExcerpt,
+    EvidenceGenericName,
+    EvidenceProductName,
+    EvidenceSourceUrl,
+)
 from backend.domain.foundation.json_types import JsonValue
 from backend.domain.foundation.primitives.primitives import (
     BaseFiniteFloat,
     BaseString,
 )
+from backend.domain.medicine.primitives import BrandName, GenericName, MatchedAlias
 from backend.domain.medicine.value_objects import MedicineMatch
-from backend.domain.retrieval.primitives import DetectionSource
-from backend.domain.retrieval.value_objects import Evidence
 from backend.presentation.chat_dto_mapper import (
     chat_message_from_api,
     chat_response_to_api,
@@ -57,6 +65,13 @@ def _assert_pure_value(value: object) -> None:
             (
                 BaseFiniteFloat,
                 BaseString,
+                BrandName,
+                GenericName,
+                MatchedAlias,
+                EvidenceProductName,
+                EvidenceGenericName,
+                EvidenceSourceUrl,
+                EvidenceExcerpt,
                 DetectionSource,
             ),
         ):
@@ -142,15 +157,15 @@ def response_payload() -> dict[str, JsonValue]:
 
 
 def _application_response(payload):
-    from backend.domain.attachment.identifiers import DocumentId
-    from backend.domain.medicine.identifiers import YjCode
-    from backend.domain.retrieval.identifiers import SearchUnitId
-    from backend.domain.retrieval.value_objects import (
-        DocumentRevision,
+    from backend.application.indexing.search_models import DocumentRevision
+    from backend.application.indexing.search_values import SearchUnitId
+    from backend.application.retrieval.search_models import (
         EvidenceColumns,
         EvidenceReference,
         EvidenceSection,
     )
+    from backend.domain.attachment.identifiers import DocumentId
+    from backend.domain.medicine.identifiers import YjCode
 
     return ChatResponse(
         answer=payload["answer"],
@@ -163,10 +178,16 @@ def _application_response(payload):
         resolved_medicines=[
             ResolvedMedicine(
                 medicine=MedicineMatch(
-                    generic_name=m["generic_name"],
-                    brand_names=tuple(m["brand_names"]),
-                    yj_codes=tuple(m["yj_codes"]),
-                    matched_aliases=tuple(m["matched_aliases"]),
+                    generic_name=GenericName(m["generic_name"])
+                    if m["generic_name"]
+                    else None,
+                    brand_names=tuple(
+                        BrandName(value) for value in tuple(m["brand_names"])
+                    ),
+                    yj_codes=tuple(YjCode(value) for value in tuple(m["yj_codes"])),
+                    matched_aliases=tuple(
+                        MatchedAlias(value) for value in tuple(m["matched_aliases"])
+                    ),
                 ),
                 document_ids=tuple(m["document_ids"]),
             )
@@ -176,18 +197,22 @@ def _application_response(payload):
             Evidence(
                 unit_id=SearchUnitId(v["unit_id"]),
                 document_id=DocumentId(v["document_id"]),
-                product_name=v["product_name"],
-                generic_name=v["generic_name"],
+                product_name=EvidenceProductName(v["product_name"])
+                if v["product_name"]
+                else None,
+                generic_name=EvidenceGenericName(v["generic_name"])
+                if v["generic_name"]
+                else None,
                 product_yj_codes=tuple(YjCode(c) for c in v["product_yj_codes"]),
                 document_revision=DocumentRevision(v["document_revision"]),
                 section=EvidenceSection(v["section"]),
-                kind=v["kind"],
-                excerpt=v["excerpt"],
+                kind=SearchUnitKind(v["kind"]) if v["kind"] else None,
+                excerpt=EvidenceExcerpt(v["excerpt"]),
                 columns=EvidenceColumns(v["columns"])
                 if v["columns"] is not None
                 else None,
                 references=tuple(EvidenceReference(r) for r in v["references"]),
-                url=v["url"],
+                url=EvidenceSourceUrl(v["url"]) if v["url"] else None,
                 retrieved_by=frozenset(DetectionSource(d) for d in v["retrieved_by"]),
             )
             for v in payload["sources"]

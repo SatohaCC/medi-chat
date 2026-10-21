@@ -2,6 +2,30 @@
 
 from dataclasses import replace
 
+from backend.application.indexing.search_models import (
+    DocumentRevision,
+    SearchContentBlock,
+    SearchContentContext,
+    SearchContentReference,
+    SearchFigure,
+    SearchParagraph,
+    SearchReferenceMetadata,
+    SearchTable,
+    SearchTableBlock,
+    SearchTableCell,
+    SearchUnit,
+)
+from backend.application.indexing.search_values import (
+    SearchCellSpan,
+    SearchColumnIndex,
+    SearchUnitId,
+    SearchUnitKind,
+    SearchUnitProductCode,
+    SearchUnitSectionCode,
+    SearchUnitText,
+    SearchUnitUrl,
+)
+
 from ...domain.attachment.entities import AttachmentDocument
 from ...domain.attachment.exceptions import AttachmentDomainError
 from ...domain.attachment.value_objects import (
@@ -13,27 +37,6 @@ from ...domain.attachment.value_objects import (
     AttachmentTableBlock,
 )
 from ...domain.medicine.identifiers import YjCode
-from ...domain.retrieval.entities import SearchUnit
-from ...domain.retrieval.identifiers import SearchUnitId
-from ...domain.retrieval.primitives import (
-    SearchUnitKind,
-    SearchUnitProductCode,
-    SearchUnitSectionCode,
-    SearchUnitText,
-    SearchUnitUrl,
-)
-from ...domain.retrieval.value_objects import (
-    DocumentRevision,
-    EvidenceReference,
-    SearchContentBlock,
-    SearchContentContext,
-    SearchContentReference,
-    SearchFigure,
-    SearchParagraph,
-    SearchTable,
-    SearchTableBlock,
-    SearchTableCell,
-)
 
 
 def _context(context: AttachmentContext) -> SearchContentContext:
@@ -54,7 +57,7 @@ def _references(
             target_id=SearchUnitText(reference.target_id.value)
             if reference.target_id is not None
             else None,
-            metadata=EvidenceReference(reference.metadata.to_dict()),
+            metadata=SearchReferenceMetadata(reference.metadata.to_dict()),
         )
         for reference in references
     )
@@ -80,9 +83,9 @@ def _block(block: AttachmentBlock) -> SearchContentBlock:
                     tuple(
                         SearchTableCell(
                             text=SearchUnitText(cell.text.value),
-                            column=cell.column.value,
-                            rowspan=cell.rowspan.value,
-                            colspan=cell.colspan.value,
+                            column=SearchColumnIndex(cell.column.value),
+                            rowspan=SearchCellSpan(cell.rowspan.value),
+                            colspan=SearchCellSpan(cell.colspan.value),
                             references=_references(cell.references),
                             context=_context(cell.context),
                         )
@@ -134,7 +137,13 @@ def project_attachment(document: AttachmentDocument) -> tuple[SearchUnit, ...]:
             for block in member.body.blocks
         ]
         if all(block.context.source_order is not None for _, block in ordered):
-            ordered.sort(key=lambda item: item[1].context.source_order or 0)
+            ordered.sort(
+                key=lambda item: (
+                    item[1].context.source_order.value
+                    if item[1].context.source_order is not None
+                    else 0
+                )
+            )
         blocks = tuple(
             replace(
                 projected,

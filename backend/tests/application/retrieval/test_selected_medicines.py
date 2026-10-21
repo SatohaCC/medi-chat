@@ -5,7 +5,7 @@ from backend.infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,
 )
 from backend.tests.application.chat.test_answer_preparation import MedicineReader
-from backend.tests.domain.retrieval.test_evidence_collection import make_evidence
+from backend.tests.application.retrieval.test_evidence_collection import make_evidence
 
 
 class NoJev:

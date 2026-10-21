@@ -1,5 +1,6 @@
 """Entity・AggregateのID Primitiveに共通する基底。"""
 
+import re
 import uuid
 from dataclasses import dataclass
 from typing import ClassVar, Self
@@ -61,6 +62,16 @@ class EntityUUID(DomainPrimitive[uuid.UUID]):
 @dataclass(frozen=True, slots=True)
 class EntityStringId(BaseString):
     """NFKC正規化・前後の余白除去・空値拒否を行う文字列ID基底。"""
+
+    value_pattern: ClassVar[str | None] = None
+
+    def validate(self) -> None:
+        super().validate()
+        if (
+            self.value_pattern is not None
+            and re.fullmatch(self.value_pattern, self.value) is None
+        ):
+            raise DomainValidationError(f"{type(self).__name__} has an invalid format")
 
     @classmethod
     def parse(cls, raw: str) -> Self:

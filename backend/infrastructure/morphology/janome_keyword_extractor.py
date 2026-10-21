@@ -1,6 +1,7 @@
 """Janomeと検索語抽出契約を接続するadapter。"""
 
-from ...domain.retrieval.value_objects import TextSearchPolicy
+from backend.application.retrieval.search_models import TextSearchPolicy
+
 from .definition_settings import JanomeMorphologySettings
 from .keyword_extraction import extract_search_keywords
 
