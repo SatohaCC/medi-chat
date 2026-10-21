@@ -119,3 +119,69 @@ def test_all_input_routes_reject_duplicate_normalized_codes(client, second):
         assert response["content"] == "product_yj_codes must not contain duplicates"
         socket.send_json({"type": "ping"})
         assert socket.receive_json() == {"type": "pong"}
+
+
+@pytest.fixture
+def unavailable_client():
+    app = FastAPI()
+    app.include_router(search_routes.router)
+    app.include_router(chat_websocket_routes.router)
+    app.dependency_overrides[get_chat_service] = lambda: None
+    with TestClient(app) as client:
+        yield client
+
+
+@pytest.mark.parametrize(
+    "codes,error",
+    [
+        (["short"], "Invalid product_yj_codes"),
+        (
+            ["1234567A0000", " 1234567A0000 "],
+            "product_yj_codes must not contain duplicates",
+        ),
+        (
+            ["1234567A0000", "１２３４５６７Ａ００００"],
+            "product_yj_codes must not contain duplicates",
+        ),
+    ],
+)
+def test_unavailable_service_still_rejects_invalid_codes(
+    unavailable_client, codes, error
+):
+    response = unavailable_client.get(
+        "/api/search", params={"q": "テスト", "yj_codes": codes}
+    )
+    assert response.status_code == 422
+    assert response.json()["detail"] == error
+    with unavailable_client.websocket_connect("/ws/chat") as socket:
+        socket.send_json(
+            {
+                "type": "message",
+                "product_yj_codes": codes,
+                "messages": [{"role": "user", "content": "テスト質問"}],
+            }
+        )
+        assert socket.receive_json() == {"type": "error", "content": error}
+        socket.send_json({"type": "ping"})
+        assert socket.receive_json() == {"type": "pong"}
+
+
+def test_unavailable_service_preserves_valid_input_responses(unavailable_client):
+    for codes in ([], ["1234567A0000"]):
+        response = unavailable_client.get(
+            "/api/search", params={"q": "テスト", "yj_codes": codes}
+        )
+        assert response.status_code == 200
+        assert response.json()["items"] == []
+    with unavailable_client.websocket_connect("/ws/chat") as socket:
+        socket.send_json(
+            {
+                "type": "message",
+                "product_yj_codes": ["1234567A0000"],
+                "messages": [{"role": "user", "content": "テスト質問"}],
+            }
+        )
+        assert socket.receive_json() == {
+            "type": "error",
+            "content": "Medicine corpus is not ready",
+        }

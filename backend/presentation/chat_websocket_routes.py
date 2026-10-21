@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from ..application.chat.stream_closing import closing_stream
-from ..application.medicine.input_values import InvalidMedicineInput
+from ..application.medicine.input_values import InvalidMedicineInput, parse_yj_codes
 from .chat_models import ChatMessage
 from .chat_service import AppChatService as ChatService
 from .dependencies import get_chat_service
@@ -119,6 +119,11 @@ async def stream_chat_response(
                 continue
 
             if not service:
+                try:
+                    parse_yj_codes(payload.product_yj_codes)
+                except InvalidMedicineInput as exc:
+                    await websocket.send_json({"type": "error", "content": str(exc)})
+                    continue
                 await websocket.send_json(
                     {"type": "error", "content": "Medicine corpus is not ready"}
                 )

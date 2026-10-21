@@ -81,6 +81,11 @@ jobs:
           tests/integration/test_postgres_registration.py::test_pg003_005_real_migration_and_runtime_permissions
           tests/integration/test_postgres_search.py::test_pg028_public_corpus_and_equal_rank_use_legacy_codepoint_order
           --basetemp "${{ runner.temp }}/ci-postgres-contracts" -q
+      - name: Input boundary regression
+        run: >-
+          pnpm --filter backend exec uv run --locked pytest
+          tests/application/medicine/test_input_values.py
+          tests/presentation/test_medicine_input_validation.py -q
       - name: Architecture, lint and Python types
         run: |
           pnpm --filter backend lint

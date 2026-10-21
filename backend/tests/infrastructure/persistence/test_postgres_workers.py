@@ -142,7 +142,7 @@ async def test_api_and_ws_respond_while_search_is_blocked(
         release.set()
         result = await asyncio.wait_for(search_task, timeout=10)
         assert [item.section["code"] for item in result] == ["11"]
-        assert all(f"記載{index}" in result[0].excerpt for index in range(3))
+        assert all(f"記載{index}" in result[0].excerpt.value for index in range(3))
     finally:
         release.set()
         probes_completed.set()
@@ -158,8 +158,16 @@ async def test_api_and_ws_respond_while_search_is_blocked(
 
 def _assert_plain(value: object) -> None:
     if is_dataclass(value) and not isinstance(value, type):
-        assert type(value) is RegisteredMedicine or type(value).__module__.startswith(
-            "backend.domain."
+        assert (
+            type(value) is RegisteredMedicine
+            or type(value).__module__.startswith("backend.domain.")
+            or type(value).__module__
+            in {
+                "backend.application.indexing.search_models",
+                "backend.application.indexing.search_values",
+                "backend.application.retrieval.search_models",
+                "backend.application.retrieval.search_values",
+            }
         )
         for field in fields(value):
             _assert_plain(getattr(value, field.name))
