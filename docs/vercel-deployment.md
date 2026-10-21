@@ -15,6 +15,9 @@
 
 `/api`・`/api/*`・`/health`・`/ws/chat`をバックエンド、それ以外をフロントエンドへ振り分ける。パスは維持される。WebSocketの`/api/ws`もこの経路を使う。ブラウザからは同じドメインへ接続するので、デプロイ時の`NEXT_PUBLIC_API_URL`・`NEXT_PUBLIC_WS_URL`は未設定にする。
 
+Node.jsはルートとfrontendの `package.json` にある `engines.node: "24.x"` で指定する。Vercelはメジャーバージョン単位で選択し、マイナー・パッチは自動更新するため、24.22.1への厳密な固定はできない。既存Project SettingsのNode.js Versionも24.xに揃え、次回デプロイのビルドログで実際のバージョンを確認する。
+ローカルとCIはルートの `.nvmrc` にある24.22.1を使用する。nvm-windowsでは `nvm install 24.22.1`、`nvm use 24.22.1` を実行する。
+
 Pythonはルートの`.python-version`で3.14を指定する。`requirements.txt`はVercelが基準ディレクトリから読めるruntime依存ファイルで、`backend/uv.lock`から生成する。開発依存は含めず、手編集しない。
 
 ```powershell

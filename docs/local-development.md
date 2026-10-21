@@ -1,6 +1,6 @@
 # ローカル開発
 
-コマンドはリポジトリルートから実行します。Node.js・pnpm（バージョンは `package.json`）、Python 3.14以上・uv、Docker Desktopを用意してください。
+コマンドはリポジトリルートから実行します。Node.js 24.22.1（`.nvmrc`）・pnpm（`package.json`）、Python 3.14以上・uv、Docker Desktopを用意してください。
 
 ## セットアップ
 
