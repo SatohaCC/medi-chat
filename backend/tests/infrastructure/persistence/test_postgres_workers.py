@@ -7,16 +7,17 @@ from dataclasses import fields, is_dataclass
 
 import httpx
 import pytest
+from backend.application.indexing.search_values import SearchSectionCode
 from backend.application.medicine.product_models import (
     RegisteredMedicine,
     ResolvedMedicine,
 )
+from backend.application.retrieval.search_models import SearchCriteria
+from backend.application.retrieval.search_values import DetectionSource
 from backend.domain.foundation.primitives.primitives import BaseFiniteFloat, BaseString
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import BrandName, GenericName, MatchedAlias
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
-from backend.domain.retrieval.primitives import DetectionSource, SearchSectionCode
-from backend.domain.retrieval.value_objects import SearchCriteria
 from backend.infrastructure.persistence.read_workers import ReadWorkers
 from backend.tests.support.postgres_fixtures import pg_api as pg_api
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines

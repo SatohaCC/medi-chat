@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
 
+from backend.application.retrieval.search_models import Evidence, IntentPolicy
+
 from ..medicine.product_contracts import RegisteredMedicineReader
 from ..retrieval.intent_contracts import IntentClassifier
 from ..retrieval.keyword_contracts import KeywordExtractor
-from ..retrieval.retrieval_models import Evidence, IntentPolicy
 from ..retrieval.search_keywords import search_evidence_by_keywords
 from ..retrieval.snapshot_contracts import (
     EvidenceRepository,

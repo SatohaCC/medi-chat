@@ -12,6 +12,12 @@ from backend.application.medicine.product_models import RegisteredMedicine
 from backend.application.retrieval import retrieve_evidence as retrieval
 from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
 from backend.application.retrieval.jev_detector import JevDetectionResult
+from backend.application.retrieval.search_models import SearchCriteria
+from backend.application.retrieval.search_values import (
+    DetectionSource,
+    IntentName,
+    SearchKeyword,
+)
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.attachment.primitives import PmdaUrl
 from backend.domain.attachment.value_objects import (
@@ -25,16 +31,10 @@ from backend.domain.medicine.primitives import (
     GenericName,
 )
 from backend.domain.medicine.value_objects import MedicineNames
-from backend.domain.retrieval.primitives import (
-    DetectionSource,
-    IntentName,
-    SearchKeyword,
-)
-from backend.domain.retrieval.value_objects import SearchCriteria
 from backend.infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,
 )
-from backend.tests.domain.retrieval.test_evidence_collection import make_evidence
+from backend.tests.application.retrieval.test_evidence_collection import make_evidence
 
 
 class MedicineReader:

@@ -1,16 +1,16 @@
 """検索単位の本文保持と構造による選択を検証する。"""
 
 import pytest
-from backend.domain.attachment.identifiers import DocumentId
-from backend.domain.foundation.exceptions import DomainValidationError
-from backend.domain.retrieval.entities import SearchUnit
-from backend.domain.retrieval.identifiers import SearchUnitId
-from backend.domain.retrieval.primitives import (
+from backend.application.indexing.search_models import SearchUnit
+from backend.application.indexing.search_values import (
     EvidenceContextLabel,
+    SearchUnitId,
     SearchUnitKind,
     SearchUnitSectionCode,
     SearchUnitText,
 )
+from backend.domain.attachment.identifiers import DocumentId
+from backend.domain.foundation.exceptions import DomainValidationError
 
 
 def test_search_unit_keeps_context_label_order_and_duplicates():

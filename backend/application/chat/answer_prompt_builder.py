@@ -3,8 +3,8 @@
 from collections.abc import Sequence
 
 from backend.application.medicine.product_models import ResolvedMedicine
+from backend.application.retrieval.search_models import Evidence
 
-from ...domain.retrieval.value_objects import Evidence
 from .answer_prompt_policy import AnswerPromptPolicy
 from .chat_models import ChatMessage, ChatResponse
 

@@ -4,9 +4,9 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from backend.application.medicine.product_models import ResolvedMedicine
+from backend.application.retrieval.search_models import IntentCandidate
 
 from ...domain.foundation.json_types import JsonValue
-from ...domain.retrieval.value_objects import IntentCandidate
 
 
 @dataclass

@@ -12,34 +12,33 @@ from unittest.mock import AsyncMock
 
 import pytest
 from backend.application.chat.answer_prompt_builder import build_answer_system_prompt
+from backend.application.indexing.search_models import DocumentRevision
+from backend.application.indexing.search_values import SearchUnitId, SearchUnitKind
+from backend.application.indexing.text_projection import format_scoped_text
 from backend.application.medicine.product_models import ResolvedMedicine
 from backend.application.retrieval.intent_contracts import IntentRequest
-from backend.domain.attachment.identifiers import DocumentId
-from backend.domain.medicine.identifiers import YjCode
-from backend.domain.medicine.primitives import BrandName, GenericName
-from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
-from backend.domain.retrieval.identifiers import SearchUnitId
-from backend.domain.retrieval.primitives import (
-    DetectionSource,
-    EvidenceExcerpt,
-    EvidenceGenericName,
-    EvidenceProductName,
-    EvidenceSourceUrl,
-    SearchUnitKind,
-)
-from backend.domain.retrieval.services import (
-    detect_intents_from_keywords,
-    evidence_section_sort_key,
-    format_scoped_text,
-)
-from backend.domain.retrieval.value_objects import (
-    DocumentRevision,
+from backend.application.retrieval.search_models import (
     Evidence,
     EvidenceColumns,
     EvidenceReference,
     EvidenceSection,
 )
-from backend.domain.retrieval.value_objects import Evidence as ChatSource
+from backend.application.retrieval.search_models import Evidence as ChatSource
+from backend.application.retrieval.search_policy import (
+    detect_intents_from_keywords,
+    evidence_section_sort_key,
+)
+from backend.application.retrieval.search_values import (
+    DetectionSource,
+    EvidenceExcerpt,
+    EvidenceGenericName,
+    EvidenceProductName,
+    EvidenceSourceUrl,
+)
+from backend.domain.attachment.identifiers import DocumentId
+from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.primitives import BrandName, GenericName
+from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.infrastructure.evidence_mapping import build_evidence as evidence_from_unit
 from backend.infrastructure.intent.jev_classifier import JevIntentClassifier
 from backend.infrastructure.morphology.keyword_extraction import extract_search_keywords
@@ -137,7 +136,7 @@ async def test_明示注入したカタログを再読込せず各利用先に�
         pytest.fail("明示注入後にバックエンドが共有カタログを再読込した")
 
     for module_name in (
-        "backend.domain.retrieval.services",
+        "backend.application.retrieval.search_policy",
         "backend.infrastructure.morphology.keyword_extraction",
         "backend.application.chat.answer_prompt_builder",
         "backend.infrastructure.intent.jev_classifier",

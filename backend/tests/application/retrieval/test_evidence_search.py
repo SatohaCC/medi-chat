@@ -10,6 +10,8 @@ from backend.application.retrieval.retrieve_evidence import (
     collect_search_criteria,
     retrieve_evidence,
 )
+from backend.application.retrieval.search_models import IntentCandidate
+from backend.application.retrieval.search_values import IntentName, Probability
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.attachment.primitives import PmdaUrl
 from backend.domain.attachment.value_objects import (
@@ -23,8 +25,6 @@ from backend.domain.medicine.primitives import (
     GenericName,
 )
 from backend.domain.medicine.value_objects import MedicineNames
-from backend.domain.retrieval.primitives import IntentName, Probability
-from backend.domain.retrieval.value_objects import IntentCandidate
 from backend.infrastructure.morphology.janome_keyword_extractor import (
     JanomeKeywordExtractor,
 )

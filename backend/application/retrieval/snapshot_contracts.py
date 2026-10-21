@@ -4,7 +4,8 @@ from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass
 from typing import Protocol
 
-from ...domain.retrieval.repositories import EvidenceRepository
+from backend.application.retrieval.evidence_contracts import EvidenceRepository
+
 from ..medicine.product_contracts import (
     RegisteredMedicineReader,
     SearchGenerationId,

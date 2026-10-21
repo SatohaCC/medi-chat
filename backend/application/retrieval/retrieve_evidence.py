@@ -8,21 +8,23 @@ from backend.application.medicine.input_values import parse_yj_codes
 from backend.application.medicine.product_catalog import MedicineCatalog
 from backend.application.medicine.product_contracts import RegisteredMedicineReader
 from backend.application.medicine.product_models import ResolvedMedicine
-from backend.domain.medicine.identifiers import YjCode
-
-from ...domain.retrieval.repositories import EvidenceRepository
-from ...domain.retrieval.services import (
+from backend.application.retrieval.evidence_contracts import EvidenceRepository
+from backend.application.retrieval.retrieval_models import RetrievalResult
+from backend.application.retrieval.search_models import (
+    Evidence,
+    IntentPolicy,
+    SearchCriteria,
+)
+from backend.application.retrieval.search_policy import (
     detect_fixed_keyword_criteria as _detect_fixed_keyword_criteria,
 )
-from ...domain.retrieval.services import (
-    merge_evidence,
-)
-from ...domain.retrieval.value_objects import Evidence, IntentPolicy, SearchCriteria
+from backend.application.retrieval.search_policy import merge_evidence
+from backend.domain.medicine.identifiers import YjCode
+
 from .intent_contracts import IntentClassifier, IntentRequest
 from .jev_detector import JevDetectionResult, detect_jev_criteria
 from .keyword_contracts import KeywordExtractor
 from .morphology_detector import detect_morphology_criteria
-from .retrieval_models import RetrievalResult
 from .snapshot_contracts import RetrievalSnapshotProvider
 
 SourcesCallback = Callable[[list[Evidence]], Awaitable[None]]

@@ -3,6 +3,11 @@
 from dataclasses import replace
 
 from backend.application.indexing.attachment_projection import project_attachment
+from backend.application.indexing.search_models import (
+    SearchFigure,
+    SearchParagraph,
+    SearchTableBlock,
+)
 from backend.domain.attachment.primitives import (
     AttachmentBrandName,
     AttachmentCellSpan,
@@ -28,11 +33,6 @@ from backend.domain.attachment.value_objects import (
     AttachmentTable,
     AttachmentTableBlock,
     AttachmentTableCell,
-)
-from backend.domain.retrieval.value_objects import (
-    SearchFigure,
-    SearchParagraph,
-    SearchTableBlock,
 )
 from backend.tests.domain.attachment.test_attachment_domain import _document
 

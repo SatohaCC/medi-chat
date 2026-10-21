@@ -3,25 +3,25 @@
 from copy import deepcopy
 
 import pytest
-from backend.domain.attachment.identifiers import DocumentId
-from backend.domain.medicine.identifiers import YjCode
-from backend.domain.retrieval.identifiers import SearchUnitId
-from backend.domain.retrieval.primitives import (
-    DetectionSource,
-    EvidenceExcerpt,
-    EvidenceGenericName,
-    EvidenceProductName,
-    EvidenceSourceUrl,
-    SearchUnitKind,
-)
-from backend.domain.retrieval.services import merge_evidence
-from backend.domain.retrieval.value_objects import (
-    DocumentRevision,
+from backend.application.indexing.search_models import DocumentRevision
+from backend.application.indexing.search_values import SearchUnitId, SearchUnitKind
+from backend.application.retrieval.evidence_payloads import evidence_payload
+from backend.application.retrieval.search_models import (
     Evidence,
     EvidenceColumns,
     EvidenceReference,
     EvidenceSection,
 )
+from backend.application.retrieval.search_policy import merge_evidence
+from backend.application.retrieval.search_values import (
+    DetectionSource,
+    EvidenceExcerpt,
+    EvidenceGenericName,
+    EvidenceProductName,
+    EvidenceSourceUrl,
+)
+from backend.domain.attachment.identifiers import DocumentId
+from backend.domain.medicine.identifiers import YjCode
 
 
 def make_evidence(unit_id="unit", code="11.1", excerpt="原文\n本文", **kwargs):
@@ -90,7 +90,7 @@ async def test_detection_labels_merge_without_mutating_input(order, label):
     assert len(result) == 1
     assert result[0].retrieved_by == label
     assert original == before
-    public = result[0].to_dict()
+    public = evidence_payload(result[0])
     public_revision = public["document_revision"]
     assert isinstance(public_revision, dict)
     public_revision["date"] = "changed"
@@ -178,7 +178,7 @@ def test_all_three_detection_sources_merge_independently_of_order(order):
         ([make_evidence()], DetectionSource(source)) for source in order
     )
     assert result[0].retrieved_by == frozenset(["logic", "jev", "keyword"])
-    assert result[0].to_dict()["retrieved_by"] == [
+    assert evidence_payload(result[0])["retrieved_by"] == [
         "logic",
         "jev",
         "keyword",
@@ -187,7 +187,7 @@ def test_all_three_detection_sources_merge_independently_of_order(order):
 
 def test_missing_detection_sources_are_an_empty_public_array():
     assert make_evidence().retrieved_by == frozenset()
-    assert make_evidence().to_dict()["retrieved_by"] == []
+    assert evidence_payload(make_evidence())["retrieved_by"] == []
 
 
 def test_merge_orders_numbered_then_text_then_missing_sections():

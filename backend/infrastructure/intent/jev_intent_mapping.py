@@ -2,10 +2,11 @@
 
 from copy import deepcopy
 
+from backend.application.retrieval.search_models import IntentCandidate
+from backend.application.retrieval.search_values import IntentName, Probability
+
 from ...application.retrieval.intent_contracts import IntentResult
 from ...domain.foundation.json_types import JsonValue
-from ...domain.retrieval.primitives import IntentName, Probability
-from ...domain.retrieval.value_objects import IntentCandidate
 
 
 def map_jev_intent_result(

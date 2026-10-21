@@ -1,6 +1,6 @@
 # バックエンドの構成と命名規則
 
-このバックエンドは、**医薬品情報意思決定支援**という一つの業務ドメインを実装します。医薬品同定と添付文書根拠検索はそのサブドメインで、`application/chat` は両者を組み合わせる回答ユースケース、`presentation` はチャットを届ける配信層です。読み取り中心のため、会話集約、汎用Repository、Unit of Work、ドメインイベントは追加していません。Repository Interfaceは各 bounded context の `repositories.py` に定義し、PostgreSQL、SQLAlchemy Core、Alembicは外側の層に閉じ込めます。
+このバックエンドは、**医薬品情報意思決定支援**という一つの業務ドメインを実装します。医薬品同定と添付文書根拠検索はそのサブドメインで、`application/chat` は両者を組み合わせる回答ユースケース、`presentation` はチャットを届ける配信層です。読み取り中心のため、会話集約、汎用Repository、Unit of Work、ドメインイベントは追加していません。原本文書のRepositoryはDomainの `repositories.py`、根拠検索ポートはApplicationの `evidence_contracts.py` に定義し、PostgreSQL、SQLAlchemy Core、Alembicは外側の層に閉じ込めます。
 
 ## チャットの入出力上限
 
@@ -16,7 +16,7 @@ RESTとWebSocketは重複のない対象YJコードを1～50件受け付けま�
 
 | 位置づけ | サブドメイン／層 | 業務上の責務 | 実装上の境界 |
 | --- | --- | --- | --- |
-| Core Subdomain | 問い合わせ解釈 | 質問意図を検索条件へ変換する | `domain/retrieval` |
+| Core Subdomain | 問い合わせ解釈 | 質問意図を検索条件へ変換する | `application/retrieval` |
 | Core Subdomain | 添付文書根拠 | 出典付きの根拠を選び、文書単位の整合性を保持する | `domain/attachment` |
 | Supporting Subdomain | 医薬品マスター | YJコードを識別子として医薬品コード対応表の10列を保持する | `domain/medicine` |
 | Application | 回答準備・生成 | 2つのサブドメインとReader/Providerを順序付けて回答を作る | `application/chat` |
@@ -31,7 +31,6 @@ RESTとWebSocketは重複のない対象YJコードを1～50件受け付けま�
 | --- | --- |
 | `domain/attachment` | 添付文書 bounded context。`primitives.py`、`value_objects.py`、`entities.py`、`services.py`、`exceptions.py` に責務別の正本を置く |
 | `domain/medicine` | 医薬品の名称・識別子、照合結果を所有する |
-| `domain/retrieval` | 検索 bounded context。検索Primitive、検索条件、意図選択、根拠・取得経路の統合、根拠取得ポート、検索ポリシーを置く |
 | `domain/foundation` | 業務非依存のPrimitive、Value Object、Entity/Aggregate Rootの基底、宣言型ガード、例外基底 |
 | `domain/shared` | 複数コンテキストで共有する汎用正規化処理を置く。YJコードはmedicineが所有する |
 | `application/chat` | `ChatApplicationService` を中心に、会話から質問を取り出し、retrievalの結果を使って回答を準備・生成する。プロンプトと所有stream終了を担当する |
@@ -76,12 +75,12 @@ RESTとWebSocketは重複のない対象YJコードを1～50件受け付けま�
    - `Presentation` は `Application` と `Config` のみに依存します（`Domain`・`Infrastructure` への依存は完全禁止）。
    - `Infrastructure` は `Application`・`Domain`・`Config` に依存し、`Presentation` には依存しません（Composition Rootの配線のみ）。
 3. **レイヤー内部のモジュール階層・独立性の強制**:
-   - **Domain内部**: コンテキスト間（`attachment` / `medicine` / `retrieval`）は独立し、他コンテキストからは公開ID（`identifiers.py`）のみ参照可能です。さらにコンテキスト内部でも `identifiers -> exceptions -> primitives -> value_objects -> entities -> repositories -> services` の単方向階層を強制しています。
-   - **Application内部**: `chat -> retrieval -> medicine` および `attachment_import -> indexing -> medicine` の有向パイプライン境界を強制し、逆方向参照や循環を防止します。
+   - **Domain内部**: コンテキスト間（`attachment` / `medicine`）は独立し、他コンテキストからは公開ID（`identifiers.py`）のみ参照可能です。さらにコンテキスト内部でも `identifiers -> exceptions -> primitives -> value_objects -> entities -> repositories -> services` の単方向階層を強制しています。
+   - **Application内部**: `chat -> retrieval -> indexing -> medicine`、`retrieval -> medicine` および `attachment_import -> indexing` の有向パイプライン境界を強制し、逆方向参照や循環を防止します。
    - **Presentation内部**: `routes -> dependencies -> services (AppChatService) -> mappers -> DTO models` の5段階の階層を強制し、ルーターが `request.app.state` を直接読むことや、DTOモデルが上位サービスを参照することを防ぎます。
    - **Infrastructure内部**: 外部技術アダプター（`llm` / `intent` / `morphology` / `pmda_xml`）間の相互独立、`persistence -> sources` 禁止、`package_insert_definitions` から他アダプターへの依存禁止、`index_payloads` / `evidence_mapping` からアダプターパッケージへの依存禁止を契約化しています。
 
-他コンテキストからの直接importは、所有元の `identifiers.py` に定義する公開ID Primitive（**1コンテキスト＝1公開ID**）に限ります。添付文書の `DocumentId` は `domain/attachment/identifiers.py`、検索単位の `SearchUnitId` は `domain/retrieval/identifiers.py`、医薬品の `YjCode` は `domain/medicine/identifiers.py` が正本です。それ以外の情報はApplicationで利用側の型へ変換します。
+他コンテキストからの直接importは、所有元の `identifiers.py` に定義する公開ID Primitive（**1コンテキスト＝1公開ID**）に限ります。添付文書の `DocumentId` は `domain/attachment/identifiers.py`、医薬品の `YjCode` は `domain/medicine/identifiers.py` が正本です。それ以外の情報はApplicationで利用側の型へ変換します。検索単位の `SearchUnitId` はDomainの公開IDではなく、`application/indexing/search_values.py` が所有する投影のIDです。
 各コンテキストの `identifiers.py` のプロジェクト内import先は `domain/foundation/primitives/identifiers.py` だけです。標準ライブラリは利用でき、IDは `EntityUUID` または `EntityStringId` を継承します。文字列ID基底はNFKC正規化・前後の余白除去・空値拒否を行います。
 sharedは各業務コンテキストへ、foundationは業務コンテキスト・sharedへ依存できません。
 domain全体からapplication・infrastructure・presentationへの依存も禁止します。静的な直接・間接依存を検査し、動的importは対象外です。
@@ -113,7 +112,7 @@ medicineの販売名・一般名・英名・読み名称はそれぞれ `BrandNa
 
 任意名称の欠落・空文字・空白だけの値は取り込み境界で `None` に変換し、数値等は文字列化せず拒否します。Applicationの読み取り投影は `.value` と従来の空文字を公開します。照合用の正規化は原表記とは分けて導出します。`YjCode` は既存ID基底のNFKC/trim後に12文字ASCII英数字を要求し、コードの実在性は保証しません。形式制約はID基底の `value_pattern` で宣言し、公開IDモジュールから例外モジュールへ依存しません。
 
-PresentationはYJコードを `str` として受け取り、必須・配列件数・重複等の入力契約を検証します。YJ固有の形式制約は重ねず、Applicationの検索・根拠取得入口で `parse_yj_codes()` がDomain Primitiveへ変換します。不正値は `InvalidMedicineInput` へ変換し、RESTは422、WebSocketは接続を維持したエラー応答を返します。カタログ内部は `Sequence[YjCode]` のみを扱い、文字列からの暗黙変換を行いません。
+PresentationはYJコードを `str` として受け取り、必須・配列件数等の入力契約を検証します。YJ固有の形式制約は重ねず、Applicationの検索・根拠取得入口で `parse_yj_codes()` がDomain Primitiveへ変換し、正規化後の重複も拒否します。不正値は `InvalidMedicineInput` へ変換し、RESTは422、WebSocketは接続を維持したエラー応答を返します。カタログ内部は `Sequence[YjCode]` のみを扱い、文字列からの暗黙変換を行いません。
 attachmentの販売名・英名・正式項目名・改訂ラベル・版表記も原表記を保持します。本文の `AttachmentText` は有効な空本文を保持し、非空の名称とは区別します。`RevisionYearMonth` は正規化後のASCII年月（0001年～9999年、01月～12月）を検証します。
 
 `AttachmentSourceOrder` は0以上の整数を表し、boolを拒否します。VOの文脈比較には出現順を含めず、XML decoder・永続化mapper・検索投影で明示変換します。保存JSONの `source_order` は従来の整数/Noneです。VOと `AttachmentDocument` は重複・親子関係等の業務上の不変条件を検証します。XML/保存JSONなど外部の生データの型は入力・復元境界で確認し、明示的にPrimitiveと不変コレクションを組み立てます。
@@ -162,7 +161,7 @@ flowchart LR
   Main --> Infra
 ```
 
-`domain`から`application`、`presentation`、`infrastructure`、SDK、JSON loaderへの依存は禁止します。`application`は`domain`と標準ライブラリだけを参照します。`presentation`は`application`と`config`だけを参照し、`domain`・`infrastructure`への依存は全面禁止します。添付文書の正式名称はattachmentのSectionTaxonomyが所有し、Applicationのdefinition_projectionで用途側へ写します。検索規則/整形はretrieval、回答指示はApplication、JSON/XML/Jev/Janome設定はInfrastructure（`package_insert_definitions/definition_settings.py`）に置きます。永続化の具象IOは各 bounded context の `repositories.py` に定義したInterface越しに注入します。型確認用import・相対importも依存検査の対象です。
+`domain`から`application`、`presentation`、`infrastructure`、SDK、JSON loaderへの依存は禁止します。`application`は`domain`と標準ライブラリ、および許可されたApplication内の下流機能だけを参照します。`presentation`は`application`と`config`だけを参照し、`domain`・`infrastructure`への依存は全面禁止します。添付文書の正式名称はattachmentのSectionTaxonomyが所有し、Applicationのdefinition_projectionで用途側へ写します。検索規則/整形はretrieval、回答指示はApplication、JSON/XML/Jev/Janome設定はInfrastructure（`package_insert_definitions/definition_settings.py`）に置きます。永続化の具象IOは、Domainの文書RepositoryとApplicationの検索ポートを通して注入します。型確認用import・相対importも依存検査の対象です。
 
 次は実行時の呼出しです。Reader/SDKは注入されたportの実装です。
 
@@ -198,7 +197,6 @@ backend/
 ├── domain/
 │   ├── attachment/      # 添付文書 bounded context（責務別の直下モジュール）
 │   ├── medicine/        # YJ医薬品マスター・別名優先度規則
-│   ├── retrieval/       # 検索対象・条件・結果・根拠統合
 │   ├── foundation/      # Primitive・不変Mapping・例外・JsonValueの共通基底
 │   └── shared/          # 合意した共有語彙・純粋な文字列照合
 ├── infrastructure/
@@ -322,24 +320,19 @@ DBとJSONの保存形式は維持し、Readerで明示的に両モデルへ変�
 原本の識別・項目・製品・参照には `DocumentId`、`SectionCode`、
 `AttachmentProductCode`、`AttachmentUrl` を使います。番号付き項目を扱う
 原本モデルは `SectionCode.require_numbered()` で階層番号を検証します。
-検索条件の項目コードはretrievalの `SearchSectionCode` を使います。
+検索条件の項目コードはApplicationのindexingが所有する `SearchSectionCode` を使います。
 添付文書掲載製品の参照文字列と改訂情報はattachmentの `PmdaUrl` と
 `AttachmentProductRevision` が所有します。
 attachmentは原本文書の構造と整合性を所有し、Repositoryは文書取得だけを公開します。
-原文から派生する `SearchUnit`、そのID・本文・種類・選択条件と検索処理はretrievalが所有します。
-`SearchUnit` は索引で識別される検索前の本文単位Entityです。
-`Evidence` は `retrieval/value_objects.py` の検索後の出典・取得経路付き結果VOで、
-JSONLという保存形式には依存しません。根拠の重複排除・取得経路の統合は
-`retrieval/services.py` の状態を持たない `merge_evidence()` が担当します。
-最初の原文と既存の取得経路を保持し、経路を和集合で統合します。
-番号付き項目・文字列項目・空項目の順に並べ、同項目では検索単位ID順の不変タプルを返します。
-検索実行時の取得経路を表す
-`DetectionSource` は `domain/retrieval/primitives.py` が所有します。
-
-検索結果に載せる改訂・参照・項目・表の列のスナップショットはretrievalの
-Value Objectとして保持します。検索ポートは文書IDを公開する入力契約を使います。
-これらのMapping操作と入力・出力の独立コピーは、汎用基底の
-`domain/foundation/value_objects.py` の `ImmutableMapping` に集約しています。
+原文から派生する索引用投影 `SearchUnit` と `SearchContent*`、そのID・本文・項目コード等の型は `application/indexing/search_models.py` と `search_values.py` が所有します。
+検索条件・意図判定ポリシー・検索結果 `Evidence` は `application/retrieval/search_models.py`、検索用の値は `search_values.py` に置きます。
+キーワード検出・確率による意図選択・製品範囲の選択・結果の並び替えと統合は `application/retrieval/search_policy.py`、文脈ラベル付き原文の投影は `application/indexing/text_projection.py` が担当します。
+`domain/retrieval` は廃止し、分類と参照項目の対応も根拠取得ユースケースのポリシーとしてApplicationが所有します。
+`EvidenceRepository` と `EvidenceSearchTarget` は `application/retrieval/evidence_contracts.py` に置く検索ポートです。
+`Evidence` は不変な読み取りモデルであり、公開用payloadへの変換は `evidence_payloads.py` の明示的な関数に分けます。
+根拠の統合は最初の原文と既存の取得経路を保持し、取得経路を和集合にします。番号付き項目・文字列項目・空項目の順、同項目では検索単位ID順の不変タプルを返します。
+検索結果の改訂・参照・項目・表の列は、原表記と未知metadataを保持し、`domain/foundation/value_objects.py` の汎用 `ImmutableMapping` によって入力・出力から独立させます。
+Application内は `chat → retrieval → indexing`、`attachment_import → indexing` を許可し、indexingからretrievalへの逆依存を禁止します。モデルは値とモデル、ポートは値・モデル・ポートに依存でき、値からモデル・実行処理への逆依存は禁止します。
 文書内の製品重複と項目の親子関係は `AttachmentDocument` が検証し、
 取得経路は `frozenset[DetectionSource]` で保持し、公開JSONはEnum定義順の配列に変換します。
 経路がない場合は空集合・空配列とし、組み合わせ専用のEnumや対応表は定義しません。
@@ -400,8 +393,7 @@ tests/
 ├── domain/              # モデルの不変条件・照合・検索の純粋な規則
 │   ├── attachment/
 │   ├── foundation/
-│   ├── medicine/
-│   └── retrieval/
+│   └── medicine/
 ├── application/         # ユースケース・ポート・投影
 │   ├── attachment_import/
 │   ├── chat/

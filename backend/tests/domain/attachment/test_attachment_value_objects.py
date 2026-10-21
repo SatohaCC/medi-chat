@@ -3,6 +3,12 @@
 from dataclasses import FrozenInstanceError, replace
 
 import pytest
+from backend.application.indexing.search_models import DocumentRevision
+from backend.application.retrieval.search_models import (
+    EvidenceColumns,
+    EvidenceReference,
+    EvidenceSection,
+)
 from backend.domain.attachment.primitives import (
     AttachmentSectionTitle,
     AttachmentSha256,
@@ -14,12 +20,6 @@ from backend.domain.attachment.value_objects import (
     AttachmentSource,
 )
 from backend.domain.foundation.exceptions import DomainValidationError
-from backend.domain.retrieval.value_objects import (
-    DocumentRevision,
-    EvidenceColumns,
-    EvidenceReference,
-    EvidenceSection,
-)
 
 
 @pytest.mark.parametrize("value_type", [DocumentRevision, EvidenceReference])

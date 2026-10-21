@@ -7,11 +7,11 @@ from pathlib import Path
 
 from backend.application.chat.answer_prompt_builder import build_answer_messages
 from backend.application.chat.chat_models import ChatMessage, ChatResponse
+from backend.application.indexing.text_projection import format_scoped_text
 from backend.application.medicine.product_models import ResolvedMedicine
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import BrandName, GenericName
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
-from backend.domain.retrieval.services import format_scoped_text
 from backend.infrastructure.morphology.keyword_extraction import extract_search_keywords
 from backend.infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,

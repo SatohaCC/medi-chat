@@ -80,7 +80,7 @@ medi-chat/
 
 バックエンドの責務分担、依存関係、モジュールの移動先は [backend/README.md](backend/README.md) を参照してください。
 
-添付文書の項目・質問意図・キーワード・Jev分類・プロンプト用の定義・XML対応は、[Infrastructure定義ソース](backend/infrastructure/package_insert_definitions/package_insert_catalog.json) で一元管理します。[編集方法](backend/infrastructure/package_insert_definitions/README.md) に参照規則と検証方法を記載しています。用途別のモデルをbackend内のattachment/retrieval/Applicationへ投影し、技術設定はInfrastructureが所有します。Python実行にはbackendの配置を使用します。
+添付文書の項目・質問意図・キーワード・Jev分類・プロンプト用の定義・XML対応は、[Infrastructure定義ソース](backend/infrastructure/package_insert_definitions/package_insert_catalog.json) で一元管理します。[編集方法](backend/infrastructure/package_insert_definitions/README.md) に参照規則と検証方法を記載しています。用途別のモデルをbackend内のDomainのattachmentとApplicationのindexing/retrievalへ投影し、技術設定はInfrastructureが所有します。Python実行にはbackendの配置を使用します。
 
 ---
 

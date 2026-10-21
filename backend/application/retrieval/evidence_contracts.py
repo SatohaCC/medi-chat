@@ -1,8 +1,10 @@
-"""検索条件に対応する根拠の取得ポート。"""
+"""根拠取得ユースケースが必要とする検索ポート。"""
+
+from __future__ import annotations
 
 from typing import Protocol
 
-from .value_objects import Evidence, SearchCriteria
+from backend.application.retrieval.search_models import Evidence, SearchCriteria
 
 
 class EvidenceSearchTarget(Protocol):
@@ -16,7 +18,7 @@ class EvidenceSearchTarget(Protocol):
 
 
 class EvidenceRepository(Protocol):
-    """検索条件に対応する根拠を取得するドメインポート。"""
+    """検索条件に対応する根拠を取得するApplicationポート。"""
 
     async def search(
         self, criteria: SearchCriteria, medicines: tuple[EvidenceSearchTarget, ...]

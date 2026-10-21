@@ -3,9 +3,9 @@
 from dataclasses import replace
 
 import pytest
+from backend.application.retrieval.search_models import SymptomKeywordRule
+from backend.application.retrieval.search_values import SearchPolicyTerm
 from backend.domain.foundation.json_types import JsonValue
-from backend.domain.retrieval.primitives import SearchPolicyTerm
-from backend.domain.retrieval.value_objects import SymptomKeywordRule
 
 
 def test_tc15_mapping_uses_injected_heading_policy(monkeypatch) -> None:

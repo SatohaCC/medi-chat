@@ -4,14 +4,12 @@ import hashlib
 import json
 
 import pytest
+from backend.application.indexing.search_values import SearchSectionCode
+from backend.application.retrieval.evidence_payloads import evidence_payload
+from backend.application.retrieval.search_models import SearchCriteria
+from backend.application.retrieval.search_values import DetectionSource, SearchKeyword
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import BrandName, MatchedAlias
-from backend.domain.retrieval.primitives import (
-    DetectionSource,
-    SearchKeyword,
-    SearchSectionCode,
-)
-from backend.domain.retrieval.value_objects import SearchCriteria
 from backend.infrastructure.persistence.postgres_runtime import PostgresRuntime
 from backend.infrastructure.persistence.read_workers import ReadWorkers
 from backend.tests.application.indexing.test_active_attachment_projection import (
@@ -153,7 +151,9 @@ async def test_pg028_030_snapshot_retains_ids_order_payload(pg_engines, pg_publi
                     ),
                 )
                 actual = await scope.evidence_reader.search(criteria, target())
-                assert [item.to_dict() for item in actual] == case["expected"], case
+                assert [evidence_payload(item) for item in actual] == case[
+                    "expected"
+                ], case
     finally:
         await workers.aclose()
 
@@ -207,8 +207,8 @@ async def test_pg031_more_than_four_hundred_results_have_no_limit(
                 receipt.document_id for receipt in receipts
             }
             assert all("テスト全件検索" in item.excerpt.value for item in first)
-            assert [item.to_dict() for item in repeated] == [
-                item.to_dict() for item in first
+            assert [evidence_payload(item) for item in repeated] == [
+                evidence_payload(item) for item in first
             ]
     finally:
         await workers.aclose()
@@ -264,7 +264,7 @@ async def test_pg032_original_xml_tables_and_sources_match_independent_oracle(
                     )
                     result = await snapshot.evidence_reader.search(criteria, medicines)
                     assert len(result) == 1
-                    assert_public_source(result[0].to_dict(), document, major)
+                    assert_public_source(evidence_payload(result[0]), document, major)
     finally:
         await workers.aclose()
 
@@ -283,7 +283,9 @@ async def test_pg032_requested_product_tables_and_version_sources_match_old_snap
                 actual = await scope.evidence_reader.search(
                     warning_criteria(), target(code)
                 )
-                assert [item.to_dict() for item in actual] == ORACLE["products"][code]
+                assert [evidence_payload(item) for item in actual] == ORACLE[
+                    "products"
+                ][code]
                 assert ("A値" in actual[0].excerpt.value) is (code == "111111111111")
                 assert ("B値" in actual[0].excerpt.value) is (code == "222222222222")
         assert pg_engines[1].pool.checkedout() == 0

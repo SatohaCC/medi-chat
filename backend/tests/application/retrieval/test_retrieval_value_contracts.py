@@ -4,17 +4,20 @@ from dataclasses import FrozenInstanceError, fields, replace
 from typing import Any
 
 import pytest
+from backend.application.indexing import search_models as im
+from backend.application.indexing import search_values as ip
+from backend.application.indexing.search_models import SearchUnit
+from backend.application.indexing.search_values import SearchUnitId
+from backend.application.retrieval import search_models as v
+from backend.application.retrieval import search_values as p
+from backend.application.retrieval.evidence_payloads import evidence_payload
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.foundation.exceptions import DomainValidationError
-from backend.domain.retrieval import primitives as p
-from backend.domain.retrieval import value_objects as v
-from backend.domain.retrieval.entities import SearchUnit
-from backend.domain.retrieval.identifiers import SearchUnitId
 
 
 @pytest.mark.parametrize(
     "kind,minimum",
-    [(p.KeywordPriority, 1), (p.SearchColumnIndex, 0), (p.SearchCellSpan, 1)],
+    [(p.KeywordPriority, 1), (ip.SearchColumnIndex, 0), (ip.SearchCellSpan, 1)],
 )
 def test_numeric_primitives_enforce_integer_boundaries(kind, minimum):
     assert kind(minimum).value == minimum
@@ -53,14 +56,14 @@ def test_excerpt_preserves_empty_original():
 
 
 def examples() -> list[Any]:
-    context = v.SearchContentContext()
-    cell = v.SearchTableCell(
-        text=p.SearchUnitText(""),
-        column=p.SearchColumnIndex(0),
-        rowspan=p.SearchCellSpan(1),
-        colspan=p.SearchCellSpan(1),
+    context = im.SearchContentContext()
+    cell = im.SearchTableCell(
+        text=ip.SearchUnitText(""),
+        column=ip.SearchColumnIndex(0),
+        rowspan=ip.SearchCellSpan(1),
+        colspan=ip.SearchCellSpan(1),
     )
-    table = v.SearchTable(columns=(), rows=())
+    table = im.SearchTable(columns=(), rows=())
     fallback = v.SearchIntentDefinition(
         id=p.IntentName("other"), section_codes=(), keywords=(), keyword_priority=None
     )
@@ -82,20 +85,20 @@ def examples() -> list[Any]:
             stop_words=frozenset(), symptom_rules=(), scope_heading_texts=frozenset()
         ),
         context,
-        v.SearchContentReference(label=p.SearchUnitText("参照")),
+        im.SearchContentReference(label=ip.SearchUnitText("参照")),
         cell,
         table,
-        v.SearchParagraph(text=p.SearchUnitText(""), context=context),
-        v.SearchTableBlock(table=table, context=context),
-        v.SearchFigure(
-            reference=p.SearchUnitText("fig"),
-            description=p.SearchUnitText(""),
+        im.SearchParagraph(text=ip.SearchUnitText(""), context=context),
+        im.SearchTableBlock(table=table, context=context),
+        im.SearchFigure(
+            reference=ip.SearchUnitText("fig"),
+            description=ip.SearchUnitText(""),
             context=context,
         ),
         v.SearchCriteria(source=p.DetectionSource.LOGIC),
         v.IntentCandidate(p.IntentName("other"), p.Probability(0)),
         v.IntentSelection(),
-        v.DocumentRevision({}),
+        im.DocumentRevision({}),
         v.EvidenceReference({}),
         v.EvidenceSection({}),
         v.EvidenceColumns({}),
@@ -107,7 +110,7 @@ def examples() -> list[Any]:
             product_name=None,
             generic_name=None,
             product_yj_codes=(),
-            document_revision=v.DocumentRevision({}),
+            document_revision=im.DocumentRevision({}),
             section=v.EvidenceSection({}),
             kind=None,
             excerpt=p.EvidenceExcerpt(""),
@@ -116,9 +119,9 @@ def examples() -> list[Any]:
         SearchUnit(
             unit_id=SearchUnitId("unit"),
             document_id=DocumentId("doc"),
-            section_code=p.SearchUnitSectionCode("1"),
-            kind=p.SearchUnitKind("section"),
-            text=p.SearchUnitText(""),
+            section_code=ip.SearchUnitSectionCode("1"),
+            kind=ip.SearchUnitKind("section"),
+            text=ip.SearchUnitText(""),
         ),
     ]
 
@@ -135,7 +138,7 @@ def test_models_are_frozen_and_defaults_are_valid():
 
 def test_evidence_public_empty_values_stay_basic_types():
     evidence = next(m for m in MODELS if isinstance(m, v.Evidence))
-    payload = evidence.to_dict()
+    payload = evidence_payload(evidence)
     assert all(
         payload[key] == ""
         for key in ("product_name", "generic_name", "kind", "excerpt", "url")

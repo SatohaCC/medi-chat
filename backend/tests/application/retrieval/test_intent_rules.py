@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import unittest
 
-from backend.domain.retrieval.services import detect_intents_from_keywords
+from backend.application.retrieval.search_policy import detect_intents_from_keywords
 from backend.infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,
 )

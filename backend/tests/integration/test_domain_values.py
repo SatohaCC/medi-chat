@@ -10,6 +10,7 @@ from backend.application.medicine.product_models import (
     RegisteredMedicine,
     ResolvedMedicine,
 )
+from backend.application.retrieval.search_values import DetectionSource, Probability
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.attachment.primitives import PmdaUrl
 from backend.domain.attachment.value_objects import (
@@ -27,8 +28,7 @@ from backend.domain.medicine.primitives import (
 )
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.domain.medicine.value_objects import MedicineNames
-from backend.domain.retrieval.primitives import DetectionSource, Probability
-from backend.tests.domain.retrieval.test_evidence_collection import make_evidence
+from backend.tests.application.retrieval.test_evidence_collection import make_evidence
 
 
 def test_domain_primitives_validate_and_remain_immutable():

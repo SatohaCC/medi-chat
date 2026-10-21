@@ -1,5 +1,5 @@
 import pytest
-from backend.domain.retrieval.services import detect_fixed_keyword_criteria
+from backend.application.retrieval.search_policy import detect_fixed_keyword_criteria
 from backend.infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,
 )

@@ -13,16 +13,39 @@ from backend.application.chat.answer_prompt_builder import build_answer_messages
 from backend.application.chat.answer_question import answer_question
 from backend.application.chat.answer_stream import stream_answer
 from backend.application.chat.chat_models import ChatMessage, ChatResponse
+from backend.application.indexing.search_models import DocumentRevision
+from backend.application.indexing.search_values import (
+    SearchSectionCode,
+    SearchUnitId,
+    SearchUnitKind,
+)
 from backend.application.medicine.product_models import (
     RegisteredMedicine,
     ResolvedMedicine,
 )
+from backend.application.retrieval.evidence_contracts import EvidenceSearchTarget
 from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
 from backend.application.retrieval.jev_detector import (
     JevDetectionResult,
     detect_jev_criteria,
 )
 from backend.application.retrieval.morphology_detector import detect_morphology_criteria
+from backend.application.retrieval.search_models import (
+    Evidence,
+    EvidenceSection,
+    IntentCandidate,
+    SearchCriteria,
+)
+from backend.application.retrieval.search_values import (
+    DetectionSource,
+    EvidenceExcerpt,
+    EvidenceGenericName,
+    EvidenceProductName,
+    EvidenceSourceUrl,
+    IntentName,
+    Probability,
+    SearchKeyword,
+)
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.attachment.primitives import PmdaUrl
 from backend.domain.attachment.value_objects import (
@@ -43,29 +66,6 @@ from backend.domain.medicine.primitives import (
 )
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.domain.medicine.value_objects import MedicineNames
-from backend.domain.retrieval.identifiers import SearchUnitId
-from backend.domain.retrieval.primitives import (
-    DetectionSource,
-    EvidenceExcerpt,
-    EvidenceGenericName,
-    EvidenceProductName,
-    EvidenceSourceUrl,
-    IntentName,
-    Probability,
-    SearchKeyword,
-    SearchSectionCode,
-    SearchUnitKind,
-)
-from backend.domain.retrieval.repositories import (
-    EvidenceSearchTarget,
-)
-from backend.domain.retrieval.value_objects import (
-    DocumentRevision,
-    Evidence,
-    EvidenceSection,
-    IntentCandidate,
-    SearchCriteria,
-)
 from backend.infrastructure.intent.jev_classifier import JevIntentClassifier
 from backend.infrastructure.morphology.janome_keyword_extractor import (
     JanomeKeywordExtractor,

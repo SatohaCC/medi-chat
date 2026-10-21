@@ -1,24 +1,19 @@
-"""検索コンテキストの状態を持たないDomain Service。"""
+"""根拠取得の型とポリシー。"""
+
+from __future__ import annotations
 
 import re
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable
 from dataclasses import replace
 from typing import Protocol
 
-from ..medicine.identifiers import YjCode
-from ..shared.services import normalize_match_text
-from .identifiers import SearchUnitId
-from .primitives import (
-    DetectionSource,
+from backend.application.indexing.search_values import (
     EvidenceContextLabel,
-    EvidenceExcerpt,
-    EvidenceProductName,
-    IntentName,
-    Probability,
-    SearchKeyword,
     SearchSectionCode,
+    SearchUnitId,
 )
-from .value_objects import (
+from backend.application.indexing.text_projection import format_scoped_text
+from backend.application.retrieval.search_models import (
     Evidence,
     EvidenceDocument,
     IntentCandidate,
@@ -27,6 +22,16 @@ from .value_objects import (
     SearchCriteria,
     TextSearchPolicy,
 )
+from backend.application.retrieval.search_values import (
+    DetectionSource,
+    EvidenceExcerpt,
+    EvidenceProductName,
+    IntentName,
+    Probability,
+    SearchKeyword,
+)
+from backend.domain.medicine.identifiers import YjCode
+from backend.domain.shared.services import normalize_match_text
 
 
 def detect_intents_from_keywords(
@@ -222,15 +227,3 @@ def merge_evidence(
 
 def section_code_sort_key(code: str) -> tuple[int | str, ...]:
     return tuple(int(part) if part.isdigit() else part for part in code.split("."))
-
-
-def format_scoped_text(text: str, scope: Sequence[str]) -> str:
-    missing = [label for label in scope if label not in text]
-    if not missing:
-        return text
-    labels = [
-        label if label.startswith(("〈", "＜", "［", "[")) else f"〈{label}〉"
-        for label in missing
-    ]
-    prefix = " ".join(labels)
-    return f"{prefix}\n{text}" if "\n" in text or len(text) > 40 else f"{prefix} {text}"

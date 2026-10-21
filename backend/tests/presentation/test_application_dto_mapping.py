@@ -7,7 +7,16 @@ from dataclasses import fields
 
 import pytest
 from backend.application.chat.chat_models import ChatMessage, ChatResponse
+from backend.application.indexing.search_values import SearchUnitKind
 from backend.application.medicine.product_models import ResolvedMedicine
+from backend.application.retrieval.search_models import Evidence
+from backend.application.retrieval.search_values import (
+    DetectionSource,
+    EvidenceExcerpt,
+    EvidenceGenericName,
+    EvidenceProductName,
+    EvidenceSourceUrl,
+)
 from backend.domain.foundation.json_types import JsonValue
 from backend.domain.foundation.primitives.primitives import (
     BaseFiniteFloat,
@@ -15,15 +24,6 @@ from backend.domain.foundation.primitives.primitives import (
 )
 from backend.domain.medicine.primitives import BrandName, GenericName, MatchedAlias
 from backend.domain.medicine.value_objects import MedicineMatch
-from backend.domain.retrieval.primitives import (
-    DetectionSource,
-    EvidenceExcerpt,
-    EvidenceGenericName,
-    EvidenceProductName,
-    EvidenceSourceUrl,
-    SearchUnitKind,
-)
-from backend.domain.retrieval.value_objects import Evidence
 from backend.presentation.chat_dto_mapper import (
     chat_message_from_api,
     chat_response_to_api,
@@ -157,15 +157,15 @@ def response_payload() -> dict[str, JsonValue]:
 
 
 def _application_response(payload):
-    from backend.domain.attachment.identifiers import DocumentId
-    from backend.domain.medicine.identifiers import YjCode
-    from backend.domain.retrieval.identifiers import SearchUnitId
-    from backend.domain.retrieval.value_objects import (
-        DocumentRevision,
+    from backend.application.indexing.search_models import DocumentRevision
+    from backend.application.indexing.search_values import SearchUnitId
+    from backend.application.retrieval.search_models import (
         EvidenceColumns,
         EvidenceReference,
         EvidenceSection,
     )
+    from backend.domain.attachment.identifiers import DocumentId
+    from backend.domain.medicine.identifiers import YjCode
 
     return ChatResponse(
         answer=payload["answer"],

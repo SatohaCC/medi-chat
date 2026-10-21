@@ -1,24 +1,23 @@
 """Reader-port aggregation oracle, independent of storage projection granularity."""
 
 import pytest
+from backend.application.indexing.search_models import DocumentRevision
+from backend.application.indexing.search_values import SearchUnitId, SearchUnitKind
 from backend.application.retrieval.retrieve_evidence import _search_evidence
-from backend.domain.attachment.identifiers import DocumentId
-from backend.domain.medicine.identifiers import YjCode
-from backend.domain.retrieval.identifiers import SearchUnitId
-from backend.domain.retrieval.primitives import (
+from backend.application.retrieval.search_models import (
+    Evidence,
+    EvidenceSection,
+    SearchCriteria,
+)
+from backend.application.retrieval.search_values import (
     DetectionSource,
     EvidenceExcerpt,
     EvidenceGenericName,
     EvidenceProductName,
     EvidenceSourceUrl,
-    SearchUnitKind,
 )
-from backend.domain.retrieval.value_objects import (
-    DocumentRevision,
-    Evidence,
-    EvidenceSection,
-    SearchCriteria,
-)
+from backend.domain.attachment.identifiers import DocumentId
+from backend.domain.medicine.identifiers import YjCode
 
 
 def evidence(index, code="11.1", text=None):

@@ -5,8 +5,20 @@ from functools import lru_cache
 from pathlib import Path
 from types import MappingProxyType
 
-from backend.domain.retrieval.primitives import KeywordPriority, SearchPolicyTerm
-from backend.domain.retrieval.value_objects import SymptomKeywordRule
+from backend.application.indexing.search_values import SearchSectionCode
+from backend.application.retrieval.search_models import (
+    IntentKeyword,
+    IntentPolicy,
+    SearchIntentDefinition,
+    SymptomKeywordRule,
+    TextSearchPolicy,
+)
+from backend.application.retrieval.search_values import (
+    IntentKeywordText,
+    IntentName,
+    KeywordPriority,
+    SearchPolicyTerm,
+)
 
 from ...application.chat.answer_prompt_policy import (
     AnswerColumn,
@@ -26,17 +38,6 @@ from ...domain.attachment.value_objects import (
     InteractionColumnDefinition,
     SectionDefinition,
     SectionTaxonomy,
-)
-from ...domain.retrieval.primitives import (
-    IntentKeywordText,
-    IntentName,
-    SearchSectionCode,
-)
-from ...domain.retrieval.value_objects import (
-    IntentKeyword,
-    IntentPolicy,
-    SearchIntentDefinition,
-    TextSearchPolicy,
 )
 from .definition_settings import (
     JanomeMorphologySettings,

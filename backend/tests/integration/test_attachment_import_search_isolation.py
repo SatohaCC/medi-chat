@@ -4,8 +4,9 @@ from dataclasses import dataclass
 
 import httpx
 import pytest
-from backend.domain.retrieval.primitives import DetectionSource, SearchSectionCode
-from backend.domain.retrieval.value_objects import SearchCriteria
+from backend.application.indexing.search_values import SearchSectionCode
+from backend.application.retrieval.search_models import SearchCriteria
+from backend.application.retrieval.search_values import DetectionSource
 from backend.tests.integration.test_generation_readonly import digest
 from backend.tests.support.attachment_import_fixtures import xml_source
 from backend.tests.support.postgres_fixtures import pg_api as pg_api

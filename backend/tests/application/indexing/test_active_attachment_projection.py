@@ -3,6 +3,7 @@ import json
 from dataclasses import replace
 
 from backend.application.indexing.attachment_projection import project_active_attachment
+from backend.application.indexing.search_models import SearchTableBlock
 from backend.domain.attachment.primitives import (
     AttachmentProductCode,
     AttachmentSha256,
@@ -14,7 +15,6 @@ from backend.domain.attachment.value_objects import (
     AttachmentParagraph,
 )
 from backend.domain.medicine.identifiers import YjCode
-from backend.domain.retrieval.value_objects import SearchTableBlock
 from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
 from backend.infrastructure.pmda_xml.registration_artifacts import (
     encode_registered_units,

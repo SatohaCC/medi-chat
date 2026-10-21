@@ -3,10 +3,10 @@
 import json
 
 import pytest
-from backend.domain.retrieval.services import (
+from backend.application.retrieval.search_policy import (
     detect_fixed_keyword_criteria as _detect_fixed_keyword_criteria,
 )
-from backend.domain.retrieval.services import detect_intents_from_keywords
+from backend.application.retrieval.search_policy import detect_intents_from_keywords
 from backend.infrastructure.package_insert_definitions.loader import (
     DEFINITIONS_PATH,
     load_package_insert_definitions,

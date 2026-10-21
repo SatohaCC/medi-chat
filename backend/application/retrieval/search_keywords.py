@@ -7,15 +7,15 @@ from collections.abc import Sequence
 from backend.application.medicine.input_values import parse_yj_codes
 from backend.application.medicine.product_catalog import MedicineCatalog
 from backend.application.medicine.product_contracts import RegisteredMedicineReader
-from backend.domain.medicine.identifiers import YjCode
-
-from ...domain.retrieval.primitives import DetectionSource
-from ...domain.retrieval.repositories import EvidenceRepository
-from ...domain.retrieval.services import (
+from backend.application.retrieval.evidence_contracts import EvidenceRepository
+from backend.application.retrieval.search_models import Evidence
+from backend.application.retrieval.search_policy import (
     build_keyword_search_criteria,
     merge_evidence,
 )
-from ...domain.retrieval.value_objects import Evidence
+from backend.application.retrieval.search_values import DetectionSource
+from backend.domain.medicine.identifiers import YjCode
+
 from .keyword_contracts import KeywordExtractor
 from .snapshot_contracts import RetrievalSnapshotProvider
 

@@ -4,7 +4,15 @@ import html
 import json
 from typing import Any
 
+from backend.application.indexing.search_models import (
+    SearchContentBlock,
+    SearchContentReference,
+    SearchParagraph,
+    SearchTableBlock,
+    SearchUnit,
+)
 from backend.application.medicine.product_models import RegisteredMedicine
+from backend.application.retrieval.search_policy import section_code_matches
 from backend.domain.attachment.value_objects import MedicineDocumentReference
 from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.primitives import (
@@ -28,14 +36,6 @@ from ..domain.attachment.primitives import PmdaUrl
 from ..domain.attachment.value_objects import AttachmentProductRevision
 from ..domain.foundation.json_types import JsonValue
 from ..domain.medicine.identifiers import YjCode
-from ..domain.retrieval.entities import SearchUnit
-from ..domain.retrieval.services import section_code_matches
-from ..domain.retrieval.value_objects import (
-    SearchContentBlock,
-    SearchContentReference,
-    SearchParagraph,
-    SearchTableBlock,
-)
 from ..domain.shared.services import normalize_search_text
 
 MAX_ARTIFACT_BYTES = 32 * 1024 * 1024

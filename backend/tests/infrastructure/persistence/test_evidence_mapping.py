@@ -4,20 +4,26 @@ from copy import deepcopy
 from dataclasses import replace
 
 import pytest
-from backend.domain.foundation.json_types import JsonValue
-from backend.domain.medicine.identifiers import YjCode
-from backend.domain.retrieval.primitives import (
+from backend.application.indexing.search_values import EvidenceContextLabel
+from backend.application.retrieval.evidence_payloads import evidence_payload
+from backend.application.retrieval.search_models import (
+    EvidenceDocument,
+    EvidenceProduct,
+)
+from backend.application.retrieval.search_policy import (
+    build_evidence as format_evidence,
+)
+from backend.application.retrieval.search_values import (
     EvidenceBrandName,
-    EvidenceContextLabel,
     EvidenceExcerpt,
     EvidenceGenericName,
     EvidenceProductName,
     EvidenceSourceUrl,
 )
-from backend.domain.retrieval.services import build_evidence as format_evidence
-from backend.domain.retrieval.value_objects import EvidenceDocument, EvidenceProduct
+from backend.domain.foundation.json_types import JsonValue
+from backend.domain.medicine.identifiers import YjCode
 from backend.infrastructure.evidence_mapping import build_evidence
-from backend.tests.domain.retrieval.test_evidence_collection import make_evidence
+from backend.tests.application.retrieval.test_evidence_collection import make_evidence
 
 
 def test_section_evidence_gets_current_revision_from_document_metadata():
@@ -40,7 +46,7 @@ def test_section_evidence_gets_current_revision_from_document_metadata():
         },
         "logic",
     )
-    assert evidence.to_dict()["document_revision"] == current
+    assert evidence_payload(evidence)["document_revision"] == current
 
 
 @pytest.mark.parametrize(
@@ -81,7 +87,7 @@ def test_allowed_values_and_original_information_are_preserved(
     }
     before = deepcopy((unit, document))
     evidence = build_evidence(unit, document, "logic")
-    assert evidence.to_dict() == {
+    assert evidence_payload(evidence) == {
         "unit_id": "自由な根拠ID",
         "document_id": "自由な文書ID",
         "product_name": name,

@@ -5,26 +5,25 @@ from __future__ import annotations
 import unittest
 
 from backend.application.chat.answer_prompt_builder import build_answer_system_prompt
+from backend.application.indexing.search_models import DocumentRevision
+from backend.application.indexing.search_values import SearchUnitId, SearchUnitKind
 from backend.application.medicine.product_models import ResolvedMedicine
-from backend.domain.attachment.identifiers import DocumentId
-from backend.domain.medicine.identifiers import YjCode
-from backend.domain.medicine.primitives import BrandName, GenericName
-from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
-from backend.domain.retrieval.identifiers import SearchUnitId
-from backend.domain.retrieval.primitives import (
-    EvidenceExcerpt,
-    EvidenceGenericName,
-    EvidenceProductName,
-    EvidenceSourceUrl,
-    SearchUnitKind,
-)
-from backend.domain.retrieval.value_objects import (
-    DocumentRevision,
+from backend.application.retrieval.search_models import Evidence as ChatSource
+from backend.application.retrieval.search_models import (
     EvidenceColumns,
     EvidenceReference,
     EvidenceSection,
 )
-from backend.domain.retrieval.value_objects import Evidence as ChatSource
+from backend.application.retrieval.search_values import (
+    EvidenceExcerpt,
+    EvidenceGenericName,
+    EvidenceProductName,
+    EvidenceSourceUrl,
+)
+from backend.domain.attachment.identifiers import DocumentId
+from backend.domain.medicine.identifiers import YjCode
+from backend.domain.medicine.primitives import BrandName, GenericName
+from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,
 )

@@ -2,26 +2,13 @@
 
 from dataclasses import dataclass
 
-from ..domain.attachment.identifiers import DocumentId
-from ..domain.foundation.json_types import JsonValue
-from ..domain.medicine.identifiers import YjCode
-from ..domain.retrieval.identifiers import SearchUnitId
-from ..domain.retrieval.primitives import (
-    DetectionSource,
-    EvidenceBrandName,
+from backend.application.indexing.search_models import DocumentRevision
+from backend.application.indexing.search_values import (
     EvidenceContextLabel,
-    EvidenceExcerpt,
-    EvidenceGenericName,
-    EvidenceSourceUrl,
+    SearchUnitId,
     SearchUnitKind,
 )
-from ..domain.retrieval.services import (
-    build_evidence as format_evidence,
-)
-from ..domain.retrieval.services import is_scope_heading_only as scope_heading_only
-from ..domain.retrieval.services import select_products
-from ..domain.retrieval.value_objects import (
-    DocumentRevision,
+from backend.application.retrieval.search_models import (
     Evidence,
     EvidenceColumns,
     EvidenceDocument,
@@ -30,6 +17,24 @@ from ..domain.retrieval.value_objects import (
     EvidenceSection,
     TextSearchPolicy,
 )
+from backend.application.retrieval.search_policy import (
+    build_evidence as format_evidence,
+)
+from backend.application.retrieval.search_policy import (
+    is_scope_heading_only as scope_heading_only,
+)
+from backend.application.retrieval.search_policy import select_products
+from backend.application.retrieval.search_values import (
+    DetectionSource,
+    EvidenceBrandName,
+    EvidenceExcerpt,
+    EvidenceGenericName,
+    EvidenceSourceUrl,
+)
+
+from ..domain.attachment.identifiers import DocumentId
+from ..domain.foundation.json_types import JsonValue
+from ..domain.medicine.identifiers import YjCode
 
 
 def _object(value: JsonValue) -> dict[str, JsonValue]:

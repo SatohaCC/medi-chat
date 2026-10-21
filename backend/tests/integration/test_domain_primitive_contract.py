@@ -5,6 +5,24 @@ from dataclasses import FrozenInstanceError, replace
 
 import pytest
 from backend.application.chat.chat_models import ChatResponse
+from backend.application.indexing.search_values import (
+    SearchSectionCode,
+    SearchUnitId,
+    SearchUnitKind,
+)
+from backend.application.retrieval.evidence_payloads import evidence_payload
+from backend.application.retrieval.search_models import (
+    IntentCandidate,
+    IntentSelection,
+    SearchCriteria,
+)
+from backend.application.retrieval.search_values import (
+    DetectionSource,
+    EvidenceExcerpt,
+    IntentName,
+    Probability,
+    SearchKeyword,
+)
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.attachment.primitives import (
     AttachmentProductCode,
@@ -16,23 +34,8 @@ from backend.domain.foundation.exceptions import DomainValidationError
 from backend.domain.foundation.primitives.base import DomainPrimitive
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import ProductGroupId
-from backend.domain.retrieval.identifiers import SearchUnitId
-from backend.domain.retrieval.primitives import (
-    DetectionSource,
-    EvidenceExcerpt,
-    IntentName,
-    Probability,
-    SearchKeyword,
-    SearchSectionCode,
-    SearchUnitKind,
-)
-from backend.domain.retrieval.value_objects import (
-    IntentCandidate,
-    IntentSelection,
-    SearchCriteria,
-)
 from backend.presentation.chat_dto_mapper import chat_response_to_api
-from backend.tests.domain.retrieval.test_evidence_collection import make_evidence
+from backend.tests.application.retrieval.test_evidence_collection import make_evidence
 
 
 @pytest.mark.parametrize(
@@ -98,7 +101,7 @@ def test_dataclass_reconstruction_preserves_search_primitives():
 def test_evidence_json_and_api_keep_basic_values_after_reconstruction():
     evidence = make_evidence()
     reconstructed = replace(evidence, excerpt=EvidenceExcerpt("更新した原文"))
-    payload = reconstructed.to_dict()
+    payload = evidence_payload(reconstructed)
     assert payload["unit_id"] == evidence.unit_id.value
     assert payload["document_id"] == evidence.document_id.value
     assert "document_key" not in payload

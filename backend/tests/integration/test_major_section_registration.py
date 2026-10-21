@@ -1,14 +1,11 @@
 """大項目データの実保存・再起動・PostgreSQL snapshot検索を検証する。"""
 
 import pytest
+from backend.application.indexing.search_values import SearchSectionCode
 from backend.application.medicine.product_catalog import MedicineCatalog
+from backend.application.retrieval.search_models import SearchCriteria
+from backend.application.retrieval.search_values import DetectionSource, SearchKeyword
 from backend.domain.medicine.identifiers import YjCode
-from backend.domain.retrieval.primitives import (
-    DetectionSource,
-    SearchKeyword,
-    SearchSectionCode,
-)
-from backend.domain.retrieval.value_objects import SearchCriteria
 from backend.infrastructure.persistence import postgres_schema as schema
 from backend.infrastructure.persistence.postgres_engine import create_postgres_engine
 from backend.infrastructure.persistence.postgres_runtime import PostgresRuntime

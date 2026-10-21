@@ -1,16 +1,16 @@
-"""検索コンテキストのValue Object。"""
+"""根拠取得の型とポリシー。"""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
-from ..attachment.identifiers import DocumentId
-from ..foundation.exceptions import DomainValidationError
-from ..foundation.json_types import JsonValue
-from ..foundation.value_objects import ImmutableMapping
-from ..medicine.identifiers import YjCode
-from .identifiers import SearchUnitId
-from .primitives import (
+from backend.application.indexing.search_models import DocumentRevision
+from backend.application.indexing.search_values import (
+    SearchSectionCode,
+    SearchUnitId,
+    SearchUnitKind,
+)
+from backend.application.retrieval.search_values import (
     DetectionSource,
     EvidenceBrandName,
     EvidenceExcerpt,
@@ -21,16 +21,14 @@ from .primitives import (
     IntentName,
     KeywordPriority,
     Probability,
-    SearchCellSpan,
-    SearchColumnIndex,
     SearchKeyword,
     SearchPolicyTerm,
-    SearchSectionCode,
-    SearchUnitKind,
-    SearchUnitProductCode,
-    SearchUnitSectionCode,
-    SearchUnitText,
 )
+from backend.domain.attachment.identifiers import DocumentId
+from backend.domain.foundation.exceptions import DomainValidationError
+from backend.domain.foundation.json_types import JsonValue
+from backend.domain.foundation.value_objects import ImmutableMapping
+from backend.domain.medicine.identifiers import YjCode
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -120,63 +118,6 @@ class TextSearchPolicy:
     scope_heading_texts: frozenset[SearchPolicyTerm]
 
 
-@dataclass(frozen=True, slots=True, kw_only=True)
-class SearchContentContext:
-    product_codes: tuple[SearchUnitProductCode, ...] = ()
-    labels: tuple[SearchUnitText, ...] = ()
-    section_code: SearchUnitSectionCode | None = None
-    section_title: SearchUnitText | None = None
-
-
-@dataclass(frozen=True, slots=True, kw_only=True)
-class SearchContentReference:
-    label: SearchUnitText
-    target_id: SearchUnitText | None = None
-    metadata: EvidenceReference = field(default_factory=lambda: EvidenceReference())
-
-
-@dataclass(frozen=True, slots=True, kw_only=True)
-class SearchTableCell:
-    text: SearchUnitText
-    column: SearchColumnIndex
-    rowspan: SearchCellSpan
-    colspan: SearchCellSpan
-    references: tuple[SearchContentReference, ...] = ()
-    context: SearchContentContext = field(default_factory=SearchContentContext)
-
-
-@dataclass(frozen=True, slots=True, kw_only=True)
-class SearchTable:
-    columns: tuple[SearchUnitText, ...]
-    rows: tuple[tuple[SearchTableCell, ...], ...]
-
-
-@dataclass(frozen=True, slots=True, kw_only=True)
-class SearchParagraph:
-    text: SearchUnitText
-    is_heading: bool = False
-    context: SearchContentContext
-    references: tuple[SearchContentReference, ...] = ()
-
-
-@dataclass(frozen=True, slots=True, kw_only=True)
-class SearchTableBlock:
-    table: SearchTable
-    context: SearchContentContext
-    references: tuple[SearchContentReference, ...] = ()
-
-
-@dataclass(frozen=True, slots=True, kw_only=True)
-class SearchFigure:
-    reference: SearchUnitText
-    description: SearchUnitText
-    context: SearchContentContext
-    references: tuple[SearchContentReference, ...] = ()
-
-
-type SearchContentBlock = SearchParagraph | SearchTableBlock | SearchFigure
-
-
 @dataclass(frozen=True, slots=True)
 class SearchCriteria:
     """3つの判定器が作る、添付文書検索の条件。"""
@@ -202,11 +143,6 @@ class IntentSelection:
     primary: IntentName | None = None
     qualifying_intents: tuple[IntentName, ...] = ()
     section_codes: tuple[SearchSectionCode, ...] = ()
-
-
-@dataclass(frozen=True, slots=True, eq=False)
-class DocumentRevision(ImmutableMapping[JsonValue]):
-    """根拠に含める原本の改訂情報。未知metadataも保持する。"""
 
 
 @dataclass(frozen=True, slots=True, eq=False)
@@ -258,29 +194,3 @@ class Evidence:
     columns: EvidenceColumns | None = None
     references: tuple[EvidenceReference, ...] = ()
     retrieved_by: frozenset[DetectionSource] = frozenset()
-
-    def to_dict(self) -> dict[str, JsonValue]:
-        """公開境界へ渡す、内部値から独立したJSON情報。"""
-        return {
-            "unit_id": self.unit_id.value,
-            "document_id": self.document_id.value,
-            "product_name": self.product_name.value
-            if self.product_name is not None
-            else "",
-            "generic_name": self.generic_name.value
-            if self.generic_name is not None
-            else "",
-            "product_yj_codes": [code.value for code in self.product_yj_codes],
-            "document_revision": dict(self.document_revision),
-            "section": dict(self.section),
-            "kind": self.kind.value if self.kind is not None else "",
-            "excerpt": self.excerpt.value,
-            "columns": dict(self.columns) if self.columns is not None else None,
-            "references": [dict(ref) for ref in self.references],
-            "url": self.url.value if self.url is not None else "",
-            "retrieved_by": [
-                source.value
-                for source in DetectionSource
-                if source in self.retrieved_by
-            ],
-        }
