@@ -1625,10 +1625,15 @@ def test_response_dto_rule_detects_reverse_conversions(source, forbidden) -> Non
 def test_retrieval_is_owned_by_application_without_domain_facade():
     assert not (BACKEND_ROOT / "domain" / "retrieval").joinpath("__init__.py").exists()
     assert not list((BACKEND_ROOT / "domain" / "retrieval").glob("*.py"))
-    for path in BACKEND_ROOT.rglob("*.py"):
-        if "tests" in path.relative_to(BACKEND_ROOT).parts:
-            continue
-        assert "domain.retrieval" not in path.read_text(encoding="utf-8"), path
+    for directory in (
+        BACKEND_ROOT,
+        BACKEND_ROOT.parent / "frontend" / "scripts",
+        BACKEND_ROOT.parent / "scripts",
+    ):
+        for path in directory.rglob("*.py"):
+            if "tests" in path.relative_to(BACKEND_ROOT.parent).parts:
+                continue
+            assert "domain.retrieval" not in path.read_text(encoding="utf-8"), path
 
 
 @pytest.mark.parametrize(

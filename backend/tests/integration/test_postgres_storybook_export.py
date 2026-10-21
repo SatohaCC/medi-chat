@@ -11,6 +11,13 @@ from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
 from backend.tests.support.postgres_observations import digest
 
 
+def test_storybook_exporter_loads_without_database():
+    exporter = runpy.run_path(
+        str(PROJECT_ROOT / "frontend/scripts/export-storybook-evidence.py")
+    )
+    assert callable(exporter["read_evidence"])
+
+
 @pytest.mark.asyncio
 async def test_pg038_storybook_export_is_readonly_and_returns_public_evidence(
     pg_api, pg_engines
