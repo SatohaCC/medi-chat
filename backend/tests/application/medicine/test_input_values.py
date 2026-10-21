@@ -20,3 +20,18 @@ def test_normalization_and_format_are_owned_by_domain():
         YjCode("1234567a0000"),
     )
     assert parse_yj_codes([]) == ()
+
+
+@pytest.mark.parametrize(
+    "second", ["1234567A0000", " 1234567A0000 ", "１２３４５６７Ａ００００"]
+)
+def test_duplicate_normalized_codes_are_rejected(second):
+    with pytest.raises(InvalidMedicineInput, match="must not contain duplicates"):
+        parse_yj_codes(["1234567A0000", second])
+
+
+def test_distinct_codes_preserve_input_order():
+    assert parse_yj_codes(["1234567A0001", "1234567A0000"]) == (
+        YjCode("1234567A0001"),
+        YjCode("1234567A0000"),
+    )

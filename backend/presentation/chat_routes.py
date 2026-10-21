@@ -29,13 +29,6 @@ class ChatRequest(BaseModel):
             raise ValueError("message must contain non-whitespace characters")
         return value.strip()
 
-    @field_validator("product_yj_codes")
-    @classmethod
-    def validate_unique_product_codes(cls, value: list[str]) -> list[str]:
-        if len(value) != len(set(value)):
-            raise ValueError("product_yj_codes must not contain duplicates")
-        return value
-
 
 router = APIRouter(tags=["chat"])
 

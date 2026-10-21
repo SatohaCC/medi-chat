@@ -90,3 +90,32 @@ def test_presentation_rejects_non_string_codes(client, value):
 def test_presentation_dto_accepts_strings_without_domain_format_validation():
     payload = chat_routes.ChatRequest(message="テスト", product_yj_codes=["short"])
     assert payload.product_yj_codes == ["short"]
+
+
+@pytest.mark.parametrize(
+    "second", ["1234567A0000", " 1234567A0000 ", "１２３４５６７Ａ００００"]
+)
+def test_all_input_routes_reject_duplicate_normalized_codes(client, second):
+    codes = ["1234567A0000", second]
+    response = client.post(
+        "/api/chat", json={"message": "テスト質問", "product_yj_codes": codes}
+    )
+    assert response.status_code == 422
+    assert response.json()["detail"] == "product_yj_codes must not contain duplicates"
+    response = client.get("/api/search", params={"q": "テスト", "yj_codes": codes})
+    assert response.status_code == 422
+    with client.websocket_connect("/ws/chat") as socket:
+        socket.send_json(
+            {
+                "type": "message",
+                "product_yj_codes": codes,
+                "messages": [{"role": "user", "content": "テスト質問"}],
+            }
+        )
+        response = socket.receive_json()
+        while response["type"] == "retrieval_status":
+            response = socket.receive_json()
+        assert response["type"] == "error"
+        assert response["content"] == "product_yj_codes must not contain duplicates"
+        socket.send_json({"type": "ping"})
+        assert socket.receive_json() == {"type": "pong"}

@@ -34,13 +34,6 @@ class WebSocketChatRequest(BaseModel):
     provider: str | None = Field(default=None, max_length=50)
     model: str | None = Field(default=None, max_length=100)
 
-    @field_validator("product_yj_codes")
-    @classmethod
-    def validate_unique_product_codes(cls, value: list[str]) -> list[str]:
-        if len(value) != len(set(value)):
-            raise ValueError("product_yj_codes must not contain duplicates")
-        return value
-
     @field_validator("messages")
     @classmethod
     def validate_user_message_presence(

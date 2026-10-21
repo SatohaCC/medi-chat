@@ -12,6 +12,9 @@ class InvalidMedicineInput(ValueError):
 
 def parse_yj_codes(values: Sequence[str]) -> tuple[YjCode, ...]:
     try:
-        return tuple(YjCode(value) for value in values)
+        codes = tuple(YjCode(value) for value in values)
     except DomainValidationError:
         raise InvalidMedicineInput("Invalid product_yj_codes") from None
+    if len(codes) != len(set(codes)):
+        raise InvalidMedicineInput("product_yj_codes must not contain duplicates")
+    return codes
