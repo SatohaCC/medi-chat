@@ -104,7 +104,7 @@ markupsafe==3.0.3
     #   mako
 mdurl==0.1.2
     # via markdown-it-py
-openai==3.19.2
+openai==3.35.1
     # via medi-chat-backend
 psycopg==3.3.6
     # via medi-chat-backend
