@@ -467,8 +467,6 @@ async def test_pg027_detectors_pin_old_scope_then_llm_has_no_connection(
     definitions = get_package_insert_definitions()
     service = AppChatService(
         application_service=ChatApplicationService(
-            medicine_reader=UnusedReaders(),
-            evidence_reader=UnusedReaders(),
             intent_classifier=Detector(),
             keyword_extractor=Keywords(),
             intent_policy=definitions.intent_policy,

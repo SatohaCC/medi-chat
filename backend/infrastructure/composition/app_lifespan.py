@@ -28,14 +28,6 @@ from ..pmda_xml.artifact_mapping import PmdaArtifactEncoder
 from ..pmda_xml.decoder import PmdaXmlDecoder
 
 
-class _SnapshotRequired:
-    async def read_medicines(self):
-        raise RuntimeError("A retrieval snapshot is required")
-
-    async def search(self, criteria, medicines):
-        raise RuntimeError("A retrieval snapshot is required")
-
-
 def create_app_lifespan(
     *,
     definitions: PackageInsertDefinitions,
@@ -74,10 +66,7 @@ def create_app_lifespan(
                 search_policy=definitions.text_search_policy,
                 morphology_settings=definitions.morphology_settings,
             )
-            required = _SnapshotRequired()
             application_service = ChatApplicationService(
-                medicine_reader=required,
-                evidence_reader=required,
                 intent_classifier=classifier,
                 keyword_extractor=keywords,
                 intent_policy=definitions.intent_policy,

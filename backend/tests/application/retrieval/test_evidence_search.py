@@ -32,6 +32,7 @@ from backend.infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,
 )
 from backend.infrastructure.persistence.postgres_runtime import _Scope
+from backend.tests.support.retrieval_snapshot import FixedSnapshotProvider
 
 
 class FakeJevIntentClassifier:
@@ -106,8 +107,7 @@ class EvidenceSearchTests(unittest.IsolatedAsyncioTestCase):
         reply = await retrieve_evidence(
             "副作用の頭痛について",
             ["3339003F5020"],
-            medicine_reader=Medicines(),
-            evidence_reader=reader,
+            snapshot_provider=FixedSnapshotProvider(Medicines(), reader),
             intent_classifier=classifier,
             keyword_extractor=Keywords(),
             intent_policy=catalog.intent_policy,

@@ -75,6 +75,7 @@ from backend.infrastructure.package_insert_definitions.loader import (
 )
 from backend.presentation.chat_dto_mapper import chat_response_to_api
 from backend.tests.support.paths import FIXTURES_ROOT
+from backend.tests.support.retrieval_snapshot import FixedSnapshotProvider
 
 
 class FakeSdkError(RuntimeError):
@@ -580,8 +581,7 @@ async def test_answer_preparation_accepts_pure_reader_ports(
     reply = await prepare_reply(
         case.conversation,
         case.product_yj_codes,
-        medicine_reader=medicine_reader,
-        evidence_reader=evidence_reader,
+        snapshot_provider=FixedSnapshotProvider(medicine_reader, evidence_reader),
         intent_classifier=intent,
         keyword_extractor=keywords,
         intent_policy=get_package_insert_definitions().intent_policy,
@@ -651,8 +651,7 @@ async def test_clarification_does_not_create_or_call_provider() -> None:
     reply = await answer_question(
         conversation,
         product_yj_codes,
-        medicine_reader=medicine_reader,
-        evidence_reader=evidence_reader,
+        snapshot_provider=FixedSnapshotProvider(medicine_reader, evidence_reader),
         intent_classifier=intent,
         keyword_extractor=keywords,
         intent_policy=get_package_insert_definitions().intent_policy,

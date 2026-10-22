@@ -35,6 +35,7 @@ from backend.infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,
 )
 from backend.tests.application.retrieval.test_evidence_collection import make_evidence
+from backend.tests.support.retrieval_snapshot import FixedSnapshotProvider
 
 
 class MedicineReader:
@@ -117,8 +118,9 @@ async def test_preparation_failure_and_cancel_reclaim_async_children_and_release
         preparation.prepare_reply(
             [ChatMessage(role="user", content="質問")],
             ["1234567A0000"],
-            medicine_reader=MedicineReader(),
-            evidence_reader=OrderedEvidenceReader(False),
+            snapshot_provider=FixedSnapshotProvider(
+                MedicineReader(), OrderedEvidenceReader(False)
+            ),
             intent_classifier=IntentClassifier(),
             keyword_extractor=KeywordExtractor(),
             intent_policy=get_package_insert_definitions().intent_policy,
@@ -221,8 +223,7 @@ async def test_detector_completion_order_preserves_intent_and_first_content(
         preparation.prepare_reply(
             [ChatMessage(role="user", content="質問")],
             ["1234567A0000"],
-            medicine_reader=MedicineReader(),
-            evidence_reader=reader,
+            snapshot_provider=FixedSnapshotProvider(MedicineReader(), reader),
             intent_classifier=UnusedIntentClassifier(),
             keyword_extractor=UnusedKeywordExtractor(),
             intent_policy=get_package_insert_definitions().intent_policy,
@@ -279,8 +280,7 @@ async def test_partially_unresolved_products_preserve_resolved_medicine_and_skip
     reply = await preparation.prepare_reply(
         [ChatMessage(role="user", content="質問")],
         codes,
-        medicine_reader=MedicineReader(),
-        evidence_reader=reader,
+        snapshot_provider=FixedSnapshotProvider(MedicineReader(), reader),
         intent_classifier=UnusedIntentClassifier(),
         keyword_extractor=UnusedKeywordExtractor(),
         intent_policy=get_package_insert_definitions().intent_policy,
@@ -294,8 +294,7 @@ async def test_partially_unresolved_products_preserve_resolved_medicine_and_skip
     all_unknown_reply = await preparation.prepare_reply(
         [ChatMessage(role="user", content="質問")],
         ["0000000A0000"],
-        medicine_reader=MedicineReader(),
-        evidence_reader=reader,
+        snapshot_provider=FixedSnapshotProvider(MedicineReader(), reader),
         intent_classifier=UnusedIntentClassifier(),
         keyword_extractor=UnusedKeywordExtractor(),
         intent_policy=get_package_insert_definitions().intent_policy,

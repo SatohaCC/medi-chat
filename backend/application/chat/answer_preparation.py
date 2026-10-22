@@ -2,8 +2,6 @@
 
 from collections.abc import Sequence
 
-from backend.application.medicine.product_contracts import RegisteredMedicineReader
-from backend.application.retrieval.evidence_contracts import EvidenceRepository
 from backend.application.retrieval.search_models import Evidence, IntentPolicy
 
 from ..retrieval.intent_contracts import IntentClassifier
@@ -17,12 +15,10 @@ async def prepare_reply(
     conversation: Sequence[ChatMessage],
     product_yj_codes: list[str],
     *,
-    medicine_reader: RegisteredMedicineReader,
-    evidence_reader: EvidenceRepository,
     intent_classifier: IntentClassifier,
     keyword_extractor: KeywordExtractor,
     intent_policy: IntentPolicy,
-    snapshot_provider: RetrievalSnapshotProvider | None = None,
+    snapshot_provider: RetrievalSnapshotProvider,
     on_logic_sources: SourcesCallback | None = None,
 ) -> ChatResponse:
     message = next(
@@ -31,8 +27,6 @@ async def prepare_reply(
     result = await retrieve_evidence(
         message,
         product_yj_codes,
-        medicine_reader=medicine_reader,
-        evidence_reader=evidence_reader,
         intent_classifier=intent_classifier,
         keyword_extractor=keyword_extractor,
         intent_policy=intent_policy,

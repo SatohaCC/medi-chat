@@ -2,8 +2,6 @@
 
 from collections.abc import Callable, Sequence
 
-from backend.application.medicine.product_contracts import RegisteredMedicineReader
-from backend.application.retrieval.evidence_contracts import EvidenceRepository
 from backend.application.retrieval.search_models import IntentPolicy
 
 from ..retrieval.intent_contracts import IntentClassifier
@@ -21,8 +19,6 @@ async def answer_question(
     conversation: Sequence[ChatMessage],
     product_yj_codes: list[str],
     *,
-    medicine_reader: RegisteredMedicineReader,
-    evidence_reader: EvidenceRepository,
     intent_classifier: IntentClassifier,
     keyword_extractor: KeywordExtractor,
     intent_policy: IntentPolicy,
@@ -30,13 +26,11 @@ async def answer_question(
     provider_factory: Callable[[str | None], LLMProvider],
     provider_name: str | None,
     model_name: str | None,
-    snapshot_provider: RetrievalSnapshotProvider | None = None,
+    snapshot_provider: RetrievalSnapshotProvider,
 ) -> ChatResponse:
     reply = await prepare_reply(
         conversation,
         product_yj_codes,
-        medicine_reader=medicine_reader,
-        evidence_reader=evidence_reader,
         intent_classifier=intent_classifier,
         keyword_extractor=keyword_extractor,
         intent_policy=intent_policy,

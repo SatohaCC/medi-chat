@@ -10,6 +10,7 @@ from backend.infrastructure.package_insert_definitions.loader import (
 from backend.presentation import chat_routes, chat_websocket_routes, search_routes
 from backend.presentation.chat_service import AppChatService
 from backend.presentation.dependencies import get_chat_service
+from backend.tests.support.retrieval_snapshot import FixedSnapshotProvider
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -24,14 +25,16 @@ def client():
     class UnusedDependency:
         is_available = False
 
+        async def search(self, criteria, medicines):
+            raise AssertionError("invalid input must be rejected before searching")
+
         async def read_medicines(self):
             raise AssertionError("invalid input must be rejected before reading")
 
     unused = UnusedDependency()
     definitions = get_package_insert_definitions()
     dependencies: dict[str, Any] = {
-        "medicine_reader": unused,
-        "evidence_reader": unused,
+        "snapshot_provider": FixedSnapshotProvider(unused, unused),
         "intent_classifier": unused,
         "keyword_extractor": unused,
         "intent_policy": definitions.intent_policy,

@@ -19,8 +19,6 @@ def compose_chat_service(
     application = original._app_service
     return AppChatService(
         application_service=ChatApplicationService(
-            medicine_reader=application.medicine_reader,
-            evidence_reader=application.evidence_reader,
             intent_classifier=intent_classifier
             if intent_classifier is not None
             else application.intent_classifier,

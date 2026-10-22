@@ -19,6 +19,7 @@ from backend.tests.application.chat.test_answer_preparation import (
 from backend.tests.infrastructure.intent.test_jev_intent_mapping import RecordingReader
 from backend.tests.support.postgres_fixtures import pg_api as pg_api
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
+from backend.tests.support.retrieval_snapshot import FixedSnapshotProvider
 
 
 class RecordingProvider:
@@ -51,8 +52,9 @@ async def test_api_service_closes_owned_stream_and_preserves_generation_defaults
 
     service = AppChatService(
         application_service=ChatApplicationService(
-            medicine_reader=MedicineReader(),
-            evidence_reader=RecordingReader(),
+            snapshot_provider=FixedSnapshotProvider(
+                MedicineReader(), RecordingReader()
+            ),
             intent_classifier=UnusedIntentClassifier(),
             keyword_extractor=UnusedKeywordExtractor(),
             intent_policy=get_package_insert_definitions().intent_policy,
@@ -103,8 +105,9 @@ async def test_prepared_application_reply_is_retained_until_generation(monkeypat
     definitions = get_package_insert_definitions()
     service = AppChatService(
         application_service=ChatApplicationService(
-            medicine_reader=MedicineReader(),
-            evidence_reader=RecordingReader(),
+            snapshot_provider=FixedSnapshotProvider(
+                MedicineReader(), RecordingReader()
+            ),
             intent_classifier=UnusedIntentClassifier(),
             keyword_extractor=UnusedKeywordExtractor(),
             intent_policy=definitions.intent_policy,

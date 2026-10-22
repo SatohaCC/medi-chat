@@ -40,6 +40,7 @@ from backend.tests.support.interaction_raw_oracle import (
 )
 from backend.tests.support.paths import FIXTURES_ROOT
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
+from backend.tests.support.retrieval_snapshot import FixedSnapshotProvider
 from backend.tests.support.section_records import major_unit_id
 from sqlalchemy import select
 
@@ -411,8 +412,9 @@ async def test_tc120_122_all_detector_collection_and_tc121_original_tables(
             result = await retrieve_evidence(
                 message,
                 [item[2] for item in DOCUMENTS] if pair else [DOCUMENTS[0][2]],
-                medicine_reader=snapshot.medicine_reader,
-                evidence_reader=RecordingReader(),
+                snapshot_provider=FixedSnapshotProvider(
+                    snapshot.medicine_reader, RecordingReader()
+                ),
                 intent_classifier=Classifier(),
                 keyword_extractor=Keywords(),
                 intent_policy=get_package_insert_definitions().intent_policy,
@@ -607,8 +609,9 @@ async def test_tc123_all_evidence_reaches_recording_provider_and_conversation(
             reply = await answer_question(
                 conversation,
                 [doc[2] for doc in DOCUMENTS] if pair else [DOCUMENTS[0][2]],
-                medicine_reader=snapshot.medicine_reader,
-                evidence_reader=snapshot.evidence_reader,
+                snapshot_provider=FixedSnapshotProvider(
+                    snapshot.medicine_reader, snapshot.evidence_reader
+                ),
                 intent_classifier=Classifier(),
                 keyword_extractor=Keywords(),
                 intent_policy=get_package_insert_definitions().intent_policy,

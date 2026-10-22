@@ -27,6 +27,7 @@ from backend.tests.integration.test_application_port_contracts import (
     RecordingKeywordExtractor,
     RecordingMedicineReader,
 )
+from backend.tests.support.retrieval_snapshot import FixedSnapshotProvider
 from fastapi import FastAPI, WebSocketDisconnect
 from starlette.types import Message, Scope
 
@@ -228,8 +229,9 @@ async def test_owned_sdk_resources_close_on_all_exit_paths(
                     prepare_reply(
                         [ChatMessage(role="user", content="質問")],
                         [],
-                        medicine_reader=RecordingMedicineReader(()),
-                        evidence_reader=RecordingEvidenceReader([], []),
+                        snapshot_provider=FixedSnapshotProvider(
+                            RecordingMedicineReader(()), RecordingEvidenceReader([], [])
+                        ),
                         intent_classifier=classifier,
                         keyword_extractor=RecordingKeywordExtractor(()),
                         intent_policy=get_package_insert_definitions().intent_policy,
