@@ -50,7 +50,7 @@
     "@stylexjs/eslint-plugin": "0.19.1",
     "@stylexjs/postcss-plugin": "0.19.1",
     "@stylexjs/unplugin": "^0.19.1",
-    "@types/node": "^20",
+    "@types/node": "^26",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
