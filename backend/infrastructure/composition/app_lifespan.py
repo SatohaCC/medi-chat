@@ -19,6 +19,7 @@ from ..morphology.janome_keyword_extractor import JanomeKeywordExtractor
 from ..morphology.keyword_extraction import get_janome_tokenizer
 from ..package_insert_definitions.loader import PackageInsertDefinitions
 from ..persistence.postgres_engine import create_postgres_engine
+from ..persistence.postgres_import_queries import PostgresImportQueries
 from ..persistence.postgres_readiness import verify_postgres_readiness
 from ..persistence.postgres_registration import PostgresRegistrationPublisher
 from ..persistence.postgres_runtime import PostgresRuntime
@@ -85,6 +86,7 @@ def create_app_lifespan(
                 import_service = AttachmentImportService(
                     decoder=decoder,
                     publisher=publisher,
+                    reader=PostgresImportQueries(engine),
                     upload_store=PostgresUploadStore(engine),
                 )
                 application.state.attachment_import_service = import_service

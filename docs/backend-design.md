@@ -345,11 +345,17 @@ lifespanが取り込みworkerを所有し、decoderとpublisherをevent loop外�
 
 YJごとに最も新しい改訂年月を選択し、同年月の別原本は409、年月なしは422です。A+Bの旧版に新Aが来た場合は旧Bを保持します。参照0payloadの削除失敗はDB由来reasonのcleanup_pendingになり、明示maintenance/登録後の限定再試行で回収します。再送はreceiptを再利用し、削除済み旧版の本文を復活させません。元XML・既存SQLite・手作業データは削除しません。
 
+登録準備は `RegistrationPreparer`、ロック内で読み取った状態からの公開割当計画は `plan_registration()` が担当します。計画は既存Domainの改訂選択規則を使い、Publisherが単一トランザクションで反映します。履歴・再送結果の照会は `AttachmentImportReader` / `PostgresImportQueries`、別トランザクションでの世代・payload清掃は `PostgresRegistrationCleanup` が担当します。commit後の取消で確定済み登録を取り消しません。
+
+`AttachmentDocument` は本文ブロックと表セルの参照先IDの存在を生成時に検証します。`target_id=None` の参照は許可し、直接生成・XML変換・保存形式復元で同じ不変条件を適用します。
+
 ### 通常E2Eと索引の明示回復
 
 `pnpm test:e2e`は通常dotenvで選択したPGをread-only readiness検査し、専用port3212の実OS health、その後mock/real Chromiumを順に実行します。`configured_e2e_gate --resolve-only`は秘密値を出しません。configured DBは書込/修復せず、未準備・実破損は拒否します。実接続試験は`TEST_DATABASE_URL`/`TEST_RUNTIME_DATABASE_URL`で明示した`medi_chat_test`の所有UUIDschemaだけを作成・削除します。既存serverや別runのschemaは停止・削除しません。
 
 ### 公開世代と取得の所有
+
+チャットと公開検索ユースケースは必須の `RetrievalSnapshotProvider` だけを取得依存として受け取ります。入口で一度snapshotを取得し、内部の処理はそのreaderを使います。直接readerを指定する代替経路や、実行すると例外になるダミーreaderは置きません。
 
 製品解決・全detector・要求YJへの再投影・改訂materializeは、一つのread-only REPEATABLE READ接続でpointerを固定して行います。並行detectorが同じ接続を使う際はSQL利用を直列化します。別processが公開し旧payloadをDELETEしても、旧scopeはMVCCにより旧根拠を一貫して読み、次の要求だけが新版を使います。永久lease/PID/ファイルmanifestはありません。
 

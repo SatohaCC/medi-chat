@@ -6,10 +6,9 @@ import time
 from pathlib import Path
 
 from backend.infrastructure.persistence.postgres_engine import create_postgres_engine
-from backend.infrastructure.persistence.postgres_registration import (
-    PostgresRegistrationPublisher,
+from backend.infrastructure.persistence.postgres_registration_cleanup import (
+    PostgresRegistrationCleanup,
 )
-from backend.infrastructure.pmda_xml.artifact_mapping import PmdaArtifactEncoder
 from sqlalchemy import text
 
 
@@ -37,9 +36,7 @@ def main():
         while not (directory / "release-maintenance-worker").exists():
             time.sleep(0.002)
         started = time.time()
-        PostgresRegistrationPublisher(
-            engine, encoder=PmdaArtifactEncoder(), fault=fault
-        ).cleanup()
+        PostgresRegistrationCleanup(engine, fault=fault).cleanup()
         (directory / "maintenance-summary.json").write_text(
             json.dumps({"backend_pid": pid, "start": started, "end": time.time()}),
             encoding="utf-8",

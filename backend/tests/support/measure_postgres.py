@@ -647,8 +647,8 @@ async def run(output, samples):
         assert {code: active[code] for code in CODES.values()} == {
             CODES[name]: digest for name, digest in old_hashes.items()
         }
-        publisher.cleanup()
-        publisher.cleanup()
+        publisher.maintenance.cleanup()
+        publisher.maintenance.cleanup()
         with owner.connect().execution_options(
             isolation_level="AUTOCOMMIT"
         ) as connection:

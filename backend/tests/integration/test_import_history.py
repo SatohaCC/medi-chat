@@ -23,7 +23,9 @@ async def test_history_retains_deleted_versions_orders_pages_and_avoids_payloads
 ):
     engine = pg_engines[1]
     publisher = PostgresRegistrationPublisher(engine, encoder=PmdaArtifactEncoder())
-    service = AttachmentImportService(decoder=PmdaXmlDecoder(), publisher=publisher)
+    service = AttachmentImportService(
+        decoder=PmdaXmlDecoder(), publisher=publisher, reader=publisher.results
+    )
     app = FastAPI()
     app.include_router(router)
     app.state.attachment_import_service = service

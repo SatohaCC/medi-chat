@@ -31,6 +31,7 @@ async def client(pg_publisher):
     service = AttachmentImportService(
         decoder=PmdaXmlDecoder(),
         publisher=pg_publisher,
+        reader=pg_publisher.results,
     )
     app = FastAPI()
     app.state.attachment_import_service = service

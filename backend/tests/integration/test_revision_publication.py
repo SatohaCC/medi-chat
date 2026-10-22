@@ -9,11 +9,11 @@ from backend.application.attachment_import.import_errors import (
     InvalidAttachment,
 )
 from backend.infrastructure.persistence import postgres_schema as schema
-from backend.infrastructure.persistence.postgres_registration import (
-    PostgresRegistrationInput as RegistrationInput,
-)
 from backend.infrastructure.persistence.postgres_runtime import PostgresRuntime
 from backend.infrastructure.persistence.read_workers import ReadWorkers
+from backend.infrastructure.persistence.registration_models import (
+    PostgresRegistrationInput as RegistrationInput,
+)
 from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
 from backend.tests.integration.test_postgres_registration import pg_publisher, publish
 from backend.tests.presentation.test_registration_http import client as client
@@ -74,7 +74,7 @@ def test_latest_revision_is_independent_of_upload_order(publisher, newest_first)
     repeated = publish(publisher, newer)
     assert repeated.reused and repeated.active_yj_codes == ("111111111111",)
     assert repeated.generation_id == result.generation_id
-    publisher.cleanup()
+    publisher.maintenance.cleanup()
 
 
 @pytest.mark.asyncio

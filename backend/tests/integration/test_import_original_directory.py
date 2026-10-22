@@ -2,7 +2,7 @@
 
 import os
 
-from backend.infrastructure.persistence.postgres_registration import (
+from backend.infrastructure.persistence.registration_models import (
     PostgresRegistrationInput as RegistrationInput,
 )
 from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder

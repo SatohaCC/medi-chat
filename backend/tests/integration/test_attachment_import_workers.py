@@ -26,6 +26,7 @@ def service(publisher, decoder=None):
     return AttachmentImportService(
         decoder=decoder or PmdaXmlDecoder(),
         publisher=publisher,
+        reader=publisher.results,
     )
 
 
@@ -71,7 +72,7 @@ async def test_resend_reuses_original_conversion_result_without_running_new_enco
         def refuse(*args, **kwargs):
             raise AssertionError("resend re-encoded committed version")
 
-        monkeypatch.setattr(pg_publisher.encoder, "encode", refuse)
+        monkeypatch.setattr(pg_publisher.preparer.encoder, "encode", refuse)
         second = await importer.import_document(
             raw, original_filename="../../renamed.xml"
         )
@@ -97,7 +98,7 @@ async def test_cancellation_waits_for_owned_worker_and_never_publishes_stage(
     decoder = PmdaXmlDecoder()
     entered, release = threading.Event(), threading.Event()
     if phase in {"decode", "encode"}:
-        target = decoder if phase == "decode" else pg_publisher.encoder
+        target = decoder if phase == "decode" else pg_publisher.preparer.encoder
         method = phase
         original = getattr(target, method)
 

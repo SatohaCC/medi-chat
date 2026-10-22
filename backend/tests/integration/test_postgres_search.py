@@ -164,7 +164,7 @@ async def test_pg031_more_than_four_hundred_results_have_no_limit(
 ):
     from backend.application.medicine.product_models import ResolvedMedicine
     from backend.domain.medicine.value_objects import MedicineMatch
-    from backend.infrastructure.persistence.postgres_registration import (
+    from backend.infrastructure.persistence.registration_models import (
         PostgresRegistrationInput,
     )
     from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder

@@ -23,6 +23,7 @@ async def client(publisher):
     service = AttachmentImportService(
         decoder=PmdaXmlDecoder(),
         publisher=publisher,
+        reader=publisher.results,
     )
     app = FastAPI()
     app.include_router(router)
@@ -232,7 +233,7 @@ async def test_tc106_partial_b_and_cleanup_pending_public_metadata(client, publi
         if phase == "cleanup":
             raise OSError("fixed database cleanup failure")
 
-    publisher.fault = fail
+    publisher.maintenance.fault = fail
     new_b = source("新B", ("222222222222",), revised_at="2026-11")
     pending = await post(client, new_b)
     assert pending.status_code == 201
@@ -249,7 +250,7 @@ async def test_tc106_partial_b_and_cleanup_pending_public_metadata(client, publi
         }
     ]
     assert (await client.get(old_url)).status_code == 200
-    publisher.fault = lambda phase: None
+    publisher.maintenance.fault = lambda phase: None
     retry = await post(client, new_b)
     assert retry.status_code == 200
     finished = retry.json()

@@ -4,9 +4,6 @@ import hashlib
 import json
 import uuid
 from collections.abc import Callable
-from dataclasses import dataclass, replace
-from pathlib import PurePosixPath
-from typing import Any, TypedDict
 
 from sqlalchemy import Text, cast, delete, func, insert, select, text, update
 from sqlalchemy.engine import Engine
@@ -18,76 +15,27 @@ from backend.application.attachment_import.import_contracts import (
 from backend.application.attachment_import.import_errors import (
     ImportCancelled,
     ImportConflict,
-    ImportGone,
-    ImportLimitExceeded,
-    ImportNotFound,
     ImportStorageError,
-    InvalidAttachment,
 )
 from backend.application.attachment_import.import_models import (
     DecodedAttachment,
-    ImportPage,
     ImportResult,
-    ImportSummary,
-)
-from backend.application.attachment_import.registration_contract import (
-    registration_version,
-)
-from backend.application.indexing.attachment_projection import (
-    project_attachment,
-)
-from backend.domain.attachment.exceptions import (
-    MissingOrInvalidYjError,
-    MissingRevisionError,
 )
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.attachment.primitives import AttachmentSha256, RevisionYearMonth
 from backend.domain.attachment.value_objects import RegistrationVersion
-from backend.domain.foundation.json_types import JsonValue
 from backend.domain.medicine.identifiers import YjCode
 from backend.infrastructure.index_payloads import (
-    MAX_ARTIFACT_BYTES,
     result_dict,
-    result_from_dict,
 )
 
 from . import postgres_schema as s
-from .attachment_document_mapping import document_to_payload
+from .postgres_import_queries import PostgresImportQueries
 from .postgres_integrity import PROJECTION_FINGERPRINT
-from .postgres_projection import projection_records
-from .revision_selection import assign_latest
-
-
-@dataclass(frozen=True)
-class FigureInput:
-    logical_name: str
-    media_type: str
-    content: bytes
-
-
-@dataclass(frozen=True)
-class PostgresRegistrationInput:
-    decoded: DecodedAttachment
-    source: bytes
-    figures: tuple[FigureInput, ...] = ()
-
-
-class _NewVersionPayload(TypedDict):
-    structure: dict[str, Any]
-    catalogue: dict[str, Any]
-    source: bytes
-    filename: str
-    validation: dict[str, Any]
-    figures: tuple[FigureInput, ...]
-    units: list[dict[str, JsonValue]]
-    unit_products: list[dict[str, str]]
-    result: ImportResult
-
-
-@dataclass(frozen=True)
-class _PreparedInput:
-    version: RegistrationVersion
-    payload: _NewVersionPayload | None
+from .postgres_registration_cleanup import PostgresRegistrationCleanup
+from .registration_models import PostgresRegistrationInput, PreparedRegistration
+from .registration_plan import plan_registration
+from .registration_preparation import RegistrationPreparer
 
 
 class PostgresRegistrationPublisher:
@@ -99,7 +47,9 @@ class PostgresRegistrationPublisher:
         fault: Callable[[str], None] = lambda phase: None,
     ):
         self.engine = engine
-        self.encoder = encoder
+        self.preparer = RegistrationPreparer(encoder)
+        self.results = PostgresImportQueries(engine)
+        self.maintenance = PostgresRegistrationCleanup(engine, fault=fault)
         self.fault = fault
 
     def publish(
@@ -123,7 +73,7 @@ class PostgresRegistrationPublisher:
         check_cancel()
         error_phase = "publication"
         try:
-            versions = tuple(self._version(item) for item in inputs)
+            versions = tuple(self.preparer.version(item) for item in inputs)
             with self.engine.connect() as connection:
                 known = set(
                     connection.execute(
@@ -135,9 +85,9 @@ class PostgresRegistrationPublisher:
                     ).scalars()
                 )
             prepared = [
-                _PreparedInput(version, None)
+                PreparedRegistration(version, None)
                 if version.version_id.value in known
-                else self._prepare(item)
+                else self.preparer.prepare(item)
                 for item, version in zip(inputs, versions, strict=True)
             ]
             self.fault("prepared")
@@ -163,14 +113,13 @@ class PostgresRegistrationPublisher:
                     YjCode(row.yj_code): self._stored_version(records[row.version_id])
                     for row in connection.execute(select(s.active))
                 }
-                planned = dict(before)
-                for item in sorted(
-                    prepared,
-                    key=lambda item: item.version.revised_at.value,
-                    reverse=True,
-                ):
-                    if item.version.version_id.value not in records:
-                        planned = assign_latest(planned, item.version)
+                planned = dict(
+                    plan_registration(
+                        before,
+                        tuple(item.version for item in prepared),
+                        frozenset(records),
+                    ).assignments
+                )
                 after = dict(before)
                 sequence = state["sequence"]
                 for item in prepared:
@@ -333,9 +282,10 @@ class PostgresRegistrationPublisher:
             except ImportCancelled:
                 pass
             else:
-                self._cleanup_safe()
+                self.maintenance.cleanup_after_publication()
             return tuple(
-                self._result(identity, reused=reused) for identity, reused in requested
+                self.results.result(identity, reused=reused)
+                for identity, reused in requested
             )
         except (SQLAlchemyError, OSError) as error:
             raise ImportStorageError(
@@ -352,275 +302,3 @@ class PostgresRegistrationPublisher:
             yj_codes=frozenset(YjCode(code) for code in record["yj_codes"]),
             revised_at=RevisionYearMonth(record["revised_at"]),
         )
-
-    @staticmethod
-    def _version(item: PostgresRegistrationInput) -> RegistrationVersion:
-        try:
-            version = registration_version(item.decoded.document)
-        except MissingOrInvalidYjError:
-            raise InvalidAttachment(
-                "missing_or_invalid_yj",
-                "Every listed product must have a valid YJ code",
-                phase="validation",
-            ) from None
-        except MissingRevisionError:
-            raise InvalidAttachment(
-                "missing_revision",
-                "A revision month is required to select the latest document",
-                phase="validation",
-            ) from None
-        if hashlib.sha256(item.source).hexdigest() != version.source_sha256.value:
-            raise InvalidAttachment(
-                "source_hash_conflict",
-                "Source bytes do not match the decoded document",
-                phase="validation",
-            )
-        return version
-
-    def _prepare(self, item: PostgresRegistrationInput) -> _PreparedInput:
-        version = self._version(item)
-        for figure in item.figures:
-            name = PurePosixPath(figure.logical_name)
-            if (
-                name.is_absolute()
-                or ".." in name.parts
-                or "\\" in figure.logical_name
-                or ":" in figure.logical_name
-                or not figure.logical_name
-                or not figure.media_type
-            ):
-                raise InvalidAttachment(
-                    "unsafe_figure", "Figure name is unsafe", phase="validation"
-                )
-        projected = project_attachment(item.decoded.document)
-        bundle = self.encoder.encode(
-            item.decoded.document, projected, item.decoded.source_info
-        )
-        if (
-            sum(
-                len(file.content)
-                for file in bundle.files
-                if file.name != "source_metadata.json"
-            )
-            > MAX_ARTIFACT_BYTES
-        ):
-            raise ImportLimitExceeded(
-                "artifact_size_limit", "Generated artifacts exceed the size limit"
-            )
-        artifacts = {file.name: file.content for file in bundle.files}
-        metadata = json.loads(artifacts["document.json"])
-        units, products = projection_records(item.decoded.document)
-        return _PreparedInput(
-            version,
-            {
-                "structure": document_to_payload(item.decoded.document),
-                "catalogue": {
-                    "document": metadata["document"],
-                    "source": {
-                        "pmda_url": metadata["source"]["pmda_url"],
-                        "sha256": version.source_sha256.value,
-                    },
-                },
-                "unit_products": products,
-                "source": item.source,
-                "filename": metadata["source"]["file"],
-                "validation": json.loads(artifacts["validation.json"]),
-                "figures": item.figures,
-                "units": units,
-                "result": bundle.result,
-            },
-        )
-
-    def read_result(self, document_id: str, digest: str) -> ImportResult:
-        return self._result(f"{document_id}:{digest}", get=True)
-
-    def replay_result(self, document_id: str, digest: str) -> ImportResult:
-        """Replay a retained receipt even after its original payload was reclaimed."""
-        return self._result(f"{document_id}:{digest}", reused=True)
-
-    def list_imports(self, *, limit: int, offset: int) -> ImportPage:
-        try:
-            with self.engine.connect().execution_options(
-                isolation_level="REPEATABLE READ"
-            ) as connection:
-                connection.execute(text("SET TRANSACTION READ ONLY"))
-                total = connection.execute(
-                    select(func.count()).select_from(s.receipts)
-                ).scalar_one()
-                records = (
-                    connection.execute(
-                        select(s.receipts, s.versions.c.filename)
-                        .outerjoin(
-                            s.versions,
-                            s.versions.c.version_id == s.receipts.c.version_id,
-                        )
-                        .order_by(s.receipts.c.sequence.desc())
-                        .limit(limit)
-                        .offset(offset)
-                    )
-                    .mappings()
-                    .all()
-                )
-                active: dict[str, list[str]] = {}
-                if records:
-                    for row in connection.execute(
-                        select(s.active.c.version_id, s.active.c.yj_code)
-                        .where(
-                            s.active.c.version_id.in_(
-                                [r["version_id"] for r in records]
-                            )
-                        )
-                        .order_by(s.active.c.yj_code.collate("C"))
-                    ):
-                        active.setdefault(row.version_id, []).append(row.yj_code)
-                return ImportPage(
-                    items=tuple(
-                        ImportSummary(
-                            document_id=r["document_id"],
-                            source_sha256=r["source_sha256"],
-                            filename=r["filename"],
-                            registration_sequence=r["sequence"],
-                            revised_at=r["revised_at"],
-                            products=result_from_dict(r["result"]).products,
-                            active_yj_codes=tuple(active.get(r["version_id"], ())),
-                            artifacts_deleted=r["artifacts_deleted"],
-                        )
-                        for r in records
-                    ),
-                    total_count=total,
-                )
-        except SQLAlchemyError:
-            raise ImportStorageError(
-                "import_list_unavailable",
-                "取り込み一覧を取得できません。",
-                phase="publication",
-            ) from None
-
-    def _result(
-        self, identity: str, *, reused: bool = False, get: bool = False
-    ) -> ImportResult:
-        with self.engine.connect().execution_options(
-            isolation_level="REPEATABLE READ"
-        ) as connection:
-            connection.execute(text("SET TRANSACTION READ ONLY"))
-            record = (
-                connection.execute(
-                    select(s.receipts).where(s.receipts.c.version_id == identity)
-                )
-                .mappings()
-                .first()
-            )
-            if record is None:
-                raise ImportNotFound(
-                    "import_not_found",
-                    "Registered import does not exist",
-                    phase="publication",
-                )
-            if get and record["artifacts_deleted"]:
-                raise ImportGone(
-                    "version_deleted",
-                    "Registered version artifacts have been deleted",
-                    phase="publication",
-                )
-            active = tuple(
-                sorted(
-                    connection.execute(
-                        select(s.active.c.yj_code).where(
-                            s.active.c.version_id == identity
-                        )
-                    ).scalars()
-                )
-            )
-            generation = connection.execute(
-                select(s.state.c.generation_id)
-            ).scalar_one()
-            targets = connection.execute(
-                select(
-                    s.receipts.c.version_id,
-                    s.receipts.c.artifacts_deleted,
-                    s.receipts.c.cleanup_reason,
-                ).where(
-                    s.receipts.c.version_id.in_(record["cleanup_targets"]),
-                    s.receipts.c.version_id.not_in(select(s.active.c.version_id)),
-                )
-            ).all()
-        pending = tuple(
-            (target.version_id, target.cleanup_reason or "cleanup_required")
-            for target in sorted(targets)
-            if not target.artifacts_deleted
-        )
-        deleted = tuple(
-            target.version_id for target in sorted(targets) if target.artifacts_deleted
-        )
-        return replace(
-            result_from_dict(record["result"]),
-            reused=reused,
-            status=("registered_cleanup_pending" if pending else "registered")
-            if active
-            else "superseded",
-            search_index_updated=bool(active),
-            registration_sequence=record["sequence"],
-            active_yj_codes=active,
-            generation_id=generation,
-            replaced_yj_codes=tuple(record["replaced"]),
-            artifacts_deleted=record["artifacts_deleted"],
-            deleted_version_ids=deleted,
-            cleanup_pending=pending,
-        )
-
-    def cleanup(self) -> None:
-        self.fault("before_cleanup_lock")
-        with self.engine.begin() as connection:
-            current = connection.execute(
-                select(s.state.c.generation_id).with_for_update()
-            ).scalar_one()
-            self.fault("cleanup")
-            if current is not None:
-                connection.execute(
-                    delete(s.memberships).where(
-                        s.memberships.c.generation_id != current
-                    )
-                )
-                connection.execute(
-                    delete(s.generations).where(
-                        s.generations.c.generation_id != current
-                    )
-                )
-            eligible = self._eligible(current)
-            identities = list(connection.execute(eligible).scalars())
-            if identities:
-                connection.execute(
-                    delete(s.versions).where(s.versions.c.version_id.in_(identities))
-                )
-                connection.execute(
-                    update(s.receipts)
-                    .where(s.receipts.c.version_id.in_(identities))
-                    .values(artifacts_deleted=True, cleanup_reason="")
-                )
-            self.fault("cleanup_before_commit")
-
-    @staticmethod
-    def _eligible(current):
-        return select(s.receipts.c.version_id).where(
-            s.receipts.c.artifacts_deleted.is_(False),
-            s.receipts.c.version_id.not_in(select(s.active.c.version_id)),
-            s.receipts.c.version_id.not_in(
-                select(s.memberships.c.version_id).where(
-                    s.memberships.c.generation_id == current
-                )
-            ),
-        )
-
-    def _cleanup_safe(self):
-        try:
-            self.cleanup()
-        except SQLAlchemyError, OSError:
-            with self.engine.begin() as connection:
-                current = connection.execute(
-                    select(s.state.c.generation_id).with_for_update()
-                ).scalar_one()
-                connection.execute(
-                    update(s.receipts)
-                    .where(s.receipts.c.version_id.in_(self._eligible(current)))
-                    .values(cleanup_reason="database_cleanup_failed")
-                )

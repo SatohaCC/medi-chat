@@ -27,11 +27,16 @@ from backend.infrastructure.persistence.postgres_readiness import (
     verify_postgres_readiness,
 )
 from backend.infrastructure.persistence.postgres_registration import (
-    FigureInput,
-    PostgresRegistrationInput,
     PostgresRegistrationPublisher,
 )
+from backend.infrastructure.persistence.postgres_registration_cleanup import (
+    PostgresRegistrationCleanup,
+)
 from backend.infrastructure.persistence.postgres_upload import PostgresUploadStore
+from backend.infrastructure.persistence.registration_models import (
+    FigureInput,
+    PostgresRegistrationInput,
+)
 from backend.infrastructure.pmda_xml.artifact_mapping import PmdaArtifactEncoder
 from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
 from backend.infrastructure.pmda_xml.safe_parser import parse_source
@@ -247,7 +252,7 @@ def main() -> int:
         elif args.action == "export":
             result = export_version(engine, args.version_id, args.output_dir)
         else:
-            publisher.cleanup()
+            PostgresRegistrationCleanup(engine).cleanup()
             PostgresUploadStore(engine).cleanup()
             result = {"maintenance": "complete"}
         print(json.dumps(result, ensure_ascii=False))
