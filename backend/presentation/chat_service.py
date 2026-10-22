@@ -4,20 +4,11 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
 
-from backend.application.medicine.product_contracts import RegisteredMedicineReader
-from backend.application.retrieval.search_models import Evidence, IntentPolicy
+from backend.application.retrieval.search_models import Evidence
 
-from ..application.chat.answer_prompt_policy import AnswerPromptPolicy
 from ..application.chat.chat_models import ChatResponse as ApplicationChatResponse
 from ..application.chat.chat_service import ChatApplicationService
-from ..application.chat.llm_contracts import LLMProvider
 from ..application.chat.stream_closing import closing_stream
-from ..application.retrieval.intent_contracts import IntentClassifier
-from ..application.retrieval.keyword_contracts import KeywordExtractor
-from ..application.retrieval.snapshot_contracts import (
-    EvidenceRepository,
-    RetrievalSnapshotProvider,
-)
 from ..config.generation_settings import GenerationDefaults, read_generation_defaults
 from .chat_dto_mapper import (
     chat_message_from_api,
@@ -36,61 +27,14 @@ from .evidence_models import ChatSource
 class AppChatService:
     """RESTおよびWebSocket向けのDTO変換を行い、ChatApplicationServiceへ委譲するアダプター。"""
 
-    _DELEGATED_ATTRS = frozenset(
-        {
-            "medicine_reader",
-            "evidence_reader",
-            "intent_classifier",
-            "keyword_extractor",
-            "intent_policy",
-            "answer_prompt_policy",
-            "provider_factory",
-            "snapshot_provider",
-        }
-    )
-
     def __init__(
         self,
         *,
-        medicine_reader: RegisteredMedicineReader,
-        evidence_reader: EvidenceRepository,
-        intent_classifier: IntentClassifier,
-        keyword_extractor: KeywordExtractor,
-        intent_policy: IntentPolicy,
-        answer_prompt_policy: AnswerPromptPolicy,
-        provider_factory: Callable[[str | None], LLMProvider],
+        application_service: ChatApplicationService,
         defaults: Callable[[], GenerationDefaults] = read_generation_defaults,
-        snapshot_provider: RetrievalSnapshotProvider | None = None,
-        application_service: ChatApplicationService | None = None,
     ) -> None:
-        self._app_service = (
-            application_service
-            if application_service is not None
-            else ChatApplicationService(
-                medicine_reader=medicine_reader,
-                evidence_reader=evidence_reader,
-                intent_classifier=intent_classifier,
-                keyword_extractor=keyword_extractor,
-                intent_policy=intent_policy,
-                answer_prompt_policy=answer_prompt_policy,
-                provider_factory=provider_factory,
-                snapshot_provider=snapshot_provider,
-            )
-        )
-        self.medicine_reader = self._app_service.medicine_reader
-        self.evidence_reader = self._app_service.evidence_reader
-        self.intent_classifier = self._app_service.intent_classifier
-        self.keyword_extractor = self._app_service.keyword_extractor
-        self.intent_policy = self._app_service.intent_policy
-        self.answer_prompt_policy = self._app_service.answer_prompt_policy
-        self.provider_factory = self._app_service.provider_factory
-        self.snapshot_provider = self._app_service.snapshot_provider
+        self._app_service = application_service
         self.defaults = defaults
-
-    def __setattr__(self, name: str, value: object) -> None:
-        super().__setattr__(name, value)
-        if name in self._DELEGATED_ATTRS and "_app_service" in self.__dict__:
-            setattr(self._app_service, name, value)
 
     @property
     def is_jev_available(self) -> bool:

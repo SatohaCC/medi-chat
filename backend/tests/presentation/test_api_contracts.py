@@ -311,7 +311,7 @@ def test_create_app_refuses_file_arguments_and_keeps_provider_injection(
         create_app(None, None, fake_factory, "postgresql://unused")  # type: ignore[misc]
     app = pg_api(llm_provider_factory=fake_factory)
     with TestClient(app):
-        assert app.state.chat_service.provider_factory is fake_factory
+        assert app.state.chat_service._app_service.provider_factory is fake_factory
 
 
 def test_existing_provider_and_invalid_ws_behaviors_are_preserved(

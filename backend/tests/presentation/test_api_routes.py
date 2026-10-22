@@ -18,6 +18,7 @@ from backend.tests.integration.test_interaction_xml_oracle import (
     assert_prompt_oracle,
     assert_public_collection,
 )
+from backend.tests.support.chat_service import compose_chat_service
 from backend.tests.support.paths import PROJECT_ROOT
 from backend.tests.support.postgres_public_application import (
     original_application_factory,
@@ -146,9 +147,16 @@ class ChatApiRouteTests(unittest.TestCase):
         assert isinstance(application, FastAPI)
         service = application.state.chat_service
         with (
-            patch.object(service, "intent_classifier", InteractionIntentClassifier()),
-            patch.object(service, "keyword_extractor", InteractionKeywords()),
-            patch.object(service, "provider_factory", lambda _: provider),
+            patch.object(
+                application.state,
+                "chat_service",
+                compose_chat_service(
+                    service,
+                    intent_classifier=InteractionIntentClassifier(),
+                    keyword_extractor=InteractionKeywords(),
+                    provider_factory=lambda _: provider,
+                ),
+            ),
         ):
             response = self.client.post(
                 "/api/chat",

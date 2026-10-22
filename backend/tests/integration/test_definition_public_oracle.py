@@ -13,6 +13,7 @@ from backend.tests.integration.test_interaction_xml_oracle import (
     major_expectations,
 )
 from backend.tests.presentation import test_api_routes as api_fixture
+from backend.tests.support.chat_service import compose_chat_service
 from backend.tests.support.paths import FIXTURES_ROOT, PROJECT_ROOT
 from backend.tests.support.section_records import major_unit_id
 from fastapi import FastAPI
@@ -87,15 +88,14 @@ def observe_public() -> dict[str, object]:
             provider = api_fixture.PromptEchoProvider()
             with (
                 patch.object(
-                    service,
-                    "intent_classifier",
-                    api_fixture.InteractionIntentClassifier(),
-                ),
-                patch.object(
-                    service, "keyword_extractor", api_fixture.InteractionKeywords()
-                ),
-                patch.object(
-                    service, "provider_factory", lambda _, current=provider: current
+                    application.state,
+                    "chat_service",
+                    compose_chat_service(
+                        service,
+                        intent_classifier=api_fixture.InteractionIntentClassifier(),
+                        keyword_extractor=api_fixture.InteractionKeywords(),
+                        provider_factory=lambda _, current=provider: current,
+                    ),
                 ),
             ):
                 response = fixture.client.post(

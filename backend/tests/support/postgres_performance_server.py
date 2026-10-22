@@ -169,7 +169,7 @@ def create_server():
             service.decoder.decode = measured_decode
             try:
                 morphology = type(
-                    application.state.chat_service.keyword_extractor
+                    application.state.chat_service._app_service.keyword_extractor
                 ).__name__
                 assert morphology == "JanomeKeywordExtractor"
                 emit("ready", morphology=morphology)

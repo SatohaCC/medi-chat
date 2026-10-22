@@ -8,6 +8,7 @@ import pytest
 from backend import main
 from backend.application.chat.answer_preparation import prepare_reply
 from backend.application.chat.chat_models import ChatMessage
+from backend.application.chat.chat_service import ChatApplicationService
 from backend.application.retrieval import retrieve_evidence as retrieval
 from backend.application.retrieval.jev_detector import JevDetectionResult
 from backend.application.retrieval.search_models import SearchCriteria
@@ -190,13 +191,15 @@ def test_websocket_sends_logic_before_jev_then_replaces_with_integrated_sources(
     monkeypatch.setattr(retrieval, "detect_morphology_criteria", lambda *args: None)
     provider = RecordingProvider()
     service = AppChatService(
-        medicine_reader=MedicineReader(),
-        evidence_reader=OrderedEvidenceReader(True),
-        intent_classifier=UnusedIntentClassifier(),
-        keyword_extractor=UnusedKeywordExtractor(),
-        intent_policy=get_package_insert_definitions().intent_policy,
-        answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
-        provider_factory=lambda _: provider,
+        application_service=ChatApplicationService(
+            medicine_reader=MedicineReader(),
+            evidence_reader=OrderedEvidenceReader(True),
+            intent_classifier=UnusedIntentClassifier(),
+            keyword_extractor=UnusedKeywordExtractor(),
+            intent_policy=get_package_insert_definitions().intent_policy,
+            answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
+            provider_factory=lambda _: provider,
+        )
     )
     app = FastAPI()
     app.include_router(router)
@@ -399,13 +402,15 @@ def test_all_detectors_start_together_and_generation_waits_for_last(
     provider = RecordingProvider()
     definitions = get_package_insert_definitions()
     service = AppChatService(
-        medicine_reader=MedicineReader(),
-        evidence_reader=OrderedEvidenceReader(False),
-        intent_classifier=Classifier(),
-        keyword_extractor=UnusedKeywordExtractor(),
-        intent_policy=definitions.intent_policy,
-        answer_prompt_policy=definitions.answer_prompt_policy,
-        provider_factory=lambda _: provider,
+        application_service=ChatApplicationService(
+            medicine_reader=MedicineReader(),
+            evidence_reader=OrderedEvidenceReader(False),
+            intent_classifier=Classifier(),
+            keyword_extractor=UnusedKeywordExtractor(),
+            intent_policy=definitions.intent_policy,
+            answer_prompt_policy=definitions.answer_prompt_policy,
+            provider_factory=lambda _: provider,
+        )
     )
     app = FastAPI()
     app.include_router(router)

@@ -10,6 +10,7 @@ from typing import Any
 from fastapi import FastAPI
 
 from ...application.attachment_import.import_document import AttachmentImportService
+from ...application.chat.chat_service import ChatApplicationService
 from ...config.database_settings import PostgresDatabaseSettings
 from ...config.generation_settings import read_generation_defaults
 from ..intent.jev_classifier import JevIntentClassifier
@@ -74,7 +75,7 @@ def create_app_lifespan(
                 morphology_settings=definitions.morphology_settings,
             )
             required = _SnapshotRequired()
-            application.state.chat_service = chat_service_factory(
+            application_service = ChatApplicationService(
                 medicine_reader=required,
                 evidence_reader=required,
                 intent_classifier=classifier,
@@ -82,8 +83,11 @@ def create_app_lifespan(
                 intent_policy=definitions.intent_policy,
                 answer_prompt_policy=definitions.answer_prompt_policy,
                 provider_factory=llm_provider_factory or create_llm_provider,
-                defaults=read_generation_defaults,
                 snapshot_provider=runtime,
+            )
+            application.state.chat_service = chat_service_factory(
+                application_service=application_service,
+                defaults=read_generation_defaults,
             )
             if not readonly_probe:
                 encoder = PmdaArtifactEncoder()

@@ -39,7 +39,7 @@ def client():
         "provider_factory": lambda _: unused,
     }
     application = ChatApplicationService(**dependencies)
-    service = AppChatService(**dependencies, application_service=application)
+    service = AppChatService(application_service=application)
     app.dependency_overrides[get_chat_service] = lambda: service
     with TestClient(app) as client:
         yield client
