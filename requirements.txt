@@ -16,6 +16,7 @@ anyio==4.15.1
     #   httpx2
     #   openai
     #   starlette
+    #   typesafe-sdk
     #   watchfiles
 certifi==2026.10.19
     # via
@@ -106,6 +107,8 @@ mdurl==0.1.2
     # via markdown-it-py
 openai==3.19.2
     # via medi-chat-backend
+packaging==26.3
+    # via typesafe-sdk
 psycopg==3.3.6
     # via medi-chat-backend
 psycopg-binary==3.3.6 ; implementation_name != 'pypy'
@@ -181,11 +184,12 @@ truststore==0.10.4 ; sys_platform != 'emscripten'
     # via
     #   httpcore2
     #   httpx2
+    #   typesafe-sdk
 typer==0.27.2
     # via
     #   fastapi-cli
     #   fastapi-cloud-cli
-typesafe-sdk==0.7.2
+typesafe-sdk==0.7.5
     # via medi-chat-backend
 typing-extensions==4.16.0
     # via
