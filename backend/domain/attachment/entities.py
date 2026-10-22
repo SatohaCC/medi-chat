@@ -12,6 +12,7 @@ from .value_objects import (
     AttachmentRevision,
     AttachmentSection,
     AttachmentSource,
+    AttachmentTableBlock,
 )
 
 # 添付文書自体: 文書内の製品・項目階層の整合性を所有する
@@ -49,3 +50,23 @@ class AttachmentDocument:
             raise AttachmentDomainError("section parent must exist in the document")
         if any(section.parent_code is not None for section in self.sections):
             raise AttachmentDomainError("document root sections must be major sections")
+        targets = {target.reference_id for target in self.reference_targets}
+        for section in sections:
+            if section.body is None:
+                continue
+            for block in section.body.blocks:
+                references = list(block.references)
+                if isinstance(block, AttachmentTableBlock):
+                    references.extend(
+                        ref
+                        for row in block.table.rows
+                        for cell in row
+                        for ref in cell.references
+                    )
+                if any(
+                    ref.target_id is not None and ref.target_id not in targets
+                    for ref in references
+                ):
+                    raise AttachmentDomainError(
+                        "attachment reference target is missing"
+                    )

@@ -266,29 +266,6 @@ def document_from_payload(payload: dict[str, Any]) -> AttachmentDocument:
                 for target in value["reference_targets"]
             ),
         )
-        _validate_references(document)
         return document
     except (KeyError, TypeError, AttributeError, DomainError) as error:
         raise ValueError("invalid stored attachment structure") from error
-
-
-def _validate_references(document: AttachmentDocument) -> None:
-    targets = {target.reference_id for target in document.reference_targets}
-    for root in document.sections:
-        for section in root.walk():
-            if section.body is None:
-                continue
-            for block in section.body.blocks:
-                references = list(block.references)
-                if isinstance(block, v.AttachmentTableBlock):
-                    references.extend(
-                        ref
-                        for row in block.table.rows
-                        for cell in row
-                        for ref in cell.references
-                    )
-                if any(
-                    ref.target_id is not None and ref.target_id not in targets
-                    for ref in references
-                ):
-                    raise ValueError("stored attachment reference target is missing")

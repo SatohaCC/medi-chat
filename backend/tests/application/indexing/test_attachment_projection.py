@@ -28,6 +28,7 @@ from backend.domain.attachment.value_objects import (
     AttachmentParagraph,
     AttachmentProduct,
     AttachmentReference,
+    AttachmentReferenceTarget,
     AttachmentRevision,
     AttachmentSection,
     AttachmentTable,
@@ -209,7 +210,18 @@ def test_tables_keep_columns_spans_newlines_and_references_in_one_unit():
         replace(children[0], children=(children[1], children[2])),
         replace(children[3], children=(children[4],)),
     )
-    units = project_attachment(replace(_document(), sections=sections))
+    units = project_attachment(
+        replace(
+            _document(),
+            sections=sections,
+            reference_targets=(
+                AttachmentReferenceTarget(
+                    reference_id=AttachmentText("ref1"),
+                    text=AttachmentText("test reference"),
+                ),
+            ),
+        )
+    )
     assert [unit.section_code.value for unit in units] == ["10", "11"]
     assert [len(unit.blocks) for unit in units] == [2, 1]
     for unit in units:
