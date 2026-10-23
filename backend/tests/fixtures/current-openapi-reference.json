@@ -602,8 +602,7 @@
             },
             "product_yj_codes": {
               "items": {
-                "type": "string",
-                "pattern": "^[0-9A-Z]{12}$"
+                "type": "string"
               },
               "type": "array",
               "maxItems": 50,
