@@ -22,6 +22,7 @@ certifi==2026.10.19
     # via
     #   httpcore
     #   httpx
+    #   medi-chat-backend
     #   requests
     #   sentry-sdk
 cffi==2.1.1 ; platform_python_implementation != 'PyPy'
