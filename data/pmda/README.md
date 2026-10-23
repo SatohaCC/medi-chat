@@ -11,7 +11,7 @@
 - 変換正本: `backend.infrastructure.pmda_xml`、入口: `backend.infrastructure.cli.structure_pmda_xml`
 - 辞書の純粋変換: `backend.application.medicine.autocomplete`、CSV境界: `backend.infrastructure.sources.yj_csv`
 
-項目・列の共有定義は[Infrastructure定義README](../../backend/infrastructure/package_insert_definitions/README.md)に従い、`backend/infrastructure/package_insert_definitions/package_insert_catalog.json`を編集します。原文見出しと本文を共有定義で上書きしません。
+項目・列の共有定義は[型付き定義と技術設定のREADME](../../backend/infrastructure/package_insert_definitions/README.md)に従います。項目番号・正式名称・Scopeと相互作用列は[Domainの定義](../../backend/domain/attachment/value_objects.py)、XMLタグとの対応は[XML設定](../../backend/infrastructure/package_insert_definitions/xml_settings.py)を編集します。常時取得項目や質問に応じた検索方針は[Applicationの検索方針](../../backend/application/retrieval/standard_policies.py)で別に管理します。原文見出しと本文を共有定義で上書きしません。
 
 ## 実行方法
 
