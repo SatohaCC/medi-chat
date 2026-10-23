@@ -85,7 +85,9 @@ def examples() -> list[Any]:
     source = v.AttachmentSource(p.AttachmentUrl("https://example.test/original"))
     return [
         v.SectionDefinition(
-            code=p.NumberedSectionCode("10"), title=p.DefinitionTitle("項目")
+            code=p.NumberedSectionCode("10"),
+            title=p.DefinitionTitle("項目"),
+            scope=p.SectionScope("テスト項目の範囲"),
         ),
         v.SectionTaxonomy(sections=()),
         v.InteractionColumnDefinition(

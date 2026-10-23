@@ -3,7 +3,7 @@ import asyncio
 import pytest
 from backend.application.retrieval.retrieve_evidence import retrieve_evidence
 from backend.application.retrieval.search_values import DetectionSource
-from backend.infrastructure.package_insert_definitions.loader import (
+from backend.infrastructure.package_insert_definitions.assembly import (
     get_package_insert_definitions,
 )
 from backend.tests.application.chat.test_answer_preparation import MedicineReader
@@ -137,3 +137,47 @@ async def test_detectors_start_while_initial_evidence_is_in_flight(
     assert len(published) == 1
     assert published[0] == result.sources
     assert all(event.is_set() for event in started.values())
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("entry", ["prepare_reply", "answer_question"])
+async def test_custom_always_sections_are_injected_through_chat_service(entry):
+    from backend.application.chat.chat_models import ChatMessage
+    from backend.application.chat.chat_service import ChatApplicationService
+    from backend.application.indexing.search_values import SearchSectionCode
+    from backend.application.retrieval.standard_policies import EvidenceRetrievalPolicy
+
+    conditions = []
+
+    class Reader:
+        async def search(self, criteria, medicines):
+            conditions.append(criteria)
+            return ()
+
+    class Provider:
+        async def stream_response(self, messages, model=None):
+            yield "テスト回答"
+
+    definitions = get_package_insert_definitions()
+    service = ChatApplicationService(
+        intent_classifier=NoJev(),
+        keyword_extractor=NoKeywords(),
+        intent_policy=definitions.intent_policy,
+        retrieval_policy=EvidenceRetrievalPolicy(
+            always_retrieved_sections=(SearchSectionCode("9.2"),)
+        ),
+        answer_prompt_policy=definitions.answer_prompt_policy,
+        snapshot_provider=FixedSnapshotProvider(MedicineReader(), Reader()),
+        provider_factory=lambda _: Provider(),
+    )
+    arguments = (
+        {}
+        if entry == "prepare_reply"
+        else {"provider_name": "test", "model_name": "test"}
+    )
+    await getattr(service, entry)(
+        [ChatMessage(role="user", content="こんにちは")], ["1234567A0000"], **arguments
+    )
+    assert len(conditions) == 1
+    assert conditions[0].source == DetectionSource.ALWAYS
+    assert tuple(code.value for code in conditions[0].section_codes) == ("9.2",)

@@ -17,7 +17,7 @@ from ..intent.jev_classifier import JevIntentClassifier
 from ..llm.provider_factory import create_llm_provider
 from ..morphology.janome_keyword_extractor import JanomeKeywordExtractor
 from ..morphology.keyword_extraction import get_janome_tokenizer
-from ..package_insert_definitions.loader import PackageInsertDefinitions
+from ..package_insert_definitions.assembly import PackageInsertDefinitions
 from ..persistence.postgres_engine import create_postgres_engine
 from ..persistence.postgres_import_queries import PostgresImportQueries
 from ..persistence.postgres_readiness import verify_postgres_readiness
@@ -71,6 +71,7 @@ def create_app_lifespan(
                 intent_classifier=classifier,
                 keyword_extractor=keywords,
                 intent_policy=definitions.intent_policy,
+                retrieval_policy=definitions.retrieval_policy,
                 answer_prompt_policy=definitions.answer_prompt_policy,
                 provider_factory=llm_provider_factory or create_llm_provider,
                 snapshot_provider=runtime,

@@ -1,11 +1,6 @@
-"""添付文書定義の一元管理と、各利用先への反映を検証する。"""
+"""型付き定義の所有・注入と原文保持を検証する。"""
 
-from __future__ import annotations
-
-import json
-from collections.abc import Callable, Iterator
-from importlib import import_module
-from pathlib import Path
+from dataclasses import FrozenInstanceError, replace
 from types import SimpleNamespace
 from typing import Any
 from unittest.mock import AsyncMock
@@ -13,9 +8,12 @@ from unittest.mock import AsyncMock
 import pytest
 from backend.application.chat.answer_prompt_builder import build_answer_system_prompt
 from backend.application.indexing.search_models import DocumentRevision
-from backend.application.indexing.search_values import SearchUnitId, SearchUnitKind
+from backend.application.indexing.search_values import (
+    SearchSectionCode,
+    SearchUnitId,
+    SearchUnitKind,
+)
 from backend.application.indexing.text_projection import format_scoped_text
-from backend.application.medicine.product_models import ResolvedMedicine
 from backend.application.retrieval.intent_contracts import IntentRequest
 from backend.application.retrieval.search_models import (
     Evidence,
@@ -35,40 +33,35 @@ from backend.application.retrieval.search_values import (
     EvidenceProductName,
     EvidenceSourceUrl,
 )
-from backend.domain.attachment.identifiers import DocumentId
-from backend.domain.medicine.identifiers import YjCode
-from backend.domain.medicine.primitives import BrandName, GenericName
-from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
-from backend.infrastructure.evidence_mapping import build_evidence as evidence_from_unit
-from backend.infrastructure.intent.jev_classifier import JevIntentClassifier
-from backend.infrastructure.morphology.keyword_extraction import extract_search_keywords
-from backend.infrastructure.package_insert_definitions import loader as catalog_loader
-from backend.infrastructure.package_insert_definitions.loader import (
-    PackageInsertDefinitions,
-    get_package_insert_definitions,
-    load_package_insert_definitions,
+from backend.application.retrieval.standard_policies import (
+    DEFAULT_RETRIEVAL_POLICY,
+    EvidenceRetrievalPolicy,
 )
-from backend.infrastructure.pmda_xml.transform import transform
-
-
-@pytest.fixture
-def catalog_data() -> dict[str, Any]:
-    return json.loads(catalog_loader.DEFINITIONS_PATH.read_text(encoding="utf-8"))
-
-
-@pytest.fixture
-def activate_catalog(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Iterator[Callable[[dict[str, Any]], PackageInsertDefinitions]]:
-    def activate(data: dict[str, Any]) -> PackageInsertDefinitions:
-        path = tmp_path / "catalog.json"
-        path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-        monkeypatch.setattr(catalog_loader, "DEFINITIONS_PATH", path)
-        get_package_insert_definitions.cache_clear()
-        return get_package_insert_definitions()
-
-    yield activate
-    get_package_insert_definitions.cache_clear()
+from backend.domain.attachment.exceptions import AttachmentDomainError
+from backend.domain.attachment.identifiers import DocumentId
+from backend.domain.attachment.primitives import (
+    DefinitionTitle,
+    NumberedSectionCode,
+    SectionScope,
+)
+from backend.domain.attachment.value_objects import SectionDefinition, SectionTaxonomy
+from backend.domain.foundation.exceptions import DomainValidationError
+from backend.domain.medicine.identifiers import YjCode
+from backend.infrastructure.intent.jev_classifier import JevIntentClassifier
+from backend.infrastructure.morphology.janome_keyword_extractor import (
+    JanomeKeywordExtractor,
+)
+from backend.infrastructure.package_insert_definitions import assembly
+from backend.infrastructure.package_insert_definitions.assembly import (
+    build_package_insert_definitions,
+    get_package_insert_definitions,
+)
+from backend.infrastructure.package_insert_definitions.xml_settings import (
+    DEFAULT_XML_TAGS,
+    build_xml_settings,
+)
+from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
+from backend.tests.support.definition_fixtures import supplementary_definitions
 
 
 def _source(**values: Any) -> ChatSource:
@@ -99,503 +92,194 @@ def _source(**values: Any) -> ChatSource:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "consumer",
-    [
-        "keyword_intent",
-        "section_codes",
-        "text_keywords",
-        "janome_adapter",
-        "answer_prompt",
-        "jev",
-    ],
+    "consumer", ["keyword_intent", "text_keywords", "answer_prompt", "jev", "xml"]
 )
-async def test_明示注入したカタログを再読込せず各利用先に反映する(
-    tmp_path: Path,
-    catalog_data: dict[str, Any],
-    monkeypatch: pytest.MonkeyPatch,
-    consumer: str,
-) -> None:
-    catalog_data["sections"]["27"] = {
-        "title": "注入した追加項目",
-        "xml_tags": ["SupplementarySection"],
-    }
-    catalog_data["intents"]["supplementary"] = {
-        "sections": ["27"],
-        "keywords": [{"text": "追補", "exclude_from_text_search": True}],
-        "keyword_priority": 27,
-        "classification": {"description": "注入した追加項目を参照する質問"},
-    }
-    catalog_data["answer_prompt"]["citation_examples"].append("27")
-    path = tmp_path / "injected-catalog.json"
-    path.write_text(json.dumps(catalog_data, ensure_ascii=False), encoding="utf-8")
-    catalog = load_package_insert_definitions(path)
+async def test_typed_definition_injection_reaches_consumers_without_reload(
+    monkeypatch, consumer
+):
+    definitions = supplementary_definitions()
 
-    def forbid_catalog_reload(
-        *args: object, **kwargs: object
-    ) -> PackageInsertDefinitions:
-        pytest.fail("明示注入後にバックエンドが共有カタログを再読込した")
+    def forbid(*args, **kwargs):
+        pytest.fail("explicitly injected definitions were rebuilt")
 
-    for module_name in (
-        "backend.application.retrieval.search_policy",
-        "backend.infrastructure.morphology.keyword_extraction",
-        "backend.application.chat.answer_prompt_builder",
-        "backend.infrastructure.intent.jev_classifier",
-        "backend.infrastructure.package_insert_definitions.loader",
-    ):
-        monkeypatch.setattr(
-            import_module(module_name),
-            "get_package_insert_definitions",
-            forbid_catalog_reload,
-            raising=False,
-        )
-    monkeypatch.setattr(
-        catalog_loader, "load_package_insert_definitions", forbid_catalog_reload
-    )
-
+    monkeypatch.setattr(assembly, "build_package_insert_definitions", forbid)
+    monkeypatch.setattr(assembly, "get_package_insert_definitions", forbid)
     if consumer == "keyword_intent":
         assert detect_intents_from_keywords(
-            "追補について", intent_policy=catalog.intent_policy
+            "追補について", intent_policy=definitions.intent_policy
         ) == ("supplementary",)
-    elif consumer == "section_codes":
-        assert catalog.intent_policy.section_codes_for_intent("supplementary") == (
-            "27",
-        )
     elif consumer == "text_keywords":
-        assert (
-            extract_search_keywords(
-                "追補",
-                search_policy=catalog.text_search_policy,
-                morphology_settings=catalog.morphology_settings,
-            )
-            == []
-        )
-    elif consumer == "janome_adapter":
-        from backend.infrastructure.morphology.janome_keyword_extractor import (
-            JanomeKeywordExtractor,
-        )
-
         adapter = JanomeKeywordExtractor(
-            search_policy=catalog.text_search_policy,
-            morphology_settings=catalog.morphology_settings,
+            search_policy=definitions.text_search_policy,
+            morphology_settings=definitions.morphology_settings,
         )
         assert adapter.extract_keywords("追補") == ()
     elif consumer == "answer_prompt":
-        source = _source(document_revision={"version": "第2版"})
         prompt = build_answer_system_prompt(
-            [source],
+            [_source()],
             [],
             "supplementary",
-            answer_prompt_policy=catalog.answer_prompt_policy,
+            answer_prompt_policy=definitions.answer_prompt_policy,
         )
-        assert "注入した追加項目 (supplementary)" in prompt
-        assert "27. 注入した追加項目" in prompt
-        assert "原文の見出し" in prompt
+        assert "追加項目の正式名称" in prompt
+        assert "27. 追加項目の正式名称" in prompt
         assert "原文の本文" in prompt
-        assert "https://example.test/source" in prompt
-        assert "第2版" in prompt
-    else:
+    elif consumer == "jev":
         client = SimpleNamespace(system_one=AsyncMock(return_value={"answers": {}}))
         classifier = JevIntentClassifier(
-            api_key="", classification_settings=catalog.jev_settings
+            api_key="", classification_settings=definitions.jev_settings
         )
         monkeypatch.setattr(classifier, "_client", client)
-        monkeypatch.setattr(
-            "backend.infrastructure.intent.jev_classifier.ts.Choice",
-            lambda **values: SimpleNamespace(**values),
-        )
-
         await classifier.classify(IntentRequest("追補は？"))
-
-        client.system_one.assert_awaited_once()
         request = client.system_one.call_args.kwargs
         assert request["state"] == {"question": "追補は？"}
-        assert request["questions"]["intent"].criteria["supplementary"] == (
-            "27. 注入した追加項目：注入した追加項目を参照する質問"
+        assert (
+            request["questions"]["intent"].criteria["supplementary"]
+            == "27. 追加項目の正式名称：追加項目の内容に関する質問"
+        )
+    else:
+        from backend.tests.support.attachment_import_fixtures import xml_source
+
+        document = PmdaXmlDecoder(xml_settings=definitions.xml_settings).decode(
+            xml_source(
+                "<SupplementarySection><Detail><Lang>テスト原文</Lang></Detail></SupplementarySection>"
+            )
+        )
+        assert document.document is not None
+        assert (
+            definitions.xml_settings.sections_by_xml_tag["SupplementarySection"].title
+            == "追加項目の正式名称"
         )
 
 
-def test_読み込みを共有して利用先からの変更を防ぐ() -> None:
-    catalog = get_package_insert_definitions()
-    assert get_package_insert_definitions() is catalog
-    section_code = next(
-        section.code
-        for section in catalog.taxonomy.sections
-        if section.code.value == "16.7"
-    )
-    assert section_code.parent_code is not None
-    assert section_code.parent_code.value == "16"
-    assert catalog.intent_policy.section_codes_for_intent("interaction") == (
-        "10",
-        "10.1",
-        "10.2",
-        "16.7",
-    )
-    assert (
-        catalog.answer_prompt_policy.intent_display_name(
-            "precautions_related_to_dosage"
-        )
-        == "用法及び用量に関連する注意"
-    )
-    assert catalog.answer_prompt_policy.intent_display_name("unknown") == "unknown"
+def test_constant_definitions_are_immutable_and_criteria_copy_is_independent():
+    definitions = get_package_insert_definitions()
+    assert definitions is get_package_insert_definitions()
+    with pytest.raises(FrozenInstanceError):
+        definitions.taxonomy.sections[0].title = DefinitionTitle("変更")  # pyright: ignore[reportAttributeAccessIssue]
     with pytest.raises(TypeError):
-        catalog.taxonomy.sections[0] = catalog.taxonomy.sections[1]  # type: ignore[index]
-    criteria = catalog.jev_settings.build_classification_criteria()
-    criteria["warnings"] = "変更"
-    assert catalog.jev_settings.build_classification_criteria()["warnings"].startswith(
-        "1. 警告："
+        definitions.jev_settings.criteria["warnings"] = "変更"  # pyright: ignore[reportIndexIssue]
+    copied = definitions.jev_settings.build_classification_criteria()
+    copied["warnings"] = "変更"
+    assert definitions.jev_settings.criteria["warnings"].startswith("1. 警告：")
+
+
+def test_always_reference_policy_is_independent_from_question_intents():
+    definitions = get_package_insert_definitions()
+    custom = build_package_insert_definitions(
+        retrieval_policy=EvidenceRetrievalPolicy(
+            always_retrieved_sections=(SearchSectionCode("9.2"),)
+        )
     )
-    sections = list(catalog.intent_policy.section_codes_for_intent("interaction"))
-    assert sections is not None
-    sections.clear()
-    assert list(catalog.intent_policy.section_codes_for_intent("interaction")) == [
-        "10",
-        "10.1",
-        "10.2",
-        "16.7",
+    assert custom.intent_policy == definitions.intent_policy
+    assert custom.jev_settings == definitions.jev_settings
+    assert custom.retrieval_policy != DEFAULT_RETRIEVAL_POLICY
+    assert not hasattr(custom.intent_policy, "always_retrieved_sections")
+
+
+def test_references_to_unknown_sections_are_rejected():
+    with pytest.raises(ValueError, match="unknown policy sections"):
+        build_package_insert_definitions(
+            retrieval_policy=EvidenceRetrievalPolicy(
+                always_retrieved_sections=(SearchSectionCode("99"),)
+            )
+        )
+
+
+def test_domain_taxonomy_rejects_duplicate_or_missing_parent():
+    section = SectionDefinition(
+        code=NumberedSectionCode("1"),
+        title=DefinitionTitle("警告"),
+        scope=SectionScope("テスト警告の範囲"),
+    )
+    with pytest.raises(AttachmentDomainError, match="duplicate section"):
+        SectionTaxonomy(sections=(section, section))
+    with pytest.raises(AttachmentDomainError, match="unknown parent"):
+        SectionTaxonomy(sections=(replace(section, code=NumberedSectionCode("1.1")),))
+    with pytest.raises(DomainValidationError):
+        SectionScope(" ")
+
+
+@pytest.mark.parametrize("reverse", [False, True])
+def test_column_titles_and_order_are_projected_without_rewriting_source(reverse):
+    definitions = get_package_insert_definitions()
+    columns = tuple(
+        replace(c, title=DefinitionTitle("テスト薬剤列"))
+        if c.id.value == "drug_name"
+        else c
+        for c in definitions.interaction_columns
+    )
+    if reverse:
+        columns = tuple(reversed(columns))
+    custom = build_package_insert_definitions(interaction_columns=columns)
+    assert [c.id for c in custom.answer_prompt_policy.interaction_columns] == [
+        c.id.value for c in columns
     ]
-
-
-@pytest.mark.parametrize(
-    ("keys", "value", "error"),
-    [
-        (("schema_version",), 2, "unsupported catalog version"),
-        (("always_retrieved_sections",), ["999"], "unknown section codes"),
-        (("always_retrieved_sections",), ["1", "1"], "duplicate values"),
-        (("sections", "1", "title"), "", "expected nonempty text"),
-        (("sections", "1", "typo"), "値", "unknown fields"),
-        (("sections", "1", "xml_tags"), "Warnings", "expected a list"),
-        (("sections", "2", "xml_tags"), ["Warnings"], "duplicate XML tag"),
-        (
-            ("sections", "2", "xml_contexts"),
-            [{"parent_tag": "Pharmacokinetics", "tag": "OtherInformation"}],
-            "duplicate XML context",
-        ),
-        (
-            ("sections", "16.8", "xml_contexts"),
-            [{"parent_tag": "Unknown", "tag": "OtherInformation"}],
-            "invalid parent XML tag",
-        ),
-        (
-            ("sections", "16.8", "xml_contexts"),
-            [{"parent_tag": "Pharmacokinetics", "tag": "Warnings"}],
-            "also global",
-        ),
-        (("intents", "warnings", "sections"), ["999"], "unknown section codes"),
-        (("intents", "warnings", "sections"), ["1", "1"], "duplicate values"),
-        (
-            ("intents", "warnings", "classification", "sections"),
-            ["2"],
-            "must refer to search sections",
-        ),
-        (("intents", "warnings", "keyword_priority"), 1, "duplicate keyword priority"),
-        (("intents", "warnings", "keyword_priority"), True, "positive integer"),
-        (("intents", "warnings", "keywords", 0, "text"), "禁忌", "duplicate keyword"),
-        (
-            ("intents", "warnings", "keywords", 0, "exclude_from_text_search"),
-            "false",
-            "expected a boolean",
-        ),
-        (("intents", "warnings", "sections"), [], "keywords require search sections"),
-        (("intents", "composition", "keyword_priority"), 27, "requires keywords"),
-        (("fallback_intent",), "unknown", "must exist without sections"),
-        (("general_intent",), "document_search", "invalid classification roles"),
-        (("answer_prompt", "citation_examples"), ["999"], "unknown section codes"),
-        (
-            ("answer_prompt", "multiple_intents_template"),
-            "{section:999}",
-            "unknown section reference",
-        ),
-        (
-            ("answer_prompt", "multiple_intents_template"),
-            "{invalid}",
-            "invalid section reference",
-        ),
-        (
-            ("intents", "interaction", "answer_guidance", "minimum_medicines"),
-            0,
-            "positive integer",
-        ),
-        (("interaction_columns", 1, "id"), "drug_name", "duplicate column ID"),
-        (("interaction_columns", 1, "xml_tag"), "DrugName", "duplicate column ID"),
-        (("xml", "header_tags"), ["Warnings"], "cannot be document headers"),
-        (
-            ("text_search", "additional_stop_words"),
-            ["警告"],
-            "define keyword exclusions on the keyword itself",
-        ),
-    ],
-)
-def test_設定不備を読み込み時に拒否する(
-    tmp_path: Path,
-    catalog_data: dict[str, Any],
-    keys: tuple[str | int, ...],
-    value: Any,
-    error: str,
-) -> None:
-    target: Any = catalog_data
-    for key in keys[:-1]:
-        target = target[key]
-    target[keys[-1]] = value
-    path = tmp_path / "invalid.json"
-    path.write_text(json.dumps(catalog_data, ensure_ascii=False), encoding="utf-8")
-
-    with pytest.raises(ValueError, match=error):
-        load_package_insert_definitions(path)
-
-
-@pytest.mark.parametrize(
-    ("keys", "error"),
-    [
-        (("sections", "9"), "unknown parent section"),
-        (("sections", "1", "title"), "missing fields"),
-    ],
-)
-def test_必須定義の削除を検出する(
-    tmp_path: Path, catalog_data: dict[str, Any], keys: tuple[str, ...], error: str
-) -> None:
-    target: Any = catalog_data
-    for key in keys[:-1]:
-        target = target[key]
-    del target[keys[-1]]
-    path = tmp_path / "missing.json"
-    path.write_text(json.dumps(catalog_data), encoding="utf-8")
-    with pytest.raises(ValueError, match=error):
-        load_package_insert_definitions(path)
-
-
-def test_JSON重複キーと破損とファイル欠落を通知する(tmp_path: Path) -> None:
-    path = tmp_path / "catalog.json"
-    with pytest.raises(FileNotFoundError):
-        load_package_insert_definitions(path)
-    path.write_text('{"schema_version": 1, "schema_version": 1}', encoding="utf-8")
-    with pytest.raises(ValueError, match="Duplicate JSON key: schema_version"):
-        load_package_insert_definitions(path)
-    path.write_text('{"schema_version":', encoding="utf-8")
-    with pytest.raises(ValueError):
-        load_package_insert_definitions(path)
-
-
-def test_新しい項目の定義だけで検索とプロンプトとXMLに反映する(
-    tmp_path: Path,
-    catalog_data: dict[str, Any],
-    activate_catalog: Callable[[dict[str, Any]], PackageInsertDefinitions],
-) -> None:
-    catalog_data["sections"]["27"] = {
-        "title": "追加の項目",
-        "xml_tags": ["SupplementarySection"],
-    }
-    catalog_data["intents"]["supplementary"] = {
-        "sections": ["27"],
-        "keywords": [{"text": "追補", "exclude_from_text_search": True}],
-        "keyword_priority": 27,
-        "classification": {"description": "追加項目を参照する質問"},
-    }
-    catalog_data["answer_prompt"]["citation_examples"].append("27")
-    catalog = activate_catalog(catalog_data)
-
-    assert detect_intents_from_keywords(
-        "追補について", intent_policy=catalog.intent_policy
-    ) == ("supplementary",)
-    assert catalog.intent_policy.section_codes_for_intent("supplementary") == ("27",)
-    assert extract_search_keywords("追補") == []
-    assert (
-        catalog.jev_settings.build_classification_criteria()["supplementary"]
-        == "27. 追加の項目：追加項目を参照する質問"
-    )
-    prompt = build_answer_system_prompt(
-        [], [], "supplementary", answer_prompt_policy=catalog.answer_prompt_policy
-    )
-    assert "追加の項目 (supplementary)" in prompt
-    assert "27. 追加の項目" in prompt
-
-    xml = tmp_path / "insert.xml"
-    xml.write_text(
-        '<PackIns drugType="Medicine"><PackageInsertNo>001</PackageInsertNo><CompanyIdentifier>000001</CompanyIdentifier><SupplementarySection><Lang>追補の本文</Lang></SupplementarySection></PackIns>',
-        encoding="utf-8",
-    )
-    output = tmp_path / "structured"
-    transform(xml, output)
-    units = [
-        json.loads(line)
-        for line in (output / "search_units.jsonl")
-        .read_text(encoding="utf-8")
-        .splitlines()
+    assert [c.id for c in custom.xml_settings.interaction_columns] == [
+        c.id.value for c in columns
     ]
-    assert units[0]["section"] == {"code": "27", "title": "追加の項目"}
-    assert (
-        units[0]["text"]
-        == '<h3 data-section-code="27">27 追加の項目</h3><p>追補の本文</p>'
-    )
-
-
-@pytest.mark.asyncio
-async def test_共通定義からJevの分類条件を渡す(
-    catalog_data: dict[str, Any],
-    activate_catalog: Callable[[dict[str, Any]], PackageInsertDefinitions],
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    catalog_data["sections"]["1"]["title"] = "変更した警告名"
-    activate_catalog(catalog_data)
-    client = SimpleNamespace(system_one=AsyncMock(return_value={"answers": {}}))
-    classifier = JevIntentClassifier(api_key="")
-    monkeypatch.setattr(classifier, "_client", client)
-    monkeypatch.setattr(
-        "backend.infrastructure.intent.jev_classifier.ts.Choice",
-        lambda **values: SimpleNamespace(**values),
-    )
-
-    await classifier.classify(IntentRequest("警告は？"))
-
-    request = client.system_one.call_args.kwargs
-    assert request["state"] == {"question": "警告は？"}
-    assert (
-        request["questions"]["intent"]
-        .criteria["warnings"]
-        .startswith("1. 変更した警告名：")
-    )
-    assert len(request["questions"]["intent"].criteria) == 33
-
-
-def test_列定義の変更がXMLと回答用の表示に反映する(
-    tmp_path: Path,
-    catalog_data: dict[str, Any],
-    activate_catalog: Callable[[dict[str, Any]], PackageInsertDefinitions],
-) -> None:
-    catalog_data["interaction_columns"].append(
-        {"id": "extra_detail", "xml_tag": "ExtraDetail", "title": "追加情報"}
-    )
-    activate_catalog(catalog_data)
-    xml = tmp_path / "insert.xml"
-    xml.write_text(
-        '<PackIns drugType="Medicine"><PackageInsertNo>001</PackageInsertNo><CompanyIdentifier>000001</CompanyIdentifier><Interactions><ContraIndicatedCombinations><Drug><DrugName><Lang>相手薬</Lang></DrugName><ExtraDetail><Lang>追加本文</Lang></ExtraDetail></Drug></ContraIndicatedCombinations></Interactions></PackIns>',
-        encoding="utf-8",
-    )
-    output = tmp_path / "structured"
-    transform(xml, output)
-    unit = json.loads(
-        (output / "search_units.jsonl").read_text(encoding="utf-8").splitlines()[0]
-    )
-
-    assert "追加情報" in unit["text"]
-    assert "追加本文" in unit["text"]
-    prompt = build_answer_system_prompt(
-        [evidence_from_unit(unit, {}, "logic")],
-        [],
-        "interaction",
-        answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
-    )
-    assert "追加情報" in prompt
-    assert "追加本文" in prompt
-
-
-def test_既存列名の変更がXMLの原文を保って回答用表示に反映する(
-    tmp_path: Path,
-    catalog_data: dict[str, Any],
-    activate_catalog: Callable[[dict[str, Any]], PackageInsertDefinitions],
-) -> None:
-    catalog_data["interaction_columns"][0]["title"] = "変更した薬剤列名"
-    activate_catalog(catalog_data)
-    xml = tmp_path / "insert.xml"
-    xml.write_text(
-        '<PackIns drugType="Medicine"><PackageInsertNo>001</PackageInsertNo>'
-        "<CompanyIdentifier>000001</CompanyIdentifier><Interactions>"
-        "<ContraIndicatedCombinations><Drug><DrugName><Lang>相手薬の原文</Lang>"
-        "</DrugName></Drug></ContraIndicatedCombinations></Interactions></PackIns>",
-        encoding="utf-8",
-    )
-    output = tmp_path / "structured"
-    transform(xml, output)
-    unit = json.loads(
-        (output / "search_units.jsonl").read_text(encoding="utf-8").splitlines()[0]
-    )
-
-    assert "相手薬の原文" in unit["text"]
-    assert "変更した薬剤列名" in unit["text"]
-    prompt = build_answer_system_prompt(
-        [evidence_from_unit(unit, {}, "logic")],
-        [],
-        "interaction",
-        answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
-    )
-    assert "変更した薬剤列名" in prompt
-    assert "相手薬の原文" in prompt
-    assert "薬剤名: 相手薬の原文" not in prompt
-
-
-def test_tc14_列順の変更がXMLと回答の順に反映する(
-    tmp_path: Path,
-    catalog_data: dict[str, Any],
-    activate_catalog: Callable[[dict[str, Any]], PackageInsertDefinitions],
-) -> None:
-    catalog_data["interaction_columns"].reverse()
-    activate_catalog(catalog_data)
-    xml = tmp_path / "insert.xml"
-    xml.write_text(
-        '<PackIns drugType="Medicine"><PackageInsertNo>001</PackageInsertNo>'
-        "<CompanyIdentifier>000001</CompanyIdentifier><Interactions>"
-        "<ContraIndicatedCombinations><Drug><DrugName><Lang>原文薬剤</Lang></DrugName>"
-        "<ClinSymptomsAndMeasures><Lang>原文症状</Lang></ClinSymptomsAndMeasures>"
-        "<MechanismAndRiskFactors><Lang>原文機序</Lang></MechanismAndRiskFactors>"
-        "</Drug></ContraIndicatedCombinations></Interactions></PackIns>",
-        encoding="utf-8",
-    )
-    output = tmp_path / "structured"
-    transform(xml, output)
-    unit = json.loads(
-        (output / "search_units.jsonl").read_text(encoding="utf-8").splitlines()[0]
-    )
-    prompt = build_answer_system_prompt(
-        [evidence_from_unit(unit, {}, "logic")],
-        [],
-        "interaction",
-        answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
-    )
-    for text in (unit["text"], prompt):
-        assert text.index("原文機序") < text.index("原文症状") < text.index("原文薬剤")
-
-
-def test_専用指示の項目名を生成し根拠原文を保持する(
-    catalog_data: dict[str, Any],
-    activate_catalog: Callable[[dict[str, Any]], PackageInsertDefinitions],
-) -> None:
-    catalog_data["sections"]["10"]["title"] = "変更した相互作用名"
-    catalog_data["sections"]["10.1"]["title"] = "変更した併用禁忌名"
-    catalog_data["sections"]["16"]["title"] = "変更した動態名"
-    activate_catalog(catalog_data)
-    medicine = ResolvedMedicine(
-        medicine=DomainMedicineMatch(
-            generic_name=GenericName("成分"),
-            brand_names=tuple(BrandName(value) for value in ("製品",)),
-            yj_codes=tuple(YjCode(value) for value in ("1234567A0000",)),
-        ),
-        document_ids=("document-1",),
-    )
     source = _source(
-        url="https://example.test/source", document_revision={"version": "第2版"}
+        columns={
+            "drug_name": "原文薬剤",
+            "clinical_symptoms_and_measures": "原文症状",
+            "mechanism_and_risk_factors": "原文機序",
+        }
     )
-
     prompt = build_answer_system_prompt(
-        [source],
-        [medicine, medicine],
-        "interaction",
-        ["interaction", "pharmacokinetics"],
-        answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
+        [source], [], "interaction", answer_prompt_policy=custom.answer_prompt_policy
+    )
+    assert "テスト薬剤列: 原文薬剤" in prompt
+    assert "原文症状" in prompt and "原文機序" in prompt
+
+
+def test_xml_duplicate_tag_is_rejected():
+    definitions = get_package_insert_definitions()
+    with pytest.raises(ValueError, match="duplicate XML tag"):
+        build_xml_settings(
+            definitions.taxonomy,
+            definitions.interaction_columns,
+            tags=DEFAULT_XML_TAGS + (DEFAULT_XML_TAGS[0],),
+        )
+
+
+def test_typed_policy_rejects_duplicate_and_unknown_references():
+    from backend.application.retrieval.search_values import IntentName
+    from backend.application.retrieval.standard_policies import ClassificationRule
+    from backend.infrastructure.package_insert_definitions.jev_settings import (
+        build_jev_settings,
+    )
+    from backend.infrastructure.package_insert_definitions.xml_settings import (
+        XmlTagMapping,
     )
 
-    assert "7. 【複数薬剤の変更した相互作用名に関する指示】" in prompt
-    assert "変更した併用禁忌名・併用注意" in prompt
-    assert "変更した動態名と用法及び用量" in prompt
-    assert "原文の見出し" in prompt
-    assert "原文の本文" in prompt
-    assert "https://example.test/source" in prompt
-    assert "第2版" in prompt
-    single = build_answer_system_prompt(
-        [],
-        [medicine],
-        "interaction",
-        answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
-    )
-    assert "複数薬剤の" not in single
+    code = SearchSectionCode("1")
+    with pytest.raises(DomainValidationError, match="duplicate always-retrieved"):
+        EvidenceRetrievalPolicy(always_retrieved_sections=(code, code))
+    with pytest.raises(DomainValidationError, match="duplicate classification"):
+        ClassificationRule(intent=IntentName("test"), section_codes=(code, code))
+    with pytest.raises(DomainValidationError, match="requires description"):
+        ClassificationRule(intent=IntentName("test"), section_codes=())
+    definitions = get_package_insert_definitions()
+    with pytest.raises(ValueError, match="unknown classification section"):
+        build_jev_settings(
+            definitions.taxonomy,
+            (
+                ClassificationRule(
+                    intent=IntentName("test"), section_codes=(SearchSectionCode("99"),)
+                ),
+            ),
+        )
+    with pytest.raises(ValueError, match="unknown XML sections"):
+        build_xml_settings(
+            definitions.taxonomy,
+            definitions.interaction_columns,
+            tags=DEFAULT_XML_TAGS + (XmlTagMapping(tag="Test", section_code="99"),),
+        )
+    with pytest.raises(ValueError, match="duplicate interaction column"):
+        build_xml_settings(
+            definitions.taxonomy,
+            definitions.interaction_columns + (definitions.interaction_columns[0],),
+        )
 
 
 @pytest.mark.parametrize(
@@ -670,3 +354,44 @@ def test_スコープ見出しを重複せず整形する(
     text: str, scope: list[str], expected: str
 ) -> None:
     assert format_scoped_text(text, scope) == expected
+
+
+def test_section_scope_is_required_and_nonempty():
+    from dataclasses import MISSING, fields
+
+    scope_field = next(f for f in fields(SectionDefinition) if f.name == "scope")
+    assert scope_field.default is MISSING
+    assert scope_field.default_factory is MISSING
+    definitions = get_package_insert_definitions()
+    assert len(definitions.taxonomy.sections) == 54
+    assert all(section.scope.value.strip() for section in definitions.taxonomy.sections)
+
+
+def test_jev_includes_combined_sections_and_descendant_meanings():
+    criteria = get_package_insert_definitions().jev_settings.criteria
+    assert "5 効能又は効果に関連する注意：" in criteria["indications"]
+    assert "7 用法及び用量に関連する注意：" in criteria["dosage"]
+    assert "10.1 併用禁忌：" in criteria["interaction"]
+    assert "10.2 併用注意：" in criteria["interaction"]
+    assert "16.4 代謝：" in criteria["pharmacokinetics"]
+    assert "16.7 薬物相互作用：" in criteria["pharmacokinetics"]
+    assert "17.3 その他：" in criteria["clinical_studies"]
+    assert "薬物動態" in criteria["pharmacokinetics"]
+
+
+def test_child_scope_change_reaches_jev_without_changing_question_options():
+    definitions = get_package_insert_definitions()
+    taxonomy = replace(
+        definitions.taxonomy,
+        sections=tuple(
+            replace(section, scope=SectionScope("テスト代謝範囲"))
+            if section.code.value == "16.4"
+            else section
+            for section in definitions.taxonomy.sections
+        ),
+    )
+    custom = build_package_insert_definitions(taxonomy=taxonomy)
+    assert "テスト代謝範囲" in custom.jev_settings.criteria["pharmacokinetics"]
+    assert tuple(custom.jev_settings.criteria) == tuple(
+        definitions.jev_settings.criteria
+    )

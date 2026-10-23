@@ -24,7 +24,7 @@ from backend.application.retrieval.search_values import (
     Probability,
 )
 from backend.domain.medicine.identifiers import YjCode
-from backend.infrastructure.package_insert_definitions.loader import (
+from backend.infrastructure.package_insert_definitions.assembly import (
     get_package_insert_definitions,
 )
 from backend.infrastructure.persistence import postgres_schema as schema

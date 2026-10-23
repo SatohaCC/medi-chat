@@ -28,7 +28,7 @@ from backend.domain.medicine.value_objects import MedicineNames
 from backend.infrastructure.morphology.janome_keyword_extractor import (
     JanomeKeywordExtractor,
 )
-from backend.infrastructure.package_insert_definitions.loader import (
+from backend.infrastructure.package_insert_definitions.assembly import (
     get_package_insert_definitions,
 )
 from backend.infrastructure.persistence.postgres_runtime import _Scope

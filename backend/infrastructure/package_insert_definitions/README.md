@@ -1,29 +1,43 @@
-# 添付文書の定義ソース
+# 添付文書の型付き定義と技術設定
 
-編集先は [package_insert_catalog.json](package_insert_catalog.json) 一つです。schema_version、意図ID、項目番号、列IDは既存の保存形式・公開契約なので維持します。
+定義はPythonの不変クラスで管理します。添付文書の構造、取得方針、技術設定をそれぞれの所有層に置き、名称・意味・対応表を利用側へ複製しません。
 
-- `always_retrieved_sections` は質問内容にかかわらず取得する本文の項目です。現在は1（警告）・2（禁忌）・8（重要な基本的注意）で、配下の項目も含みます。存在しない項目を根拠として補わず、通常検索との重複はunit_idで除き、取得理由は併記します。
-- `sections.<番号>.title` は正式名称の正本です。attachmentのSectionTaxonomyへ読み込み、Applicationのdefinition_projectionから各利用側へ写します。原文見出し・本文・出典・改訂をこの名称で上書きしません。親はNumberedSectionCodeから導出します。
-- `display_title` / `classification_title` は用途別の別名だけを指定します。省略時は正式名称を使います。
-- 意図の `sections` は検索対象の番号配列です。固定キーワードは一致した全分類を検索条件にします。keyword_priorityは列挙順を安定させるためだけに使い、分類を除外する優先順位にはしません。exclude_from_text_searchがtrueの語は除外語へ派生し、additional_stop_wordsへ重ねて定義しません。
-- Jevのclassification.descriptionは説明だけを持ち、番号と名称は参照から生成します。classification.sectionsの省略時は検索対象の最初の項目です。SDK用criteriaはInfrastructureで生成します。
-- 回答指示の `{section:10.1}` はApplicationで正式名称へ展開します。answer_guidance.minimum_medicinesは専用指示の薬剤数下限です。
-- 相互作用列のID・名称・順はattachmentの定義です。XMLタグはPmdaXmlSettings、回答列はApplicationのAnswerPromptPolicyへ投影します。XMLの汎用タグは祖先文脈で解決します。
-- 除外語・症状言い換え・見出し判定はretrievalのTextSearchPolicy、ignored_noun_suffixesはJanomeMorphologySettingsが所有します。
-- 技術アダプター向けの設定dataclass（`JevClassificationSettings`、`JanomeMorphologySettings`、`PmdaXmlSettings` 等）は [definition_settings.py](definition_settings.py) が所有します。これにより `package_insert_definitions` は他のインフラアダプター（`intent` / `morphology` / `pmda_xml`）に依存せず、各アダプター側が `definition_settings.py` を参照する単方向依存をImport Linterで強制しています。
+| 編集する内容 | 正本 |
+| --- | --- |
+| 項目番号・正式名称・階層・内容の範囲、相互作用列のID・名称・順序 | [DomainのSectionDefinition / SectionTaxonomy](../../domain/attachment/value_objects.py) |
+| 常時参照する項目、質問意図と検索項目、固定キーワード、除外語・症状言い換え、分類用の対応 | [Applicationの検索方針](../../application/retrieval/standard_policies.py) |
+| 回答用の指示、引用項目、表示への投影 | [Applicationの回答方針](../../application/chat/standard_policy.py) |
+| XMLタグ・祖先文脈・列タグ、Janomeの技術設定 | [XML・形態素設定](xml_settings.py) |
+| Domainの項目の意味からJev選択肢への変換 | [Jevへの投影](jev_settings.py) |
 
-loaderはJSON IOとスキーマ・参照の検証を行い、不変な用途別モデルを組み立てます。get_package_insert_definitionsはプロセス内で共有し、JSON変更後は再起動が必要です。任意pathのload_package_insert_definitionsは独立して検証します。既定pathはこのファイル配置を基準に解決し、cwdに依存しません。
+[assembly.py](assembly.py) は型付き定義を用途別に組み立てるだけです。`get_package_insert_definitions()` の束はComposition RootやCLIで展開し、各サービスには必要な型を注入します。定義を差し替える場合は、`dataclasses.replace` や各型のコンストラクタで新しい値を作り、`build_package_insert_definitions()` または各投影関数へ渡します。旧JSON読込・任意pathの設定読込は廃止しました。
 
-読込結果の束は `infrastructure/composition/app_lifespan.py` / `main.py` / CLI などのInfrastructure組立地点だけで展開し、サービスへはintent/text/answer/XML/Jev/Janomeの必要な用途だけを渡します。schema_models/schema_validationはこのIO境界の内部入力表現で、利用側から参照しません。encoderはdecoderが確定した原本・検索投影・source情報を使い、定義を再読込しません。
+常時参照は `EvidenceRetrievalPolicy` が所有し、質問の `IntentPolicy` とは独立しています。現在は1・2・8とその配下を対象に、記載がある本文だけを取得します。取得方針を変えても質問意図の定義は変わりません。
 
-検証はリポジトリrootから行います。
+正式名称・項目の意味と、文書に記載された原文見出し・本文・出典・改訂情報を区別します。名称の定義を変えても原文を上書きしません。親項目は `NumberedSectionCode` から導出し、重複・親不在はDomain、存在しない項目への参照は組立時に拒否します。Jevには質問選択用の対応から項目番号・名称・意味を投影し、XML側にはタグに対応する項目番号・名称を投影します。
+
+ガイド画面のJSONは編集元ではなく、Python定義から生成した表示成果物です。定義を変更したら次を実行し、生成差分を確認してください。Next.jsのビルドはコミット済み成果物を使用し、Python実行環境を要求しません。CIはPython定義と表示成果物の一致を検証します。
 
 ```bash
-uv run --project backend --locked python -c "from backend.infrastructure.package_insert_definitions.loader import get_package_insert_definitions; get_package_insert_definitions()"
+uv run --project backend --locked python -m backend.infrastructure.cli.export_search_guide
+uv run --project backend --locked python -m backend.infrastructure.cli.export_search_guide --check
 pnpm test:backend
 pnpm --filter backend lint
-pnpm --filter backend exec uv run --locked ruff format --check .
 pnpm typecheck:python
 ```
 
-旧 `package_inserts.*` import、PackageInsertCatalog型、catalog引数は廃止しました。互換Facadeはありません。利用側はbackend内の所有モデルと用途別注入へ移行してください。リポジトリ外Python利用者の有無は未確認です。XML対応変更に伴う運用索引・原物の再生成は、この配置整理から自動実行しません。
+Jevの判定方式・閾値・説明の調整は、この配置変更とは分けて評価します。クラスへの移行だけで実Jevの精度向上を確認したとは扱いません。
+
+
+## SectionScopeの編集根拠
+
+全54項目の`SectionScope`は必須です。空の説明はPrimitiveで拒否します。
+項目名・親子関係・具体的な構成要素は、リポジトリの次の資料に照合しています。
+
+- `reference/電子添文XMLデータ/（別添4）入力項目一覧.xlsx`：Sheet1の72～265行。組成75～103行、性状104～143行、相互作用160～183行、副作用184～203行、薬物動態214～222行、臨床成績223～226行、理化学的知見233～247行。
+- 同ディレクトリの`（別添3）データモデル.xlsx`：項目階層と構成要素。
+- 同ディレクトリの別添1 XMLスキーマと別添2テンプレートインスタンス：タグと項目の対応。
+
+Scopeは資料の引用文ではなく、項目の意味を説明する要約です。構造資料に詳細な臨床的定義がない項目は、名称と階層に沿った説明に留めます。説明中の具体例は記載範囲を理解するためのもので、すべての製品にその情報があることを保証しません。貯法・有効期間は入力項目一覧30～32行の文書基本情報であり、20項への掲載を前提にしません。製剤の性状だけから粉砕可否を判断する説明もしません。
+
+Jevの選択肢には、対応する全項目と配下の項目の名称・Scopeを重複なく投影します。4/5、6/7のような統合した選択肢でも先頭以外のScopeを含めます。分類の選択肢ID・数、取得対象、閾値は変更しません。実Jevの精度への効果は実通信を用いた別途評価が必要です。

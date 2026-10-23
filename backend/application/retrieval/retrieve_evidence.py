@@ -20,6 +20,10 @@ from backend.application.retrieval.search_policy import (
 )
 from backend.application.retrieval.search_policy import merge_evidence
 from backend.application.retrieval.search_values import DetectionSource
+from backend.application.retrieval.standard_policies import (
+    DEFAULT_RETRIEVAL_POLICY,
+    EvidenceRetrievalPolicy,
+)
 from backend.domain.medicine.identifiers import YjCode
 
 from .intent_contracts import IntentClassifier, IntentRequest
@@ -39,6 +43,7 @@ async def retrieve_evidence(
     intent_classifier: IntentClassifier,
     keyword_extractor: KeywordExtractor,
     intent_policy: IntentPolicy,
+    retrieval_policy: EvidenceRetrievalPolicy = DEFAULT_RETRIEVAL_POLICY,
     snapshot_provider: RetrievalSnapshotProvider,
     on_logic_sources: SourcesCallback | None = None,
 ) -> RetrievalResult:
@@ -52,6 +57,7 @@ async def retrieve_evidence(
             intent_classifier=intent_classifier,
             keyword_extractor=keyword_extractor,
             intent_policy=intent_policy,
+            retrieval_policy=retrieval_policy,
             on_logic_sources=on_logic_sources,
         )
 
@@ -65,6 +71,7 @@ async def _retrieve_evidence(
     intent_classifier: IntentClassifier,
     keyword_extractor: KeywordExtractor,
     intent_policy: IntentPolicy,
+    retrieval_policy: EvidenceRetrievalPolicy,
     on_logic_sources: SourcesCallback | None = None,
 ) -> RetrievalResult:
     medicine_catalog = MedicineCatalog(await medicine_reader.read_medicines())
@@ -77,10 +84,10 @@ async def _retrieve_evidence(
         [
             SearchCriteria(
                 source=DetectionSource.ALWAYS,
-                section_codes=intent_policy.always_retrieved_sections,
+                section_codes=retrieval_policy.always_retrieved_sections,
             )
         ]
-        if intent_policy.always_retrieved_sections and not needs_clarification
+        if retrieval_policy.always_retrieved_sections and not needs_clarification
         else []
     )
 

@@ -17,7 +17,7 @@ from backend.application.retrieval.intent_contracts import IntentRequest, Intent
 from backend.infrastructure.intent import jev_classifier
 from backend.infrastructure.llm import gemini_provider, openai_provider
 from backend.infrastructure.llm.provider_factory import create_llm_provider
-from backend.infrastructure.package_insert_definitions.loader import (
+from backend.infrastructure.package_insert_definitions.assembly import (
     get_package_insert_definitions,
 )
 from backend.presentation import chat_websocket_routes

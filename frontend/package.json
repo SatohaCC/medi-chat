@@ -13,7 +13,7 @@
     "test:e2e:real": "playwright test --config=playwright.import-integration.config.ts",
     "dev": "next dev",
     "dev:frontend": "next dev",
-    "build": "node ../scripts/export-search-guide.mjs && next build",
+    "build": "next build",
     "lint": "biome lint .",
     "lint:stylex": "eslint --config eslint.stylex.config.mjs --no-error-on-unmatched-pattern app/**/*.ts app/**/*.tsx features/**/*.ts features/**/*.tsx shared/**/*.ts shared/**/*.tsx styles/**/*.ts",
     "format": "biome format --write .",

@@ -7,7 +7,7 @@ from backend.application.retrieval.jev_detector import detect_jev_criteria
 from backend.application.retrieval.search_policy import select_intents
 from backend.domain.foundation.json_types import JsonValue
 from backend.infrastructure.intent.jev_intent_mapping import map_jev_intent_result
-from backend.infrastructure.package_insert_definitions.loader import (
+from backend.infrastructure.package_insert_definitions.assembly import (
     get_package_insert_definitions,
 )
 

@@ -54,6 +54,7 @@ jobs:
           python-version: "3.14"
       - run: pnpm install --frozen-lockfile
       - run: uv sync --project backend --locked
+      - run: uv run --project backend --locked python -m backend.infrastructure.cli.export_search_guide --check
       - run: pnpm vercel:requirements:check
       - run: node --experimental-strip-types --test frontend/shared/server/accessToken.test.mjs scripts/dev-backend.test.mjs scripts/root-environment.test.mjs
       - name: Initialize this job's disposable service with separated roles

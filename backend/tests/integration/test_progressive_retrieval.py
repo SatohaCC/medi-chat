@@ -21,7 +21,7 @@ from backend.application.retrieval.snapshot_contracts import (
     RetrievalSnapshot,
     SearchGenerationId,
 )
-from backend.infrastructure.package_insert_definitions.loader import (
+from backend.infrastructure.package_insert_definitions.assembly import (
     get_package_insert_definitions,
 )
 from backend.presentation.chat_service import AppChatService

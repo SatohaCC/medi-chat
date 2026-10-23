@@ -39,7 +39,7 @@ from backend.infrastructure.index_payloads import (
     registered_unit_text,
     unit_matches_sections,
 )
-from backend.infrastructure.package_insert_definitions.loader import (
+from backend.infrastructure.package_insert_definitions.assembly import (
     get_package_insert_definitions,
 )
 

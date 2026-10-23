@@ -16,7 +16,7 @@ from backend.application.retrieval.search_values import DetectionSource
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import BrandName, MatchedAlias
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
-from backend.infrastructure.package_insert_definitions import loader
+from backend.infrastructure.package_insert_definitions import assembly as loader
 from backend.infrastructure.persistence import postgres_schema as schema
 from backend.infrastructure.persistence.postgres_registration import (
     PostgresRegistrationPublisher,
@@ -38,16 +38,9 @@ from sqlalchemy import select
 async def test_tc19_all_entries_keep_injected_definition_without_reload(
     tmp_path, monkeypatch, entrypoint, pg_engines
 ):
-    data = json.loads(loader.DEFINITIONS_PATH.read_text(encoding="utf-8"))
-    data["sections"]["27"] = {
-        "title": "追加項目の正式名称",
-        "xml_tags": ["SupplementarySection"],
-    }
-    data["intents"]["supplementary"] = {"sections": ["27"]}
-    data["interaction_columns"][0]["title"] = "注入薬剤列"
-    path = tmp_path / "definitions.json"
-    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-    definitions = loader.load_package_insert_definitions(path)
+    from backend.tests.support.definition_fixtures import supplementary_definitions
+
+    definitions = supplementary_definitions()
     source = xml_source(
         "<SupplementarySection><Detail><Lang>追補の原文本文</Lang></Detail></SupplementarySection><Interactions><ContraIndicatedCombinations><Drug><DrugName><Lang>相手薬の原文</Lang></DrugName></Drug></ContraIndicatedCombinations></Interactions>"
     ).replace(b"2026-10", b"2026-11")
@@ -82,7 +75,7 @@ async def test_tc19_all_entries_keep_injected_definition_without_reload(
 
     for name in (
         "backend.main",
-        "backend.infrastructure.package_insert_definitions.loader",
+        "backend.infrastructure.package_insert_definitions.assembly",
         "backend.infrastructure.pmda_xml.artifacts",
         "backend.infrastructure.pmda_xml.decoder",
         "backend.infrastructure.pmda_xml.sections",
@@ -96,7 +89,7 @@ async def test_tc19_all_entries_keep_injected_definition_without_reload(
         monkeypatch.setattr(
             import_module(name), "get_package_insert_definitions", forbid, raising=False
         )
-    monkeypatch.setattr(loader, "load_package_insert_definitions", forbid)
+    monkeypatch.setattr(loader, "build_package_insert_definitions", forbid)
     try:
         if entrypoint == "transform":
             xml = tmp_path / "source.xml"
@@ -302,7 +295,7 @@ async def test_tc21_injected_heading_policy_reaches_old_scope_and_new_request(
         pytest.fail("injected runtime policy returned to definition source")
 
     for name in (
-        "backend.infrastructure.package_insert_definitions.loader",
+        "backend.infrastructure.package_insert_definitions.assembly",
         "backend.infrastructure.persistence.postgres_runtime",
         "backend.infrastructure.persistence.postgres_registration",
         "backend.infrastructure.pmda_xml.decoder",
@@ -314,7 +307,7 @@ async def test_tc21_injected_heading_policy_reaches_old_scope_and_new_request(
         monkeypatch.setattr(
             import_module(name), "get_package_insert_definitions", forbid, raising=False
         )
-    monkeypatch.setattr(loader, "load_package_insert_definitions", forbid)
+    monkeypatch.setattr(loader, "build_package_insert_definitions", forbid)
     criteria = SearchCriteria(
         source=DetectionSource.LOGIC,
         section_codes=(SearchSectionCode("1"), SearchSectionCode("2")),

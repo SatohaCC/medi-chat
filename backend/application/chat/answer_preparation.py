@@ -3,6 +3,10 @@
 from collections.abc import Sequence
 
 from backend.application.retrieval.search_models import Evidence, IntentPolicy
+from backend.application.retrieval.standard_policies import (
+    DEFAULT_RETRIEVAL_POLICY,
+    EvidenceRetrievalPolicy,
+)
 
 from ..retrieval.intent_contracts import IntentClassifier
 from ..retrieval.keyword_contracts import KeywordExtractor
@@ -18,6 +22,7 @@ async def prepare_reply(
     intent_classifier: IntentClassifier,
     keyword_extractor: KeywordExtractor,
     intent_policy: IntentPolicy,
+    retrieval_policy: EvidenceRetrievalPolicy = DEFAULT_RETRIEVAL_POLICY,
     snapshot_provider: RetrievalSnapshotProvider,
     on_logic_sources: SourcesCallback | None = None,
 ) -> ChatResponse:
@@ -30,6 +35,7 @@ async def prepare_reply(
         intent_classifier=intent_classifier,
         keyword_extractor=keyword_extractor,
         intent_policy=intent_policy,
+        retrieval_policy=retrieval_policy,
         snapshot_provider=snapshot_provider,
         on_logic_sources=on_logic_sources,
     )
