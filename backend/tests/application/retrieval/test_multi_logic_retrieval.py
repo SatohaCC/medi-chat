@@ -29,6 +29,8 @@ async def test_all_logic_conditions_reach_search_and_progressive_results_without
 
     class Reader:
         async def search(self, criteria, medicines):
+            if criteria.intent is None:
+                return ()
             calls.append(criteria.intent.value)
             return (
                 make_evidence("shared", "10.1", "共通の原文"),
@@ -53,4 +55,4 @@ async def test_all_logic_conditions_reach_search_and_progressive_results_without
     assert len(calls) == 3  # final retrieval reuses already-published searches
     assert len(result.sources) == 4  # one shared + one for each classification
     assert len(published) == 1
-    assert published[0] == result.sources
+    assert published[-1] == result.sources

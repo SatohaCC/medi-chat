@@ -2,7 +2,7 @@
 
 - 状態: pending_review
 - 作成日: 2026-10-12
-- 最終確認日: 2026-10-12
+- 最終確認日: 2026-10-23
 - 承認者・承認日・承認の参照: 未承認
 - 更新案の場合の対象: なし
 - 統合先・廃止理由: なし
@@ -47,3 +47,12 @@ PR #4の初期実装では新規の段階配信テストを追加したが、既
 ## 次の関連作業での評価
 
 未評価。承認待ちであり、INDEXには登録しない。
+
+
+### 2026-10-23: PR #63での再発（更新案・未承認）
+
+- [CI失敗](https://github.com/SatohaCC/medi-chat/actions/runs/39968756854)ではDB不要テストが17 failed・2 errors。事前の限定検証216件には、既存の段階配信・Readerポート・定義bytesの統合検証が含まれていなかった。
+- [レビュー指摘](https://github.com/SatohaCC/medi-chat/pull/63#discussion_r4360566077): 常時取得の検索とコールバックをawaitしてから判定器を作成しており、判定器との並列実行が崩れていた。実環境の遅延量は未測定。
+- 常時取得が空のときも空の先行sourcesを送っていたため、既存の先行配信契約が失敗。検出元enum全体を期待値に使うfixtureにも、新しい取得元が誤って混入していた。
+- 確認手順の追加案: 先行配信へawaitを追加するときは、検索と送信をそれぞれ待機させたまま全判定器が開始できることを検証する。空の検索結果、例外・取消時の子タスク回収も確認する。PR前は限定検証とCIの選択範囲を照合し、実施していない層を明示する。
+- 今回追加した回帰検証: `backend/tests/application/retrieval/test_always_retrieved_sections.py::test_detectors_start_while_initial_evidence_is_in_flight`（search/publicationの2ケース）。既存の段階配信・Readerポート等を合わせた143件は通過。実DB・実LLMの成功を示すものではない。

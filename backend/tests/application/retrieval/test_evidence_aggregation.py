@@ -48,7 +48,7 @@ class Batches:
 
 
 @pytest.mark.asyncio
-async def test_三種類の検索結果は件数を制限せず重複だけを除く():
+async def test_全取得経路の検索結果は件数を制限せず重複だけを除く():
     units = tuple(evidence(index) for index in range(40))
     reader = Batches(dict.fromkeys(DetectionSource, units))
     sources = await _search_evidence(
@@ -59,9 +59,9 @@ async def test_三種類の検索結果は件数を制限せず重複だけを�
         f"test_001:{index:03d}" for index in range(40)
     ]
     assert {source.retrieved_by for source in sources} == {
-        frozenset(["logic", "jev", "keyword"])
+        frozenset(["always", "logic", "jev", "keyword"])
     }
-    assert len(reader.calls) == 3
+    assert len(reader.calls) == 4
 
 
 @pytest.mark.asyncio
@@ -80,7 +80,7 @@ async def test_重複はunit_idだけで除去し固有unitと取得元を保持
         }
     )
     sources = await _search_evidence(
-        reader, (), [SearchCriteria(source=source) for source in DetectionSource]
+        reader, (), [SearchCriteria(source=source) for source in reader.values]
     )
     assert len(sources) == 4
     assert {source.unit_id.value: source.retrieved_by for source in sources} == {

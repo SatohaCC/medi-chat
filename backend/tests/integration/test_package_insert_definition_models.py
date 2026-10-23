@@ -89,7 +89,7 @@ def test_tc01_single_source_bytes_and_tc03_constructor_ownership() -> None:
         hashlib.sha256(
             DEFINITIONS_PATH.read_bytes().replace(b"\r\n", b"\n")
         ).hexdigest()
-        == "d0055d713c4a7365a59b501b0ccaceb62f4b3d082b574dcbbfb80d9bf72f0730"
+        == "1d0c6031c18088f68ae9a694421b46ce0a87ba4e5ddfba3080aeb8baef55afc3"
     )
     assert not (PROJECT_ROOT / "package_inserts").exists()
     assert {field.name for field in fields(SectionDefinition)} == {"code", "title"}

@@ -856,12 +856,13 @@
         "DetectionSource": {
           "type": "string",
           "enum": [
+            "always",
             "logic",
             "jev",
             "keyword"
           ],
           "title": "DetectionSource",
-          "description": "検索条件を作った検出元。"
+          "description": "根拠を取得した理由・経路。"
         },
         "HTTPValidationError": {
           "properties": {

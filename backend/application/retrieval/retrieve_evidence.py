@@ -19,6 +19,7 @@ from backend.application.retrieval.search_policy import (
     detect_fixed_keyword_criteria as _detect_fixed_keyword_criteria,
 )
 from backend.application.retrieval.search_policy import merge_evidence
+from backend.application.retrieval.search_values import DetectionSource
 from backend.domain.medicine.identifiers import YjCode
 
 from .intent_contracts import IntentClassifier, IntentRequest
@@ -72,13 +73,32 @@ async def _retrieve_evidence(
     excluded_terms = medicine_catalog.names_for_yj_codes(product_yj_codes)
 
     search_batches: dict[SearchCriteria, tuple[Evidence, ...]] = {}
+    always_criteria = (
+        [
+            SearchCriteria(
+                source=DetectionSource.ALWAYS,
+                section_codes=intent_policy.always_retrieved_sections,
+            )
+        ]
+        if intent_policy.always_retrieved_sections and not needs_clarification
+        else []
+    )
 
-    async def publish_logic(criteria: list[SearchCriteria]) -> None:
+    async def publish_logic(
+        criteria: list[SearchCriteria], *, skip_empty: bool = False
+    ) -> None:
         if on_logic_sources is not None and not needs_clarification:
             sources = await _search_evidence(
-                evidence_reader, tuple(resolved), criteria, cache=search_batches
+                evidence_reader,
+                tuple(resolved),
+                always_criteria + criteria,
+                cache=search_batches,
             )
-            await on_logic_sources(sources)
+            if sources or not skip_empty:
+                await on_logic_sources(sources)
+
+    async def publish_initial_sources() -> None:
+        await publish_logic([], skip_empty=True)
 
     criteria, jev_response, qualifying_intents = await collect_search_criteria(
         intent_classifier,
@@ -87,6 +107,11 @@ async def _retrieve_evidence(
         excluded_terms,
         intent_policy=intent_policy,
         on_logic_criteria=publish_logic if on_logic_sources is not None else None,
+        on_detectors_started=(
+            publish_initial_sources
+            if always_criteria and on_logic_sources is not None
+            else None
+        ),
     )
 
     intent = (
@@ -114,7 +139,10 @@ async def _retrieve_evidence(
             qualifying_intents=qualifying_intents,
         )
     sources = await _search_evidence(
-        evidence_reader, tuple(resolved), criteria, cache=search_batches
+        evidence_reader,
+        tuple(resolved),
+        always_criteria + criteria,
+        cache=search_batches,
     )
     resolved_codes = {code for group in resolved for code in group.yj_codes}
     unregistered_codes = [
@@ -161,6 +189,7 @@ async def collect_search_criteria(
     *,
     intent_policy: IntentPolicy,
     on_logic_criteria: CriteriaCallback | None = None,
+    on_detectors_started: Callable[[], Awaitable[None]] | None = None,
 ):
     """各ローカル検出の条件を累積通知し、全検出完了後の条件を返す。"""
     tasks = [
@@ -183,6 +212,8 @@ async def collect_search_criteria(
     jev_response = None
     qualifying_intents: tuple[str, ...] = ()
     try:
+        if on_detectors_started is not None:
+            await on_detectors_started()
         for completed in asyncio.as_completed(tasks):
             result = await completed
             if isinstance(result, JevDetectionResult):

@@ -7,7 +7,7 @@ export interface SourceReference {
   target_xml_id?: string | null;
 }
 
-export type DetectionSource = "logic" | "jev" | "keyword";
+export type DetectionSource = "always" | "logic" | "jev" | "keyword";
 
 export interface SourceItem {
   unit_id: string;

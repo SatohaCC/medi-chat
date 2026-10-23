@@ -157,6 +157,8 @@ class OrderedEvidenceReader:
         self.conditions = []
 
     async def search(self, criteria, medicines):
+        if criteria.source == DetectionSource.ALWAYS:
+            return ()
         self.conditions.append(criteria)
         return (
             make_evidence(

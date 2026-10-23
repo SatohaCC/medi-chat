@@ -259,6 +259,8 @@ def test_読み込みを共有して利用先からの変更を防ぐ() -> None:
     ("keys", "value", "error"),
     [
         (("schema_version",), 2, "unsupported catalog version"),
+        (("always_retrieved_sections",), ["999"], "unknown section codes"),
+        (("always_retrieved_sections",), ["1", "1"], "duplicate values"),
         (("sections", "1", "title"), "", "expected nonempty text"),
         (("sections", "1", "typo"), "値", "unknown fields"),
         (("sections", "1", "xml_tags"), "Warnings", "expected a list"),

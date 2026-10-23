@@ -103,6 +103,9 @@ def load_package_insert_definitions(path: Path) -> PackageInsertDefinitions:
             )
             for intent in source.intents.values()
         ),
+        always_retrieved_sections=tuple(
+            SearchSectionCode(code) for code in source.always_retrieved_sections
+        ),
         fallback_intent=IntentName(source.fallback_intent),
         general_intent=IntentName(source.general_intent),
     )

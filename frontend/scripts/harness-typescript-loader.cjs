@@ -1,16 +1,18 @@
-const ts = require("typescript");
+const { transformSync } = require("next/dist/build/swc");
 const babel = require("next/dist/compiled/babel/core");
 const config = require("../babel.config.js");
 
 module.exports = function transpile(source) {
-  const javascript = ts.transpileModule(source, {
-    compilerOptions: {
-      jsx: ts.JsxEmit.ReactJSX,
-      module: ts.ModuleKind.ESNext,
-      target: ts.ScriptTarget.ES2022,
+  // Type checking belongs to tsc; transpilation must not depend on the TS 5 API.
+  const javascript = transformSync(source, {
+    filename: this.resourcePath,
+    jsc: {
+      parser: { syntax: "typescript", tsx: this.resourcePath.endsWith(".tsx") },
+      target: "es2022",
+      transform: { react: { runtime: "automatic" } },
     },
-    fileName: this.resourcePath,
-  }).outputText;
+    module: { type: "es6" },
+  }).code;
   return babel.transformSync(javascript, {
     filename: this.resourcePath,
     cwd: require("node:path").resolve(__dirname, ".."),

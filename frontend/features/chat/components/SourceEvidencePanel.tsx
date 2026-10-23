@@ -37,6 +37,8 @@ export function SourceEvidencePanel({
   const [selectedSection, setSelectedSection] = useState<string>("all");
   const [selectedMedicine, setSelectedMedicine] = useState<string>("all");
 
+  const alwaysCount = sources.filter((s) => s.retrieved_by?.includes("always")).length;
+  const alwaysSummary = alwaysCount > 0 ? `常時取得：${alwaysCount}件、` : "";
   const logicCount = sources.filter((s) => s.retrieved_by?.includes("logic")).length;
   const jevCount = sources.filter((s) => s.retrieved_by?.includes("jev")).length;
   const keywordCount = sources.filter((s) => s.retrieved_by?.includes("keyword")).length;
@@ -44,8 +46,8 @@ export function SourceEvidencePanel({
 
   const countSummary =
     keywordCount > 0
-      ? `ロジック：${logicCount}件、Jev：${jevCount}件、キーワード：${keywordCount}件、合計：${totalCount}件`
-      : `ロジック：${logicCount}件、Jev：${jevCount}件、合計：${totalCount}件`;
+      ? `${alwaysSummary}ロジック：${logicCount}件、Jev：${jevCount}件、キーワード：${keywordCount}件、合計：${totalCount}件`
+      : `${alwaysSummary}ロジック：${logicCount}件、Jev：${jevCount}件、合計：${totalCount}件`;
 
   const sectionGroups = extractSectionGroups(sources);
   const medicineGroups = extractMedicineGroups(sources);
@@ -100,8 +102,8 @@ export function SourceEvidencePanel({
               {retrievalStatus === "complete"
                 ? `統合根拠（${countSummary}）`
                 : retrievalStatus === "jev_searching"
-                  ? `ロジック検索根拠（ロジック：${totalCount}件、Jev：取得中...）`
-                  : `ロジック検索根拠（${totalCount}件）`}
+                  ? `取得済み根拠（${alwaysSummary}ロジック：${logicCount}件、キーワード：${keywordCount}件、合計：${totalCount}件、Jev：取得中...）`
+                  : `取得済み根拠（${countSummary}）`}
             </span>
             {retrievalStatus === "jev_searching" && (
               <span {...stylex.props(styles.searchingBadge)}>
@@ -138,6 +140,13 @@ export function SourceEvidencePanel({
 
         {currentTab === "sources" && (
           <>
+            {alwaysCount > 0 && (
+              <div {...stylex.props(styles.multipleNotice)}>
+                警告・禁忌・重要な基本的注意は、質問内容にかかわらず、記載がある場合に取得します。
+                {countSummary}
+                。取得理由別の件数には重複が含まれ、合計は重複を除いた件数です。
+              </div>
+            )}
             {jevResponse?.qualifying_intents &&
               jevResponse.qualifying_intents.length > 1 && (
                 <div {...stylex.props(styles.multipleNotice)}>

@@ -209,7 +209,9 @@ def test_merge_preserves_existing_sources_on_first_and_duplicate_hits():
     first = make_evidence(excerpt="最初", retrieved_by="logic")
     later = make_evidence(excerpt="後続", retrieved_by="keyword")
     result = merge_evidence((((first, later), DetectionSource.JEV),))
-    assert result[0].retrieved_by == frozenset(DetectionSource)
+    assert result[0].retrieved_by == frozenset(
+        {DetectionSource.LOGIC, DetectionSource.JEV, DetectionSource.KEYWORD}
+    )
     assert result[0].excerpt.value == "最初"
     assert first.retrieved_by == frozenset({DetectionSource.LOGIC})
     assert merge_evidence(((result, DetectionSource.LOGIC),)) == result

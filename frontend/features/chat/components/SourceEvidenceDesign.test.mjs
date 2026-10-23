@@ -8,6 +8,9 @@ import { loadTestComponent } from "../../../scripts/load-test-component.mjs";
 const { SourceEvidenceCard } = await loadTestComponent(
   fileURLToPath(new URL("./SourceEvidenceCard.tsx", import.meta.url)),
 );
+const { SourceEvidencePanel } = await loadTestComponent(
+  fileURLToPath(new URL("./SourceEvidencePanel.tsx", import.meta.url)),
+);
 const { MessageItem } = await loadTestComponent(
   fileURLToPath(new URL("./MessageItem.tsx", import.meta.url)),
 );
@@ -171,4 +174,27 @@ test("assistant answer keeps Markdown and ignores obsolete generated clinical UI
     html,
     /表示してはいけないカード|data-evidence-design|data-genui-renderer/,
   );
+});
+
+test("always retrieved evidence keeps both the safety and question-based reasons", () => {
+  const html = render({
+    section: { code: "8", title: "重要な基本的注意" },
+    retrieved_by: ["always", "logic"],
+  });
+  assert.ok(html.includes("常時取得"));
+  assert.ok(html.includes("ロジック取得"));
+  assert.ok(html.includes("重要な基本的注意"));
+});
+
+test("progressive panel distinguishes always retrieved evidence from logic hits", () => {
+  const html = renderToStaticMarkup(createElement(SourceEvidencePanel, {
+    sources: [{ ...source, retrieved_by: ["always", "logic"] }],
+    retrievalStatus: "jev_searching",
+  }));
+  assert.ok(html.includes("常時取得：1件"));
+  assert.ok(html.includes("ロジック：1件"));
+  assert.ok(html.includes("合計：1件"));
+  assert.ok(html.includes("質問内容にかかわらず"));
+  assert.ok(html.includes("取得理由別の件数には重複"));
+  assert.ok(!html.includes("ロジック検索根拠"));
 });

@@ -387,7 +387,13 @@ def answer_preparation_case() -> AnswerPreparationCase:
                 kind=SearchUnitKind("text"),
                 excerpt=EvidenceExcerpt(f"頭痛に注意してください。記載{index}"),
                 url=EvidenceSourceUrl("https://example.test/package-insert"),
-                retrieved_by=frozenset(DetectionSource),
+                retrieved_by=frozenset(
+                    {
+                        DetectionSource.LOGIC,
+                        DetectionSource.JEV,
+                        DetectionSource.KEYWORD,
+                    }
+                ),
             )
             for index in range(3)
         ],
@@ -444,6 +450,12 @@ class RecordingEvidenceReader:
         assert list(medicines) == self.medicines
         assert criteria in (
             SearchCriteria(
+                source=DetectionSource.ALWAYS,
+                section_codes=tuple(
+                    SearchSectionCode(code) for code in ("1", "2", "8")
+                ),
+            ),
+            SearchCriteria(
                 source=DetectionSource("logic"),
                 intent=IntentName("indications"),
                 section_codes=(SearchSectionCode("4"), SearchSectionCode("5")),
@@ -471,6 +483,8 @@ class RecordingEvidenceReader:
             ),
         )
         self.requests.append((criteria, deepcopy(medicines)))
+        if criteria.source == DetectionSource.ALWAYS:
+            return ()
         return tuple(
             replace(source, retrieved_by=frozenset({criteria.source}))
             for source in self.sources
@@ -593,13 +607,14 @@ async def test_answer_preparation_accepts_pure_reader_ports(
     _assert_answer_values(intent.requests[0])
     assert keywords.texts == [" の副作用と頭痛について"]
     assert fake_medicine.calls == 1
-    assert len(fake_evidence.requests) == 4
+    assert len(fake_evidence.requests) == 5
     assert {
         criteria.intent.value
         for criteria, _ in fake_evidence.requests
         if criteria.source == "logic" and criteria.intent is not None
     } == {"adverse_events", "indications"}
     assert {criteria.source for criteria, _ in fake_evidence.requests} == {
+        "always",
         "logic",
         "jev",
         "keyword",

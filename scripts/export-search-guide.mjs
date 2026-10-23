@@ -11,17 +11,25 @@ const rules = Object.values(catalog.intents)
     keywords: intent.keywords.map((keyword) => keyword.text),
     sections: intent.sections.map((code) => ({ code, title: catalog.sections[code].title })),
   }));
-const output = new URL("../frontend/features/search-guide/logicRules.json", import.meta.url);
-const content = `${JSON.stringify(rules, null, 2)}\n`;
-let current;
-try {
-  current = JSON.parse(readFileSync(output, "utf8"));
-} catch (error) {
-  if (error.code !== "ENOENT") throw error;
-}
-const matches = JSON.stringify(current) === JSON.stringify(rules);
-if (process.argv.includes("--check")) {
-  if (!matches) throw new Error("Regenerate search guide with node scripts/export-search-guide.mjs");
-} else if (!matches) {
-  writeFileSync(fileURLToPath(output), content);
+const outputs = [
+  ["logicRules.json", rules],
+  ["alwaysSections.json", catalog.always_retrieved_sections.map((code) => ({
+    code,
+    title: catalog.sections[code].title,
+  }))],
+];
+for (const [filename, data] of outputs) {
+  const output = new URL(`../frontend/features/search-guide/${filename}`, import.meta.url);
+  let current;
+  try {
+    current = JSON.parse(readFileSync(output, "utf8"));
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+  const matches = JSON.stringify(current) === JSON.stringify(data);
+  if (process.argv.includes("--check")) {
+    if (!matches) throw new Error("Regenerate search guide with node scripts/export-search-guide.mjs");
+  } else if (!matches) {
+    writeFileSync(fileURLToPath(output), `${JSON.stringify(data, null, 2)}\n`);
+  }
 }

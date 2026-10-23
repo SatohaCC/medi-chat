@@ -114,7 +114,7 @@ class EvidenceSearchTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(
             {condition.source for condition in reader.conditions},
-            {"jev", "keyword", "logic"},
+            {"always", "jev", "keyword", "logic"},
         )
         self.assertEqual(reply.retrieval_strategy, "three_detectors")
         assert reply.jev_response is not None

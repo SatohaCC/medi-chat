@@ -75,6 +75,7 @@ class ValidatedDefinitionSource:
     sections_by_xml_tag: Mapping[str, SectionDefinition]
     sections_by_xml_context: Mapping[tuple[str, str], SectionDefinition]
     intents: Mapping[str, IntentDefinition]
+    always_retrieved_sections: tuple[str, ...]
     fallback_intent: str
     general_intent: str
     text_search: TextSearchDefinition
