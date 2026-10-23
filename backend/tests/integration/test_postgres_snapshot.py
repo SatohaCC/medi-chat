@@ -10,6 +10,7 @@ import threading
 import time
 
 import pytest
+from backend.application.chat.chat_service import ChatApplicationService
 from backend.application.indexing.search_values import SearchSectionCode
 from backend.application.medicine.product_models import ResolvedMedicine
 from backend.application.retrieval.search_models import SearchCriteria
@@ -465,14 +466,14 @@ async def test_pg027_detectors_pin_old_scope_then_llm_has_no_connection(
 
     definitions = get_package_insert_definitions()
     service = AppChatService(
-        medicine_reader=UnusedReaders(),
-        evidence_reader=UnusedReaders(),
-        intent_classifier=Detector(),
-        keyword_extractor=Keywords(),
-        intent_policy=definitions.intent_policy,
-        answer_prompt_policy=definitions.answer_prompt_policy,
-        provider_factory=lambda _: Provider(),
-        snapshot_provider=runtime,
+        application_service=ChatApplicationService(
+            intent_classifier=Detector(),
+            keyword_extractor=Keywords(),
+            intent_policy=definitions.intent_policy,
+            answer_prompt_policy=definitions.answer_prompt_policy,
+            provider_factory=lambda _: Provider(),
+            snapshot_provider=runtime,
+        )
     )
     try:
         reply = await service.answer_question(

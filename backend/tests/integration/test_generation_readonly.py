@@ -82,8 +82,8 @@ async def test_pg021_pending_startup_has_no_cleanup_writes_then_explicit_mainten
     )
     assert digest(pg_engines[0]) == before
     pg_publisher.fault = lambda _: None
-    pg_publisher.cleanup()
-    after = pg_publisher.read_result(result.document_id, result.source_sha256)
+    pg_publisher.maintenance.cleanup()
+    after = pg_publisher.results.read_result(result.document_id, result.source_sha256)
     assert after.status == "registered"
     assert after.registration_sequence == result.registration_sequence
     assert after.generation_id == result.generation_id

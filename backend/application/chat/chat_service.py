@@ -6,12 +6,10 @@ from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
 
 from backend.application.retrieval.search_models import Evidence, IntentPolicy
 
-from ..medicine.product_contracts import RegisteredMedicineReader
 from ..retrieval.intent_contracts import IntentClassifier
 from ..retrieval.keyword_contracts import KeywordExtractor
 from ..retrieval.search_keywords import search_evidence_by_keywords
 from ..retrieval.snapshot_contracts import (
-    EvidenceRepository,
     RetrievalSnapshotProvider,
 )
 from .answer_preparation import prepare_reply as app_prepare_reply
@@ -29,17 +27,13 @@ class ChatApplicationService:
     def __init__(
         self,
         *,
-        medicine_reader: RegisteredMedicineReader,
-        evidence_reader: EvidenceRepository,
         intent_classifier: IntentClassifier,
         keyword_extractor: KeywordExtractor,
         intent_policy: IntentPolicy,
         answer_prompt_policy: AnswerPromptPolicy,
         provider_factory: Callable[[str | None], LLMProvider],
-        snapshot_provider: RetrievalSnapshotProvider | None = None,
+        snapshot_provider: RetrievalSnapshotProvider,
     ) -> None:
-        self.medicine_reader = medicine_reader
-        self.evidence_reader = evidence_reader
         self.intent_classifier = intent_classifier
         self.keyword_extractor = keyword_extractor
         self.intent_policy = intent_policy
@@ -59,8 +53,6 @@ class ChatApplicationService:
         return await search_evidence_by_keywords(
             query,
             product_yj_codes,
-            medicine_reader=self.medicine_reader,
-            evidence_reader=self.evidence_reader,
             keyword_extractor=self.keyword_extractor,
             snapshot_provider=self.snapshot_provider,
         )
@@ -75,8 +67,6 @@ class ChatApplicationService:
         return await app_prepare_reply(
             conversation,
             product_yj_codes,
-            medicine_reader=self.medicine_reader,
-            evidence_reader=self.evidence_reader,
             intent_classifier=self.intent_classifier,
             keyword_extractor=self.keyword_extractor,
             intent_policy=self.intent_policy,
@@ -116,8 +106,6 @@ class ChatApplicationService:
         return await app_answer_question(
             conversation,
             product_yj_codes,
-            medicine_reader=self.medicine_reader,
-            evidence_reader=self.evidence_reader,
             intent_classifier=self.intent_classifier,
             keyword_extractor=self.keyword_extractor,
             intent_policy=self.intent_policy,

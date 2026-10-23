@@ -8,6 +8,7 @@ import pytest
 from backend import main
 from backend.application.chat.answer_preparation import prepare_reply
 from backend.application.chat.chat_models import ChatMessage
+from backend.application.chat.chat_service import ChatApplicationService
 from backend.application.retrieval import retrieve_evidence as retrieval
 from backend.application.retrieval.jev_detector import JevDetectionResult
 from backend.application.retrieval.search_models import SearchCriteria
@@ -35,6 +36,7 @@ from backend.tests.application.chat.test_answer_preparation import (
 from backend.tests.integration.test_chat_service import RecordingProvider
 from backend.tests.support.postgres_fixtures import pg_api as pg_api
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
+from backend.tests.support.retrieval_snapshot import FixedSnapshotProvider
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -98,8 +100,6 @@ async def test_logic_is_published_while_jev_waits_and_children_are_reclaimed(
         prepare_reply(
             [ChatMessage(role="user", content="質問")],
             ["1234567A0000"],
-            medicine_reader=MedicineReader(),
-            evidence_reader=OrderedEvidenceReader(collision),
             intent_classifier=UnusedIntentClassifier(),
             keyword_extractor=UnusedKeywordExtractor(),
             intent_policy=get_package_insert_definitions().intent_policy,
@@ -150,8 +150,9 @@ async def test_unresolved_products_do_not_publish_partial_evidence(monkeypatch):
     reply = await prepare_reply(
         [ChatMessage(role="user", content="質問")],
         ["0000000A0000"],
-        medicine_reader=MedicineReader(),
-        evidence_reader=OrderedEvidenceReader(False),
+        snapshot_provider=FixedSnapshotProvider(
+            MedicineReader(), OrderedEvidenceReader(False)
+        ),
         intent_classifier=UnusedIntentClassifier(),
         keyword_extractor=UnusedKeywordExtractor(),
         intent_policy=get_package_insert_definitions().intent_policy,
@@ -190,13 +191,16 @@ def test_websocket_sends_logic_before_jev_then_replaces_with_integrated_sources(
     monkeypatch.setattr(retrieval, "detect_morphology_criteria", lambda *args: None)
     provider = RecordingProvider()
     service = AppChatService(
-        medicine_reader=MedicineReader(),
-        evidence_reader=OrderedEvidenceReader(True),
-        intent_classifier=UnusedIntentClassifier(),
-        keyword_extractor=UnusedKeywordExtractor(),
-        intent_policy=get_package_insert_definitions().intent_policy,
-        answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
-        provider_factory=lambda _: provider,
+        application_service=ChatApplicationService(
+            snapshot_provider=FixedSnapshotProvider(
+                MedicineReader(), OrderedEvidenceReader(True)
+            ),
+            intent_classifier=UnusedIntentClassifier(),
+            keyword_extractor=UnusedKeywordExtractor(),
+            intent_policy=get_package_insert_definitions().intent_policy,
+            answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
+            provider_factory=lambda _: provider,
+        )
     )
     app = FastAPI()
     app.include_router(router)
@@ -277,8 +281,7 @@ async def test_fixed_evidence_does_not_wait_for_morphology_and_updates_are_cumul
         prepare_reply(
             [ChatMessage(role="user", content="質問")],
             ["1234567A0000"],
-            medicine_reader=MedicineReader(),
-            evidence_reader=reader,
+            snapshot_provider=FixedSnapshotProvider(MedicineReader(), reader),
             intent_classifier=UnusedIntentClassifier(),
             keyword_extractor=UnusedKeywordExtractor(),
             intent_policy=get_package_insert_definitions().intent_policy,
@@ -322,8 +325,7 @@ async def test_fixed_evidence_does_not_wait_for_morphology_and_updates_are_cumul
         await prepare_reply(
             [ChatMessage(role="user", content="質問")],
             ["1234567A0000"],
-            medicine_reader=MedicineReader(),
-            evidence_reader=reader,
+            snapshot_provider=FixedSnapshotProvider(MedicineReader(), reader),
             intent_classifier=UnusedIntentClassifier(),
             keyword_extractor=UnusedKeywordExtractor(),
             intent_policy=get_package_insert_definitions().intent_policy,
@@ -399,13 +401,16 @@ def test_all_detectors_start_together_and_generation_waits_for_last(
     provider = RecordingProvider()
     definitions = get_package_insert_definitions()
     service = AppChatService(
-        medicine_reader=MedicineReader(),
-        evidence_reader=OrderedEvidenceReader(False),
-        intent_classifier=Classifier(),
-        keyword_extractor=UnusedKeywordExtractor(),
-        intent_policy=definitions.intent_policy,
-        answer_prompt_policy=definitions.answer_prompt_policy,
-        provider_factory=lambda _: provider,
+        application_service=ChatApplicationService(
+            snapshot_provider=FixedSnapshotProvider(
+                MedicineReader(), OrderedEvidenceReader(False)
+            ),
+            intent_classifier=Classifier(),
+            keyword_extractor=UnusedKeywordExtractor(),
+            intent_policy=definitions.intent_policy,
+            answer_prompt_policy=definitions.answer_prompt_policy,
+            provider_factory=lambda _: provider,
+        )
     )
     app = FastAPI()
     app.include_router(router)

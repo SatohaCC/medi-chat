@@ -35,25 +35,24 @@ async def retrieve_evidence(
     message: str,
     product_yj_codes: list[str],
     *,
-    medicine_reader: RegisteredMedicineReader,
-    evidence_reader: EvidenceRepository,
     intent_classifier: IntentClassifier,
     keyword_extractor: KeywordExtractor,
     intent_policy: IntentPolicy,
-    snapshot_provider: RetrievalSnapshotProvider | None = None,
+    snapshot_provider: RetrievalSnapshotProvider,
     on_logic_sources: SourcesCallback | None = None,
 ) -> RetrievalResult:
-    return await _retrieve_evidence(
-        message,
-        parse_yj_codes(product_yj_codes),
-        medicine_reader=medicine_reader,
-        evidence_reader=evidence_reader,
-        intent_classifier=intent_classifier,
-        keyword_extractor=keyword_extractor,
-        intent_policy=intent_policy,
-        snapshot_provider=snapshot_provider,
-        on_logic_sources=on_logic_sources,
-    )
+    codes = parse_yj_codes(product_yj_codes)
+    async with snapshot_provider.acquire() as snapshot:
+        return await _retrieve_evidence(
+            message,
+            codes,
+            medicine_reader=snapshot.medicine_reader,
+            evidence_reader=snapshot.evidence_reader,
+            intent_classifier=intent_classifier,
+            keyword_extractor=keyword_extractor,
+            intent_policy=intent_policy,
+            on_logic_sources=on_logic_sources,
+        )
 
 
 async def _retrieve_evidence(
@@ -65,21 +64,8 @@ async def _retrieve_evidence(
     intent_classifier: IntentClassifier,
     keyword_extractor: KeywordExtractor,
     intent_policy: IntentPolicy,
-    snapshot_provider: RetrievalSnapshotProvider | None = None,
     on_logic_sources: SourcesCallback | None = None,
 ) -> RetrievalResult:
-    if snapshot_provider is not None:
-        async with snapshot_provider.acquire() as snapshot:
-            return await _retrieve_evidence(
-                message,
-                product_yj_codes,
-                medicine_reader=snapshot.medicine_reader,
-                evidence_reader=snapshot.evidence_reader,
-                intent_classifier=intent_classifier,
-                keyword_extractor=keyword_extractor,
-                intent_policy=intent_policy,
-                on_logic_sources=on_logic_sources,
-            )
     medicine_catalog = MedicineCatalog(await medicine_reader.read_medicines())
     resolved = medicine_catalog.match_yj_codes(product_yj_codes)
     needs_clarification = not resolved

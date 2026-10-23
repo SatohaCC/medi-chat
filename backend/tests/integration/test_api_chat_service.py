@@ -5,6 +5,7 @@ from collections.abc import AsyncGenerator
 
 import pytest
 from backend.application.chat.chat_models import ChatResponse
+from backend.application.chat.chat_service import ChatApplicationService
 from backend.infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,
 )
@@ -18,6 +19,7 @@ from backend.tests.application.chat.test_answer_preparation import (
 from backend.tests.infrastructure.intent.test_jev_intent_mapping import RecordingReader
 from backend.tests.support.postgres_fixtures import pg_api as pg_api
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
+from backend.tests.support.retrieval_snapshot import FixedSnapshotProvider
 
 
 class RecordingProvider:
@@ -49,13 +51,16 @@ async def test_api_service_closes_owned_stream_and_preserves_generation_defaults
         return provider
 
     service = AppChatService(
-        medicine_reader=MedicineReader(),
-        evidence_reader=RecordingReader(),
-        intent_classifier=UnusedIntentClassifier(),
-        keyword_extractor=UnusedKeywordExtractor(),
-        intent_policy=get_package_insert_definitions().intent_policy,
-        answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
-        provider_factory=factory,
+        application_service=ChatApplicationService(
+            snapshot_provider=FixedSnapshotProvider(
+                MedicineReader(), RecordingReader()
+            ),
+            intent_classifier=UnusedIntentClassifier(),
+            keyword_extractor=UnusedKeywordExtractor(),
+            intent_policy=get_package_insert_definitions().intent_policy,
+            answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
+            provider_factory=factory,
+        )
     )
     reply = ChatResponse(
         answer="", intent="document_search", retrieval_strategy="three_detectors"
@@ -99,13 +104,16 @@ async def test_prepared_application_reply_is_retained_until_generation(monkeypat
 
     definitions = get_package_insert_definitions()
     service = AppChatService(
-        medicine_reader=MedicineReader(),
-        evidence_reader=RecordingReader(),
-        intent_classifier=UnusedIntentClassifier(),
-        keyword_extractor=UnusedKeywordExtractor(),
-        intent_policy=definitions.intent_policy,
-        answer_prompt_policy=definitions.answer_prompt_policy,
-        provider_factory=lambda _: RecordingProvider(),
+        application_service=ChatApplicationService(
+            snapshot_provider=FixedSnapshotProvider(
+                MedicineReader(), RecordingReader()
+            ),
+            intent_classifier=UnusedIntentClassifier(),
+            keyword_extractor=UnusedKeywordExtractor(),
+            intent_policy=definitions.intent_policy,
+            answer_prompt_policy=definitions.answer_prompt_policy,
+            provider_factory=lambda _: RecordingProvider(),
+        )
     )
     prepared = ChatResponse(
         answer="",
@@ -133,3 +141,75 @@ async def test_prepared_application_reply_is_retained_until_generation(monkeypat
     ]
     assert received == [prepared]
     assert received[0] is prepared
+
+
+@pytest.mark.asyncio
+async def test_lifespan_composes_application_service_before_api_adapter(monkeypatch):
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock, Mock
+
+    from backend.config.database_settings import PostgresDatabaseSettings
+    from backend.infrastructure.composition import app_lifespan
+    from backend.infrastructure.intent.jev_classifier import JevIntentClassifier
+    from backend.infrastructure.morphology.janome_keyword_extractor import (
+        JanomeKeywordExtractor,
+    )
+    from fastapi import FastAPI
+
+    engine = SimpleNamespace(dispose=Mock())
+    runtime = object()
+
+    class Classifier(JevIntentClassifier):
+        def __init__(self, **kwargs):
+            self.closed = False
+
+        @property
+        def is_available(self):
+            return False
+
+        async def aclose(self):
+            self.closed = True
+
+    class Keywords(JanomeKeywordExtractor):
+        def __init__(self, **kwargs):
+            pass
+
+    workers = SimpleNamespace(run=AsyncMock(), aclose=AsyncMock())
+    monkeypatch.setattr(app_lifespan, "create_postgres_engine", lambda *a, **k: engine)
+    monkeypatch.setattr(app_lifespan, "ReadWorkers", lambda **k: workers)
+    monkeypatch.setattr(app_lifespan, "PostgresRuntime", lambda *a, **k: runtime)
+
+    def provider_factory(_):
+        return RecordingProvider()
+
+    received = []
+
+    def adapter_factory(*, application_service, defaults):
+        received.append(application_service)
+        return AppChatService(
+            application_service=application_service, defaults=defaults
+        )
+
+    lifespan = app_lifespan.create_app_lifespan(
+        definitions=get_package_insert_definitions(),
+        settings=PostgresDatabaseSettings("postgresql://unused"),
+        chat_service_factory=adapter_factory,
+        llm_provider_factory=provider_factory,
+        intent_classifier_cls=Classifier,
+        keyword_extractor_cls=Keywords,
+        janome_initializer=lambda: None,
+        readonly_probe=True,
+    )
+    app = FastAPI()
+    async with lifespan(app):
+        application = received[0]
+        assert isinstance(application, ChatApplicationService)
+        classifier = application.intent_classifier
+        assert isinstance(classifier, Classifier)
+        assert isinstance(application.keyword_extractor, Keywords)
+        assert application.provider_factory is provider_factory
+        assert application.snapshot_provider is runtime
+        assert app.state.chat_service.is_jev_available is False
+    assert classifier.closed is True
+    workers.aclose.assert_awaited_once()
+    engine.dispose.assert_called_once()

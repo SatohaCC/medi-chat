@@ -7,7 +7,7 @@ from backend.infrastructure.persistence import postgres_schema as s
 from backend.infrastructure.persistence.postgres_readiness import (
     verify_postgres_readiness,
 )
-from backend.infrastructure.persistence.postgres_registration import (
+from backend.infrastructure.persistence.registration_models import (
     FigureInput,
     PostgresRegistrationInput,
 )

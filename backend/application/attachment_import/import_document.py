@@ -7,6 +7,7 @@ from typing import TypeVar
 
 from .import_contracts import (
     AttachmentDecoder,
+    AttachmentImportReader,
     AttachmentRegistrationPublisher,
 )
 from .import_errors import (
@@ -29,10 +30,12 @@ class AttachmentImportService:
         *,
         decoder: AttachmentDecoder,
         publisher: AttachmentRegistrationPublisher,
+        reader: AttachmentImportReader,
         upload_store: UploadStore | None = None,
     ) -> None:
         self.decoder = decoder
         self.publisher = publisher
+        self.reader = reader
         self.upload_store = upload_store
         self._executor = ThreadPoolExecutor(
             max_workers=2, thread_name_prefix="attachment-import"
@@ -82,7 +85,7 @@ class AttachmentImportService:
 
     async def read_result(self, document_id: str, source_sha256: str) -> ImportResult:
         return await self._run(
-            lambda: self.publisher.read_result(document_id, source_sha256),
+            lambda: self.reader.read_result(document_id, source_sha256),
             threading.Event(),
         )
 
@@ -123,7 +126,7 @@ class AttachmentImportService:
         document_id = uploaded.document_id
         if document_id is not None:
             return await self._run(
-                lambda: self.publisher.replay_result(
+                lambda: self.reader.replay_result(
                     document_id, uploaded.spec.source_sha256
                 ),
                 threading.Event(),
@@ -158,6 +161,6 @@ class AttachmentImportService:
         if not 1 <= limit <= 100 or offset < 0:
             raise ValueError("Invalid import page")
         return await self._run(
-            lambda: self.publisher.list_imports(limit=limit, offset=offset),
+            lambda: self.reader.list_imports(limit=limit, offset=offset),
             threading.Event(),
         )

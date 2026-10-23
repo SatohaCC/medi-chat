@@ -32,9 +32,11 @@ from backend.infrastructure.persistence.attachment_document_mapping import (
     document_to_payload,
 )
 from backend.infrastructure.persistence.postgres_registration import (
+    PostgresRegistrationPublisher,
+)
+from backend.infrastructure.persistence.registration_models import (
     FigureInput,
     PostgresRegistrationInput,
-    PostgresRegistrationPublisher,
 )
 from backend.infrastructure.pmda_xml.artifact_mapping import PmdaArtifactEncoder
 from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
@@ -67,6 +69,7 @@ async def pg_client(pg_publisher):
     service = AttachmentImportService(
         decoder=PmdaXmlDecoder(),
         publisher=pg_publisher,
+        reader=pg_publisher.results,
     )
     app = FastAPI()
     app.include_router(router)
@@ -180,7 +183,7 @@ def test_pg011_resend_does_not_reencode_or_revive_a_known_receipt(
     if deleted:
         publish(pg_publisher, source("テスト更新済み", revised_at="2026-11"))
     before = (
-        pg_publisher.read_result(first.document_id, first.source_sha256)
+        pg_publisher.results.read_result(first.document_id, first.source_sha256)
         if not deleted
         else None
     )
@@ -188,7 +191,7 @@ def test_pg011_resend_does_not_reencode_or_revive_a_known_receipt(
     def refuse(*args, **kwargs):
         raise AssertionError("Known receipt must reuse original conversion result")
 
-    monkeypatch.setattr(pg_publisher.encoder, "encode", refuse)
+    monkeypatch.setattr(pg_publisher.preparer.encoder, "encode", refuse)
     repeated = publish(pg_publisher, raw, filename="テスト別名.xml")
     assert repeated.reused
     assert repeated.registration_sequence == first.registration_sequence
@@ -215,7 +218,7 @@ def test_pg011_receipt_reuse_and_real_input_hash(pg_engines, pg_publisher):
     assert first.generation_id == reused.generation_id
     assert first.active_yj_codes == ("111111111111",)
     assert (
-        pg_publisher.read_result(
+        pg_publisher.results.read_result(
             first.document_id, first.source_sha256
         ).registration_sequence
         == 1
@@ -235,7 +238,7 @@ def test_pg012_revision_priority_and_no_regression(pg_publisher, order):
         for result in results
         if result.source_sha256 == hashlib.sha256(new).hexdigest()
     )
-    assert pg_publisher.read_result(
+    assert pg_publisher.results.read_result(
         newest.document_id, newest.source_sha256
     ).active_yj_codes == ("111111111111",)
     with pg_publisher.engine.connect() as connection:
@@ -278,7 +281,7 @@ def test_pg015_partial_old_yj_remains_active(pg_publisher):
         pg_publisher, source("テスト旧共通", ("111111111111", "222222222222"))
     )
     new = publish(pg_publisher, source("テストA新版", revised_at="2026-11"))
-    assert pg_publisher.read_result(
+    assert pg_publisher.results.read_result(
         old.document_id, old.source_sha256
     ).active_yj_codes == ("222222222222",)
     assert new.active_yj_codes == ("111111111111",)
@@ -437,7 +440,7 @@ def test_pg020_022_cleanup_deletes_payload_and_replay_never_revives(
     old_id = f"{old.document_id}:{old.source_sha256}"
     assert new.deleted_version_ids == (old_id,)
     with pytest.raises(ImportGone) as failure:
-        pg_publisher.read_result(old.document_id, old.source_sha256)
+        pg_publisher.results.read_result(old.document_id, old.source_sha256)
     assert (
         failure.value.code == "version_deleted" and failure.value.phase == "publication"
     )
@@ -475,7 +478,7 @@ def test_pg021_cleanup_failure_is_pending_and_retries_atomically(
         if actual == phase:
             raise OSError("test cleanup failure")
 
-    pg_publisher.fault = fault
+    pg_publisher.maintenance.fault = fault
     new = publish(pg_publisher, source("テスト保留新版", revised_at="2026-11"))
     assert new.status == "registered_cleanup_pending"
     assert new.cleanup_pending == ((old_id, "database_cleanup_failed"),)
@@ -488,9 +491,9 @@ def test_pg021_cleanup_failure_is_pending_and_retries_atomically(
                 s.receipts.c.version_id == old_id
             )
         ).scalar_one()
-    pg_publisher.fault = lambda phase: None
-    pg_publisher.cleanup()
-    result = pg_publisher.read_result(new.document_id, new.source_sha256)
+    pg_publisher.maintenance.fault = lambda phase: None
+    pg_publisher.maintenance.cleanup()
+    result = pg_publisher.results.read_result(new.document_id, new.source_sha256)
     assert result.deleted_version_ids == (old_id,) and result.cleanup_pending == ()
 
 
@@ -596,7 +599,7 @@ def test_pg052_cleanup_rechecks_pointer_after_competing_writer(
         pg_engines[1], encoder=PmdaArtifactEncoder(), fault=pause
     )
     with ThreadPoolExecutor(max_workers=2) as executor:
-        pending = executor.submit(cleaner.cleanup)
+        pending = executor.submit(cleaner.maintenance.cleanup)
         assert entered.wait(10)
         try:
             current = publish(
@@ -1068,9 +1071,9 @@ def test_pg021_real_database_error_rolls_back_cleanup_and_two_maintenance_runs_c
                     s.receipts.c.version_id == old_id
                 )
             ).scalar_one()
-        pg_publisher.cleanup()
-        pg_publisher.cleanup()
-        assert pg_publisher.read_result(
+        pg_publisher.maintenance.cleanup()
+        pg_publisher.maintenance.cleanup()
+        assert pg_publisher.results.read_result(
             new.document_id, new.source_sha256
         ).deleted_version_ids == (old_id,)
     finally:

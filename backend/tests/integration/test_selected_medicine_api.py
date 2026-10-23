@@ -4,6 +4,7 @@ from backend.tests.application.retrieval.test_selected_medicines import (
     NoKeywords,
 )
 from backend.tests.integration.test_chat_service import RecordingProvider
+from backend.tests.support.chat_service import compose_chat_service
 from backend.tests.support.postgres_fixtures import pg_api as pg_api
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
 from fastapi.testclient import TestClient
@@ -17,9 +18,11 @@ def test_only_selected_codes_are_used_and_connections_are_released(
     provider = RecordingProvider()
     app = pg_api(llm_provider_factory=lambda _: provider)
     with TestClient(app) as client:
-        service = app.state.chat_service
-        service.intent_classifier = NoJev()
-        service.keyword_extractor = NoKeywords()
+        app.state.chat_service = compose_chat_service(
+            app.state.chat_service,
+            intent_classifier=NoJev(),
+            keyword_extractor=NoKeywords(),
+        )
         message = "テスト薬とロキソニンの副作用について"
         if transport == "rest":
             response = client.post(

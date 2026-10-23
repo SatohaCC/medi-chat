@@ -15,6 +15,7 @@ from backend.infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,
 )
 from backend.tests.application.chat.test_answer_preparation import MedicineReader
+from backend.tests.support.retrieval_snapshot import FixedSnapshotProvider
 
 
 class Classifier:
@@ -163,8 +164,7 @@ async def test_opaque_public_json_does_not_control_business_selection_or_prompt(
         reply = await prepare_reply(
             conversation,
             ["1234567A0000"],
-            medicine_reader=MedicineReader(),
-            evidence_reader=reader,
+            snapshot_provider=FixedSnapshotProvider(MedicineReader(), reader),
             intent_classifier=Classifier(result),
             keyword_extractor=EmptyExtractor(),
             intent_policy=catalog.intent_policy,

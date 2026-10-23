@@ -6,6 +6,7 @@ from backend.infrastructure.package_insert_definitions.loader import (
 )
 from backend.tests.application.chat.test_answer_preparation import MedicineReader
 from backend.tests.application.retrieval.test_evidence_collection import make_evidence
+from backend.tests.support.retrieval_snapshot import FixedSnapshotProvider
 
 
 class NoJev:
@@ -35,8 +36,7 @@ async def test_selected_codes_alone_determine_targets(message):
     result = await retrieve_evidence(
         message,
         ["1234567A0000"],
-        medicine_reader=MedicineReader(),
-        evidence_reader=Reader(),
+        snapshot_provider=FixedSnapshotProvider(MedicineReader(), Reader()),
         intent_classifier=NoJev(),
         keyword_extractor=NoKeywords(),
         intent_policy=get_package_insert_definitions().intent_policy,
@@ -55,8 +55,7 @@ async def test_typed_name_without_selection_does_not_resolve_a_product():
     result = await retrieve_evidence(
         "1234567A0000の副作用",
         [],
-        medicine_reader=MedicineReader(),
-        evidence_reader=Reader(),
+        snapshot_provider=FixedSnapshotProvider(MedicineReader(), Reader()),
         intent_classifier=NoJev(),
         keyword_extractor=NoKeywords(),
         intent_policy=get_package_insert_definitions().intent_policy,

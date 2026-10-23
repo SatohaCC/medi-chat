@@ -8,6 +8,7 @@ from backend.infrastructure.package_insert_definitions.loader import (
 )
 from backend.tests.application.chat.test_answer_preparation import MedicineReader
 from backend.tests.application.retrieval.test_evidence_collection import make_evidence
+from backend.tests.support.retrieval_snapshot import FixedSnapshotProvider
 
 
 class NoKeywords:
@@ -42,8 +43,7 @@ async def test_all_logic_conditions_reach_search_and_progressive_results_without
         result = await retrieve_evidence(
             "副作用と飲み合わせを教えて",
             ["1234567A0000"],
-            medicine_reader=MedicineReader(),
-            evidence_reader=Reader(),
+            snapshot_provider=FixedSnapshotProvider(MedicineReader(), Reader()),
             intent_classifier=Classifier(),
             keyword_extractor=NoKeywords(),
             intent_policy=get_package_insert_definitions().intent_policy,

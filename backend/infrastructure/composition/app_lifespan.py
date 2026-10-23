@@ -10,6 +10,7 @@ from typing import Any
 from fastapi import FastAPI
 
 from ...application.attachment_import.import_document import AttachmentImportService
+from ...application.chat.chat_service import ChatApplicationService
 from ...config.database_settings import PostgresDatabaseSettings
 from ...config.generation_settings import read_generation_defaults
 from ..intent.jev_classifier import JevIntentClassifier
@@ -18,6 +19,7 @@ from ..morphology.janome_keyword_extractor import JanomeKeywordExtractor
 from ..morphology.keyword_extraction import get_janome_tokenizer
 from ..package_insert_definitions.loader import PackageInsertDefinitions
 from ..persistence.postgres_engine import create_postgres_engine
+from ..persistence.postgres_import_queries import PostgresImportQueries
 from ..persistence.postgres_readiness import verify_postgres_readiness
 from ..persistence.postgres_registration import PostgresRegistrationPublisher
 from ..persistence.postgres_runtime import PostgresRuntime
@@ -25,14 +27,6 @@ from ..persistence.postgres_upload import PostgresUploadStore
 from ..persistence.read_workers import ReadWorkers
 from ..pmda_xml.artifact_mapping import PmdaArtifactEncoder
 from ..pmda_xml.decoder import PmdaXmlDecoder
-
-
-class _SnapshotRequired:
-    async def read_medicines(self):
-        raise RuntimeError("A retrieval snapshot is required")
-
-    async def search(self, criteria, medicines):
-        raise RuntimeError("A retrieval snapshot is required")
 
 
 def create_app_lifespan(
@@ -73,17 +67,17 @@ def create_app_lifespan(
                 search_policy=definitions.text_search_policy,
                 morphology_settings=definitions.morphology_settings,
             )
-            required = _SnapshotRequired()
-            application.state.chat_service = chat_service_factory(
-                medicine_reader=required,
-                evidence_reader=required,
+            application_service = ChatApplicationService(
                 intent_classifier=classifier,
                 keyword_extractor=keywords,
                 intent_policy=definitions.intent_policy,
                 answer_prompt_policy=definitions.answer_prompt_policy,
                 provider_factory=llm_provider_factory or create_llm_provider,
-                defaults=read_generation_defaults,
                 snapshot_provider=runtime,
+            )
+            application.state.chat_service = chat_service_factory(
+                application_service=application_service,
+                defaults=read_generation_defaults,
             )
             if not readonly_probe:
                 encoder = PmdaArtifactEncoder()
@@ -92,6 +86,7 @@ def create_app_lifespan(
                 import_service = AttachmentImportService(
                     decoder=decoder,
                     publisher=publisher,
+                    reader=PostgresImportQueries(engine),
                     upload_store=PostgresUploadStore(engine),
                 )
                 application.state.attachment_import_service = import_service

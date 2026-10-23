@@ -112,7 +112,7 @@ async def test_tc106_all_registration_dtos_have_fixed_complete_fields(
             raise OSError("fixed database cleanup failure")
 
     with monkeypatch.context() as patch:
-        patch.setattr(publisher, "fault", fail)
+        patch.setattr(publisher.maintenance, "fault", fail)
         new_b = source("P B更新", (b,), revised_at="2026-11")
         response = await post(client, new_b)
         assert response.status_code == 201, response.text

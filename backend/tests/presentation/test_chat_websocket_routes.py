@@ -7,6 +7,7 @@ import unittest
 from typing import Any
 from unittest.mock import patch
 
+from backend.tests.support.chat_service import compose_chat_service
 from backend.tests.support.postgres_public_application import (
     original_application_factory,
 )
@@ -152,7 +153,13 @@ class ChatWebSocketRouteTests(unittest.TestCase):
         mock_jev.classify = AsyncMock(return_value=map_jev_intent_result(mock_payload))
 
         with (
-            patch.object(self.app.state.chat_service, "intent_classifier", mock_jev),
+            patch.object(
+                self.app.state,
+                "chat_service",
+                compose_chat_service(
+                    self.app.state.chat_service, intent_classifier=mock_jev
+                ),
+            ),
             patch.dict(os.environ, {"OPENAI_API_KEY": ""}),
             self.client.websocket_connect("/ws/chat") as websocket,
         ):
