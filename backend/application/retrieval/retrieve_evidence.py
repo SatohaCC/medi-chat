@@ -19,6 +19,7 @@ from backend.application.retrieval.search_policy import (
     detect_fixed_keyword_criteria as _detect_fixed_keyword_criteria,
 )
 from backend.application.retrieval.search_policy import merge_evidence
+from backend.application.retrieval.search_values import DetectionSource
 from backend.domain.medicine.identifiers import YjCode
 
 from .intent_contracts import IntentClassifier, IntentRequest
@@ -72,13 +73,29 @@ async def _retrieve_evidence(
     excluded_terms = medicine_catalog.names_for_yj_codes(product_yj_codes)
 
     search_batches: dict[SearchCriteria, tuple[Evidence, ...]] = {}
+    always_criteria = (
+        [
+            SearchCriteria(
+                source=DetectionSource.ALWAYS,
+                section_codes=intent_policy.always_retrieved_sections,
+            )
+        ]
+        if intent_policy.always_retrieved_sections and not needs_clarification
+        else []
+    )
 
     async def publish_logic(criteria: list[SearchCriteria]) -> None:
         if on_logic_sources is not None and not needs_clarification:
             sources = await _search_evidence(
-                evidence_reader, tuple(resolved), criteria, cache=search_batches
+                evidence_reader,
+                tuple(resolved),
+                always_criteria + criteria,
+                cache=search_batches,
             )
             await on_logic_sources(sources)
+
+    if always_criteria and on_logic_sources is not None:
+        await publish_logic([])
 
     criteria, jev_response, qualifying_intents = await collect_search_criteria(
         intent_classifier,
@@ -114,7 +131,10 @@ async def _retrieve_evidence(
             qualifying_intents=qualifying_intents,
         )
     sources = await _search_evidence(
-        evidence_reader, tuple(resolved), criteria, cache=search_batches
+        evidence_reader,
+        tuple(resolved),
+        always_criteria + criteria,
+        cache=search_batches,
     )
     resolved_codes = {code for group in resolved for code in group.yj_codes}
     unregistered_codes = [

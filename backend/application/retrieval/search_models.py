@@ -58,6 +58,7 @@ class IntentPolicy:
     intents: tuple[SearchIntentDefinition, ...]
     fallback_intent: IntentName
     general_intent: IntentName
+    always_retrieved_sections: tuple[SearchSectionCode, ...] = ()
 
     def __post_init__(self) -> None:
         names = tuple(intent.id for intent in self.intents)
@@ -120,7 +121,7 @@ class TextSearchPolicy:
 
 @dataclass(frozen=True, slots=True)
 class SearchCriteria:
-    """3つの判定器が作る、添付文書検索の条件。"""
+    """常時取得または質問の判定器が作る、添付文書検索の条件。"""
 
     source: DetectionSource
     intent: IntentName | None = None

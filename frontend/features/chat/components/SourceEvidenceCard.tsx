@@ -39,13 +39,15 @@ export function SourceEvidenceCard({
         <div {...stylex.props(styles.badgeGroup)}>
           {source.retrieved_by?.map((method) => {
             const label =
-              method === "logic"
-                ? "ロジック取得"
-                : method === "jev"
-                  ? "Jev判定取得"
-                  : method === "keyword"
-                    ? "形態素キーワード"
-                    : method;
+              method === "always"
+                ? "常時取得"
+                : method === "logic"
+                  ? "ロジック取得"
+                  : method === "jev"
+                    ? "Jev判定取得"
+                    : method === "keyword"
+                      ? "形態素キーワード"
+                      : method;
             return (
               <span key={method} {...stylex.props(styles.retrievalBadge)}>
                 {label}
@@ -58,9 +60,10 @@ export function SourceEvidenceCard({
       <ExpandableEvidenceContent
         content={source.excerpt}
         highlightWords={highlightWords}
-        alwaysExpanded={["WarningEvidence", "ContraindicationEvidence"].includes(
-          evidenceDesign(source),
-        )}
+        alwaysExpanded={
+          !source.retrieved_by?.includes("always") &&
+          ["WarningEvidence", "ContraindicationEvidence"].includes(evidenceDesign(source))
+        }
       >
         <SourceEvidenceDesign source={source} highlightWords={highlightWords} />
 

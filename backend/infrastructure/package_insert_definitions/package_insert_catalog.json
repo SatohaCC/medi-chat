@@ -1,5 +1,6 @@
 {
   "schema_version": 1,
+  "always_retrieved_sections": ["1", "2", "8"],
   "sections": {
     "1": {
       "title": "警告",

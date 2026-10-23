@@ -15,8 +15,9 @@ from backend.domain.foundation.primitives.primitives import (
 
 
 class DetectionSource(ValidatedStrEnum):
-    """検索条件を作った検出元。"""
+    """根拠を取得した理由・経路。"""
 
+    ALWAYS = "always"
     LOGIC = "logic"
     JEV = "jev"
     KEYWORD = "keyword"

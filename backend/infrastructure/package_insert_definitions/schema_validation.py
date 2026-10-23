@@ -75,7 +75,7 @@ def read_validated_source(path: Path) -> ValidatedDefinitionSource:
     data = _object(
         json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_unique_object),
         "catalog",
-        "schema_version sections intents fallback_intent general_intent text_search interaction_columns xml answer_prompt",
+        "schema_version sections intents always_retrieved_sections fallback_intent general_intent text_search interaction_columns xml answer_prompt",
     )
     if type(data["schema_version"]) is not int or data["schema_version"] != 1:
         raise ValueError("schema_version: unsupported catalog version")
@@ -346,6 +346,9 @@ def read_validated_source(path: Path) -> ValidatedDefinitionSource:
         sections_by_xml_tag=MappingProxyType(tags),
         sections_by_xml_context=MappingProxyType(contexts),
         intents=MappingProxyType(intents),
+        always_retrieved_sections=section_codes(
+            data["always_retrieved_sections"], "always_retrieved_sections"
+        ),
         fallback_intent=fallback,
         general_intent=general,
         text_search=TextSearchDefinition(

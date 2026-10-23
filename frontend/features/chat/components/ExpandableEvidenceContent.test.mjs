@@ -36,7 +36,7 @@ test("expandable content preserves all text and highlights matching words", () =
   assert.match(html, /<mark class="search-highlight">15mg<\/mark>/);
 });
 
-test("warning and contraindication designs remain always expanded through SourceEvidenceDesign", async () => {
+test("always retrieved safety cards allow folding while other warning cards stay expanded", async () => {
   const { SourceEvidenceCard } = await loadTestComponent(
     fileURLToPath(new URL("./SourceEvidenceCard.tsx", import.meta.url)),
   );
@@ -63,4 +63,23 @@ test("warning and contraindication designs remain always expanded through Source
   assert.ok(html.includes("極めて重要な警告記載。全開で表示されなければならない。"));
   assert.ok(!html.includes("続きを読む"));
   assert.match(html, /data-evidence-design="WarningEvidence"/);
+
+  for (const [code, title] of [
+    ["1", "警告"],
+    ["2", "禁忌"],
+    ["8", "重要な基本的注意"],
+  ]) {
+    const expandable = renderToStaticMarkup(
+      createElement(SourceEvidenceCard, {
+        source: {
+          ...warningSource,
+          section: { code, title },
+          retrieved_by: ["always", "logic"],
+        },
+      }),
+    );
+    assert.match(expandable, /<div id="/);
+    assert.ok(expandable.includes("常時取得"));
+    assert.ok(expandable.includes(warningSource.excerpt));
+  }
 });

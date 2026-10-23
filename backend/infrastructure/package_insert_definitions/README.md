@@ -2,6 +2,7 @@
 
 編集先は [package_insert_catalog.json](package_insert_catalog.json) 一つです。schema_version、意図ID、項目番号、列IDは既存の保存形式・公開契約なので維持します。
 
+- `always_retrieved_sections` は質問内容にかかわらず取得する本文の項目です。現在は1（警告）・2（禁忌）・8（重要な基本的注意）で、配下の項目も含みます。存在しない項目を根拠として補わず、通常検索との重複はunit_idで除き、取得理由は併記します。
 - `sections.<番号>.title` は正式名称の正本です。attachmentのSectionTaxonomyへ読み込み、Applicationのdefinition_projectionから各利用側へ写します。原文見出し・本文・出典・改訂をこの名称で上書きしません。親はNumberedSectionCodeから導出します。
 - `display_title` / `classification_title` は用途別の別名だけを指定します。省略時は正式名称を使います。
 - 意図の `sections` は検索対象の番号配列です。固定キーワードは一致した全分類を検索条件にします。keyword_priorityは列挙順を安定させるためだけに使い、分類を除外する優先順位にはしません。exclude_from_text_searchがtrueの語は除外語へ派生し、additional_stop_wordsへ重ねて定義しません。
