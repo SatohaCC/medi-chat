@@ -1,16 +1,13 @@
 """DM-02: 定義の格納順によらず全分類を取得する。"""
 
-import json
+from dataclasses import replace
 
 import pytest
 from backend.application.retrieval.search_policy import (
     detect_fixed_keyword_criteria as _detect_fixed_keyword_criteria,
 )
 from backend.application.retrieval.search_policy import detect_intents_from_keywords
-from backend.infrastructure.package_insert_definitions.loader import (
-    DEFINITIONS_PATH,
-    load_package_insert_definitions,
-)
+from backend.application.retrieval.standard_policies import DEFAULT_INTENT_POLICY
 
 
 @pytest.mark.parametrize("reversed_intents", [False, True])
@@ -26,17 +23,16 @@ from backend.infrastructure.package_insert_definitions.loader import (
 def test_all_fixed_keywords_independent_of_storage_order(
     message, intent, reversed_intents, tmp_path
 ):
-    payload = json.loads(DEFINITIONS_PATH.read_text(encoding="utf-8"))
-    if reversed_intents:
-        payload["intents"] = dict(reversed(list(payload["intents"].items())))
-    path = tmp_path / "catalog.json"
-    path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
-    catalog = load_package_insert_definitions(path)
-    assert (
-        detect_intents_from_keywords(message, intent_policy=catalog.intent_policy)
-        == intent
+    policy = (
+        replace(
+            DEFAULT_INTENT_POLICY,
+            intents=tuple(reversed(DEFAULT_INTENT_POLICY.intents)),
+        )
+        if reversed_intents
+        else DEFAULT_INTENT_POLICY
     )
-    criteria = _detect_fixed_keyword_criteria(message, catalog.intent_policy)
+    assert detect_intents_from_keywords(message, intent_policy=policy) == intent
+    criteria = _detect_fixed_keyword_criteria(message, policy)
     for item in criteria:
         assert item.intent is not None
     assert (
@@ -48,4 +44,4 @@ def test_all_fixed_keywords_independent_of_storage_order(
         assert item.source == "logic"
         assert tuple(
             code.value for code in item.section_codes
-        ) == catalog.intent_policy.section_codes_for_intent(item.intent.value)
+        ) == policy.section_codes_for_intent(item.intent.value)

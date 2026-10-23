@@ -367,7 +367,7 @@ def _allowed_module(module: str, *, caller: str) -> bool:
         ("from ..attachment.identifiers import DocumentId\n", False),
         ("from ..shared.services import normalize_match_text\n", False),
         (
-            "from backend.infrastructure.package_insert_definitions.loader import PackageInsertDefinitions\n",
+            "from backend.infrastructure.package_insert_definitions.assembly import PackageInsertDefinitions\n",
             False,
         ),
         ("from ..foundation.primitives.base import DomainPrimitive\n", False),
@@ -901,9 +901,9 @@ def test_domain_has_no_compatibility_facades() -> None:
         ),
         (
             "backend.application.fixture",
-            "from backend.infrastructure.package_insert_definitions.loader import get_package_insert_definitions\n",
+            "from backend.infrastructure.package_insert_definitions.assembly import get_package_insert_definitions\n",
             1,
-            "import backend.infrastructure.package_insert_definitions.loader.get_package_insert_definitions",
+            "import backend.infrastructure.package_insert_definitions.assembly.get_package_insert_definitions",
         ),
         (
             "backend.domain.fixture",
@@ -1146,7 +1146,7 @@ def test_domain_has_no_compatibility_facades() -> None:
             "import backend.presentation.search_routes.router",
         ),
         (
-            "backend.infrastructure.package_insert_definitions.loader",
+            "backend.infrastructure.package_insert_definitions.assembly",
             "from ..intent.definition_settings import JevClassificationSettings\n",
             1,
             "import backend.infrastructure.intent.definition_settings.JevClassificationSettings",
@@ -1334,7 +1334,7 @@ def test_import_linter_contracts_detect_submodule_violations() -> None:
         ),
         (
             "Package insert definitions do not depend on other infrastructure adapters",
-            "backend.infrastructure.package_insert_definitions.loader",
+            "backend.infrastructure.package_insert_definitions.assembly",
             "backend.infrastructure.intent.definition_settings",
         ),
         (

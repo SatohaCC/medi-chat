@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from backend.infrastructure.package_insert_definitions.loader import (
+from backend.infrastructure.package_insert_definitions.assembly import (
     get_package_insert_definitions,
 )
 from backend.infrastructure.pmda_xml.transform import transform

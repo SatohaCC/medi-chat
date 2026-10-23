@@ -5,6 +5,10 @@ from __future__ import annotations
 from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
 
 from backend.application.retrieval.search_models import Evidence, IntentPolicy
+from backend.application.retrieval.standard_policies import (
+    DEFAULT_RETRIEVAL_POLICY,
+    EvidenceRetrievalPolicy,
+)
 
 from ..retrieval.intent_contracts import IntentClassifier
 from ..retrieval.keyword_contracts import KeywordExtractor
@@ -30,6 +34,7 @@ class ChatApplicationService:
         intent_classifier: IntentClassifier,
         keyword_extractor: KeywordExtractor,
         intent_policy: IntentPolicy,
+        retrieval_policy: EvidenceRetrievalPolicy = DEFAULT_RETRIEVAL_POLICY,
         answer_prompt_policy: AnswerPromptPolicy,
         provider_factory: Callable[[str | None], LLMProvider],
         snapshot_provider: RetrievalSnapshotProvider,
@@ -37,6 +42,7 @@ class ChatApplicationService:
         self.intent_classifier = intent_classifier
         self.keyword_extractor = keyword_extractor
         self.intent_policy = intent_policy
+        self.retrieval_policy = retrieval_policy
         self.answer_prompt_policy = answer_prompt_policy
         self.provider_factory = provider_factory
         self.snapshot_provider = snapshot_provider
@@ -70,6 +76,7 @@ class ChatApplicationService:
             intent_classifier=self.intent_classifier,
             keyword_extractor=self.keyword_extractor,
             intent_policy=self.intent_policy,
+            retrieval_policy=self.retrieval_policy,
             snapshot_provider=self.snapshot_provider,
             on_logic_sources=on_logic_sources,
         )
@@ -109,6 +116,7 @@ class ChatApplicationService:
             intent_classifier=self.intent_classifier,
             keyword_extractor=self.keyword_extractor,
             intent_policy=self.intent_policy,
+            retrieval_policy=self.retrieval_policy,
             answer_prompt_policy=self.answer_prompt_policy,
             provider_factory=self.provider_factory,
             provider_name=provider_name,

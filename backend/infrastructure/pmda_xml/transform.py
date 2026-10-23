@@ -6,7 +6,7 @@ from pathlib import Path
 from ...application.attachment_import.import_errors import AttachmentImportError
 from ...application.indexing.attachment_projection import project_attachment
 from ...project_paths import resolve_project_path
-from ..package_insert_definitions.loader import get_package_insert_definitions
+from ..package_insert_definitions.assembly import get_package_insert_definitions
 from .artifact_mapping import PmdaArtifactEncoder
 from .decoder import PmdaXmlDecoder
 from .definition_settings import PmdaXmlSettings

@@ -9,7 +9,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from ..package_insert_definitions.loader import get_package_insert_definitions
+from ..package_insert_definitions.assembly import get_package_insert_definitions
 from .definition_settings import PmdaXmlSettings
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]

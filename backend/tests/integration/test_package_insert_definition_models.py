@@ -1,8 +1,6 @@
 """TC01/03/04/05: purpose-owned definitions and projection regression."""
 
-import hashlib
 import inspect
-import json
 from dataclasses import fields
 from pathlib import Path
 
@@ -10,7 +8,7 @@ import pytest
 
 
 def test_purpose_models_keep_same_default_targets_and_labels() -> None:
-    from backend.infrastructure.package_insert_definitions.loader import (
+    from backend.infrastructure.package_insert_definitions.assembly import (
         get_package_insert_definitions,
     )
 
@@ -44,18 +42,9 @@ def test_purpose_models_keep_same_default_targets_and_labels() -> None:
 
 
 def test_canonical_title_projection_preserves_raw_text(tmp_path: Path) -> None:
-    from backend.infrastructure.package_insert_definitions.loader import (
-        DEFINITIONS_PATH,
-        load_package_insert_definitions,
-    )
+    from backend.tests.support.definition_fixtures import renamed_definitions
 
-    data = json.loads(DEFINITIONS_PATH.read_text(encoding="utf-8"))
-    data["sections"]["1"]["title"] = "  全角Ａ警告  "
-    data["sections"]["1"].pop("display_title", None)
-    data["sections"]["1"].pop("classification_title", None)
-    path = tmp_path / "titles.json"
-    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-    definitions = load_package_insert_definitions(path)
+    definitions = renamed_definitions()
     assert (
         definitions.answer_prompt_policy.intent_display_name("warnings")
         == "  全角Ａ警告  "
@@ -76,23 +65,22 @@ def test_tc01_single_source_bytes_and_tc03_constructor_ownership() -> None:
     from backend.infrastructure.morphology.janome_keyword_extractor import (
         JanomeKeywordExtractor,
     )
-    from backend.infrastructure.package_insert_definitions.loader import (
-        DEFINITIONS_PATH,
-    )
+
+    # Definition source is Python; JSON source/loader are no longer supported.
+    from backend.infrastructure.package_insert_definitions import assembly
     from backend.infrastructure.persistence.postgres_runtime import PostgresRuntime
     from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
     from backend.presentation.chat_service import AppChatService
     from backend.project_paths import PROJECT_ROOT
 
-    # Git checkout may use CRLF on Windows; pin the repository content with LF.
-    assert (
-        hashlib.sha256(
-            DEFINITIONS_PATH.read_bytes().replace(b"\r\n", b"\n")
-        ).hexdigest()
-        == "1d0c6031c18088f68ae9a694421b46ce0a87ba4e5ddfba3080aeb8baef55afc3"
-    )
+    assert not hasattr(assembly, "load_package_insert_definitions")
+    assert not hasattr(assembly, "DEFINITIONS_PATH")
     assert not (PROJECT_ROOT / "package_inserts").exists()
-    assert {field.name for field in fields(SectionDefinition)} == {"code", "title"}
+    assert {field.name for field in fields(SectionDefinition)} == {
+        "code",
+        "title",
+        "scope",
+    }
     for constructor, required in (
         (ChatApplicationService, {"intent_policy", "answer_prompt_policy"}),
         (AppChatService, {"application_service"}),
@@ -118,7 +106,7 @@ def test_tc01_single_source_bytes_and_tc03_constructor_ownership() -> None:
     ],
 )
 def test_tc04_every_purpose_nested_mapping_is_readonly(member: str) -> None:
-    from backend.infrastructure.package_insert_definitions.loader import (
+    from backend.infrastructure.package_insert_definitions.assembly import (
         get_package_insert_definitions,
     )
 

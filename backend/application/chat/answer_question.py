@@ -3,6 +3,10 @@
 from collections.abc import Callable, Sequence
 
 from backend.application.retrieval.search_models import IntentPolicy
+from backend.application.retrieval.standard_policies import (
+    DEFAULT_RETRIEVAL_POLICY,
+    EvidenceRetrievalPolicy,
+)
 
 from ..retrieval.intent_contracts import IntentClassifier
 from ..retrieval.keyword_contracts import KeywordExtractor
@@ -22,6 +26,7 @@ async def answer_question(
     intent_classifier: IntentClassifier,
     keyword_extractor: KeywordExtractor,
     intent_policy: IntentPolicy,
+    retrieval_policy: EvidenceRetrievalPolicy = DEFAULT_RETRIEVAL_POLICY,
     answer_prompt_policy: AnswerPromptPolicy,
     provider_factory: Callable[[str | None], LLMProvider],
     provider_name: str | None,
@@ -34,6 +39,7 @@ async def answer_question(
         intent_classifier=intent_classifier,
         keyword_extractor=keyword_extractor,
         intent_policy=intent_policy,
+        retrieval_policy=retrieval_policy,
         snapshot_provider=snapshot_provider,
     )
     if reply.needs_clarification:

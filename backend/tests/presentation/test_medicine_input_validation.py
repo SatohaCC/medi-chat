@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 from backend.application.chat.chat_service import ChatApplicationService
-from backend.infrastructure.package_insert_definitions.loader import (
+from backend.infrastructure.package_insert_definitions.assembly import (
     get_package_insert_definitions,
 )
 from backend.presentation import chat_routes, chat_websocket_routes, search_routes

@@ -6,7 +6,7 @@ from collections.abc import AsyncGenerator
 import pytest
 from backend.application.chat.chat_models import ChatResponse
 from backend.application.chat.chat_service import ChatApplicationService
-from backend.infrastructure.package_insert_definitions.loader import (
+from backend.infrastructure.package_insert_definitions.assembly import (
     get_package_insert_definitions,
 )
 from backend.presentation.chat_models import ChatMessage

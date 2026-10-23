@@ -43,7 +43,7 @@ RESTとWebSocketは重複のない対象YJコードを1～50件受け付けま�
 | `infrastructure/composition` / `main.py` | `app_lifespan.py`（`create_app_lifespan`）で具象の生成・接続・準備済みDB検証・SDK/worker/engineの所有終了を集約し、`main.py`（`create_app`）はCORS・ルーター登録とlifespan委譲のみを担当する |
 | `config` | 接続設定と生成provider/modelの環境default供給 |
 | `infrastructure/cli` | `manage_postgres`の明示migration/初期登録/export/rebuild/maintenance、`structure_pmda_xml`のoffline変換入口 |
-| `infrastructure/package_insert_definitions` | 単一JSONのIO/検証と用途別組立、および各アダプター向け設定型（`definition_settings.py`）の所有。正式名称はattachment、検索規則・整形はretrieval、回答指示はApplicationが所有する |
+| `infrastructure/package_insert_definitions` | 各層が所有する型付き定義の用途別組立と、各アダプター向け設定型（`definition_settings.py`）の所有。項目構造・意味はDomain、常時参照・検索規則はApplication、タグ対応・SDK形式はInfrastructureが所有する |
 
 公開DTOの`ChatMessage`/`ChatResponse`/`ChatSource`/`MedicineMatch`は`presentation`に置き、REST JSON・WSイベント・OpenAPIの名前を維持します。applicationの同名モデルはフレームワーク非依存の入出力です。`IntentResult.candidates`が意図判定の業務契約で、`raw_response`は公開原本として保持します。applicationはSDKの`answers`/`choice`/`probabilities`を読まず、presentation mapperが入力DTOからApplication入力への変換と、Application結果から公開JSONへの変換を担当します。準備済みの回答はApplicationモデルのまま生成まで保持し、出力DTOから内部モデルへ復元しません。
 
@@ -202,7 +202,7 @@ backend/
 ├── infrastructure/
 │   ├── intent/          # TypeSafe adapterと境界mapping
 │   ├── morphology/      # Janome adapterとkeyword_extraction
-│   ├── package_insert_definitions/ # 単一JSONカタログloaderと各adapter用definition_settings
+│   ├── package_insert_definitions/ # 型付き定義のassemblyと各adapter用設定・投影
 │   ├── persistence/     # Core schema、Reader/Writer、GenerationRuntime、Publisher、workers
 │   ├── pmda_xml/        # PMDA XML decoder / artifact encoder
 │   ├── sources/         # FileIndexSourceReader
@@ -421,3 +421,10 @@ tests/
 ## チャットの対象医薬品
 
 チャットは`@医薬品`で確定した`product_yj_codes`だけを検索対象にします。本文にある薬名やYJコードから対象を追加・変更しません。@医薬品の候補絞り込みはブラウザ側で行い、バックエンドは全候補一覧を返します。チャットの本文キーワード抽出では、選択製品の登録名を除外します。
+
+
+## 添付文書の定義と検索方針の所有
+
+項目番号・正式名称・階層・項目が扱う範囲は `domain/attachment/value_objects.py` の型付き定義が正本です。項目の範囲は `SectionScope`、名称は `DefinitionTitle`、番号は `NumberedSectionCode` で保持します。原文本文・原文見出しをこの定義で上書きしません。
+
+`application/retrieval/standard_policies.py` が質問意図・検索条件・分類対応を所有し、常時参照は独立した `EvidenceRetrievalPolicy` が所有します。`application/chat/standard_policy.py` は回答指示・表示名を投影します。InfrastructureはXMLタグやSDK設定を持ち、`package_insert_definitions/assembly.py` で各層の型を組み立てます。JSONカタログ・スキーマ・互換読込はありません。参照整合性とDomainの不変条件はPythonモデルの構築時に検証します。

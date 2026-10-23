@@ -42,7 +42,7 @@ from ...domain.attachment.value_objects import (
     AttachmentTableCell,
 )
 from ...domain.foundation.exceptions import DomainValidationError
-from ..package_insert_definitions.loader import get_package_insert_definitions
+from ..package_insert_definitions.assembly import get_package_insert_definitions
 from .artifacts import build_artifacts
 from .definition_settings import PmdaXmlSettings
 from .safe_parser import parse_source

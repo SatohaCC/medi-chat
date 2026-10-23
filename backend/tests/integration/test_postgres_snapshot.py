@@ -421,7 +421,7 @@ async def test_pg027_detectors_pin_old_scope_then_llm_has_no_connection(
     pg_engines, pg_publisher
 ):
     from backend.application.retrieval.intent_contracts import IntentResult
-    from backend.infrastructure.package_insert_definitions.loader import (
+    from backend.infrastructure.package_insert_definitions.assembly import (
         get_package_insert_definitions,
     )
     from backend.presentation.chat_models import ChatMessage

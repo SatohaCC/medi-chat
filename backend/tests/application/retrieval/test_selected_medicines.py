@@ -1,7 +1,7 @@
 import pytest
 from backend.application.retrieval.intent_contracts import IntentResult
 from backend.application.retrieval.retrieve_evidence import retrieve_evidence
-from backend.infrastructure.package_insert_definitions.loader import (
+from backend.infrastructure.package_insert_definitions.assembly import (
     get_package_insert_definitions,
 )
 from backend.tests.application.chat.test_answer_preparation import MedicineReader

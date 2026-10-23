@@ -173,3 +173,12 @@ class AttachmentSourceOrder(DomainPrimitive[int]):
     def validate(self) -> None:
         if type(self.value) is not int or self.value < 0:
             raise DomainValidationError("source order must be a nonnegative integer")
+
+
+@dataclass(frozen=True, slots=True)
+class SectionScope(DomainPrimitive[str]):
+    """添付文書の項目が扱う内容の範囲。原文本文や検索条件ではない。"""
+
+    def validate(self) -> None:
+        if not isinstance(self.value, str) or not self.value.strip():
+            raise DomainValidationError("section scope must be nonempty text")

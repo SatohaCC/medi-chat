@@ -58,7 +58,6 @@ class IntentPolicy:
     intents: tuple[SearchIntentDefinition, ...]
     fallback_intent: IntentName
     general_intent: IntentName
-    always_retrieved_sections: tuple[SearchSectionCode, ...] = ()
 
     def __post_init__(self) -> None:
         names = tuple(intent.id for intent in self.intents)

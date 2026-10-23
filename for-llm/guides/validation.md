@@ -16,7 +16,7 @@ pnpm-workspaceの`python.enabled=false`でpnpmの別Python環境管理を停止�
 | Python型検査（Pyright） | `pnpm typecheck:python` |
 
 `pnpm typecheck:python`はルートのpyrightconfigによるPyrightとbackendのmypyを順に実行する。どちらか片方だけの成功を全体成功として扱わない。
-カタログだけの検証は`python -c "from backend.infrastructure.package_insert_definitions.loader import get_package_insert_definitions; get_package_insert_definitions()"`。実行環境を確認し、これだけで検索・プロンプト・XML経路が検証できたと扱わない。
+カタログだけの検証は`python -c "from backend.infrastructure.package_insert_definitions.assembly import get_package_insert_definitions; get_package_insert_definitions()"`。実行環境を確認し、これだけで検索・プロンプト・XML経路が検証できたと扱わない。
 
 ## frontend
 

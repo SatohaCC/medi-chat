@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 from backend.application.attachment_import.import_errors import InvalidAttachment
-from backend.infrastructure.package_insert_definitions.loader import (
+from backend.infrastructure.package_insert_definitions.assembly import (
     get_package_insert_definitions,
 )
 from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder

@@ -5,7 +5,7 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 from typing import Any
 
-from ..package_insert_definitions.loader import get_package_insert_definitions
+from ..package_insert_definitions.assembly import get_package_insert_definitions
 from .definition_settings import PmdaXmlSettings
 from .xml_nodes import tag_name
 

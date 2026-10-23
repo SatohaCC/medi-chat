@@ -13,9 +13,8 @@ from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import BrandName, GenericName
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.infrastructure.morphology.keyword_extraction import extract_search_keywords
-from backend.infrastructure.package_insert_definitions.loader import (
+from backend.infrastructure.package_insert_definitions.assembly import (
     get_package_insert_definitions,
-    load_package_insert_definitions,
 )
 from backend.tests.integration.test_package_insert_catalog import _source
 from backend.tests.support.paths import FIXTURES_ROOT
@@ -128,20 +127,9 @@ def test_definition_behavior_matches_prechange_oracle() -> None:
 
 
 def test_tc05_titles_preserve_whitespace_and_alias_fallback(tmp_path: Path) -> None:
-    from backend.infrastructure.package_insert_definitions.loader import (
-        DEFINITIONS_PATH,
-    )
+    from backend.tests.support.definition_fixtures import renamed_definitions
 
-    data = json.loads(DEFINITIONS_PATH.read_text(encoding="utf-8"))
-    data["sections"]["1"]["title"] = "  全角Ａ警告  "
-    data["sections"]["1"].pop("display_title", None)
-    data["sections"]["1"].pop("classification_title", None)
-    data["sections"]["10"]["title"] = "  全角Ｂ相互作用  "
-    data["sections"]["10"]["display_title"] = "表示別名"
-    data["sections"]["10"]["classification_title"] = "分類別名"
-    path = tmp_path / "titles.json"
-    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-    catalog = load_package_insert_definitions(path)
+    catalog = renamed_definitions()
     assert (
         next(
             section.title.value

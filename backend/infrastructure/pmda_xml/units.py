@@ -9,7 +9,7 @@ from typing import Any
 
 from backend.application.indexing.text_projection import format_scoped_text
 
-from ..package_insert_definitions.loader import get_package_insert_definitions
+from ..package_insert_definitions.assembly import get_package_insert_definitions
 from .definition_settings import PmdaXmlSettings
 from .sections import nearest_section
 from .xml_nodes import (
