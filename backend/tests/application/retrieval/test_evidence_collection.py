@@ -3,17 +3,17 @@
 from copy import deepcopy
 
 import pytest
-from backend.application.indexing.search_models import DocumentRevision
-from backend.application.indexing.search_values import SearchUnitId, SearchUnitKind
-from backend.application.retrieval.evidence_payloads import evidence_payload
-from backend.application.retrieval.search_models import (
+from backend.application.indexing.queries.models import DocumentRevision
+from backend.application.indexing.values import SearchUnitId, SearchUnitKind
+from backend.application.retrieval.queries.dtos.evidence import evidence_payload
+from backend.application.retrieval.queries.models import (
     Evidence,
     EvidenceColumns,
     EvidenceReference,
     EvidenceSection,
 )
-from backend.application.retrieval.search_policy import merge_evidence
-from backend.application.retrieval.search_values import (
+from backend.application.retrieval.queries.policies.selection import merge_evidence
+from backend.application.retrieval.values import (
     DetectionSource,
     EvidenceExcerpt,
     EvidenceGenericName,

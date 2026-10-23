@@ -4,9 +4,9 @@ from dataclasses import dataclass
 
 import httpx
 import pytest
-from backend.application.indexing.search_values import SearchSectionCode
-from backend.application.retrieval.search_models import SearchCriteria
-from backend.application.retrieval.search_values import DetectionSource
+from backend.application.indexing.values import SearchSectionCode
+from backend.application.retrieval.queries.models import SearchCriteria
+from backend.application.retrieval.values import DetectionSource
 from backend.tests.integration.test_generation_readonly import digest
 from backend.tests.support.attachment_import_fixtures import xml_source
 from backend.tests.support.postgres_fixtures import pg_api as pg_api
@@ -85,4 +85,4 @@ async def test_http_import_and_restart_preserve_search_snapshot(pg_api, pg_engin
             assert (await client.get("/health")).status_code == 200
         assert digest(pg_engines[0]) == saved
         with pytest.raises(RuntimeError, match="Import service is closed"):
-            await app.state.attachment_import_service.read_result("missing", "a" * 64)
+            await app.state.attachment_import_queries.read_result("missing", "a" * 64)

@@ -1,9 +1,9 @@
 """DM-03/04: 型付き候補の閾値・順位・choice補完。"""
 
 import pytest
-from backend.application.retrieval.search_models import IntentCandidate
-from backend.application.retrieval.search_policy import select_intents
-from backend.application.retrieval.search_values import IntentName, Probability
+from backend.application.retrieval.queries.models import IntentCandidate
+from backend.application.retrieval.queries.policies.selection import select_intents
+from backend.application.retrieval.values import IntentName, Probability
 from backend.infrastructure.package_insert_definitions.assembly import (
     get_package_insert_definitions,
 )

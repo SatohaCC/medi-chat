@@ -1,15 +1,17 @@
 """Reader-port aggregation oracle, independent of storage projection granularity."""
 
 import pytest
-from backend.application.indexing.search_models import DocumentRevision
-from backend.application.indexing.search_values import SearchUnitId, SearchUnitKind
-from backend.application.retrieval.retrieve_evidence import _search_evidence
-from backend.application.retrieval.search_models import (
+from backend.application.indexing.queries.models import DocumentRevision
+from backend.application.indexing.values import SearchUnitId, SearchUnitKind
+from backend.application.retrieval.queries.models import (
     Evidence,
     EvidenceSection,
     SearchCriteria,
 )
-from backend.application.retrieval.search_values import (
+from backend.application.retrieval.queries.services.evidence_retrieval import (
+    _search_evidence,
+)
+from backend.application.retrieval.values import (
     DetectionSource,
     EvidenceExcerpt,
     EvidenceGenericName,

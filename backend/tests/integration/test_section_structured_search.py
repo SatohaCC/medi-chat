@@ -3,11 +3,11 @@
 import asyncio
 
 import pytest
-from backend.application.indexing.search_values import SearchSectionCode
-from backend.application.medicine.product_models import ResolvedMedicine
-from backend.application.retrieval.evidence_payloads import evidence_payload
-from backend.application.retrieval.search_models import SearchCriteria
-from backend.application.retrieval.search_values import DetectionSource, SearchKeyword
+from backend.application.indexing.values import SearchSectionCode
+from backend.application.medicine.queries.models import ResolvedMedicine
+from backend.application.retrieval.queries.dtos.evidence import evidence_payload
+from backend.application.retrieval.queries.models import SearchCriteria
+from backend.application.retrieval.values import DetectionSource, SearchKeyword
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import BrandName, MatchedAlias
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch

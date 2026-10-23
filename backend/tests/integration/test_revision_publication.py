@@ -4,7 +4,7 @@ import hashlib
 import json
 
 import pytest
-from backend.application.attachment_import.import_errors import (
+from backend.application.attachment_import.errors import (
     ImportConflict,
     InvalidAttachment,
 )

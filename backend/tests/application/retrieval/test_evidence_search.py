@@ -4,14 +4,17 @@ import asyncio
 import unittest
 from unittest.mock import patch
 
-from backend.application.medicine.product_models import RegisteredMedicine
-from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
-from backend.application.retrieval.retrieve_evidence import (
+from backend.application.medicine.queries.models import RegisteredMedicine
+from backend.application.retrieval.queries.models import (
+    IntentCandidate,
+    IntentRequest,
+    IntentResult,
+)
+from backend.application.retrieval.queries.services.evidence_retrieval import (
     collect_search_criteria,
     retrieve_evidence,
 )
-from backend.application.retrieval.search_models import IntentCandidate
-from backend.application.retrieval.search_values import IntentName, Probability
+from backend.application.retrieval.values import IntentName, Probability
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.attachment.primitives import PmdaUrl
 from backend.domain.attachment.value_objects import (

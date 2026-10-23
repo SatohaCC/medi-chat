@@ -9,7 +9,8 @@ from collections import Counter
 from pathlib import PurePosixPath
 from typing import Any
 
-from ...application.attachment_import.import_errors import InvalidAttachment
+from backend.application.attachment_import.errors import InvalidAttachment
+
 from ..index_payloads import DOCUMENT_SCHEMA_VERSION, SEARCH_SCHEMA_VERSION
 from ..package_insert_definitions.assembly import get_package_insert_definitions
 from .definition_settings import PmdaXmlSettings

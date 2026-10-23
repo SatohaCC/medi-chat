@@ -2,11 +2,13 @@
 
 from dataclasses import replace
 
-from backend.application.indexing.attachment_projection import project_attachment
-from backend.application.indexing.search_models import (
+from backend.application.indexing.queries.models import (
     SearchFigure,
     SearchParagraph,
     SearchTableBlock,
+)
+from backend.application.indexing.queries.services.attachment_projection import (
+    project_attachment,
 )
 from backend.domain.attachment.primitives import (
     AttachmentBrandName,

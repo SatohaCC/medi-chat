@@ -8,11 +8,13 @@ from importlib import import_module
 
 import httpx
 import pytest
-from backend.application.indexing.attachment_projection import project_attachment
-from backend.application.indexing.search_values import SearchSectionCode
-from backend.application.medicine.product_models import ResolvedMedicine
-from backend.application.retrieval.search_models import SearchCriteria
-from backend.application.retrieval.search_values import DetectionSource
+from backend.application.indexing.queries.services.attachment_projection import (
+    project_attachment,
+)
+from backend.application.indexing.values import SearchSectionCode
+from backend.application.medicine.queries.models import ResolvedMedicine
+from backend.application.retrieval.queries.models import SearchCriteria
+from backend.application.retrieval.values import DetectionSource
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import BrandName, MatchedAlias
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch

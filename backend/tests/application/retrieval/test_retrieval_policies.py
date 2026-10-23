@@ -3,11 +3,15 @@
 from dataclasses import replace
 
 import pytest
-from backend.application.retrieval.search_policy import (
+from backend.application.retrieval.queries.policies.selection import (
     detect_fixed_keyword_criteria as _detect_fixed_keyword_criteria,
 )
-from backend.application.retrieval.search_policy import detect_intents_from_keywords
-from backend.application.retrieval.standard_policies import DEFAULT_INTENT_POLICY
+from backend.application.retrieval.queries.policies.selection import (
+    detect_intents_from_keywords,
+)
+from backend.application.retrieval.queries.policies.standard import (
+    DEFAULT_INTENT_POLICY,
+)
 
 
 @pytest.mark.parametrize("reversed_intents", [False, True])

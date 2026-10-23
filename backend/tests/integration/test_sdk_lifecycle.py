@@ -10,10 +10,10 @@ from typing import cast
 from unittest.mock import AsyncMock, Mock
 
 import pytest
-from backend.application.chat.answer_preparation import prepare_reply
-from backend.application.chat.answer_stream import stream_answer
-from backend.application.chat.chat_models import ChatMessage
-from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
+from backend.application.chat.queries.models import ChatMessage
+from backend.application.chat.queries.services.answer_generation import stream_answer
+from backend.application.chat.queries.services.reply_preparation import prepare_reply
+from backend.application.retrieval.queries.models import IntentRequest, IntentResult
 from backend.infrastructure.intent import jev_classifier
 from backend.infrastructure.llm import gemini_provider, openai_provider
 from backend.infrastructure.llm.provider_factory import create_llm_provider

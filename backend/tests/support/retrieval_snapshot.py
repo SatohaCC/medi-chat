@@ -3,19 +3,23 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from backend.application.medicine.product_contracts import RegisteredMedicineReader
-from backend.application.retrieval.evidence_contracts import EvidenceRepository
-from backend.application.retrieval.snapshot_contracts import (
+from backend.application.medicine.interfaces.medicine_query_reader import (
+    MedicineQueryReader,
+)
+from backend.application.medicine.values import SearchGenerationId
+from backend.application.retrieval.interfaces.evidence_query_reader import (
+    EvidenceQueryReader,
+)
+from backend.application.retrieval.interfaces.snapshot_provider import (
     RetrievalSnapshot,
-    SearchGenerationId,
 )
 
 
 class FixedSnapshotProvider:
     def __init__(
         self,
-        medicine_reader: RegisteredMedicineReader,
-        evidence_reader: EvidenceRepository,
+        medicine_reader: MedicineQueryReader,
+        evidence_reader: EvidenceQueryReader,
     ):
         self.snapshot = RetrievalSnapshot(
             SearchGenerationId("test"), medicine_reader, evidence_reader

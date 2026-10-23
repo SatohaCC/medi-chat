@@ -1,6 +1,8 @@
 import pytest
-from backend.application.retrieval.intent_contracts import IntentResult
-from backend.application.retrieval.retrieve_evidence import retrieve_evidence
+from backend.application.retrieval.queries.models import IntentResult
+from backend.application.retrieval.queries.services.evidence_retrieval import (
+    retrieve_evidence,
+)
 from backend.infrastructure.package_insert_definitions.assembly import (
     get_package_insert_definitions,
 )

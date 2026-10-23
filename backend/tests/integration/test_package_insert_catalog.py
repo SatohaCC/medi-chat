@@ -6,36 +6,40 @@ from typing import Any
 from unittest.mock import AsyncMock
 
 import pytest
-from backend.application.chat.answer_prompt_builder import build_answer_system_prompt
-from backend.application.indexing.search_models import DocumentRevision
-from backend.application.indexing.search_values import (
+from backend.application.chat.queries.policies.answer_prompt import (
+    build_answer_system_prompt,
+)
+from backend.application.indexing.queries.models import DocumentRevision
+from backend.application.indexing.queries.policies.text_projection import (
+    format_scoped_text,
+)
+from backend.application.indexing.values import (
     SearchSectionCode,
     SearchUnitId,
     SearchUnitKind,
 )
-from backend.application.indexing.text_projection import format_scoped_text
-from backend.application.retrieval.intent_contracts import IntentRequest
-from backend.application.retrieval.search_models import (
+from backend.application.retrieval.queries.models import (
     Evidence,
     EvidenceColumns,
     EvidenceReference,
     EvidenceSection,
+    IntentRequest,
 )
-from backend.application.retrieval.search_models import Evidence as ChatSource
-from backend.application.retrieval.search_policy import (
+from backend.application.retrieval.queries.models import Evidence as ChatSource
+from backend.application.retrieval.queries.policies.selection import (
     detect_intents_from_keywords,
     evidence_section_sort_key,
 )
-from backend.application.retrieval.search_values import (
+from backend.application.retrieval.queries.policies.standard import (
+    DEFAULT_RETRIEVAL_POLICY,
+    EvidenceRetrievalPolicy,
+)
+from backend.application.retrieval.values import (
     DetectionSource,
     EvidenceExcerpt,
     EvidenceGenericName,
     EvidenceProductName,
     EvidenceSourceUrl,
-)
-from backend.application.retrieval.standard_policies import (
-    DEFAULT_RETRIEVAL_POLICY,
-    EvidenceRetrievalPolicy,
 )
 from backend.domain.attachment.exceptions import AttachmentDomainError
 from backend.domain.attachment.identifiers import DocumentId
@@ -243,8 +247,10 @@ def test_xml_duplicate_tag_is_rejected():
 
 
 def test_typed_policy_rejects_duplicate_and_unknown_references():
-    from backend.application.retrieval.search_values import IntentName
-    from backend.application.retrieval.standard_policies import ClassificationRule
+    from backend.application.retrieval.queries.policies.standard import (
+        ClassificationRule,
+    )
+    from backend.application.retrieval.values import IntentName
     from backend.infrastructure.package_insert_definitions.jev_settings import (
         build_jev_settings,
     )

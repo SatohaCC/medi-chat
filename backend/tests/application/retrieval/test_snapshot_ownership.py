@@ -1,5 +1,7 @@
 import pytest
-from backend.application.retrieval.search_keywords import search_evidence_by_keywords
+from backend.application.retrieval.queries.services.keyword_search import (
+    search_evidence_by_keywords,
+)
 from backend.tests.application.chat.test_answer_preparation import MedicineReader
 from backend.tests.support.retrieval_snapshot import FixedSnapshotProvider
 

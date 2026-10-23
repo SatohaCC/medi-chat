@@ -12,9 +12,12 @@ from unittest.mock import patch
 from xml.etree import ElementTree as ET
 
 import pytest
-from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
-from backend.application.retrieval.search_models import IntentCandidate
-from backend.application.retrieval.search_values import IntentName, Probability
+from backend.application.retrieval.queries.models import (
+    IntentCandidate,
+    IntentRequest,
+    IntentResult,
+)
+from backend.application.retrieval.values import IntentName, Probability
 from backend.tests.integration.test_interaction_xml_oracle import (
     assert_prompt_oracle,
     assert_public_collection,

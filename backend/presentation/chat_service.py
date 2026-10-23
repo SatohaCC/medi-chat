@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
+from collections.abc import AsyncGenerator, Awaitable, Callable, Sequence
+from contextlib import aclosing as closing_stream
 
-from backend.application.retrieval.search_models import Evidence
+from backend.application.chat.queries.chat import (
+    ChatQueries,
+)
+from backend.application.chat.queries.models import (
+    ChatResponse as ApplicationChatResponse,
+)
+from backend.application.retrieval.queries.models import Evidence
 
-from ..application.chat.chat_models import ChatResponse as ApplicationChatResponse
-from ..application.chat.chat_service import ChatApplicationService
-from ..application.chat.stream_closing import closing_stream
 from ..config.generation_settings import GenerationDefaults, read_generation_defaults
 from .chat_dto_mapper import (
     chat_message_from_api,
@@ -30,7 +34,7 @@ class AppChatService:
     def __init__(
         self,
         *,
-        application_service: ChatApplicationService,
+        application_service: ChatQueries,
         defaults: Callable[[], GenerationDefaults] = read_generation_defaults,
     ) -> None:
         self._app_service = application_service
@@ -79,7 +83,7 @@ class AppChatService:
         conversation: Sequence[ApiChatMessage],
         provider_name: str | None = None,
         model_name: str | None = None,
-    ) -> AsyncIterator[str]:
+    ) -> AsyncGenerator[str]:
         settings = self.defaults()
         pure_conversation = [chat_message_from_api(m) for m in conversation]
         async with closing_stream(

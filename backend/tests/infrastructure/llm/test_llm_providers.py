@@ -10,7 +10,7 @@ from typing import Any
 from unittest.mock import AsyncMock, Mock, call
 
 import pytest
-from backend.application.chat.answer_stream import stream_answer
+from backend.application.chat.queries.services.answer_generation import stream_answer
 from backend.infrastructure.llm import gemini_provider, mock_response, openai_provider
 from backend.infrastructure.llm.provider_factory import create_llm_provider
 

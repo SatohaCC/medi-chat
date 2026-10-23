@@ -139,7 +139,8 @@ def main() -> int:
 def _register(args: argparse.Namespace) -> int:
     from sqlalchemy.exc import SQLAlchemyError
 
-    from ...application.attachment_import.import_errors import AttachmentImportError
+    from backend.application.attachment_import.errors import AttachmentImportError
+
     from ..persistence.postgres_engine import create_postgres_engine
     from ..persistence.postgres_registration import PostgresRegistrationPublisher
     from ..pmda_xml.artifact_mapping import PmdaArtifactEncoder

@@ -1,5 +1,5 @@
 import pytest
-from backend.application.attachment_import.import_errors import ImportConflict
+from backend.application.attachment_import.errors import ImportConflict
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.attachment.primitives import AttachmentSha256, RevisionYearMonth
 from backend.domain.attachment.value_objects import RegistrationVersion

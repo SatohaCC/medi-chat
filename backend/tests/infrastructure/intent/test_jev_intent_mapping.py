@@ -3,13 +3,20 @@
 from copy import deepcopy
 
 import pytest
-from backend.application.chat.answer_preparation import prepare_reply
-from backend.application.chat.answer_prompt_builder import build_answer_messages
-from backend.application.chat.chat_models import ChatMessage
-from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
-from backend.application.retrieval.jev_detector import detect_jev_criteria
-from backend.application.retrieval.search_models import IntentCandidate
-from backend.application.retrieval.search_values import IntentName, Probability
+from backend.application.chat.queries.models import ChatMessage
+from backend.application.chat.queries.policies.answer_prompt import (
+    build_answer_messages,
+)
+from backend.application.chat.queries.services.reply_preparation import prepare_reply
+from backend.application.retrieval.queries.models import (
+    IntentCandidate,
+    IntentRequest,
+    IntentResult,
+)
+from backend.application.retrieval.queries.services.intent_detection import (
+    detect_jev_criteria,
+)
+from backend.application.retrieval.values import IntentName, Probability
 from backend.infrastructure.intent.jev_intent_mapping import map_jev_intent_result
 from backend.infrastructure.package_insert_definitions.assembly import (
     get_package_insert_definitions,

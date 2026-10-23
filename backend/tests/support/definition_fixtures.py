@@ -2,23 +2,25 @@
 
 from dataclasses import replace
 
-from backend.application.chat.standard_policy import build_answer_prompt_policy
-from backend.application.indexing.search_values import SearchSectionCode
-from backend.application.retrieval.search_models import (
+from backend.application.chat.queries.policies.standard import (
+    build_answer_prompt_policy,
+)
+from backend.application.indexing.values import SearchSectionCode
+from backend.application.retrieval.queries.models import (
     IntentKeyword,
     SearchIntentDefinition,
 )
-from backend.application.retrieval.search_values import (
-    IntentKeywordText,
-    IntentName,
-    KeywordPriority,
-)
-from backend.application.retrieval.standard_policies import (
+from backend.application.retrieval.queries.policies.standard import (
     DEFAULT_CLASSIFICATION_RULES,
     DEFAULT_CLASSIFICATION_TITLES,
     DEFAULT_DISPLAY_TITLES,
     DEFAULT_INTENT_POLICY,
     ClassificationRule,
+)
+from backend.application.retrieval.values import (
+    IntentKeywordText,
+    IntentName,
+    KeywordPriority,
 )
 from backend.domain.attachment.primitives import (
     DefinitionTitle,

@@ -5,8 +5,8 @@
 | 編集する内容 | 正本 |
 | --- | --- |
 | 項目番号・正式名称・階層・内容の範囲、相互作用列のID・名称・順序 | [DomainのSectionDefinition / SectionTaxonomy](../../domain/attachment/value_objects.py) |
-| 常時参照する項目、質問意図と検索項目、固定キーワード、除外語・症状言い換え、分類用の対応 | [Applicationの検索方針](../../application/retrieval/standard_policies.py) |
-| 回答用の指示、引用項目、表示への投影 | [Applicationの回答方針](../../application/chat/standard_policy.py) |
+| 常時参照する項目、質問意図と検索項目、固定キーワード、除外語・症状言い換え、分類用の対応 | [Applicationの検索方針](../../application/retrieval/policies/standard.py) |
+| 回答用の指示、引用項目、表示への投影 | [Applicationの回答方針](../../application/chat/policies/standard.py) |
 | XMLタグ・祖先文脈・列タグ、Janomeの技術設定 | [XML・形態素設定](xml_settings.py) |
 | Domainの項目の意味からJev選択肢への変換 | [Jevへの投影](jev_settings.py) |
 

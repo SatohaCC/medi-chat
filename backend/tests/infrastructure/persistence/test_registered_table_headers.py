@@ -3,7 +3,9 @@
 import json
 
 import pytest
-from backend.application.indexing.attachment_projection import project_active_attachment
+from backend.application.indexing.queries.services.attachment_projection import (
+    project_active_attachment,
+)
 from backend.domain.medicine.identifiers import YjCode
 from backend.infrastructure.index_payloads import (
     encode_registered_units,

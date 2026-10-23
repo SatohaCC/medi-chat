@@ -7,7 +7,7 @@ from collections.abc import AsyncIterator
 from pathlib import Path
 
 import uvicorn
-from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
+from backend.application.retrieval.queries.models import IntentRequest, IntentResult
 from backend.infrastructure.intent.jev_classifier import JevIntentClassifier
 from backend.infrastructure.morphology.janome_keyword_extractor import (
     JanomeKeywordExtractor,

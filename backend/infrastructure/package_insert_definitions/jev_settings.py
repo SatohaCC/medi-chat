@@ -3,7 +3,7 @@
 from collections.abc import Mapping
 from types import MappingProxyType
 
-from backend.application.retrieval.standard_policies import (
+from backend.application.retrieval.queries.policies.standard import (
     DEFAULT_CLASSIFICATION_RULES,
     DEFAULT_CLASSIFICATION_TITLES,
     ClassificationRule,

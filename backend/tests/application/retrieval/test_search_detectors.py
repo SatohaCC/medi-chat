@@ -2,8 +2,12 @@ from __future__ import annotations
 
 import unittest
 
-from backend.application.retrieval.morphology_detector import detect_morphology_criteria
-from backend.application.retrieval.search_policy import detect_fixed_keyword_criteria
+from backend.application.retrieval.queries.policies.selection import (
+    detect_fixed_keyword_criteria,
+)
+from backend.application.retrieval.queries.services.keyword_detection import (
+    detect_morphology_criteria,
+)
 from backend.infrastructure.morphology.janome_keyword_extractor import (
     JanomeKeywordExtractor,
 )

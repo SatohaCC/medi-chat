@@ -4,10 +4,10 @@ import hashlib
 import json
 
 import pytest
-from backend.application.indexing.search_values import SearchSectionCode
-from backend.application.retrieval.evidence_payloads import evidence_payload
-from backend.application.retrieval.search_models import SearchCriteria
-from backend.application.retrieval.search_values import DetectionSource, SearchKeyword
+from backend.application.indexing.values import SearchSectionCode
+from backend.application.retrieval.queries.dtos.evidence import evidence_payload
+from backend.application.retrieval.queries.models import SearchCriteria
+from backend.application.retrieval.values import DetectionSource, SearchKeyword
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import BrandName, MatchedAlias
 from backend.infrastructure.persistence.postgres_runtime import PostgresRuntime
@@ -35,7 +35,7 @@ ORACLE = json.loads(
 async def test_pg028_public_corpus_and_equal_rank_use_legacy_codepoint_order(
     pg_engines, pg_publisher, operation
 ):
-    from backend.application.medicine.product_models import ResolvedMedicine
+    from backend.application.medicine.queries.models import ResolvedMedicine
     from backend.domain.medicine.value_objects import MedicineMatch
 
     codes = tuple(f"11111111111{index}" for index in range(5))
@@ -162,7 +162,7 @@ async def test_pg028_030_snapshot_retains_ids_order_payload(pg_engines, pg_publi
 async def test_pg031_more_than_four_hundred_results_have_no_limit(
     pg_engines, pg_publisher
 ):
-    from backend.application.medicine.product_models import ResolvedMedicine
+    from backend.application.medicine.queries.models import ResolvedMedicine
     from backend.domain.medicine.value_objects import MedicineMatch
     from backend.infrastructure.persistence.registration_models import (
         PostgresRegistrationInput,
@@ -219,7 +219,7 @@ async def test_pg031_more_than_four_hundred_results_have_no_limit(
 async def test_pg032_original_xml_tables_and_sources_match_independent_oracle(
     pg_engines, pg_publisher
 ):
-    from backend.application.medicine.product_models import ResolvedMedicine
+    from backend.application.medicine.queries.models import ResolvedMedicine
     from backend.domain.medicine.value_objects import MedicineMatch
     from backend.tests.integration.test_interaction_xml_oracle import (
         assert_public_source,

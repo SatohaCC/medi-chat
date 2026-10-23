@@ -6,7 +6,11 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from ..application.medicine.input_values import InvalidMedicineInput, parse_yj_codes
+from backend.application.medicine.errors import InvalidMedicineInput
+from backend.application.medicine.queries.catalog import (
+    MedicineQueries,
+)
+
 from .chat_service import AppChatService
 from .dependencies import get_chat_service
 from .search_models import KeywordSearchResponse
@@ -39,7 +43,7 @@ async def search_package_inserts(
     """添付文書からキーワードに合致する根拠単位を検索する"""
     try:
         if chat_service is None:
-            parse_yj_codes(yj_codes or ())
+            MedicineQueries.validate_product_codes(yj_codes or ())
             return KeywordSearchResponse(query=q, items=[], total_count=0)
         items = await chat_service.search_keywords(q, yj_codes or ())
     except InvalidMedicineInput as exc:

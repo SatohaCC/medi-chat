@@ -6,8 +6,10 @@ from pydantic import ValidationError
 from starlette.datastructures import UploadFile
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from ..application.attachment_import.import_document import AttachmentImportService
-from ..application.attachment_import.import_errors import (
+from backend.application.attachment_import.commands.import_documents import (
+    AttachmentImportCommands,
+)
+from backend.application.attachment_import.errors import (
     AttachmentImportError,
     ImportConflict,
     ImportGone,
@@ -17,7 +19,20 @@ from ..application.attachment_import.import_errors import (
     InvalidAttachment,
     UnsupportedAttachment,
 )
-from ..application.attachment_import.upload_models import CHUNK_BYTES, UploadSpec
+from backend.application.attachment_import.queries.import_history import (
+    ImportHistoryQueries,
+)
+from backend.application.file_upload.commands.models import UploadSpec
+from backend.application.file_upload.errors import (
+    FileUploadError,
+    InvalidUpload,
+    UploadConflict,
+    UploadGone,
+    UploadLimitExceeded,
+    UploadStorageError,
+)
+from backend.config.upload_settings import CHUNK_BYTES
+
 from .attachment_import_models import (
     AttachmentImportResponse,
     ImportConflictResponse,
@@ -26,14 +41,15 @@ from .attachment_import_models import (
     UploadRequest,
     UploadResponse,
 )
-from .dependencies import get_import_service
+from .dependencies import get_import_queries, get_import_service
 
 BODY_LIMIT = 11 * 1024 * 1024
 FILE_LIMIT = 10 * 1024 * 1024
 
 router = APIRouter(prefix="/api/attachment-imports", tags=["attachment-imports"])
 
-ImportService = Annotated[AttachmentImportService, Depends(get_import_service)]
+ImportService = Annotated[AttachmentImportCommands, Depends(get_import_service)]
+ImportQueries = Annotated[ImportHistoryQueries, Depends(get_import_queries)]
 
 
 def error(
@@ -44,9 +60,14 @@ def error(
     )
 
 
-def import_error(exc: AttachmentImportError) -> HTTPException:
+def import_error(exc: AttachmentImportError | FileUploadError) -> HTTPException:
     statuses = {
         ImportConflict: 409,
+        UploadConflict: 409,
+        UploadGone: 410,
+        UploadLimitExceeded: 413,
+        UploadStorageError: 500,
+        InvalidUpload: 422,
         ImportLimitExceeded: 413,
         ImportNotFound: 404,
         ImportGone: 410,
@@ -55,14 +76,16 @@ def import_error(exc: AttachmentImportError) -> HTTPException:
         UnsupportedAttachment: 415,
     }
     result = error(statuses[type(exc)], exc.code, exc.message, phase=exc.phase)
-    if isinstance(exc, ImportConflict):
+    if isinstance(exc, (ImportConflict, UploadConflict)):
         detail = {
             "code": exc.code,
             "message": exc.message,
             "phase": exc.phase,
             "conflicts": [
                 {"yj_code": code, "version_ids": list(versions)}
-                for code, versions in exc.conflicts
+                for code, versions in (
+                    exc.conflicts if isinstance(exc, ImportConflict) else ()
+                )
             ],
         }
         result = HTTPException(statuses[type(exc)], detail=detail)
@@ -99,7 +122,7 @@ async def start_upload(request: Request, service: ImportService) -> UploadRespon
         upload_id = await service.start_upload(spec)
     except ValidationError, ValueError:
         raise error(422, "invalid_upload", "XMLのファイル情報が不正です。") from None
-    except AttachmentImportError as exc:
+    except (AttachmentImportError, FileUploadError) as exc:
         raise import_error(exc) from None
     return UploadResponse(upload_id=upload_id)
 
@@ -124,7 +147,7 @@ async def upload_part(
     content = await bounded_body(request, CHUNK_BYTES)
     try:
         await service.upload_part(upload_id, index, content)
-    except AttachmentImportError as exc:
+    except (AttachmentImportError, FileUploadError) as exc:
         raise import_error(exc) from None
     return Response(status_code=204)
 
@@ -139,7 +162,7 @@ async def finish_upload(
 ) -> AttachmentImportResponse:
     try:
         result = await service.finish_upload(upload_id)
-    except AttachmentImportError as exc:
+    except (AttachmentImportError, FileUploadError) as exc:
         raise import_error(exc) from None
     response.status_code = 200 if result.reused else 201
     response.headers["Location"] = (
@@ -206,7 +229,7 @@ async def import_attachment(
             result = await service.import_document(
                 source, original_filename=file.filename or "source.xml"
             )
-    except AttachmentImportError as exc:
+    except (AttachmentImportError, FileUploadError) as exc:
         raise import_error(exc) from None
     except StarletteHTTPException as exc:
         if isinstance(exc.detail, dict):
@@ -223,13 +246,13 @@ async def import_attachment(
 
 @router.get("", response_model=ImportListResponse)
 async def list_attachments(
-    service: ImportService,
+    service: ImportQueries,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> ImportListResponse:
     try:
         page = await service.list_imports(limit=limit, offset=offset)
-    except AttachmentImportError as exc:
+    except (AttachmentImportError, FileUploadError) as exc:
         raise import_error(exc) from None
     return ImportListResponse.from_page(page, limit=limit, offset=offset)
 
@@ -242,11 +265,11 @@ async def list_attachments(
     },
 )
 async def read_attachment(
-    document_id: str, source_sha256: str, service: ImportService
+    document_id: str, source_sha256: str, service: ImportQueries
 ) -> AttachmentImportResponse:
     try:
         result = await service.read_result(document_id, source_sha256)
-    except AttachmentImportError as exc:
+    except (AttachmentImportError, FileUploadError) as exc:
         raise import_error(exc) from None
     except ValueError:
         raise error(404, "not_found", "保存済みの取り込みが見つかりません。") from None

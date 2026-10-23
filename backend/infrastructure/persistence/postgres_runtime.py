@@ -12,19 +12,23 @@ from dataclasses import dataclass
 from sqlalchemy import func, select, text
 from sqlalchemy.engine import Connection, Engine
 
-from backend.application.indexing.attachment_projection import project_active_attachment
-from backend.application.medicine.product_models import (
-    RegisteredMedicine,
-    SearchGenerationId,
+from backend.application.indexing.queries.services.attachment_projection import (
+    project_active_attachment,
 )
-from backend.application.medicine.suggestions import MedicineSuggester
-from backend.application.retrieval.evidence_contracts import EvidenceSearchTarget
-from backend.application.retrieval.search_models import (
+from backend.application.medicine.queries.models import RegisteredMedicine
+from backend.application.medicine.queries.suggest_medicines import MedicineSuggester
+from backend.application.medicine.values import SearchGenerationId
+from backend.application.retrieval.interfaces.evidence_query_reader import (
+    EvidenceSearchTarget,
+)
+from backend.application.retrieval.interfaces.snapshot_provider import (
+    RetrievalSnapshot,
+)
+from backend.application.retrieval.queries.models import (
     Evidence,
     SearchCriteria,
     TextSearchPolicy,
 )
-from backend.application.retrieval.snapshot_contracts import RetrievalSnapshot
 from backend.domain.foundation.json_types import JsonValue
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.shared.services import normalize_match_text, normalize_search_text

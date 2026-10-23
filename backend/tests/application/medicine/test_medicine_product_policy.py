@@ -2,8 +2,10 @@
 
 from dataclasses import fields
 
-from backend.application.medicine.product_catalog import MedicineCatalog
-from backend.application.medicine.product_models import RegisteredMedicine
+from backend.application.medicine.queries.models import RegisteredMedicine
+from backend.application.medicine.queries.policies.catalog_matching import (
+    MedicineCatalog,
+)
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.attachment.primitives import PmdaUrl
 from backend.domain.attachment.value_objects import (

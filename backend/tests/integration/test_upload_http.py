@@ -4,7 +4,7 @@ import hashlib
 
 import httpx
 import pytest
-from backend.application.attachment_import.import_errors import ImportStorageError
+from backend.application.attachment_import.errors import ImportStorageError
 from backend.tests.support.attachment_import_fixtures import xml_source
 from backend.tests.support.postgres_fixtures import pg_api as pg_api
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines

@@ -2,10 +2,16 @@
 
 from collections.abc import Callable
 
-from backend.application.chat.chat_service import ChatApplicationService
-from backend.application.chat.llm_contracts import LLMProvider
-from backend.application.retrieval.intent_contracts import IntentClassifier
-from backend.application.retrieval.keyword_contracts import KeywordExtractor
+from backend.application.chat.interfaces.llm_provider import LLMProvider
+from backend.application.chat.queries.chat import (
+    ChatQueries,
+)
+from backend.application.retrieval.interfaces.intent_classifier import (
+    IntentClassifier,
+)
+from backend.application.retrieval.interfaces.keyword_extractor import (
+    KeywordExtractor,
+)
 from backend.presentation.chat_service import AppChatService
 
 
@@ -18,7 +24,7 @@ def compose_chat_service(
 ) -> AppChatService:
     application = original._app_service
     return AppChatService(
-        application_service=ChatApplicationService(
+        application_service=ChatQueries(
             intent_classifier=intent_classifier
             if intent_classifier is not None
             else application.intent_classifier,

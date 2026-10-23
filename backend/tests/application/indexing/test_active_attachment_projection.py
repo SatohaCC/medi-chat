@@ -2,8 +2,10 @@ import hashlib
 import json
 from dataclasses import replace
 
-from backend.application.indexing.attachment_projection import project_active_attachment
-from backend.application.indexing.search_models import SearchTableBlock
+from backend.application.indexing.queries.models import SearchTableBlock
+from backend.application.indexing.queries.services.attachment_projection import (
+    project_active_attachment,
+)
 from backend.domain.attachment.primitives import (
     AttachmentProductCode,
     AttachmentSha256,

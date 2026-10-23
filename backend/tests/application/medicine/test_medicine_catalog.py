@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import pytest
-from backend.application.medicine.product_catalog import MedicineCatalog, _ProductGroup
-from backend.application.medicine.product_models import RegisteredMedicine
+from backend.application.medicine.queries.models import RegisteredMedicine
+from backend.application.medicine.queries.policies.catalog_matching import (
+    MedicineCatalog,
+    _ProductGroup,
+)
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.attachment.primitives import PmdaUrl
 from backend.domain.attachment.value_objects import (

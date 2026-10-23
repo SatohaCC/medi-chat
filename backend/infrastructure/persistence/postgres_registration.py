@@ -9,22 +9,20 @@ from sqlalchemy import Text, cast, delete, func, insert, select, text, update
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SQLAlchemyError
 
-from backend.application.attachment_import.import_contracts import (
-    AttachmentArtifactEncoder,
-)
-from backend.application.attachment_import.import_errors import (
+from backend.application.attachment_import.commands.models import ImportResult
+from backend.application.attachment_import.errors import (
     ImportCancelled,
     ImportConflict,
     ImportStorageError,
-)
-from backend.application.attachment_import.import_models import (
-    DecodedAttachment,
-    ImportResult,
 )
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.attachment.primitives import AttachmentSha256, RevisionYearMonth
 from backend.domain.attachment.value_objects import RegistrationVersion
 from backend.domain.medicine.identifiers import YjCode
+from backend.infrastructure.import_payloads import (
+    AttachmentArtifactEncoder,
+    DecodedAttachment,
+)
 from backend.infrastructure.index_payloads import (
     result_dict,
 )

@@ -3,12 +3,10 @@
 from dataclasses import dataclass
 from typing import Any, TypedDict
 
-from backend.application.attachment_import.import_models import (
-    DecodedAttachment,
-    ImportResult,
-)
+from backend.application.attachment_import.commands.models import ImportResult
 from backend.domain.attachment.value_objects import RegistrationVersion
 from backend.domain.foundation.json_types import JsonValue
+from backend.infrastructure.import_payloads import DecodedAttachment
 
 
 @dataclass(frozen=True)

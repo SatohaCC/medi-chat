@@ -6,7 +6,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from backend.application.retrieval.search_values import DetectionSource
+from backend.application.retrieval.queries.dtos.evidence import DetectionSource
 
 
 class ChatSource(BaseModel):

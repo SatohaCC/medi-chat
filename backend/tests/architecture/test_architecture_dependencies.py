@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 from backend.tests.support.paths import BACKEND_ROOT
+from scripts.application_architecture import ROLE_DEPENDENCIES, module_role
 
 
 def test_domain_models_do_not_define_create_wrappers() -> None:
@@ -114,7 +115,8 @@ ALLOWED_DOMAIN_INTERNAL_DEPENDENCIES: dict[str, set[str]] = {
 ALLOWED_APPLICATION_CONTEXT_DEPENDENCIES: dict[str, set[str]] = {
     "chat": {"retrieval", "medicine", "indexing"},
     "retrieval": {"medicine", "indexing"},
-    "attachment_import": {"indexing"},
+    "attachment_import": {"file_upload"},
+    "file_upload": set(),
     "indexing": {"medicine"},
     "medicine": set(),
 }
@@ -122,6 +124,7 @@ EXTERNAL_ADAPTER_PACKAGES = {"llm", "intent", "morphology", "pmda_xml"}
 INFRASTRUCTURE_ROOT_PAYLOAD_MODULES = {
     "evidence_mapping",
     "index_payloads",
+    "import_payloads",
 }
 ALLOWED_INFRASTRUCTURE_PACKAGES = {
     "cli",
@@ -138,6 +141,7 @@ ALLOWED_INFRASTRUCTURE_ROOT_FILES = {
     "__init__.py",
     "evidence_mapping.py",
     "index_payloads.py",
+    "import_payloads.py",
 }
 
 
@@ -235,23 +239,24 @@ def _allowed_module(module: str, *, caller: str) -> bool:
                 return False
             if len(module_parts) < 4:
                 return False
-        if len(caller_parts) >= 4:
-            caller_mod = caller_parts[3]
-            if caller_mod.endswith("_values") and (
-                len(module_parts) < 4 or not module_parts[3].endswith("_values")
-            ):
-                return False
-            if caller_mod.endswith("_models") and (
-                len(module_parts) < 4
-                or not module_parts[3].endswith(("_models", "_values"))
-            ):
-                return False
-            if caller_mod.endswith("_contracts") and (
-                len(module_parts) < 4
-                or not (
-                    module_parts[3].endswith(("_models", "_values"))
-                    or module_parts[3].endswith("_contracts")
-                )
+        if (
+            caller_ctx == target_ctx
+            and module != caller
+            and not module.startswith(caller + ".")
+        ):
+            source_role = module_role(caller_parts[3:])
+            target_role = next(
+                (
+                    role
+                    for width in range(len(module_parts) - 3, 0, -1)
+                    if (role := module_role(module_parts[3 : 3 + width])) is not None
+                ),
+                None,
+            )
+            if (
+                source_role
+                and target_role
+                and target_role not in ROLE_DEPENDENCIES[source_role]
             ):
                 return False
     # Presentation層: 内部の依存順序（*_routes -> dependencies -> chat_service -> chat_dto_mapper -> *_models）を強制する。
@@ -761,7 +766,7 @@ def test_legacy_facades_are_not_required() -> None:
 @pytest.mark.parametrize(
     "source",
     [
-        "import backend.application.chat.chat_models\n",
+        "import backend.application.chat.queries.models\n",
         "from ...application.chat import chat_models\n",
         "from typing import TYPE_CHECKING\nif TYPE_CHECKING:\n    from backend.application.chat import chat_models\n",
     ],
@@ -814,32 +819,32 @@ def test_domain_models_have_explicit_primitive_entity_value_object_ownership() -
         "DocumentId": "backend.domain.attachment.identifiers",
         "ProductGroupId": "backend.domain.medicine.primitives",
         "MedicineProduct": "backend.domain.medicine.entities",
-        "IntentName": "backend.application.retrieval.search_values",
+        "IntentName": "backend.application.retrieval.values",
         "PmdaUrl": "backend.domain.attachment.primitives",
-        "Probability": "backend.application.retrieval.search_values",
-        "SearchKeyword": "backend.application.retrieval.search_values",
+        "Probability": "backend.application.retrieval.values",
+        "SearchKeyword": "backend.application.retrieval.values",
         "SectionCode": "backend.domain.attachment.primitives",
-        "SearchUnitId": "backend.application.indexing.search_values",
+        "SearchUnitId": "backend.application.indexing.values",
         "YjCode": "backend.domain.medicine.identifiers",
         "JsonValue": "backend.domain.foundation.json_types",
-        "DetectionSource": "backend.application.retrieval.search_values",
-        "DocumentRevision": "backend.application.indexing.search_models",
-        "ResolvedMedicine": "backend.application.medicine.product_models",
-        "SearchCriteria": "backend.application.retrieval.search_models",
-        "IntentCandidate": "backend.application.retrieval.search_models",
-        "IntentSelection": "backend.application.retrieval.search_models",
-        "EvidenceReference": "backend.application.retrieval.search_models",
-        "EvidenceSection": "backend.application.retrieval.search_models",
-        "EvidenceColumns": "backend.application.retrieval.search_models",
-        "RegisteredMedicine": "backend.application.medicine.product_models",
-        "Evidence": "backend.application.retrieval.search_models",
-        "IntentKeywordText": "backend.application.retrieval.search_values",
-        "merge_evidence": "backend.application.retrieval.search_policy",
-        "build_keyword_search_criteria": "backend.application.retrieval.search_policy",
+        "DetectionSource": "backend.application.retrieval.values",
+        "DocumentRevision": "backend.application.indexing.queries.models",
+        "ResolvedMedicine": "backend.application.medicine.queries.models",
+        "SearchCriteria": "backend.application.retrieval.queries.models",
+        "IntentCandidate": "backend.application.retrieval.queries.models",
+        "IntentSelection": "backend.application.retrieval.queries.models",
+        "EvidenceReference": "backend.application.retrieval.queries.models",
+        "EvidenceSection": "backend.application.retrieval.queries.models",
+        "EvidenceColumns": "backend.application.retrieval.queries.models",
+        "RegisteredMedicine": "backend.application.medicine.queries.models",
+        "Evidence": "backend.application.retrieval.queries.models",
+        "IntentKeywordText": "backend.application.retrieval.values",
+        "merge_evidence": "backend.application.retrieval.queries.policies.selection",
+        "build_keyword_search_criteria": "backend.application.retrieval.queries.policies.selection",
         "katakana_to_hiragana": "backend.domain.shared.services",
-        "RegisteredMedicineReader": "backend.application.medicine.product_contracts",
-        "EvidenceRepository": "backend.application.retrieval.evidence_contracts",
-        "MedicineCatalog": "backend.application.medicine.product_catalog",
+        "MedicineQueryReader": "backend.application.medicine.interfaces.medicine_query_reader",
+        "EvidenceQueryReader": "backend.application.retrieval.interfaces.evidence_query_reader",
+        "MedicineCatalog": "backend.application.medicine.queries.policies.catalog_matching",
         "DomainException": "backend.domain.foundation.exceptions",
         "DomainValidationError": "backend.domain.foundation.exceptions",
     }
@@ -877,9 +882,9 @@ def test_domain_has_no_compatibility_facades() -> None:
     [
         (
             "backend.domain",
-            "import backend.application.chat.chat_models\n",
+            "import backend.application.chat.queries.models\n",
             1,
-            "import backend.application.chat.chat_models",
+            "import backend.application.chat.queries.models",
         ),
         (
             "backend.application.fixture",
@@ -936,28 +941,28 @@ def test_domain_has_no_compatibility_facades() -> None:
             "import backend.domain.attachment.services.merge_evidence",
         ),
         (
-            "backend.application.medicine.suggestions",
-            "from ..chat.answer_preparation import prepare_reply\n",
+            "backend.application.medicine.queries.suggest_medicines",
+            "from backend.application.chat.queries.services.reply_preparation import prepare_reply\n",
             1,
-            "import backend.application.chat.answer_preparation.prepare_reply",
+            "import backend.application.chat.queries.services.reply_preparation.prepare_reply",
         ),
         (
-            "backend.application.retrieval.retrieval_models",
-            "from .retrieve_evidence import retrieve_evidence\n",
+            "backend.application.retrieval.queries.models",
+            "from backend.application.retrieval.queries.services.evidence_retrieval import retrieve_evidence\n",
             1,
-            "import backend.application.retrieval.retrieve_evidence.retrieve_evidence",
+            "import backend.application.retrieval.queries.services.evidence_retrieval.retrieve_evidence",
         ),
         (
-            "backend.application.retrieval.intent_contracts",
-            "from .jev_detector import detect_jev_criteria\n",
+            "backend.application.retrieval.interfaces.intent_classifier",
+            "from backend.application.retrieval.queries.services.intent_detection import detect_jev_criteria\n",
             1,
-            "import backend.application.retrieval.jev_detector.detect_jev_criteria",
+            "import backend.application.retrieval.queries.services.intent_detection.detect_jev_criteria",
         ),
         (
             "backend.presentation.search_routes",
-            "from ..domain.attachment.repositories import EvidenceRepository\n",
+            "from ..domain.attachment.repositories import EvidenceQueryReader\n",
             1,
-            "import backend.domain.attachment.repositories.EvidenceRepository",
+            "import backend.domain.attachment.repositories.EvidenceQueryReader",
         ),
         (
             "backend.infrastructure.persistence.postgres_registration",
@@ -972,22 +977,22 @@ def test_domain_has_no_compatibility_facades() -> None:
             "import backend.domain.attachment.value_objects",
         ),
         (
-            "backend.application.medicine.suggestions",
-            "from backend.application.chat import answer_question\n",
+            "backend.application.medicine.queries.suggest_medicines",
+            "from backend.application.chat.queries.services import answer_question\n",
             1,
-            "import backend.application.chat.answer_question",
+            "import backend.application.chat.queries.services.answer_question",
         ),
         (
-            "backend.application.retrieval.retrieval_models",
-            "from . import retrieve_evidence\n",
+            "backend.application.retrieval.queries.models",
+            "from backend.application.retrieval.queries.services import evidence_retrieval\n",
             1,
-            "import backend.application.retrieval.retrieve_evidence",
+            "import backend.application.retrieval.queries.services.evidence_retrieval",
         ),
         (
-            "backend.application.retrieval.intent_contracts",
-            "from . import jev_detector\n",
+            "backend.application.retrieval.interfaces.intent_classifier",
+            "from backend.application.retrieval.queries.services import intent_detection\n",
             1,
-            "import backend.application.retrieval.jev_detector",
+            "import backend.application.retrieval.queries.services.intent_detection",
         ),
         (
             "backend.presentation.search_routes",
@@ -1050,22 +1055,22 @@ def test_domain_has_no_compatibility_facades() -> None:
             "import backend.domain.shared.services.normalize_match_text",
         ),
         (
-            "backend.application.medicine.autocomplete",
-            "from ..retrieval.snapshot_contracts import RetrievalSnapshotProvider\n",
+            "backend.application.medicine.queries.catalog",
+            "from backend.application.retrieval.interfaces.snapshot_provider import RetrievalSnapshotProvider\n",
             1,
-            "import backend.application.retrieval.snapshot_contracts.RetrievalSnapshotProvider",
+            "import backend.application.retrieval.interfaces.snapshot_provider.RetrievalSnapshotProvider",
         ),
         (
-            "backend.application.medicine.autocomplete",
-            'def f(x: "backend.application.retrieval.snapshot_contracts.RetrievalSnapshotProvider") -> None:\n    pass\n',
+            "backend.application.medicine.queries.catalog",
+            'def f(x: "backend.application.retrieval.interfaces.snapshot_provider.RetrievalSnapshotProvider") -> None:\n    pass\n',
             1,
-            "annotation backend.application.retrieval.snapshot_contracts.RetrievalSnapshotProvider",
+            "annotation backend.application.retrieval.interfaces.snapshot_provider.RetrievalSnapshotProvider",
         ),
         (
-            "backend.application.indexing.attachment_projection",
-            "from ..retrieval.retrieve_evidence import retrieve_evidence\n",
+            "backend.application.indexing.queries.services.attachment_projection",
+            "from backend.application.retrieval.queries.services.evidence_retrieval import retrieve_evidence\n",
             1,
-            "import backend.application.retrieval.retrieve_evidence.retrieve_evidence",
+            "import backend.application.retrieval.queries.services.evidence_retrieval.retrieve_evidence",
         ),
         (
             "backend.infrastructure.persistence.postgres_registration",
@@ -1105,9 +1110,9 @@ def test_domain_has_no_compatibility_facades() -> None:
         ),
         (
             "backend.presentation.chat_service",
-            "from ..domain.attachment.repositories import EvidenceRepository\n",
+            "from ..domain.attachment.repositories import EvidenceQueryReader\n",
             1,
-            "import backend.domain.attachment.repositories.EvidenceRepository",
+            "import backend.domain.attachment.repositories.EvidenceQueryReader",
         ),
         (
             "backend.presentation.evidence_models",
@@ -1205,11 +1210,11 @@ def test_import_linter_contracts_detect_submodule_violations() -> None:
         (
             "Domain does not depend on outer layers",
             "backend.domain.attachment.services",
-            "backend.application.chat.answer_question",
+            "backend.application.chat.queries.services.answer_question",
         ),
         (
             "Application does not depend on outer layers",
-            "backend.application.retrieval.retrieve_evidence",
+            "backend.application.retrieval.queries.services.evidence_retrieval",
             "backend.infrastructure.persistence.sqlite_evidence_repository",
         ),
         (
@@ -1284,33 +1289,33 @@ def test_import_linter_contracts_detect_submodule_violations() -> None:
         ),
         (
             "Non-chat application contexts do not depend on chat",
-            "backend.application.retrieval.retrieve_evidence",
-            "backend.application.chat.answer_question",
+            "backend.application.retrieval.queries.services.evidence_retrieval",
+            "backend.application.chat.queries.services.answer_question",
         ),
         (
             "Non-chat application contexts do not depend on chat",
-            "backend.application.attachment_import.import_document",
-            "backend.application.chat.answer_question",
+            "backend.application.attachment_import.commands.import_documents",
+            "backend.application.chat.queries.services.answer_question",
         ),
         (
             "Medicine catalogue does not depend on retrieval use cases",
-            "backend.application.medicine.autocomplete",
-            "backend.application.retrieval.snapshot_contracts",
+            "backend.application.medicine.queries.catalog",
+            "backend.application.retrieval.interfaces.snapshot_provider",
         ),
         (
             "Medicine catalogue does not depend on retrieval use cases",
-            "backend.application.medicine.autocomplete",
-            "backend.application.indexing.attachment_projection",
+            "backend.application.medicine.queries.catalog",
+            "backend.application.indexing.queries.services.attachment_projection",
         ),
         (
             "Application contexts follow directed pipeline boundaries",
-            "backend.application.indexing.attachment_projection",
-            "backend.application.retrieval.retrieve_evidence",
+            "backend.application.indexing.queries.services.attachment_projection",
+            "backend.application.retrieval.queries.services.evidence_retrieval",
         ),
         (
             "Application contexts follow directed pipeline boundaries",
-            "backend.application.attachment_import.import_document",
-            "backend.application.retrieval.retrieve_evidence",
+            "backend.application.attachment_import.commands.import_documents",
+            "backend.application.retrieval.queries.services.evidence_retrieval",
         ),
         (
             "Persistence does not depend on input sources",
@@ -1572,31 +1577,31 @@ def test_response_dto_boundaries_in_presentation() -> None:
     [
         (
             "from .chat_models import ChatResponse as Public\n"
-            "from ..application.chat.chat_models import ChatResponse as Result\n"
+            "from ..application.chat.models import ChatResponse as Result\n"
             "def convert(value: Public) -> Result: ...\n",
             True,
         ),
         (
             "from . import evidence_models as api\n"
-            "from ..application.retrieval import retrieval_models as app\n"
+            "from ..application.retrieval import models as app\n"
             "def convert(*, values: 'list[api.ChatSource]') -> 'list[app.Evidence]': ...\n",
             True,
         ),
         (
             "from .medicine_models import MedicineMatch as Public\n"
-            "from ..application.medicine.product_models import ResolvedMedicine\n"
+            "from ..application.medicine.models import ResolvedMedicine\n"
             "def convert(value: Public): return ResolvedMedicine()\n",
             True,
         ),
         (
             "from .chat_models import ChatMessage as Public\n"
-            "from ..application.chat.chat_models import ChatMessage as Input\n"
+            "from ..application.chat.models import ChatMessage as Input\n"
             "def convert(value: Public) -> Input: ...\n",
             False,
         ),
         (
             "from .chat_models import ChatResponse as Public\n"
-            "from ..application.chat.chat_models import ChatResponse as Result\n"
+            "from ..application.chat.models import ChatResponse as Result\n"
             "def convert(value: Result) -> Public: ...\n",
             False,
         ),
@@ -1608,7 +1613,7 @@ def test_response_dto_boundaries_in_presentation() -> None:
         (
             "from collections.abc import Callable, Awaitable\n"
             "from .evidence_models import ChatSource\n"
-            "from ..application.chat.chat_models import ChatResponse\n"
+            "from ..application.chat.models import ChatResponse\n"
             "def prepare(notify: Callable[[list[ChatSource]], Awaitable[None]]) -> ChatResponse: ...\n",
             False,
         ),
@@ -1640,23 +1645,23 @@ def test_retrieval_is_owned_by_application_without_domain_facade():
     "caller, target, allowed",
     [
         (
-            "backend.application.retrieval.search_models",
-            "backend.application.indexing.search_values.SearchUnitId",
+            "backend.application.retrieval.queries.models",
+            "backend.application.indexing.values.SearchUnitId",
             True,
         ),
         (
-            "backend.application.indexing.search_models",
-            "backend.application.retrieval.search_models.Evidence",
+            "backend.application.indexing.queries.models",
+            "backend.application.retrieval.queries.models.Evidence",
             False,
         ),
         (
-            "backend.application.retrieval.search_values",
-            "backend.application.retrieval.search_models.SearchCriteria",
+            "backend.application.retrieval.values",
+            "backend.application.retrieval.queries.models.SearchCriteria",
             False,
         ),
         (
             "backend.domain.attachment.services",
-            "backend.application.retrieval.search_policy.merge_evidence",
+            "backend.application.retrieval.queries.policies.selection.merge_evidence",
             False,
         ),
     ],

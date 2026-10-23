@@ -4,15 +4,25 @@ import html
 import json
 from typing import Any
 
-from backend.application.indexing.search_models import (
+from backend.application.attachment_import.commands.models import (
+    ImportedProduct,
+    ImportedRevision,
+    ImportResult,
+    ImportWarning,
+)
+from backend.application.indexing.queries.models import (
+    IndexDocument,
+    IndexUnit,
     SearchContentBlock,
     SearchContentReference,
     SearchParagraph,
     SearchTableBlock,
     SearchUnit,
 )
-from backend.application.medicine.product_models import RegisteredMedicine
-from backend.application.retrieval.search_policy import section_code_matches
+from backend.application.medicine.queries.models import RegisteredMedicine
+from backend.application.retrieval.queries.policies.selection import (
+    section_code_matches,
+)
 from backend.domain.attachment.value_objects import MedicineDocumentReference
 from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.primitives import (
@@ -23,13 +33,6 @@ from backend.domain.medicine.primitives import (
 )
 from backend.domain.medicine.value_objects import MedicineNames
 
-from ..application.attachment_import.import_models import (
-    ImportedProduct,
-    ImportedRevision,
-    ImportResult,
-    ImportWarning,
-)
-from ..application.indexing.index_models import IndexDocument, IndexUnit
 from ..domain.attachment.entities import AttachmentDocument
 from ..domain.attachment.identifiers import DocumentId
 from ..domain.attachment.primitives import PmdaUrl

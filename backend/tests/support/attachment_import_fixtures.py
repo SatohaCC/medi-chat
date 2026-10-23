@@ -2,7 +2,9 @@
 
 import json
 
-from backend.application.indexing.attachment_projection import project_attachment
+from backend.application.indexing.queries.services.attachment_projection import (
+    project_attachment,
+)
 from backend.infrastructure.pmda_xml.artifact_mapping import PmdaArtifactEncoder
 from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
 

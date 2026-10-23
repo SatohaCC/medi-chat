@@ -5,15 +5,18 @@ import itertools
 import threading
 from copy import deepcopy
 
+import backend.application.chat.queries.services.reply_preparation as preparation
+import backend.application.retrieval.queries.services.evidence_retrieval as retrieval
 import pytest
-from backend.application.chat import answer_preparation as preparation
-from backend.application.chat.chat_models import ChatMessage
-from backend.application.medicine.product_models import RegisteredMedicine
-from backend.application.retrieval import retrieve_evidence as retrieval
-from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
-from backend.application.retrieval.jev_detector import JevDetectionResult
-from backend.application.retrieval.search_models import SearchCriteria
-from backend.application.retrieval.search_values import (
+from backend.application.chat.queries.models import ChatMessage
+from backend.application.medicine.queries.models import RegisteredMedicine
+from backend.application.retrieval.queries.models import (
+    IntentRequest,
+    IntentResult,
+    JevDetectionResult,
+    SearchCriteria,
+)
+from backend.application.retrieval.values import (
     DetectionSource,
     IntentName,
     SearchKeyword,

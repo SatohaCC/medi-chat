@@ -7,10 +7,12 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from ..application.medicine.autocomplete import read_autocomplete_catalog
-from ..application.medicine.suggestions import MedicineSuggester
-from ..application.retrieval.snapshot_contracts import RetrievalSnapshotProvider
-from .dependencies import get_generation_runtime, get_medicine_suggester
+from backend.application.medicine.queries.catalog import (
+    MedicineQueries,
+)
+from backend.application.medicine.queries.suggest_medicines import MedicineSuggester
+
+from .dependencies import get_medicine_service, get_medicine_suggester
 from .medicine_models import MedicineMatch
 
 
@@ -61,9 +63,9 @@ class AutocompleteResponse(BaseModel):
 
 @router.get("/api/medicines/autocomplete", response_model=AutocompleteResponse)
 async def autocomplete(
-    runtime: Annotated[RetrievalSnapshotProvider, Depends(get_generation_runtime)],
+    service: Annotated[MedicineQueries, Depends(get_medicine_service)],
 ) -> AutocompleteResponse:
-    generation_id, items = await read_autocomplete_catalog(runtime)
+    generation_id, items = await service.read_autocomplete_catalog()
     return AutocompleteResponse(
         generation_id=generation_id.value,
         items=[CompactMedicineResponse(**item) for item in items],

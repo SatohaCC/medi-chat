@@ -1,8 +1,8 @@
 """検索単位の本文保持と構造による選択を検証する。"""
 
 import pytest
-from backend.application.indexing.search_models import SearchUnit
-from backend.application.indexing.search_values import (
+from backend.application.indexing.queries.models import SearchUnit
+from backend.application.indexing.values import (
     EvidenceContextLabel,
     SearchUnitId,
     SearchUnitKind,

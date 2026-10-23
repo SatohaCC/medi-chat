@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
+from contextlib import aclosing as closing_stream
 from contextlib import suppress
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
-from ..application.chat.stream_closing import closing_stream
-from ..application.medicine.input_values import InvalidMedicineInput, parse_yj_codes
+from backend.application.medicine.errors import InvalidMedicineInput
+from backend.application.medicine.queries.catalog import (
+    MedicineQueries,
+)
+
 from .chat_models import ChatMessage
 from .chat_service import AppChatService as ChatService
 from .dependencies import get_chat_service
@@ -120,7 +124,7 @@ async def stream_chat_response(
 
             if not service:
                 try:
-                    parse_yj_codes(payload.product_yj_codes)
+                    MedicineQueries.validate_product_codes(payload.product_yj_codes)
                 except InvalidMedicineInput as exc:
                     await websocket.send_json({"type": "error", "content": str(exc)})
                     continue

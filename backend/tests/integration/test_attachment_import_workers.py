@@ -6,11 +6,18 @@ import json
 import threading
 
 import pytest
-from backend.application.attachment_import.import_document import (
-    AttachmentImportService,
+from backend.application.attachment_import.commands.import_documents import (
+    AttachmentImportCommands,
 )
-from backend.application.attachment_import.import_errors import ImportNotFound
+from backend.application.attachment_import.errors import ImportNotFound
+from backend.application.attachment_import.queries.import_history import (
+    ImportHistoryQueries,
+)
 from backend.infrastructure.persistence import postgres_schema as schema
+from backend.infrastructure.persistence.import_workers import ImportWorkers
+from backend.infrastructure.persistence.original_document_registration import (
+    OriginalDocumentRegistration,
+)
 from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
 from backend.tests.integration.test_postgres_registration import (
     pg_publisher as pg_publisher,
@@ -23,10 +30,12 @@ from sqlalchemy import select
 
 
 def service(publisher, decoder=None):
-    return AttachmentImportService(
-        decoder=decoder or PmdaXmlDecoder(),
-        publisher=publisher,
+    return AttachmentImportCommands(
+        executor=ImportWorkers(),
         reader=publisher.results,
+        registration=OriginalDocumentRegistration(
+            decoder=decoder or PmdaXmlDecoder(), publisher=publisher
+        ),
     )
 
 
@@ -52,10 +61,18 @@ async def test_missing_figure_warning_and_caption_survive_store_restart(
         await first.aclose()
     restarted = service(pg_publisher)
     try:
-        assert (
-            await restarted.read_result(result.document_id, result.source_sha256)
-            == result
-        )
+        detail = await ImportHistoryQueries(
+            reader=pg_publisher.results, executor=restarted._executor
+        ).read_result(result.document_id, result.source_sha256)
+        assert detail.document_id == result.document_id
+        assert detail.source_sha256 == result.source_sha256
+        assert detail.status == result.status
+        assert [(p.yj_code, p.brand_name) for p in detail.products] == [
+            (p.yj_code, p.brand_name) for p in result.products
+        ]
+        assert [(w.code, w.reference) for w in detail.warnings] == [
+            (w.code, w.reference) for w in result.warnings
+        ]
     finally:
         await restarted.aclose()
 
@@ -137,7 +154,9 @@ async def test_cancellation_waits_for_owned_worker_and_never_publishes_stage(
                 select(schema.versions.c.version_id)
             ).scalars().all() == [f"{old.document_id}:{old.source_sha256}"]
         with pytest.raises(ImportNotFound):
-            await importer.read_result(old.document_id, hashlib.sha256(raw).hexdigest())
+            await ImportHistoryQueries(
+                reader=pg_publisher.results, executor=importer._executor
+            ).read_result(old.document_id, hashlib.sha256(raw).hexdigest())
     finally:
         release.set()
         await asyncio.gather(task, return_exceptions=True)

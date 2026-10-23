@@ -13,10 +13,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from backend.application.indexing.search_values import SearchSectionCode
-from backend.application.medicine.product_models import ResolvedMedicine
-from backend.application.retrieval.search_models import SearchCriteria
-from backend.application.retrieval.search_values import DetectionSource
+from backend.application.indexing.values import SearchSectionCode
+from backend.application.medicine.queries.models import ResolvedMedicine
+from backend.application.retrieval.queries.models import SearchCriteria
+from backend.application.retrieval.values import DetectionSource
 from backend.config.database_settings import resolve_postgres_database_settings
 from backend.config.runtime_environment import load_runtime_environment
 from backend.domain.medicine.value_objects import MedicineMatch

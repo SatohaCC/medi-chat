@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import unittest
 
-from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
-from backend.application.retrieval.jev_detector import detect_jev_criteria
-from backend.application.retrieval.search_policy import select_intents
+from backend.application.retrieval.queries.models import IntentRequest, IntentResult
+from backend.application.retrieval.queries.policies.selection import select_intents
+from backend.application.retrieval.queries.services.intent_detection import (
+    detect_jev_criteria,
+)
 from backend.domain.foundation.json_types import JsonValue
 from backend.infrastructure.intent.jev_intent_mapping import map_jev_intent_result
 from backend.infrastructure.package_insert_definitions.assembly import (

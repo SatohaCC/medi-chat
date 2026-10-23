@@ -1,7 +1,12 @@
 from pydantic import BaseModel, ConfigDict, Field
 
-from ..application.attachment_import.import_models import ImportPage, ImportResult
-from ..application.attachment_import.upload_models import CHUNK_BYTES, MAX_SOURCE_BYTES
+from backend.application.attachment_import.commands.models import ImportResult
+from backend.application.attachment_import.queries.dtos.import_views import (
+    ImportDetail,
+    ImportPage,
+)
+from backend.application.file_upload.commands.models import MAX_SOURCE_BYTES
+from backend.config.upload_settings import CHUNK_BYTES
 
 
 class UploadRequest(BaseModel):
@@ -124,7 +129,9 @@ class AttachmentImportResponse(BaseModel):
     artifacts_deleted: bool
 
     @classmethod
-    def from_result(cls, result: ImportResult) -> AttachmentImportResponse:
+    def from_result(
+        cls, result: ImportResult | ImportDetail
+    ) -> AttachmentImportResponse:
         return cls(
             document_id=result.document_id,
             source_sha256=result.source_sha256,

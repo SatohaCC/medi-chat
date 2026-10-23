@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 
-from ...application.chat.stream_closing import closing_stream
+from backend.application.chat.queries.services.stream_lifetime import closing_stream
+
 from .error_messages import format_llm_error
 from .mock_response import stream_mock_response
 from .provider_errors import LLMRequestError, LLMUnavailableError

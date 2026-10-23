@@ -2,10 +2,9 @@
 
 from copy import deepcopy
 
-from backend.application.retrieval.search_models import IntentCandidate
-from backend.application.retrieval.search_values import IntentName, Probability
+from backend.application.retrieval.queries.models import IntentCandidate, IntentResult
+from backend.application.retrieval.values import IntentName, Probability
 
-from ...application.retrieval.intent_contracts import IntentResult
 from ...domain.foundation.json_types import JsonValue
 
 

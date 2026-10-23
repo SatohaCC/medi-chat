@@ -1,17 +1,20 @@
-from backend.application.indexing.search_models import SearchUnit
-
-from ...application.attachment_import.import_errors import (
-    ImportLimitExceeded,
-    InvalidAttachment,
-)
-from ...application.attachment_import.import_models import (
-    ArtifactBundle,
-    ArtifactFile,
+from backend.application.attachment_import.commands.models import (
     ImportedProduct,
     ImportedRevision,
     ImportResult,
     ImportWarning,
 )
+from backend.application.attachment_import.errors import (
+    ImportLimitExceeded,
+    InvalidAttachment,
+)
+from backend.application.indexing.queries.models import SearchUnit
+from backend.infrastructure.import_payloads import (
+    ArtifactBundle,
+    ArtifactFile,
+    AttachmentSourceInformation,
+)
+
 from ...domain.attachment.entities import AttachmentDocument
 from ..index_payloads import (
     MAX_ARTIFACT_BYTES,
@@ -20,7 +23,6 @@ from ..index_payloads import (
     result_dict,
     result_from_dict,
 )
-from .decoder import SourceInformation
 
 __all__ = [
     "MAX_ARTIFACT_BYTES",
@@ -38,12 +40,8 @@ class PmdaArtifactEncoder:
         self,
         document: AttachmentDocument,
         search_units: tuple[SearchUnit, ...],
-        source_info: object,
+        source_info: AttachmentSourceInformation,
     ) -> ArtifactBundle:
-        if not isinstance(source_info, SourceInformation):
-            raise InvalidAttachment(
-                "invalid_source_information", "Source information is invalid"
-            )
         info = source_info
         templates: dict[str, list[dict]] = {}
         for row in info.rows:

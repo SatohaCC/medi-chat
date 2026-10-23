@@ -10,11 +10,13 @@ import threading
 import time
 
 import pytest
-from backend.application.chat.chat_service import ChatApplicationService
-from backend.application.indexing.search_values import SearchSectionCode
-from backend.application.medicine.product_models import ResolvedMedicine
-from backend.application.retrieval.search_models import SearchCriteria
-from backend.application.retrieval.search_values import DetectionSource
+from backend.application.chat.queries.chat import (
+    ChatQueries,
+)
+from backend.application.indexing.values import SearchSectionCode
+from backend.application.medicine.queries.models import ResolvedMedicine
+from backend.application.retrieval.queries.models import SearchCriteria
+from backend.application.retrieval.values import DetectionSource
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import BrandName, MatchedAlias
 from backend.domain.medicine.value_objects import MedicineMatch
@@ -420,7 +422,7 @@ async def test_pg051_injected_pool_is_reused_and_only_owner_disposes(
 async def test_pg027_detectors_pin_old_scope_then_llm_has_no_connection(
     pg_engines, pg_publisher
 ):
-    from backend.application.retrieval.intent_contracts import IntentResult
+    from backend.application.retrieval.queries.models import IntentResult
     from backend.infrastructure.package_insert_definitions.assembly import (
         get_package_insert_definitions,
     )
@@ -466,7 +468,7 @@ async def test_pg027_detectors_pin_old_scope_then_llm_has_no_connection(
 
     definitions = get_package_insert_definitions()
     service = AppChatService(
-        application_service=ChatApplicationService(
+        application_service=ChatQueries(
             intent_classifier=Detector(),
             keyword_extractor=Keywords(),
             intent_policy=definitions.intent_policy,

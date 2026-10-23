@@ -1,8 +1,10 @@
 import asyncio
 
 import pytest
-from backend.application.retrieval.retrieve_evidence import retrieve_evidence
-from backend.application.retrieval.search_values import DetectionSource
+from backend.application.retrieval.queries.services.evidence_retrieval import (
+    retrieve_evidence,
+)
+from backend.application.retrieval.values import DetectionSource
 from backend.infrastructure.package_insert_definitions.assembly import (
     get_package_insert_definitions,
 )
@@ -87,8 +89,8 @@ async def test_no_safety_sections_does_not_create_empty_evidence():
 async def test_detectors_start_while_initial_evidence_is_in_flight(
     monkeypatch, blocked_phase
 ):
-    from backend.application.retrieval import retrieve_evidence as retrieval
-    from backend.application.retrieval.jev_detector import JevDetectionResult
+    import backend.application.retrieval.queries.services.evidence_retrieval as retrieval
+    from backend.application.retrieval.queries.models import JevDetectionResult
 
     loop = asyncio.get_running_loop()
     started = {name: asyncio.Event() for name in ("logic", "keyword", "jev")}
@@ -142,10 +144,14 @@ async def test_detectors_start_while_initial_evidence_is_in_flight(
 @pytest.mark.asyncio
 @pytest.mark.parametrize("entry", ["prepare_reply", "answer_question"])
 async def test_custom_always_sections_are_injected_through_chat_service(entry):
-    from backend.application.chat.chat_models import ChatMessage
-    from backend.application.chat.chat_service import ChatApplicationService
-    from backend.application.indexing.search_values import SearchSectionCode
-    from backend.application.retrieval.standard_policies import EvidenceRetrievalPolicy
+    from backend.application.chat.queries.chat import (
+        ChatQueries,
+    )
+    from backend.application.chat.queries.models import ChatMessage
+    from backend.application.indexing.values import SearchSectionCode
+    from backend.application.retrieval.queries.policies.standard import (
+        EvidenceRetrievalPolicy,
+    )
 
     conditions = []
 
@@ -159,7 +165,7 @@ async def test_custom_always_sections_are_injected_through_chat_service(entry):
             yield "テスト回答"
 
     definitions = get_package_insert_definitions()
-    service = ChatApplicationService(
+    service = ChatQueries(
         intent_classifier=NoJev(),
         keyword_extractor=NoKeywords(),
         intent_policy=definitions.intent_policy,

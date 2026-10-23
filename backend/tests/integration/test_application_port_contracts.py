@@ -8,35 +8,42 @@ from copy import deepcopy
 from dataclasses import asdict, dataclass, fields, replace
 
 import pytest
-from backend.application.chat.answer_preparation import prepare_reply
-from backend.application.chat.answer_prompt_builder import build_answer_messages
-from backend.application.chat.answer_question import answer_question
-from backend.application.chat.answer_stream import stream_answer
-from backend.application.chat.chat_models import ChatMessage, ChatResponse
-from backend.application.indexing.search_models import DocumentRevision
-from backend.application.indexing.search_values import (
+from backend.application.chat.queries.models import ChatMessage, ChatResponse
+from backend.application.chat.queries.policies.answer_prompt import (
+    build_answer_messages,
+)
+from backend.application.chat.queries.services.answer_generation import stream_answer
+from backend.application.chat.queries.services.answer_question import answer_question
+from backend.application.chat.queries.services.reply_preparation import prepare_reply
+from backend.application.indexing.queries.models import DocumentRevision
+from backend.application.indexing.values import (
     SearchSectionCode,
     SearchUnitId,
     SearchUnitKind,
 )
-from backend.application.medicine.product_models import (
+from backend.application.medicine.queries.models import (
     RegisteredMedicine,
     ResolvedMedicine,
 )
-from backend.application.retrieval.evidence_contracts import EvidenceSearchTarget
-from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
-from backend.application.retrieval.jev_detector import (
-    JevDetectionResult,
-    detect_jev_criteria,
+from backend.application.retrieval.interfaces.evidence_query_reader import (
+    EvidenceSearchTarget,
 )
-from backend.application.retrieval.morphology_detector import detect_morphology_criteria
-from backend.application.retrieval.search_models import (
+from backend.application.retrieval.queries.models import (
     Evidence,
     EvidenceSection,
     IntentCandidate,
+    IntentRequest,
+    IntentResult,
+    JevDetectionResult,
     SearchCriteria,
 )
-from backend.application.retrieval.search_values import (
+from backend.application.retrieval.queries.services.intent_detection import (
+    detect_jev_criteria,
+)
+from backend.application.retrieval.queries.services.keyword_detection import (
+    detect_morphology_criteria,
+)
+from backend.application.retrieval.values import (
     DetectionSource,
     EvidenceExcerpt,
     EvidenceGenericName,

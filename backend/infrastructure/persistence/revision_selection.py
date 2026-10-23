@@ -1,6 +1,7 @@
 """登録する原本の改訂年月に基づく公開先選択。"""
 
-from ...application.attachment_import.import_errors import ImportConflict
+from backend.application.attachment_import.errors import ImportConflict
+
 from ...domain.attachment.exceptions import ConflictingRevisionError
 from ...domain.attachment.services import latest_attachment
 from ...domain.attachment.value_objects import RegistrationVersion

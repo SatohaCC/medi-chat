@@ -4,18 +4,18 @@ import hashlib
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
-from backend.application.attachment_import.import_errors import (
-    ImportConflict,
-    ImportGone,
-    ImportLimitExceeded,
-    InvalidAttachment,
+from backend.application.file_upload.commands.models import MAX_SOURCE_BYTES, UploadSpec
+from backend.application.file_upload.errors import (
+    InvalidUpload,
+    UploadConflict,
+    UploadGone,
+    UploadLimitExceeded,
 )
-from backend.application.attachment_import.upload_models import (
-    CHUNK_BYTES,
-    MAX_SOURCE_BYTES,
-    UploadSpec,
+from backend.config.upload_settings import CHUNK_BYTES
+from backend.infrastructure.persistence.postgres_upload import (
+    PostgresUploadImportReceipts,
+    PostgresUploadStore,
 )
-from backend.infrastructure.persistence.postgres_upload import PostgresUploadStore
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
 from sqlalchemy import text
 
@@ -29,16 +29,19 @@ def test_parts_survive_instance_change_and_cannot_be_replaced(pg_engines):
     raw = b"a" * CHUNK_BYTES + b"tail"
     upload_id = a.create(spec(raw))
     a.put(upload_id, 0, raw[:CHUNK_BYTES])
-    with pytest.raises(ImportConflict):
+    with pytest.raises(UploadConflict):
         b.read(upload_id)
     b.put(upload_id, 1, raw[CHUNK_BYTES:])
     a.put(upload_id, 0, raw[:CHUNK_BYTES])
-    with pytest.raises(ImportConflict):
+    with pytest.raises(UploadConflict):
         b.put(upload_id, 0, b"b" * CHUNK_BYTES)
     assert b.read(upload_id).source == raw
-    a.complete(upload_id, "test-document")
-    done = b.read(upload_id)
-    assert done.source is None and done.document_id == "test-document"
+    receipts = PostgresUploadImportReceipts(pg_engines[1])
+    receipts.record(upload_id, "test-document")
+    done = receipts.find(upload_id)
+    assert done is not None and done.document_id == "test-document"
+    with pytest.raises(UploadGone):
+        b.read(upload_id)
     with pg_engines[0].connect() as connection:
         assert (
             connection.execute(
@@ -51,16 +54,16 @@ def test_parts_survive_instance_change_and_cannot_be_replaced(pg_engines):
 def test_size_digest_and_expiration(pg_engines):
     store = PostgresUploadStore(pg_engines[1])
     upload_id = store.create(spec(b"abcd"))
-    with pytest.raises(InvalidAttachment):
+    with pytest.raises(InvalidUpload):
         store.put(upload_id, 0, b"abc")
     store.put(upload_id, 0, b"wxyz")
-    with pytest.raises(InvalidAttachment):
+    with pytest.raises(InvalidUpload):
         store.read(upload_id)
     with pg_engines[0].begin() as connection:
         connection.execute(
             text("UPDATE attachment_uploads SET expires_at=now()-interval '1 second'")
         )
-    with pytest.raises(ImportGone):
+    with pytest.raises(UploadGone):
         store.read(upload_id)
     store.create(spec(b"new"))
     with pg_engines[0].connect() as connection:
@@ -96,9 +99,9 @@ def test_session_capacity_and_completed_sessions_release_admission(pg_engines):
 
     store = PostgresUploadStore(pg_engines[1])
     ids = [store.create(spec(b"test")) for _ in range(MAX_UPLOADS)]
-    with pytest.raises(ImportLimitExceeded):
+    with pytest.raises(UploadLimitExceeded):
         store.create(spec(b"test"))
     store.put(ids[0], 0, b"test")
     assert store.read(ids[0]).source == b"test"
-    store.complete(ids[0], "test-document")
+    PostgresUploadImportReceipts(pg_engines[1]).record(ids[0], "test-document")
     assert store.create(spec(b"next"))

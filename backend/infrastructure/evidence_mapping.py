@@ -2,13 +2,13 @@
 
 from dataclasses import dataclass
 
-from backend.application.indexing.search_models import DocumentRevision
-from backend.application.indexing.search_values import (
+from backend.application.indexing.queries.models import DocumentRevision
+from backend.application.indexing.values import (
     EvidenceContextLabel,
     SearchUnitId,
     SearchUnitKind,
 )
-from backend.application.retrieval.search_models import (
+from backend.application.retrieval.queries.models import (
     Evidence,
     EvidenceColumns,
     EvidenceDocument,
@@ -17,14 +17,14 @@ from backend.application.retrieval.search_models import (
     EvidenceSection,
     TextSearchPolicy,
 )
-from backend.application.retrieval.search_policy import (
+from backend.application.retrieval.queries.policies.selection import (
     build_evidence as format_evidence,
 )
-from backend.application.retrieval.search_policy import (
+from backend.application.retrieval.queries.policies.selection import (
     is_scope_heading_only as scope_heading_only,
 )
-from backend.application.retrieval.search_policy import select_products
-from backend.application.retrieval.search_values import (
+from backend.application.retrieval.queries.policies.selection import select_products
+from backend.application.retrieval.values import (
     DetectionSource,
     EvidenceBrandName,
     EvidenceExcerpt,

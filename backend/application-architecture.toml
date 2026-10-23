@@ -1,0 +1,26 @@
+enforced_features = ["attachment_import", "file_upload", "medicine", "indexing", "retrieval", "chat"]
+
+# Explicit feature dependencies and public module contracts. No per-violation ignores.
+[features.attachment_import]
+depends_on = ["file_upload"]
+public_modules = ["commands.models", "queries.dtos.import_views", "queries.import_history", "interfaces.import_replay", "errors", "policies", "commands.import_documents", "interfaces.original_document_registration", "interfaces.import_query_reader", "interfaces.upload_import_receipts", "interfaces.import_execution"]
+
+[features.file_upload]
+depends_on = []
+public_modules = ["commands.models", "errors", "commands.services.start_upload", "commands.services.upload_part", "commands.services.complete_upload", "interfaces.temporary_file_store"]
+
+[features.chat]
+depends_on = ["retrieval", "medicine", "indexing"]
+public_modules = ["queries.models", "queries.chat", "interfaces.llm_provider", "queries.policies.standard", "queries.services.stream_lifetime"]
+
+[features.retrieval]
+depends_on = ["medicine", "indexing"]
+public_modules = ["queries.models", "values", "queries.policies.selection", "queries.policies.standard", "queries.policies.section_titles", "queries.dtos.evidence", "queries.services.evidence_retrieval", "queries.services.keyword_search", "interfaces.evidence_query_reader", "interfaces.intent_classifier", "interfaces.keyword_extractor", "interfaces.snapshot_provider"]
+
+[features.indexing]
+depends_on = ["medicine"]
+public_modules = ["queries.models", "values", "queries.policies.text_projection", "queries.services.attachment_projection"]
+
+[features.medicine]
+depends_on = []
+public_modules = ["queries.models", "values", "errors", "queries.catalog", "queries.policies.catalog_matching", "interfaces.medicine_query_reader", "queries.suggest_medicines"]

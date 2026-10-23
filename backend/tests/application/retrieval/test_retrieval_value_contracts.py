@@ -3,14 +3,14 @@
 from dataclasses import FrozenInstanceError, fields, replace
 from typing import Any
 
+import backend.application.indexing.queries.models as im
+import backend.application.indexing.values as ip
+import backend.application.retrieval.queries.models as v
+import backend.application.retrieval.values as p
 import pytest
-from backend.application.indexing import search_models as im
-from backend.application.indexing import search_values as ip
-from backend.application.indexing.search_models import SearchUnit
-from backend.application.indexing.search_values import SearchUnitId
-from backend.application.retrieval import search_models as v
-from backend.application.retrieval import search_values as p
-from backend.application.retrieval.evidence_payloads import evidence_payload
+from backend.application.indexing.queries.models import SearchUnit
+from backend.application.indexing.values import SearchUnitId
+from backend.application.retrieval.queries.dtos.evidence import evidence_payload
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.foundation.exceptions import DomainValidationError
 

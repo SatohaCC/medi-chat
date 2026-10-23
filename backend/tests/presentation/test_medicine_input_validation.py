@@ -3,7 +3,9 @@
 from typing import Any
 
 import pytest
-from backend.application.chat.chat_service import ChatApplicationService
+from backend.application.chat.queries.chat import (
+    ChatQueries,
+)
 from backend.infrastructure.package_insert_definitions.assembly import (
     get_package_insert_definitions,
 )
@@ -41,7 +43,7 @@ def client():
         "answer_prompt_policy": definitions.answer_prompt_policy,
         "provider_factory": lambda _: unused,
     }
-    application = ChatApplicationService(**dependencies)
+    application = ChatQueries(**dependencies)
     service = AppChatService(application_service=application)
     app.dependency_overrides[get_chat_service] = lambda: service
     with TestClient(app) as client:
