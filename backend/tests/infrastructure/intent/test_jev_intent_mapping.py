@@ -174,7 +174,10 @@ async def test_opaque_public_json_does_not_control_business_selection_or_prompt(
         replies.append(reply)
         requests.append(reader.conditions)
     assert requests[0] == requests[1]
-    assert tuple(code.value for code in requests[0][0].section_codes) == ("1",)
+    assert [
+        tuple(code.value for code in condition.section_codes)
+        for condition in requests[0]
+    ] == [("1", "2", "8"), ("1",)]
     replies[1].jev_response = {"qualifying_intents": ["dosage", "interaction"]}
     assert build_answer_messages(
         replies[0], conversation, answer_prompt_policy=catalog.answer_prompt_policy
