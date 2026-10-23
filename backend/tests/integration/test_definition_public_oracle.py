@@ -7,9 +7,10 @@ from copy import deepcopy
 from unittest.mock import patch
 from xml.etree import ElementTree as ET
 
-from backend.tests.integration.test_interaction_xml_oracle import ORACLE as XML_ORACLE
+import pytest
 from backend.tests.integration.test_interaction_xml_oracle import (
     assert_public_source,
+    get_interaction_oracle,
     major_expectations,
 )
 from backend.tests.presentation import test_api_routes as api_fixture
@@ -17,6 +18,9 @@ from backend.tests.support.chat_service import compose_chat_service
 from backend.tests.support.paths import FIXTURES_ROOT, PROJECT_ROOT
 from backend.tests.support.section_records import major_unit_id
 from fastapi import FastAPI
+
+pytestmark = [pytest.mark.postgres, pytest.mark.source_data]
+
 
 REFERENCE = FIXTURES_ROOT / "definition-public-reference.json"
 
@@ -79,7 +83,7 @@ def observe_public() -> dict[str, object]:
         service = application.state.chat_service
         results = {}
         # Use the same stored XML pair as the existing full-field evidence oracle.
-        selected = XML_ORACLE
+        selected = get_interaction_oracle()
         for label, codes in (
             ("single", [selected[0]["yj"]]),
             ("multiple", [selected[0]["yj"], selected[1]["yj"]]),
@@ -135,7 +139,11 @@ def test_tc20_public_envelope_is_stable_and_current_content_matches_originals() 
         case = actual[label]
         assert isinstance(case, dict)
         sources = case["rest"]["sources"]
-        documents = XML_ORACLE[:1] if label == "single" else XML_ORACLE[:2]
+        documents = (
+            get_interaction_oracle()[:1]
+            if label == "single"
+            else get_interaction_oracle()[:2]
+        )
         indexed = {
             identifier: (document, code)
             for identifier, document, code in major_expectations(documents)
@@ -156,7 +164,7 @@ def test_tc20_public_envelope_is_stable_and_current_content_matches_originals() 
             document, code = indexed[source["unit_id"]]
             assert_expanded_source(source, document, code, originals)
             expected_routes = ["logic"] if code in {"4", "5"} else ["logic", "jev"]
-            if document is not XML_ORACLE[0] and code == "10":
+            if document is not get_interaction_oracle()[0] and code == "10":
                 expected_routes.append("keyword")
             assert source["retrieved_by"] == expected_routes
         previous_ids = set()

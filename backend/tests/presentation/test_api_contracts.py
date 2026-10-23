@@ -23,15 +23,11 @@ REPO_ROOT = PROJECT_ROOT
 LEGACY_OPENAPI_PATH = FIXTURES_ROOT / "current-openapi-reference.json"
 
 
-@pytest.mark.asyncio
-async def test_rest_and_openapi_contracts_match_baseline(
-    pg_api,
-) -> None:
-
-    # 1. OpenAPI契約比較
+def test_openapi_contracts_match_baseline() -> None:
+    # Schema generation does not need database engines or a running lifespan.
     reference_data = json.loads(LEGACY_OPENAPI_PATH.read_text(encoding="utf-8"))
     expected_openapi = reference_data["schema"]
-    app = pg_api()
+    app = create_app(database_url="postgresql+psycopg://unused@127.0.0.1:1/unused")
     actual_openapi = deepcopy(app.openapi())
     for path in (
         "/api/attachment-imports/uploads",
@@ -51,7 +47,12 @@ async def test_rest_and_openapi_contracts_match_baseline(
         del actual_openapi["components"]["schemas"][name]
     assert actual_openapi == expected_openapi
 
-    # 2. RESTエンドポイント比較
+
+@pytest.mark.asyncio
+async def test_rest_contracts_match_baseline(pg_api) -> None:
+    app = pg_api()
+    actual_openapi = app.openapi()
+    # REST behavior still uses the explicitly owned real PostgreSQL database.
     async with (
         app.router.lifespan_context(app),
         httpx.AsyncClient(

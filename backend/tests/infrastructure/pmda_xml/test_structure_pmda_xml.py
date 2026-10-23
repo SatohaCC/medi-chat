@@ -8,12 +8,16 @@ import unittest
 from pathlib import Path
 from typing import Any
 
+import pytest
 from backend.infrastructure.package_insert_definitions.loader import (
     get_package_insert_definitions,
 )
 from backend.infrastructure.pmda_xml.transform import transform
 from backend.tests.support.paths import PROJECT_ROOT
 from backend.tests.support.section_records import flatten_sections
+
+pytestmark = pytest.mark.source_data
+
 
 DATA_DIR = PROJECT_ROOT / "data/pmda/originals"
 SOURCE = DATA_DIR / "イグザレルト錠２．５ｍｇ" / "630004_3339003F5020_1_08.xml"

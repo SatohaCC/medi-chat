@@ -708,6 +708,7 @@ def test_pg006_007_cli_initialization_and_export_preserve_bytes(pg_engines, tmp_
     assert refused.returncode != 0
 
 
+@pytest.mark.source_data
 def test_pg006_007_full_original_set_and_all_figure_references(
     pg_engines, pg_publisher
 ):

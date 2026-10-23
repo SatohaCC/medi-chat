@@ -10,6 +10,7 @@ from backend import project_paths
 from backend.infrastructure.cli import build_autocomplete_index, structure_pmda_xml
 
 
+@pytest.mark.source_data
 @pytest.mark.parametrize("batch", [False, True])
 @pytest.mark.parametrize("other_cwd", [False, True])
 def test_xml_cli_uses_project_relative_paths(

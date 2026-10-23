@@ -49,6 +49,7 @@ def test_numbered_sections_own_their_body_without_duplicating_children(tmp_path)
     assert (output / "search_units.jsonl").read_bytes() == before
 
 
+@pytest.mark.source_data
 @pytest.mark.parametrize(
     "source",
     sorted((PROJECT_ROOT / "data/pmda/originals").rglob("*.xml")),

@@ -1,7 +1,7 @@
 # 品質コマンドと証跡
 
 以下はリポジトリルートからのコマンド。実行前に対象のpackage.jsonと環境を確認し、現在の差分と承認済み計画に必要な検証を選ぶ。
-backendの依存はuv.lockで管理し、pnpmのbackendスクリプトはuv経由で実行する。backendにはPython 3.14以上と対象パッケージのdev依存が必要。サービス・データ・外部APIキーが必要な検証は前提を明示し、未設定による代替応答やskipを成功としない。
+backendの依存はuv.lockで管理し、pnpmのbackendスクリプトはuv経由で実行する。backendにはPython 3.14以上と対象パッケージのdev依存が必要。通常のローカルpytestは実DB試験を除外し、DB接続・dotenv・認証情報を隔離する。実PostgreSQLはGitHub Actionsの`pnpm test:postgres`で検証する。サービス・データ・外部APIキーが必要な検証は前提を明示し、未設定による代替応答やskip・deselectedを成功としない。
 
 pnpm-workspaceの`python.enabled=false`でpnpmの別Python環境管理を停止し、Python依存はbackendのuv.lockへ一本化する。backend/pylock.tomlはuv exportの標準形式を保持する。Node依存はルートで`pnpm install --frozen-lockfile`を実行する。一時snapshotの共有node_modulesからpackage managerを実行しない。型検査の比較にはルートの実在Pyrightを直接Nodeで起動して`--project <比較対象config>`を指定できる。
 
@@ -10,6 +10,7 @@ pnpm-workspaceの`python.enabled=false`でpnpmの別Python環境管理を停止�
 | 対象 | 読み取り専用の検証 |
 |---|---|
 | backendテスト | `pnpm test:backend`、限定時は`pnpm --filter backend exec pytest tests/<対象>.py` |
+| 実PostgreSQL（CI） | `pnpm test:postgres`（`postgres and not source_data`。接続設定不足は失敗） |
 | backendlint | `pnpm --filter backend lint` |
 | backendformat確認 | `pnpm --filter backend exec ruff format --check .` |
 | Python型検査（Pyright） | `pnpm typecheck:python` |

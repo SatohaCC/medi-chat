@@ -7,6 +7,7 @@
     "dev:raw": "uv run --locked uvicorn --app-dir .. backend.main:app --port 8000 --reload",
     "dev:backend": "pnpm run dev",
     "test": "uv run --locked pytest",
+    "test:postgres": "uv run --locked pytest --postgres -m \"postgres and not source_data\"",
     "test:backend": "pnpm run test",
     "lint": "uv run --locked ruff check . && pnpm run lint:imports && pnpm run lint:boundaries",
     "lint:imports": "cd .. && uv run --project backend --locked lint-imports --config backend/pyproject.toml",

@@ -70,6 +70,7 @@ def test_canonical_title_projection_preserves_raw_text(tmp_path: Path) -> None:
 
 
 def test_tc01_single_source_bytes_and_tc03_constructor_ownership() -> None:
+    from backend.application.chat.chat_service import ChatApplicationService
     from backend.domain.attachment.value_objects import SectionDefinition
     from backend.infrastructure.intent.jev_classifier import JevIntentClassifier
     from backend.infrastructure.morphology.janome_keyword_extractor import (
@@ -83,14 +84,18 @@ def test_tc01_single_source_bytes_and_tc03_constructor_ownership() -> None:
     from backend.presentation.chat_service import AppChatService
     from backend.project_paths import PROJECT_ROOT
 
+    # Git checkout may use CRLF on Windows; pin the repository content with LF.
     assert (
-        hashlib.sha256(DEFINITIONS_PATH.read_bytes()).hexdigest()
-        == "c283b4d3fef0c022936dfb5154775c88b9c5a1892bb3e1000a8c572e0332f2d0"
+        hashlib.sha256(
+            DEFINITIONS_PATH.read_bytes().replace(b"\r\n", b"\n")
+        ).hexdigest()
+        == "d0055d713c4a7365a59b501b0ccaceb62f4b3d082b574dcbbfb80d9bf72f0730"
     )
     assert not (PROJECT_ROOT / "package_inserts").exists()
     assert {field.name for field in fields(SectionDefinition)} == {"code", "title"}
     for constructor, required in (
-        (AppChatService, {"intent_policy", "answer_prompt_policy"}),
+        (ChatApplicationService, {"intent_policy", "answer_prompt_policy"}),
+        (AppChatService, {"application_service"}),
         (JevIntentClassifier, {"classification_settings"}),
         (JanomeKeywordExtractor, {"search_policy", "morphology_settings"}),
         (PostgresRuntime, {"text_search_policy", "workers"}),

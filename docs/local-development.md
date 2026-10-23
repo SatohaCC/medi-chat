@@ -23,9 +23,9 @@ JavaScript依存はpnpm、Python依存はbackendのuvで管理します。pnpm�
 5. `pnpm db:initialize`で空DBへXML/図を登録します。図の参照先欠損/危険path/symlinkを含む初期登録は拒否し、非空DBは置換しません。既存原本・SQLite・生成物は保持します。
 6. 保持原本の明示exportは同CLIの`export --version-id <document_id:sha256> --output-dir <新規出力先>`、清掃は`maintenance`です。exportは`source.xml`と`figures/`へ元bytesを出し、stdoutに元filename/hash/byte数を返します。清掃後はtombstoneだけを保持し、旧版再送でpayloadを復活させません。
 
-実PG試験は専用`medi_chat_test`、owner/app URLを`TEST_DATABASE_URL`/`TEST_RUNTIME_DATABASE_URL`へ設定して実行します。各試験は`medi_chat_test_<run>`schemaだけを作成・削除します。test名のURLだけでdev DBを使うことはできません。接続情報をログや共有文書へ貼り付けないでください。
+通常のローカルテストにはPostgreSQLもテスト用の認証情報も不要です。上記のローカルPostgreSQLはアプリの開発起動に使います。実PG試験はGitHub Actionsの専用`medi_chat_test`で実行し、各試験は`medi_chat_test_<run>`schemaだけを作成・削除します。接続情報をログや共有文書へ貼り付けないでください。
 
-CIの`Synthetic PostgreSQL contracts`は、job所有のPG18 service・非superuser owner/runtime・UUIDschemaで合成XMLの実DB契約と静的ゲートを実行します。原本集合はGit管理外のため配布・自動取得せず、原本を使う全試験・実ブラウザ・性能はデータを準備したPCで実行します。CI部分試験だけを全移行検証とは扱いません。
+CIの`Synthetic PostgreSQL contracts`は、DB不要のテストと、job所有のPG18 service・非superuser owner/runtime・UUIDschemaを使う合成XMLの実DBテスト全体、静的ゲートを実行します。`source_data`で分類したGit管理外の原本・生成物が必要な試験はCI対象外です。原本集合は配布・自動取得せず、原本を使う試験・実ブラウザ・性能はデータと必要な実行環境を準備して別に検証します。
 
 ## 起動
 
@@ -44,12 +44,19 @@ pnpm dev
 | --- | --- |
 | `pnpm lint` | frontend・backendのlintと依存検査 |
 | `pnpm typecheck` | TypeScript・Pyright・mypy |
-| `pnpm test:backend` | backendのテスト |
+| `pnpm test:backend` | DB不要のbackendテスト（ローカル標準） |
+| `pnpm test:postgres` | 合成データによる実PostgreSQLテスト（GitHub Actions） |
 | `pnpm test:e2e` | 通常設定の起動確認とブラウザテスト |
 | `pnpm build` | frontendのビルド |
 
 `pnpm check`と`pnpm format`はファイルを変更します。検証だけを行う場合はlint・型検査を使います。
-実DBテストには `TEST_DATABASE_URL` / `TEST_RUNTIME_DATABASE_URL` が必要です。E2Eの通常設定・モック・実接続の違いは[検証ガイド](../for-llm/guides/validation.md)を参照してください。
+通常の`pytest`も実DBテストを除外します。ローカルではdotenv・APIキー・DB認証を隔離し、SQLAlchemyの実接続を拒否します。DB不要のテストは既存のFake・固定ダブルを使い、SQLite用の代替実装は追加しません。
+
+`pg_engines`に直接・間接依存する試験は`postgres`に自動分類します。fixtureを介さず実DBへ接続する試験には`@pytest.mark.postgres`を付けます。原本・生成物が必要な試験には`@pytest.mark.source_data`を付けます。
+
+実DBの明示実行は`pytest --postgres`で有効になり、`TEST_DATABASE_URL` / `TEST_RUNTIME_DATABASE_URL`の不足・接続エラーは失敗とします。`pnpm test:postgres`はさらに`postgres and not source_data`を選択します。DB不要の合成データ試験だけなら`pnpm test:backend -m "not source_data"`を使います。原本を含む実DB試験は`pytest --postgres -m source_data`で別途選択します。除外件数を成功件数に含めないでください。
+
+E2Eの通常設定・モック・実接続の違いは[検証ガイド](../for-llm/guides/validation.md)を参照してください。
 
 ## データと運用
 

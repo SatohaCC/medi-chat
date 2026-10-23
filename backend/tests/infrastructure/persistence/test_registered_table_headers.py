@@ -18,6 +18,7 @@ CASES = [
 ]
 
 
+@pytest.mark.source_data
 @pytest.mark.parametrize("stem,yj_code", CASES)
 def test_current_encoder_saves_declared_column_titles(stem, yj_code):
     source = next((PROJECT_ROOT / "data/pmda/originals").rglob(f"{stem}.xml"))
