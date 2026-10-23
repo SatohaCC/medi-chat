@@ -70,6 +70,7 @@ def test_canonical_title_projection_preserves_raw_text(tmp_path: Path) -> None:
 
 
 def test_tc01_single_source_bytes_and_tc03_constructor_ownership() -> None:
+    from backend.application.chat.chat_service import ChatApplicationService
     from backend.domain.attachment.value_objects import SectionDefinition
     from backend.infrastructure.intent.jev_classifier import JevIntentClassifier
     from backend.infrastructure.morphology.janome_keyword_extractor import (
@@ -90,7 +91,8 @@ def test_tc01_single_source_bytes_and_tc03_constructor_ownership() -> None:
     assert not (PROJECT_ROOT / "package_inserts").exists()
     assert {field.name for field in fields(SectionDefinition)} == {"code", "title"}
     for constructor, required in (
-        (AppChatService, {"intent_policy", "answer_prompt_policy"}),
+        (ChatApplicationService, {"intent_policy", "answer_prompt_policy"}),
+        (AppChatService, {"application_service"}),
         (JevIntentClassifier, {"classification_settings"}),
         (JanomeKeywordExtractor, {"search_policy", "morphology_settings"}),
         (PostgresRuntime, {"text_search_policy", "workers"}),

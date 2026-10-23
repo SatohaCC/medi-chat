@@ -214,6 +214,7 @@ async def test_pg031_more_than_four_hundred_results_have_no_limit(
         await workers.aclose()
 
 
+@pytest.mark.source_data
 @pytest.mark.asyncio
 async def test_pg032_original_xml_tables_and_sources_match_independent_oracle(
     pg_engines, pg_publisher
@@ -221,8 +222,8 @@ async def test_pg032_original_xml_tables_and_sources_match_independent_oracle(
     from backend.application.medicine.product_models import ResolvedMedicine
     from backend.domain.medicine.value_objects import MedicineMatch
     from backend.tests.integration.test_interaction_xml_oracle import (
-        ORACLE,
         assert_public_source,
+        get_interaction_oracle,
     )
     from backend.tests.support.interaction_raw_oracle import (
         DOCUMENTS,
@@ -230,7 +231,7 @@ async def test_pg032_original_xml_tables_and_sources_match_independent_oracle(
         read_raw_oracle,
     )
 
-    assert read_raw_oracle() == ORACLE
+    assert read_raw_oracle() == get_interaction_oracle()
     for document_id, _, _ in DOCUMENTS:
         publish(
             pg_publisher,
@@ -243,7 +244,7 @@ async def test_pg032_original_xml_tables_and_sources_match_independent_oracle(
         async with PostgresRuntime(
             pg_engines[1], workers=workers
         ).acquire() as snapshot:
-            for document in ORACLE:
+            for document in get_interaction_oracle():
                 medicines = (
                     ResolvedMedicine(
                         MedicineMatch(

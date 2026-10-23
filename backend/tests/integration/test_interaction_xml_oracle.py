@@ -5,6 +5,7 @@ import copy
 import json
 import re
 import time
+from functools import cache
 from html.parser import HTMLParser
 from xml.etree import ElementTree as ET
 
@@ -44,8 +45,14 @@ from backend.tests.support.retrieval_snapshot import FixedSnapshotProvider
 from backend.tests.support.section_records import major_unit_id
 from sqlalchemy import select
 
+pytestmark = pytest.mark.source_data
+
 FIXTURE = FIXTURES_ROOT / "interaction_oracle_v6.json"
-ORACLE = json.loads(FIXTURE.read_text(encoding="utf-8"))
+
+
+@cache
+def get_interaction_oracle():
+    return json.loads(FIXTURE.read_text(encoding="utf-8"))
 
 
 @pytest.fixture
@@ -192,7 +199,7 @@ def assert_original_section_excerpt(excerpt, document, code):
 
 
 def assert_public_collection(sources, pair):
-    documents = ORACLE if pair else ORACLE[:1]
+    documents = get_interaction_oracle() if pair else get_interaction_oracle()[:1]
     expected = major_expectations(documents)
     assert [source["unit_id"] for source in sources] == [item[0] for item in expected]
     for source, (_, doc, code) in zip(sources, expected, strict=True):
@@ -204,12 +211,12 @@ def assert_public_collection(sources, pair):
 
 
 def test_tc121_fixed_fixture_matches_original_xml_and_detects_swapped_columns_targets():
-    assert read_raw_oracle() == ORACLE
-    altered = copy.deepcopy(ORACLE)
+    assert read_raw_oracle() == get_interaction_oracle()
+    altered = copy.deepcopy(get_interaction_oracle())
     row = altered[0]["sections"]["10.1"]["rows"][0]
     row[0], row[1] = row[1], row[0]
     assert altered != read_raw_oracle()
-    altered = copy.deepcopy(ORACLE)
+    altered = copy.deepcopy(get_interaction_oracle())
     altered[0]["sections"]["10.1"]["references"][0]["target_section_code"] = "16.7.2"
     assert altered != read_raw_oracle()
 
@@ -289,7 +296,7 @@ def assert_owned_paragraph_blocks(blocks, expected, yj):
 def test_tc121_x16_7_all_ten_item_contexts_and_25_original_positions(
     registered_publisher,
 ):
-    document = ORACLE[0]
+    document = get_interaction_oracle()[0]
     expected = document["sections"]["16.7"]
     original = next(
         (ROOT / "data/pmda/originals").glob(f"*/{document['document_id']}.xml")
@@ -419,7 +426,9 @@ async def test_tc120_122_all_detector_collection_and_tc121_original_tables(
                 keyword_extractor=Keywords(),
                 intent_policy=get_package_insert_definitions().intent_policy,
             )
-        expected_docs = ORACLE if pair else ORACLE[:1]
+        expected_docs = (
+            get_interaction_oracle() if pair else get_interaction_oracle()[:1]
+        )
         expected = major_expectations(expected_docs)
         assert [source.unit_id.value for source in result.sources] == [
             item[0] for item in expected
@@ -468,7 +477,7 @@ async def test_tc120_122_all_detector_collection_and_tc121_original_tables(
                 by.add("jev")
             if (
                 pair
-                and document is not ORACLE[0]
+                and document is not get_interaction_oracle()[0]
                 and code == "10"
                 and profile != "empty_keyword"
             ):
@@ -506,7 +515,8 @@ async def test_tc121_complete_six_tables_and_original_reference_destinations(
             )
         sources = sorted(sources, key=lambda source: source.unit_id.value)
         expected = sorted(
-            major_expectations(ORACLE, ("10.1", "10.2")), key=lambda item: item[0]
+            major_expectations(get_interaction_oracle(), ("10.1", "10.2")),
+            key=lambda item: item[0],
         )
         assert [source.unit_id.value for source in sources] == [
             item[0] for item in expected
@@ -621,7 +631,7 @@ async def test_tc123_all_evidence_reaches_recording_provider_and_conversation(
                 model_name=None,
             )
         assert reply.answer == "送信観測のみ"
-        documents = ORACLE if pair else ORACLE[:1]
+        documents = get_interaction_oracle() if pair else get_interaction_oracle()[:1]
         assert_prompt_oracle(provider.messages, documents)
         altered = copy.deepcopy(provider.messages)
         altered[0]["content"] = altered[0]["content"].replace(
@@ -637,7 +647,9 @@ async def test_tc123_all_evidence_reaches_recording_provider_and_conversation(
         with pytest.raises(AssertionError):
             assert_prompt_oracle(altered, documents)
         altered = copy.deepcopy(provider.messages)
-        missing_url = ORACLE[0]["sections"]["16.7"]["references"][0]["target_url"]
+        missing_url = get_interaction_oracle()[0]["sections"]["16.7"]["references"][0][
+            "target_url"
+        ]
         altered[0]["content"] = (
             prefix + "[根拠 " + final_block.replace(missing_url, "参照欠落")
         )

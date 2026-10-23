@@ -2,6 +2,7 @@
 
 import asyncio
 
+import pytest
 from backend.application.indexing.search_values import SearchSectionCode
 from backend.application.medicine.product_models import ResolvedMedicine
 from backend.application.retrieval.evidence_payloads import evidence_payload
@@ -18,6 +19,8 @@ from backend.tests.integration.test_postgres_registration import (
 from backend.tests.integration.test_postgres_registration import publish
 from backend.tests.support.paths import PROJECT_ROOT
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
+
+pytestmark = pytest.mark.source_data
 
 
 def test_generated_section_is_one_postgres_hit_with_table_and_original_revision(

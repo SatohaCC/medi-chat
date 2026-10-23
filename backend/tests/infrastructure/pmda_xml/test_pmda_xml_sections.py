@@ -22,6 +22,7 @@ def resolve_targets(root, identifiers):
     }
 
 
+@pytest.mark.source_data
 @pytest.mark.parametrize(
     ("identifier", "expected"),
     [

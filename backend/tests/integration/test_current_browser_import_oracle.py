@@ -14,6 +14,8 @@ from backend.tests.support.paths import PROJECT_ROOT
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
 from sqlalchemy import select, update
 
+pytestmark = pytest.mark.source_data
+
 
 @pytest.mark.parametrize("damage", [None, "source", "tree", "file", "index"])
 def test_current_browser_oracle_detects_corruption(pg_engines, pg_publisher, damage):

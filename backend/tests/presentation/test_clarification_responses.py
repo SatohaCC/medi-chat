@@ -5,10 +5,13 @@ from __future__ import annotations
 import unittest
 from typing import Any
 
+import pytest
 from backend.tests.support.postgres_public_application import (
     original_application_factory,
 )
 from fastapi.testclient import TestClient
+
+pytestmark = [pytest.mark.postgres, pytest.mark.source_data]
 
 
 class RecordingLLMProvider:

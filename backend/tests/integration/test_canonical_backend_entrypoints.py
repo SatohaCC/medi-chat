@@ -88,6 +88,7 @@ print("canonical independent API passed")
     assert "canonical independent API passed" in result.stdout
 
 
+@pytest.mark.source_data
 @pytest.mark.parametrize("batch", [False, True])
 @pytest.mark.parametrize("missing", [False, True])
 def test_xml_module_entrypoint_is_strict_in_single_and_batch_modes(

@@ -66,32 +66,10 @@ jobs:
           docker exec -i \
             -e POSTGRES_USER -e POSTGRES_OWNER_PASSWORD -e POSTGRES_RUNTIME_PASSWORD \
             '${{ job.services.postgres.id }}' bash < scripts/postgres/init.sh
-      - name: Real PG contracts using synthetic source data
-        run: >-
-          pnpm --filter backend exec uv run --locked pytest
-          tests/infrastructure/persistence/test_postgres_storage.py
-          tests/presentation/test_access_control.py
-          tests/integration/test_private_link_api.py
-          tests/integration/test_configured_e2e_gate.py
-          tests/infrastructure/config/test_dev_logging.py
-          tests/infrastructure/persistence/test_postgres_workers.py
-          tests/infrastructure/persistence/test_postgres_fixture_ownership.py
-          tests/integration/test_postgres_browser_fixture.py
-          tests/integration/test_import_history.py
-          tests/integration/test_postgres_upload.py
-          tests/integration/test_upload_http.py
-          tests/integration/test_postgres_readiness.py
-          tests/integration/test_postgres_snapshot.py
-          tests/integration/test_postgres_storybook_export.py
-          tests/integration/test_postgres_process_failure.py
-          tests/integration/test_postgres_registration.py::test_pg003_005_real_migration_and_runtime_permissions
-          tests/integration/test_postgres_search.py::test_pg028_public_corpus_and_equal_rank_use_legacy_codepoint_order
-          --basetemp "${{ runner.temp }}/ci-postgres-contracts" -q
-      - name: Input boundary regression
-        run: >-
-          pnpm --filter backend exec uv run --locked pytest
-          tests/application/medicine/test_input_values.py
-          tests/presentation/test_medicine_input_validation.py -q
+      - name: Local tests without a database or private source data
+        run: pnpm test:backend -m "not source_data" -q
+      - name: All real PostgreSQL tests using synthetic source data
+        run: pnpm test:postgres -q
       - name: Architecture, lint and Python types
         run: |
           pnpm --filter backend lint

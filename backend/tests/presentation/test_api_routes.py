@@ -6,17 +6,19 @@ import hashlib
 import html
 import json
 import unittest
+from functools import cache
 from typing import Any
 from unittest.mock import patch
 from xml.etree import ElementTree as ET
 
+import pytest
 from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
 from backend.application.retrieval.search_models import IntentCandidate
 from backend.application.retrieval.search_values import IntentName, Probability
 from backend.tests.integration.test_interaction_xml_oracle import (
-    ORACLE,
     assert_prompt_oracle,
     assert_public_collection,
+    get_interaction_oracle,
 )
 from backend.tests.support.chat_service import compose_chat_service
 from backend.tests.support.paths import PROJECT_ROOT
@@ -27,12 +29,19 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 
+pytestmark = [pytest.mark.postgres, pytest.mark.source_data]
+
+
 REPO_ROOT = PROJECT_ROOT
-CATALOGUE = json.loads(
-    (
-        REPO_ROOT / "backend/tests/fixtures/postgres_public_catalogue_oracle.json"
-    ).read_text(encoding="utf-8")
-)
+
+
+@cache
+def get_catalogue_oracle():
+    return json.loads(
+        (
+            REPO_ROOT / "backend/tests/fixtures/postgres_public_catalogue_oracle.json"
+        ).read_text(encoding="utf-8")
+    )
 
 
 class UnavailableIntentClassifier:
@@ -105,14 +114,14 @@ class ChatApiRouteTests(unittest.TestCase):
         for path in (REPO_ROOT / "data/pmda/originals").glob("*/*.xml"):
             self.assertEqual(
                 hashlib.sha256(path.read_bytes()).hexdigest(),
-                CATALOGUE["originals"][path.name],
+                get_catalogue_oracle()["originals"][path.name],
             )
         self.assertEqual(
             response.json(),
             {
                 "status": "ok",
-                "document_count": CATALOGUE["document_count"],
-                "unit_count": CATALOGUE["unit_count"],
+                "document_count": get_catalogue_oracle()["document_count"],
+                "unit_count": get_catalogue_oracle()["unit_count"],
                 "generation_id": self._published_generation(),
             },
         )
@@ -136,7 +145,7 @@ class ChatApiRouteTests(unittest.TestCase):
         self._assert_interaction_xml_contract(pair=False)
 
     def _assert_interaction_xml_contract(self, *, pair: bool) -> None:
-        documents = ORACLE if pair else ORACLE[:1]
+        documents = get_interaction_oracle() if pair else get_interaction_oracle()[:1]
         question = (
             "イグザレルト錠2.5mgとイトラコナゾールの飲み合わせを教えて"
             if pair
@@ -463,7 +472,7 @@ class ChatApiRouteTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         items = response.json()["items"]
-        expected_codes = set(CATALOGUE["yj_codes"])
+        expected_codes = set(get_catalogue_oracle()["yj_codes"])
         actual_codes = {code for item in items for code in item["yj_codes"]}
         self.assertEqual(actual_codes, expected_codes)
 

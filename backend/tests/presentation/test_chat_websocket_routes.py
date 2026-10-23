@@ -7,11 +7,14 @@ import unittest
 from typing import Any
 from unittest.mock import patch
 
+import pytest
 from backend.tests.support.chat_service import compose_chat_service
 from backend.tests.support.postgres_public_application import (
     original_application_factory,
 )
 from fastapi.testclient import TestClient
+
+pytestmark = [pytest.mark.postgres, pytest.mark.source_data]
 
 
 class ChatWebSocketRouteTests(unittest.TestCase):

@@ -235,6 +235,7 @@ def test_fatal_validation_is_never_downgraded_to_figure_warning(body, code):
     assert caught.value.code == code
 
 
+@pytest.mark.source_data
 @pytest.mark.parametrize(
     "source",
     sorted((PROJECT_ROOT / "data/pmda/originals").rglob("*.xml")),

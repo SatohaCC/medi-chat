@@ -10,6 +10,8 @@ from backend.tests.support import postgres_fixtures
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
+pytestmark = pytest.mark.postgres
+
 
 def test_pg049_owned_schema_is_reclaimed_when_engine_setup_fails(monkeypatch):
     postgres_fixtures.validate_test_database_url(os.environ["TEST_DATABASE_URL"])
