@@ -68,12 +68,12 @@ export function connectChatWebSocket(
     ws.onclose = (event) => {
       if (!isCurrent()) return;
       socket = null;
-      onStatusChange("disconnected");
-      if (event?.code === 4001) onAuthenticationExpired?.();
-      if (event?.code === 1008) {
+      // Report the cause before disconnected clears the active exchange state.
+      if (event?.code === 4001 || event?.code === 1008) {
         onAuthenticationExpired?.();
-        return;
       }
+      onStatusChange("disconnected");
+      if (event?.code === 1008) return;
 
       const delay = Math.min(1000 * 2 ** attempt, 5000) + Math.random() * 1000;
       attempt += 1;

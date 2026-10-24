@@ -149,10 +149,11 @@ export function useChatWebSocket({ selectedModel }: UseChatWebSocketOptions) {
     const connection = connectChatWebSocket(wsBaseUrl(), {
       authorize: ensureAuthenticated,
       onAuthenticationExpired: () => {
+        if (!activeRequestRef.current) return;
         activeRequestRef.current = false;
         setIsStreaming(false);
         setMessages((prev) =>
-          patchLastAssistant(prev, (last) => ({
+          patchLastAssistant(markLatestExchangeInterrupted(prev), (last) => ({
             ...last,
             content: `${last.content}\n\nログインの有効期限が切れたため、回答を中断しました。必要に応じてもう一度送信してください。`,
             isError: true,

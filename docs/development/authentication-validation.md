@@ -17,9 +17,9 @@
 | --- | --- |
 | `pnpm quality:changed` | コミット前の最終共通実行は終了コード0。鍵ファイル対応・スキーマ型修正・開発監視・hooks修正を含め、backend・frontend・開発ツールの品質検査を実施 |
 | `pnpm quality:backend` | 最終backend差分で終了コード0。Ruff・Import Linter・Application/Domainハーネス・型・DB不要テストを実施 |
-| DB不要pytest | 1,134 passed、345 deselected。実DB・非公開原本を必要とする試験を成功件数へ含めない |
+| DB不要pytest | レビュー修正後1,135 passed、345 deselected。実DB・非公開原本を必要とする試験を成功件数へ含めない |
 | Application/Domainハーネスの検出能力 | 66 passed / 73 passed。構造適合と業務挙動の検証は別 |
-| frontendのNode単体 | 85 passed。更新集約、2タブ相当のロック、再送抑止、returnTo、既存WS等 |
+| frontendのNode単体 | レビュー修正後87 passed。更新集約、2タブ相当のロック、再送抑止、returnTo、既存WS、期限切れ通知の順序等 |
 | 開発ツールNode / hooks Python | 18 passed、Windowsのsignal試験2件skip / 10 passed。skipを成功に含めない |
 | frontend lint・format・StyleX・型 | 共通品質入口で成功 |
 | `pnpm build` | 最終frontend差分で成功。loginを含む6ページのrouteを生成 |
@@ -70,11 +70,19 @@ Windows・Python 3.14・論理CPU16、RSA2048の試験鍵、DBなしの局所測
 
 `scripts/dev-backend.mjs`が旧401コード`access_required`を期待し、現在の`authentication_required`を異常と判断していた。稼働中の8000番への未認証・読み取り専用probeでも現在の401コードを確認した。判定を現行契約に変更し、試験子プロセスの寿命を延ばして修正前の誤再起動を再現した（終了コード1）。修正後の監視試験は9 passed、Windowsシグナル試験2 skipped。任意の401と認証利用不能503は正常扱いせず、応答途絶時の再起動も検証した。通常pnpm dev全体の長時間連続運転は未検証。反映には監視プロセスの再起動が必要。
 
-## 未実施事項
+## PR #69 レビュー・CI修正
 
-- 実PostgreSQL契約8件を`backend/tests/integration/test_postgres_authentication.py`へ追加。既存CIの`pnpm test:postgres`対象だが、この作業中のCI実行は未実施。
+初回CI（`dd424a2`）の実PostgreSQL試験は226 passed / 6 failed。canonical API、原本保持HTTP、XML定義注入Web、通常アプリのsnapshot試験、DBのみでのOS再起動、複数OSプロセス試験に認証付き利用者の設定漏れがあった。未認証401・Origin拒否403を返し、OS healthはタイムアウトしていた。試験クライアントへ現在の試験鍵で署名したCookie・許可Origin・CSRFヘッダーを明示し、本番の認証境界は維持した。HTTP更新とWebSocketを通すDB不要回帰も追加した。
+
+レビュー指摘は、待機中のWebSocket認証期限切れで完了済み回答までエラー化し、次の質問履歴から除外される問題。修正前の実Next.js＋API/WSモックChromiumで再現した（完了済みケース1 failed、生成中ケース1 passed）。認証期限切れ通知を切断状態通知より先に処理し、進行中の交換だけを中断するよう修正した。修正後は2 passed。再接続後の自動再送なし、完了済み履歴の保持、生成中履歴の除外も観測した。
+
+実DB修正の合否は再実行CIの結果と区別する。ローカルで実DB試験を代用実行していない。
+
+## 残る未実施事項
+
+- 実PostgreSQL認証契約8件を追加。初回CIは実DB全体226 passed / 6 failedであり、全体成功は修正後の再実行CIで確認する。
 - 実DBを使うブラウザ回帰のfixtureには明示的な試験利用者を用意したが、当該ブラウザ層は未実施。APIモック付きChromiumと区別する。
-- ブラウザ全体のvisual snapshot再生成・全ファイル実行、Vercel Preview、実OIDC、外部LLM通信は未実施。
+- ブラウザ全体のvisual snapshot再生成・全ファイル実行、Vercel Preview上の認証動作、実OIDC、外部LLM通信は未実施。初回PRのVercelデプロイcheck自体は成功した。
 - 本番設定・本番DB・実ユーザー作成・本番公開は未実施。
 
 ## 証跡と再発防止候補

@@ -29,6 +29,7 @@ from backend.infrastructure.pmda_xml.artifact_mapping import PmdaArtifactEncoder
 from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
 from backend.infrastructure.pmda_xml.transform import transform
 from backend.tests.support.attachment_import_fixtures import xml_source
+from backend.tests.support.authentication import signed_test_headers
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
 from sqlalchemy import select
 
@@ -159,7 +160,9 @@ async def test_tc19_all_entries_keep_injected_definition_without_reload(
             async with (
                 app.router.lifespan_context(app),
                 httpx.AsyncClient(
-                    transport=httpx.ASGITransport(app=app), base_url="http://test"
+                    transport=httpx.ASGITransport(app=app),
+                    base_url="http://test",
+                    headers=signed_test_headers(),
                 ) as client,
             ):
                 response = await client.post(

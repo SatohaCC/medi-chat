@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { connectChatWebSocket } from "./chatWebSocket.ts";
 
-function setup(t) {
+function setup(t, handlers = {}) {
   const originalWebSocket = globalThis.WebSocket;
   const sockets = [];
   const timers = new Map();
@@ -59,6 +59,7 @@ function setup(t) {
     const connection = connectChatWebSocket("ws://localhost/api/ws", {
       onStatusChange: (status) => statuses.push(status),
       onMessage: (message) => messages.push(message),
+      ...handlers,
     });
     connections.push(connection);
     return connection;
@@ -79,6 +80,25 @@ function setup(t) {
       return sockets.at(-1);
     },
   };
+}
+
+for (const code of [4001, 1008]) {
+  test(`authentication close ${code} reports expiry before clearing active state`, (t) => {
+    let active = true;
+    let interrupted = false;
+    const { sockets } = setup(t, {
+      onAuthenticationExpired: () => {
+        interrupted = active;
+      },
+      onStatusChange: (status) => {
+        if (status === "disconnected") active = false;
+      },
+    });
+    sockets[0].open();
+    sockets[0].onclose({ code });
+    assert.equal(interrupted, true);
+    assert.equal(active, false);
+  });
 }
 
 test("TC-01: 接続状態を通知し、接続後に送受信できる", (t) => {

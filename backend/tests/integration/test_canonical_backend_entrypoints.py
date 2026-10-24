@@ -71,7 +71,8 @@ for module in ("backend.presentation.chat_service", "backend.infrastructure.cli.
     importlib.import_module(module)
 from backend.main import create_app
 from fastapi.testclient import TestClient
-with TestClient(create_app()) as client:
+from backend.tests.support.authentication import signed_test_headers
+with TestClient(create_app(), headers=signed_test_headers()) as client:
     assert client.get("/api").json() == {"status": "ok"}
     assert client.get("/health").json()["status"] == "ok"
     assert len(client.get("/api/medicines").json()["items"]) == 1

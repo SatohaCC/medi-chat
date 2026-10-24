@@ -4,6 +4,8 @@ import json
 import time
 from functools import lru_cache
 
+from backend.config.authentication_settings import read_authentication_settings
+from backend.config.origin_settings import read_allowed_origins
 from backend.domain.identity.identifiers import UserId
 from backend.infrastructure.authentication.tokens import JwtTokens
 from cryptography.hazmat.primitives import serialization
@@ -31,6 +33,24 @@ def authentication_environment() -> dict[str, str]:
         "AUTH_KEY_ID": "test",
         "AUTH_PRIVATE_KEY": private,
         "AUTH_PUBLIC_KEYS": json.dumps({"test": public}),
+    }
+
+
+def signed_test_headers() -> dict[str, str]:
+    """Sign requests using this process's configured test keys, also inherited by children."""
+    settings = read_authentication_settings()
+    now = int(time.time())
+    token = JwtTokens(
+        private_key=settings.private_key.get_secret_value(),
+        public_keys=settings.public_keys,
+        key_id=settings.key_id,
+        issuer=settings.issuer,
+        audience=settings.audience,
+    ).issue(str(UserId.generate()), now, now + 1800)
+    return {
+        "Cookie": "medi_chat_access_token=" + token,
+        "Origin": read_allowed_origins()[0],
+        "X-Medi-Chat-CSRF": "1",
     }
 
 

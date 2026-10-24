@@ -9,6 +9,7 @@ from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
 from backend.tests.integration.test_postgres_registration import (
     pg_publisher as pg_publisher,
 )
+from backend.tests.support.authentication import signed_test_headers
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
 from backend.tests.support.registration_oracles import source
 from fastapi.testclient import TestClient
@@ -37,7 +38,7 @@ def test_http_import_preserves_separately_located_initial_original(
         database_url=os.environ["TEST_RUNTIME_DATABASE_URL"],
         _database_schema=pg_engines[2],
     )
-    with TestClient(app) as client:
+    with TestClient(app, headers=signed_test_headers()) as client:
         response = client.post(
             "/api/attachment-imports",
             files={
