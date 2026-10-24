@@ -1,8 +1,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { expect, type Page, type TestInfo, test } from "@playwright/test";
 import { openChat } from "./helpers/chat";
 import { visualImport, visualJev, visualSource } from "./helpers/presentation";
+import { expect, type Page, type TestInfo, test } from "./helpers/test";
 
 // Development chrome is outside the application visual oracle.
 test.beforeEach(async ({ page }) => {

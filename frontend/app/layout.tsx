@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { S2ClientProvider } from "@/shared/providers/S2ClientProvider";
+import { AuthBoundary } from "../features/authentication/AuthBoundary";
 
 export const metadata: Metadata = {
   title: "薬剤師向け 添付文書検索",
@@ -15,7 +16,9 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body>
-        <S2ClientProvider>{children}</S2ClientProvider>
+        <S2ClientProvider>
+          <AuthBoundary>{children}</AuthBoundary>
+        </S2ClientProvider>
       </body>
     </html>
   );

@@ -39,6 +39,7 @@ export function planFor(scopes, phase = "full") {
   if (scopes.includes("backend")) {
     if (phase === "quick") {
       uv("Python lint", "ruff", "check", "backend", "scripts/checks", "scripts/hooks");
+      uv("Backend Mypy", "mypy", "--config-file", "backend/pyproject.toml", "--no-incremental", "-p", "backend");
     } else {
       pnpm("Backend lint and architecture", "--filter", "backend", "lint");
       uv("Backend format", "ruff", "format", "--check", "backend", "scripts/checks", "scripts/hooks");

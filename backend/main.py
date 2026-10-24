@@ -10,7 +10,6 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .config.access_settings import read_access_secret
 from .config.database_settings import resolve_postgres_database_settings
 from .config.origin_settings import read_allowed_origins
 from .config.runtime_environment import load_runtime_environment
@@ -24,6 +23,8 @@ from .infrastructure.package_insert_definitions.assembly import (
     get_package_insert_definitions,
 )
 from .presentation.access_control import AccessControlMiddleware
+from .presentation.authentication_routes import register_authentication_errors
+from .presentation.authentication_routes import router as authentication_router
 from .presentation.chat_service import AppChatService
 
 # ローカル環境変数の読み込み
@@ -52,7 +53,6 @@ def create_app(
     ):
         raise ValueError("Legacy runtime file settings are not supported")
     settings = resolve_postgres_database_settings(database_url=database_url)
-    access_secret = read_access_secret(required=not settings.is_local)
     lifespan = create_app_lifespan(
         definitions=definitions,
         settings=settings,
@@ -62,7 +62,8 @@ def create_app(
         intent_classifier_cls=JevIntentClassifier,
         keyword_extractor_cls=JanomeKeywordExtractor,
         database_schema=_database_schema
-        or os.environ.get("MEDI_CHAT_DATABASE_SCHEMA", "public"),
+        or os.environ.get("MEDI_CHAT_DATABASE_SCHEMA")
+        or "public",
         janome_initializer=get_janome_tokenizer,
     )
 
@@ -75,7 +76,12 @@ def create_app(
 
     # Next.js フロントエンド向けの CORS 設定
     allowed_origins = read_allowed_origins()
-    application.add_middleware(AccessControlMiddleware, secret=access_secret)
+    application.add_middleware(AccessControlMiddleware)
+    application.state.auth_secure_cookies = (
+        not settings.is_local or os.environ.get("VERCEL") == "1"
+    )
+    register_authentication_errors(application)
+    application.include_router(authentication_router)
     application.add_middleware(
         CORSMiddleware,
         allow_origins=allowed_origins,

@@ -2,17 +2,17 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createSupervisor } from "./dev-backend.mjs";
 
-test("supervisor identifies quiet probes and accepts the access gate's 401", async (t) => {
+test("supervisor identifies quiet probes and accepts the authentication gate's 401", async (t) => {
   let probes = 0;
   t.mock.method(globalThis, "fetch", async (url) => {
     assert.equal(url, "http://127.0.0.1:8000/api?__medi_chat_dev_monitor=1");
     probes++;
-    return new Response(JSON.stringify({ detail: { code: "access_required" } }), { status: 401 });
+    return new Response(JSON.stringify({ detail: { code: "authentication_required" } }), { status: 401 });
   });
   let restarts = 0;
   const supervisor = createSupervisor({
     command: process.execPath,
-    args: ["-e", "setTimeout(() => process.exit(0), 150)"],
+    args: ["-e", "setTimeout(() => process.exit(0), 1500)"],
     healthCheckIntervalMs: 10,
     startupTimeoutMs: 40,
     initialDelayMs: 1,
@@ -22,6 +22,24 @@ test("supervisor identifies quiet probes and accepts the access gate's 401", asy
   assert.equal(restarts, 0);
   assert.ok(probes > 0);
 });
+
+for (const [status, code] of [[401, "unexpected_error"], [503, "authentication_unavailable"]]) {
+  test(`supervisor rejects unhealthy ${status} ${code}`, async (t) => {
+    t.mock.method(globalThis, "fetch", async () =>
+      new Response(JSON.stringify({ detail: { code } }), { status }));
+    let restarts = 0;
+    const supervisor = createSupervisor({
+      command: process.execPath,
+      args: ["-e", "setInterval(() => {}, 1000)"],
+      healthCheckIntervalMs: 20,
+      startupTimeoutMs: 60,
+      initialDelayMs: 1,
+      onRestart: () => { restarts++; supervisor.stop(); },
+    });
+    await supervisor.start();
+    assert.equal(restarts, 1);
+  });
+}
 
 test("supervisor does not restart on clean exit (code 0)", async () => {
   let restarts = 0;

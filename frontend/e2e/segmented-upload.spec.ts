@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./helpers/test";
 
 test("10MiB XML is sent in bounded bodies without changing original bytes", async ({
   page,

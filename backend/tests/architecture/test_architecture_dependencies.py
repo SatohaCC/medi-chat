@@ -106,6 +106,7 @@ INFRASTRUCTURE_ROOT_PAYLOAD_MODULES = {
     "import_payloads",
 }
 ALLOWED_INFRASTRUCTURE_PACKAGES = {
+    "authentication",
     "cli",
     "composition",
     "intent",

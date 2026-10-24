@@ -1,3 +1,4 @@
+import { authenticatedFetch } from "../../../shared/api/authentication";
 import { backendBaseUrl } from "../../../shared/api/endpoints";
 import type {
   AttachmentImportPage,
@@ -8,7 +9,7 @@ export async function listAttachmentImports(
   offset: number,
   signal: AbortSignal,
 ): Promise<AttachmentImportPage> {
-  const response = await fetch(
+  const response = await authenticatedFetch(
     `${backendBaseUrl()}/api/attachment-imports?limit=20&offset=${offset}`,
     { cache: "no-store", signal, credentials: "include" },
   );
@@ -22,11 +23,14 @@ export async function importAttachment(file: File): Promise<AttachmentImportResu
   if (file.size > 3 * 1024 * 1024) return importLargeAttachment(file);
   const form = new FormData();
   form.append("file", file);
-  const response = await fetch(`${backendBaseUrl()}/api/attachment-imports`, {
-    method: "POST",
-    credentials: "include",
-    body: form,
-  });
+  const response = await authenticatedFetch(
+    `${backendBaseUrl()}/api/attachment-imports`,
+    {
+      method: "POST",
+      credentials: "include",
+      body: form,
+    },
+  );
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(
@@ -37,12 +41,15 @@ export async function importAttachment(file: File): Promise<AttachmentImportResu
 }
 
 async function uploadRequest(path: string, body?: BodyInit, contentType?: string) {
-  const response = await fetch(`${backendBaseUrl()}/api/attachment-imports${path}`, {
-    method: "POST",
-    credentials: "include",
-    headers: contentType ? { "Content-Type": contentType } : undefined,
-    body,
-  });
+  const response = await authenticatedFetch(
+    `${backendBaseUrl()}/api/attachment-imports${path}`,
+    {
+      method: "POST",
+      credentials: "include",
+      headers: contentType ? { "Content-Type": contentType } : undefined,
+      body,
+    },
+  );
   if (!response.ok) {
     const result = await response.json().catch(() => null);
     throw new Error(

@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./helpers/test";
 import { openChat } from "./helpers/chat";
 
 test("SX-03: StyleXの色編集と復元が入力・選択を保持してHMRされる", async ({ page }) => {

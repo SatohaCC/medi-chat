@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./helpers/test";
 import type { SourceItem } from "../features/chat/model/chat";
 import { openChat } from "./helpers/chat";
 import { visualSource } from "./helpers/presentation";

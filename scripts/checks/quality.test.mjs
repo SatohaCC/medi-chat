@@ -25,9 +25,12 @@ test("full checks include tests, types and architecture without DB/browser comma
   assert.doesNotMatch(commands, /test:postgres|test:e2e|--write|--fix/);
 });
 
-test("quick checks omit slow test/type suites", () => {
+test("quick checks include uncached Mypy but omit test suites", () => {
   const labels = planFor(["backend", "frontend"], "quick").map((task) => task.label);
-  assert.deepEqual(labels, ["Python lint", "Frontend lint"]);
+  assert.deepEqual(labels, ["Python lint", "Backend Mypy", "Frontend lint"]);
+  const mypy = planFor(["backend"], "quick").find((task) => task.label === "Backend Mypy");
+  assert.ok(mypy.args.includes("--no-incremental"));
+  assert.deepEqual(mypy.args.slice(-2), ["-p", "backend"]);
 });
 
 test("scripts-only changes run tooling type checks in the full gate", () => {

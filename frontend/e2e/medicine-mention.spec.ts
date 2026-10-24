@@ -1,4 +1,4 @@
-import { expect, type Page, test, type WebSocketRoute } from "@playwright/test";
+import { expect, type Page, test, type WebSocketRoute } from "./helpers/test";
 
 interface ChatRequest {
   type: string;

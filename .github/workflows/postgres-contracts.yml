@@ -58,7 +58,7 @@ jobs:
         run: pnpm quality:backend
       - name: Development tooling and generated contracts
         run: pnpm quality:scripts
-      - run: node --experimental-strip-types --test frontend/shared/server/accessToken.test.mjs
+      - run: node --experimental-strip-types --test frontend/shared/api/authentication.test.mjs
       - name: Initialize this job's disposable service with separated roles
         env:
           POSTGRES_USER: postgres

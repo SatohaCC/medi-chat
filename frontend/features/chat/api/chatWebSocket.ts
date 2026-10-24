@@ -3,6 +3,8 @@ import type { ConnectionStatus, WsServerMessage } from "../model/chat";
 interface ChatWebSocketHandlers {
   onStatusChange: (status: ConnectionStatus) => void;
   onMessage: (message: WsServerMessage) => void;
+  authorize?: () => Promise<unknown>;
+  onAuthenticationExpired?: () => void;
 }
 
 export interface ChatWebSocketConnection {
@@ -13,7 +15,12 @@ export interface ChatWebSocketConnection {
 /** Owns the socket and retry timer for one connection lifecycle. */
 export function connectChatWebSocket(
   url: string,
-  { onStatusChange, onMessage }: ChatWebSocketHandlers,
+  {
+    onStatusChange,
+    onMessage,
+    authorize,
+    onAuthenticationExpired,
+  }: ChatWebSocketHandlers,
 ): ChatWebSocketConnection {
   let stopped = false;
   let socket: WebSocket | null = null;
@@ -22,7 +29,18 @@ export function connectChatWebSocket(
 
   function connect() {
     if (stopped) return;
+    if (authorize) {
+      void authorize()
+        .then(() => {
+          if (!stopped) open();
+        })
+        .catch(() => {
+          if (!stopped) onStatusChange("disconnected");
+        });
+    } else open();
+  }
 
+  function open() {
     onStatusChange("connecting");
     const ws = new WebSocket(url);
     socket = ws;
@@ -47,10 +65,15 @@ export function connectChatWebSocket(
       onMessage(message);
     };
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
       if (!isCurrent()) return;
       socket = null;
       onStatusChange("disconnected");
+      if (event?.code === 4001) onAuthenticationExpired?.();
+      if (event?.code === 1008) {
+        onAuthenticationExpired?.();
+        return;
+      }
 
       const delay = Math.min(1000 * 2 ** attempt, 5000) + Math.random() * 1000;
       attempt += 1;

@@ -37,7 +37,11 @@ Python Functionの最大実行時間は300秒。`functions.excludeFiles`と`.ver
 MEDI_CHAT_DATABASE_HOSTS=ep-YOUR-ENDPOINT.YOUR-REGION.aws.neon.tech
 MEDI_CHAT_DATABASE_URL=postgresql+psycopg://APP_ROLE:PASSWORD@ep-YOUR-ENDPOINT.YOUR-REGION.aws.neon.tech/DB_NAME?sslmode=require&channel_binding=require
 PYTHON_DOTENV_DISABLED=1
-APP_SECRET_KEY=REPLACE_WITH_A_RANDOM_PRIVATE_VALUE_AT_LEAST_32_BYTES
+AUTH_ISSUER=https://YOUR_APP_DOMAIN
+AUTH_AUDIENCE=medi-chat
+AUTH_KEY_ID=primary
+AUTH_PRIVATE_KEY=SET_FASTAPI_ONLY_RSA_PRIVATE_PEM
+AUTH_PUBLIC_KEYS=SET_JSON_MAPPING_KID_TO_PUBLIC_PEM
 ALLOWED_ORIGINS=https://YOUR-FRONTEND.vercel.app
 ```
 
@@ -68,7 +72,7 @@ pnpm --filter backend db:migrate
 
 ## デプロイ時に残る作業
 
-公開前に[秘密URLのアクセス制限](private-link-access.md)の設定とPreview検証を完了する。キー未設定のVercel環境ではアプリを起動しない。
+公開前に[個人ログイン](authentication.md)の鍵設定・アカウント準備とPreview検証を完了する。認証の設定不足ではFastAPIは起動しない。Next.jsへ秘密鍵を渡さない。
 
 1. Vercel MarketplaceでNeonを作成し、ProductionとPreviewのDBを分離する。
 2. GitリポジトリをRoot Directory `.`でImportする。ルートのServices設定を使い、DB接続情報・独自ドメインのOriginを設定する。

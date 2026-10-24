@@ -18,6 +18,10 @@ anyio==4.15.1
     #   starlette
     #   typesafe-sdk
     #   watchfiles
+argon2-cffi==25.1.0
+    # via medi-chat-backend
+argon2-cffi-bindings==26.1.0
+    # via argon2-cffi
 certifi==2026.10.19
     # via
     #   httpcore
@@ -25,8 +29,10 @@ certifi==2026.10.19
     #   medi-chat-backend
     #   requests
     #   sentry-sdk
-cffi==2.1.1 ; platform_python_implementation != 'PyPy'
-    # via cryptography
+cffi==2.1.1
+    # via
+    #   argon2-cffi-bindings
+    #   cryptography
 charset-normalizer==3.5.1
     # via requests
 click==8.5.0
@@ -36,7 +42,9 @@ click==8.5.0
 colorama==0.4.6 ; sys_platform == 'win32'
     # via typer
 cryptography==50.0.1
-    # via google-auth
+    # via
+    #   google-auth
+    #   pyjwt
 detect-installer==0.2.1
     # via fastapi-cloud-cli
 distro==1.9.0
@@ -118,7 +126,7 @@ pyasn1==0.6.4
     # via pyasn1-modules
 pyasn1-modules==0.4.2
     # via google-auth
-pycparser==3.0 ; implementation_name != 'PyPy' and platform_python_implementation != 'PyPy'
+pycparser==3.0 ; implementation_name != 'PyPy'
     # via cffi
 pydantic==2.14.1
     # via
@@ -140,6 +148,8 @@ pydantic-settings==2.15.0
     # via fastapi
 pygments==2.21.0
     # via rich
+pyjwt==2.15.1
+    # via medi-chat-backend
 python-dotenv==1.2.4
     # via
     #   medi-chat-backend

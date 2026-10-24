@@ -18,7 +18,13 @@ def migrate(connection):
         context.run_migrations()
 
 
-if connection is not None:
+if context.is_offline_mode():
+    context.configure(
+        url="postgresql+psycopg://", target_metadata=metadata, literal_binds=True
+    )
+    with context.begin_transaction():
+        context.run_migrations()
+elif connection is not None:
     migrate(connection)
 else:
     arguments = context.get_x_argument(as_dictionary=True)
