@@ -245,7 +245,11 @@ async def stream_chat_response(
                 )
                 continue
             msg_type = data.get("type")
-            if msg_type not in {"ping", "message", "abort"}:
+            if not isinstance(msg_type, str) or msg_type not in {
+                "ping",
+                "message",
+                "abort",
+            }:
                 await send_wire(
                     {
                         "type": "connection_error",

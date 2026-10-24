@@ -105,6 +105,8 @@ def test_WR002_invalid_id_then_valid(value):
         ("[]", "invalid_payload"),
         ("4", "invalid_payload"),
         ('{"type":"unknown"}', "unsupported_type"),
+        ('{"type":null}', "unsupported_type"),
+        ('{"type":42}', "unsupported_type"),
     ],
 )
 def test_WR003_invalid_wire_then_valid(wire, code):
@@ -219,6 +221,33 @@ class HeldService(Service):
             yield "テスト回答"
         finally:
             self.closed.set()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("value", [[], {}, None, 42])
+@pytest.mark.parametrize("stage", ["idle", "prepare", "stream"])
+async def test_WR003_invalid_type_preserves_active_generation(value, stage):
+    service = HeldService(stage)
+    async with session(service) as ws:
+        if stage != "idle":
+            await ws.send(request())
+            await asyncio.wait_for(service.started.wait(), 1)
+        await ws.send({"type": value})
+        while (event := await ws.receive())["type"] != "connection_error":
+            assert event["request_id"] == A
+        assert event["code"] == "unsupported_type"
+        assert not service.closed.is_set()
+        assert service.calls == (0 if stage == "idle" else 1)
+        service.release.set()
+        if stage != "idle":
+            while (event := await ws.receive())["type"] != "text_done":
+                assert event["request_id"] == A
+            assert event["request_id"] == A
+        await ws.send(request(B))
+        while (event := await ws.receive())["type"] != "text_done":
+            assert event["request_id"] == B
+        assert event["request_id"] == B
+        assert service.calls == (1 if stage == "idle" else 2)
 
 
 @pytest.mark.asyncio
