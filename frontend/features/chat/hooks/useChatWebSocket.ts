@@ -1,11 +1,25 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef } from "react";
 import { ensureAuthenticated } from "../../../shared/api/authentication";
 import { MAX_MESSAGE_LENGTH } from "../../../shared/api/chatLimits";
 import { wsBaseUrl } from "../../../shared/api/endpoints";
 import { MAX_TARGET_MEDICINES } from "../../medicine-selection/model/promptSnapshot";
 import { type ChatWebSocketConnection, connectChatWebSocket } from "../api/chatWebSocket";
-import type { ConnectionStatus, Message, WsServerMessage } from "../model/chat";
+import {
+  type ConnectionStatus,
+  type WsClientMessage,
+  type WsServerMessage,
+  parseModelOption,
+} from "../model/chat";
+import {
+  chatReducer,
+  initialChatState,
+  markLatestExchangeInterrupted,
+  patchLastAssistant,
+} from "../model/chatReducer";
 import { buildRequestHistory } from "../model/requestHistory";
+
+export { assertNever } from "../model/chat";
+export { patchLastAssistant, markLatestExchangeInterrupted };
 
 export interface SendRequest {
   content: string;
@@ -29,144 +43,26 @@ interface UseChatWebSocketOptions {
   selectedYjCodes?: string[];
 }
 
-/**
- * Pure helper to immutably patch the latest assistant message in the conversation.
- */
-export function assertNever(x: never): never {
-  throw new Error(`Unexpected discriminated union member: ${JSON.stringify(x)}`);
-}
-
-function patchLastAssistant(
-  messages: Message[],
-  updater: (last: Message) => Message,
-): Message[] {
-  const lastIndex = messages.length - 1;
-  const last = messages[lastIndex];
-  if (last?.role !== "assistant") return messages;
-
-  const next = [...messages];
-  next[lastIndex] = updater(last);
-  return next;
-}
-
-function markLatestExchangeInterrupted(messages: Message[]): Message[] {
-  const assistantIndex = messages.length - 1;
-  const userIndex = assistantIndex - 1;
-  const assistant = messages[assistantIndex];
-  const user = messages[userIndex];
-  if (assistant?.role !== "assistant" || user?.role !== "user") return messages;
-
-  const next = [...messages];
-  next[userIndex] = { ...user, isInterrupted: true };
-  next[assistantIndex] = { ...assistant, isInterrupted: true };
-  return next;
-}
-
 export function useChatWebSocket({ selectedModel }: UseChatWebSocketOptions) {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [status, setStatus] = useState<ConnectionStatus>("disconnected");
-
+  const [state, dispatch] = useReducer(chatReducer, initialChatState);
   const connectionRef = useRef<ChatWebSocketConnection | null>(null);
-  const activeRequestRef = useRef(false);
 
-  const handleStatusChange = useCallback((nextStatus: ConnectionStatus) => {
-    setStatus(nextStatus);
-    if (nextStatus !== "disconnected") return;
-
-    if (activeRequestRef.current) {
-      activeRequestRef.current = false;
-      setMessages(markLatestExchangeInterrupted);
-    }
-    setIsStreaming(false);
+  const handleStatusChange = useCallback((status: ConnectionStatus) => {
+    dispatch({ type: "status_change", status });
   }, []);
 
-  // Event handler for incoming WebSocket messages - separated from the connection Effect
-  const handleServerMessage = useCallback((data: WsServerMessage) => {
-    switch (data.type) {
-      case "text_delta":
-        setMessages((prev) =>
-          patchLastAssistant(prev, (last) => ({
-            ...last,
-            content: last.content + data.content,
-          })),
-        );
-        break;
+  const handleServerMessage = useCallback((message: WsServerMessage) => {
+    dispatch({ type: "server_message", message });
+  }, []);
 
-      case "sources":
-        setMessages((prev) =>
-          patchLastAssistant(prev, (last) => ({
-            ...last,
-            sources: data.sources,
-          })),
-        );
-        break;
-
-      case "retrieval_status":
-        setMessages((prev) =>
-          patchLastAssistant(prev, (last) => ({
-            ...last,
-            retrievalStatus: data.stage,
-            jevResponse: data.jev_response ?? last.jevResponse,
-          })),
-        );
-        break;
-
-      case "jev_response":
-        setMessages((prev) =>
-          patchLastAssistant(prev, (last) => ({
-            ...last,
-            jevResponse: data.data,
-          })),
-        );
-        break;
-
-      case "notices":
-        setMessages((prev) =>
-          patchLastAssistant(prev, (last) => ({
-            ...last,
-            notices: data.notices,
-          })),
-        );
-        break;
-
-      case "text_done":
-        activeRequestRef.current = false;
-        setIsStreaming(false);
-        break;
-
-      case "error":
-        activeRequestRef.current = false;
-        setMessages((prev) =>
-          patchLastAssistant(prev, (last) => ({
-            ...last,
-            content: data.content,
-            isError: true,
-          })),
-        );
-        setIsStreaming(false);
-        break;
-
-      default:
-        return assertNever(data);
-    }
+  const handleAuthenticationExpired = useCallback(() => {
+    dispatch({ type: "auth_expired" });
   }, []);
 
   useEffect(() => {
     const connection = connectChatWebSocket(wsBaseUrl(), {
       authorize: ensureAuthenticated,
-      onAuthenticationExpired: () => {
-        if (!activeRequestRef.current) return;
-        activeRequestRef.current = false;
-        setIsStreaming(false);
-        setMessages((prev) =>
-          patchLastAssistant(markLatestExchangeInterrupted(prev), (last) => ({
-            ...last,
-            content: `${last.content}\n\nログインの有効期限が切れたため、回答を中断しました。必要に応じてもう一度送信してください。`,
-            isError: true,
-          })),
-        );
-      },
+      onAuthenticationExpired: handleAuthenticationExpired,
       onStatusChange: handleStatusChange,
       onMessage: handleServerMessage,
     });
@@ -176,7 +72,7 @@ export function useChatWebSocket({ selectedModel }: UseChatWebSocketOptions) {
       connectionRef.current = null;
       connection.disconnect();
     };
-  }, [handleServerMessage, handleStatusChange]);
+  }, [handleAuthenticationExpired, handleServerMessage, handleStatusChange]);
 
   const sendMessage = useCallback(
     (request: SendRequest): SendResult => {
@@ -190,47 +86,39 @@ export function useChatWebSocket({ selectedModel }: UseChatWebSocketOptions) {
       if (Array.from(content).length > MAX_MESSAGE_LENGTH) {
         return { ok: false, reason: "message_too_long" };
       }
-      if (status !== "connected" || !connectionRef.current) {
+      if (state.status !== "connected" || !connectionRef.current) {
         return { ok: false, reason: "not_connected" };
       }
-      if (isStreaming || activeRequestRef.current) {
+      if (state.isStreaming || state.activeRequest) {
         return { ok: false, reason: "busy" };
       }
 
-      const requestMessages = buildRequestHistory(messages, content);
+      const requestMessages = buildRequestHistory(state.messages, content);
+      const { provider, model } = parseModelOption(selectedModel);
 
-      const [provider, model] = selectedModel.split(":");
+      const clientMessage: WsClientMessage = {
+        type: "message",
+        provider,
+        model,
+        product_yj_codes: [...request.productYjCodes],
+        messages: requestMessages,
+      };
 
-      const sent = connectionRef.current.send(
-        JSON.stringify({
-          type: "message",
-          provider,
-          model,
-          product_yj_codes: [...request.productYjCodes],
-          messages: requestMessages,
-        }),
-      );
+      const sent = connectionRef.current.send(clientMessage);
       if (!sent) {
         return { ok: false, reason: "not_connected" };
       }
 
-      activeRequestRef.current = true;
-      setMessages([
-        ...messages,
-        { role: "user", content },
-        { role: "assistant", content: "" },
-      ]);
-      setIsStreaming(true);
+      dispatch({ type: "start_message", userContent: content });
       return { ok: true };
     },
-    [isStreaming, messages, selectedModel, status],
+    [selectedModel, state.activeRequest, state.isStreaming, state.messages, state.status],
   );
 
   return {
-    messages,
-    setMessages,
-    isStreaming,
-    status,
+    messages: state.messages,
+    isStreaming: state.isStreaming,
+    status: state.status,
     sendMessage,
   };
 }
