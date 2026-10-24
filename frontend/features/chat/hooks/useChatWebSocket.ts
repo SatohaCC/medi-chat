@@ -46,16 +46,24 @@ interface UseChatWebSocketOptions {
 export function useChatWebSocket({ selectedModel }: UseChatWebSocketOptions) {
   const [state, dispatch] = useReducer(chatReducer, initialChatState);
   const connectionRef = useRef<ChatWebSocketConnection | null>(null);
+  const activeRequestRef = useRef(false);
 
   const handleStatusChange = useCallback((status: ConnectionStatus) => {
+    if (status === "disconnected") {
+      activeRequestRef.current = false;
+    }
     dispatch({ type: "status_change", status });
   }, []);
 
   const handleServerMessage = useCallback((message: WsServerMessage) => {
+    if (message.type === "text_done" || message.type === "error") {
+      activeRequestRef.current = false;
+    }
     dispatch({ type: "server_message", message });
   }, []);
 
   const handleAuthenticationExpired = useCallback(() => {
+    activeRequestRef.current = false;
     dispatch({ type: "auth_expired" });
   }, []);
 
@@ -89,7 +97,8 @@ export function useChatWebSocket({ selectedModel }: UseChatWebSocketOptions) {
       if (state.status !== "connected" || !connectionRef.current) {
         return { ok: false, reason: "not_connected" };
       }
-      if (state.isStreaming || state.activeRequest) {
+      // Check both React state and synchronous ref to prevent overlapping sends in the same tick
+      if (state.isStreaming || activeRequestRef.current) {
         return { ok: false, reason: "busy" };
       }
 
@@ -109,10 +118,11 @@ export function useChatWebSocket({ selectedModel }: UseChatWebSocketOptions) {
         return { ok: false, reason: "not_connected" };
       }
 
+      activeRequestRef.current = true;
       dispatch({ type: "start_message", userContent: content });
       return { ok: true };
     },
-    [selectedModel, state.activeRequest, state.isStreaming, state.messages, state.status],
+    [selectedModel, state.isStreaming, state.messages, state.status],
   );
 
   return {
