@@ -174,7 +174,7 @@ def test_ws_unauthenticated_and_missing_origin_are_rejected(protected, tokens):
 
 
 def test_ws_expires_while_waiting(protected, tokens):
-    _, client, _ = signed_client(protected, tokens, expiry=1)
+    _, client, _ = signed_client(protected, tokens, expiry=2)
     with client.websocket_connect("/api/ws", headers={"Origin": ORIGIN}) as ws:
         with pytest.raises(WebSocketDisconnect) as failure:
             ws.receive_text()
@@ -210,7 +210,7 @@ def test_ws_expiry_cancels_running_generation(tokens):
     app = FastAPI()
     app.state.allowed_origins = [ORIGIN]
     verifier = Mock()
-    verifier.execute.return_value = Principal("test-user", int(time.time()) + 1)
+    verifier.execute.return_value = Principal("test-user", int(time.time()) + 2)
     app.state.authentication = SimpleNamespace(authenticate=verifier)
     app.add_middleware(AccessControlMiddleware)
     cancelled = []
