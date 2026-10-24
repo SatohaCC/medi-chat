@@ -111,7 +111,7 @@ async def test_transient_failure_keeps_parts_for_retry(pg_api, monkeypatch):
     ):
         raw = xml_source().replace(b"111111111111", b"222222222222")
         path = await send_parts(client, raw)
-        publisher = app.state.attachment_import_service.publisher
+        publisher = app.state.attachment_import_service.registration.publisher
         publish = publisher.publish
 
         def fail(*args, **kwargs):
