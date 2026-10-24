@@ -5,6 +5,7 @@ description = "PMDA package inserts search and AI real-time streaming chat."
 requires-python = ">=3.14"
 dependencies = [
     "alembic>=1.17,<2",
+    "argon2-cffi>=25,<26",
     "certifi>=2026.10.19",
     "fastapi[standard]>=0.115.0",
     "google-genai>=1.0.0",
@@ -12,6 +13,7 @@ dependencies = [
     "openai>=1.50.0",
     "psycopg[binary]>=3.2,<4",
     "pydantic>=2.10.0",
+    "pyjwt[crypto]>=2.10,<3",
     "python-dotenv>=1.0.0",
     "sqlalchemy>=2.0,<3",
     "typesafe-sdk>=0.7.2",

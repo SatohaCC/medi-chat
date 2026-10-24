@@ -12,6 +12,10 @@ from backend.infrastructure.intent.jev_classifier import JevIntentClassifier
 from backend.infrastructure.morphology.janome_keyword_extractor import (
     JanomeKeywordExtractor,
 )
+from backend.tests.support.authentication import (
+    SignedTestActor,
+    authentication_environment,
+)
 from backend.tests.support.postgres_browser_fixture import fixture_schema, selected_url
 
 _metrics_path: Path | None = None
@@ -66,6 +70,8 @@ def run() -> None:
     args = parser.parse_args()
     _metrics_path = args.metrics_file
     os.environ["MEDI_CHAT_DATABASE_URL"] = selected_url()
+    os.environ.update(authentication_environment())
+    os.environ.pop("AUTH_PRIVATE_KEY_FILE", None)
     from backend import main
 
     main.JevIntentClassifier = FixedClassifier
@@ -75,6 +81,7 @@ def run() -> None:
         _database_schema=fixture_schema(args.root),
         llm_provider_factory=provider_factory,
     )
+    app.add_middleware(SignedTestActor)
     uvicorn.run(app, host="127.0.0.1", port=args.port)
 
 

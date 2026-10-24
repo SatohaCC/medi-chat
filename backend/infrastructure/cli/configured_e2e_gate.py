@@ -1,11 +1,8 @@
 """Read-only configured PostgreSQL readiness and owned OS health probe."""
 
 import argparse
-import hashlib
-import hmac
 import json
 import os
-import secrets
 import socket
 import subprocess
 import sys
@@ -14,13 +11,15 @@ import time
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
-from ...config.access_settings import read_access_secret
+from ...config.authentication_settings import read_authentication_settings
 from ...config.database_settings import (
     PostgresDatabaseSettings,
     resolve_postgres_database_settings,
 )
 from ...config.runtime_environment import load_runtime_environment
+from ...domain.identity.identifiers import UserId
 from ...project_paths import PROJECT_ROOT
+from ..authentication.tokens import JwtTokens
 from ..persistence.postgres_engine import create_postgres_engine
 from ..persistence.postgres_readiness import verify_postgres_readiness
 
@@ -74,14 +73,16 @@ def run_gate(
         "PYTHONUTF8": "1",
         "PYTHON_DOTENV_DISABLED": "1",
     }
-    secret = read_access_secret(environment, required=not settings.is_local)
-    headers = {}
-    if secret:
-        unsigned = f"v1.{int(time.time()) + 300}.{secrets.token_hex(16)}"
-        signature = hmac.new(
-            secret.encode(), f"medi-chat-access:{unsigned}".encode(), hashlib.sha256
-        ).hexdigest()
-        headers["Cookie"] = f"medi_chat_access={unsigned}.{signature}"
+    auth = read_authentication_settings()
+    now = int(time.time())
+    token = JwtTokens(
+        private_key=auth.private_key.get_secret_value(),
+        public_keys=auth.public_keys,
+        key_id=auth.key_id,
+        issuer=auth.issuer,
+        audience=auth.audience,
+    ).issue(str(UserId.generate()), now, now + 300)
+    headers = {"Cookie": "medi_chat_access_token=" + token}
     with tempfile.TemporaryFile(mode="w+b") as log:
         process = subprocess.Popen(
             [

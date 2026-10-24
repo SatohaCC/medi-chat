@@ -1,13 +1,11 @@
 "use client";
 
 import { useEffect, useSyncExternalStore } from "react";
+import { authenticatedFetch } from "../../../shared/api/authentication";
 import { backendBaseUrl } from "../../../shared/api/endpoints";
 import { ActiveMedicineCatalog } from "../api/activeMedicineCatalog";
 
-const catalog = new ActiveMedicineCatalog(
-  (url, options) => fetch(url, { ...options, credentials: "include" }),
-  backendBaseUrl(),
-);
+const catalog = new ActiveMedicineCatalog(authenticatedFetch, backendBaseUrl());
 const initial = catalog.snapshot;
 const read = () => catalog.snapshot;
 const server = () => initial;

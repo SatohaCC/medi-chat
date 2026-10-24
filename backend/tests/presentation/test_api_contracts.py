@@ -29,6 +29,17 @@ def test_openapi_contracts_match_baseline() -> None:
     expected_openapi = reference_data["schema"]
     app = create_app(database_url="postgresql+psycopg://unused@127.0.0.1:1/unused")
     actual_openapi = deepcopy(app.openapi())
+    # Authentication is an explicit additive contract; keep existing API shapes frozen.
+    for path, method in (
+        ("login", "post"),
+        ("refresh", "post"),
+        ("logout", "post"),
+        ("me", "get"),
+    ):
+        operation = actual_openapi["paths"].pop(f"/api/auth/{path}")
+        assert method in operation
+    for name in ("LoginInput", "LoginResponse", "PrincipalResponse"):
+        del actual_openapi["components"]["schemas"][name]
     for path in (
         "/api/attachment-imports/uploads",
         "/api/attachment-imports/uploads/{upload_id}/parts/{index}",

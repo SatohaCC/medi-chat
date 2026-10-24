@@ -1,8 +1,6 @@
-"""Verify the private-link cookie before any HTTP/WS application work."""
+"""Enforce authentication before any HTTP/WS application work."""
 
-import hashlib
-import hmac
-import re
+import asyncio
 import time
 
 from starlette.datastructures import MutableHeaders
@@ -10,55 +8,26 @@ from starlette.requests import HTTPConnection
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-COOKIE_NAME = "medi_chat_access"
-TOKEN_TTL = 30 * 86400
+from backend.application.authentication.errors import AuthenticationRequired
 
+from .authentication_models import ACCESS_COOKIE
 
-def valid_access_token(token: str, secret: str, *, now: int | None = None) -> bool:
-    match = re.fullmatch(r"v1\.([0-9]{1,12})\.([0-9a-f]{32})\.([0-9a-f]{64})", token)
-    if match is None:
-        return False
-    current = int(time.time()) if now is None else now
-    expires = int(match[1])
-    if not current < expires <= current + TOKEN_TTL + 60:
-        return False
-    unsigned = token.rsplit(".", 1)[0]
-    expected = hmac.new(
-        secret.encode(), f"medi-chat-access:{unsigned}".encode(), hashlib.sha256
-    ).hexdigest()
-    return hmac.compare_digest(expected, match[3])
+PUBLIC_AUTH = frozenset({"/api/auth/login", "/api/auth/refresh", "/api/auth/logout"})
 
 
 class AccessControlMiddleware:
-    def __init__(self, app: ASGIApp, *, secret: str | None) -> None:
+    def __init__(self, app: ASGIApp) -> None:
         self.app = app
-        self._secret = secret
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        if self._secret is None or scope["type"] not in {"http", "websocket"}:
+        if scope["type"] not in {"http", "websocket"}:
             await self.app(scope, receive, send)
             return
-        token = HTTPConnection(scope).cookies.get(COOKIE_NAME, "")
-        if not valid_access_token(token, self._secret):
-            if scope["type"] == "websocket":
-                await send({"type": "websocket.close", "code": 1008})
-            else:
-                response = JSONResponse(
-                    {
-                        "detail": {
-                            "code": "access_required",
-                            "message": "専用リンクからアクセスしてください。",
-                        }
-                    },
-                    status_code=401,
-                    headers={
-                        "Cache-Control": "private, no-store",
-                        "Vary": "Cookie",
-                        "Referrer-Policy": "no-referrer",
-                    },
-                )
-                await response(scope, receive, send)
-            return
+        connection = HTTPConnection(scope)
+        origin = connection.headers.get("origin")
+        allowed = getattr(connection.app.state, "allowed_origins", [])
+        websocket = scope["type"] == "websocket"
+        modifying = not websocket and scope["method"] not in {"GET", "HEAD", "OPTIONS"}
 
         async def private_send(message: Message) -> None:
             if message["type"] == "http.response.start":
@@ -68,4 +37,56 @@ class AccessControlMiddleware:
                 headers["Referrer-Policy"] = "no-referrer"
             await send(message)
 
-        await self.app(scope, receive, private_send)
+        async def deny(code: str, status: int = 401) -> None:
+            if websocket:
+                await send({"type": "websocket.close", "code": 1008})
+            else:
+                await JSONResponse({"detail": {"code": code}}, status_code=status)(
+                    scope, receive, private_send
+                )
+
+        if (websocket or modifying) and (not origin or origin not in allowed):
+            await deny("origin_not_allowed", 403)
+            return
+        if modifying and connection.headers.get("x-medi-chat-csrf") != "1":
+            await deny("csrf_required", 403)
+            return
+        if not websocket and scope["path"] in PUBLIC_AUTH and scope["method"] == "POST":
+            await self.app(scope, receive, private_send)
+            return
+        authentication = getattr(connection.app.state, "authentication", None)
+        if authentication is None:
+            await deny("authentication_unavailable", 503)
+            return
+        try:
+            principal = authentication.authenticate.execute(
+                connection.cookies.get(ACCESS_COOKIE, ""), int(time.time())
+            )
+        except AuthenticationRequired as error:
+            await deny(error.code)
+            return
+        scope["auth_principal"] = principal
+        if not websocket:
+            await self.app(scope, receive, private_send)
+            return
+        accepted = False
+        closed = False
+
+        async def ws_send(message: Message) -> None:
+            nonlocal accepted, closed
+            accepted |= message["type"] == "websocket.accept"
+            closed |= message["type"] == "websocket.close"
+            await send(message)
+
+        try:
+            async with asyncio.timeout(max(0, principal.expires_at - time.time())):
+                await self.app(scope, receive, ws_send)
+        except TimeoutError:
+            if not closed:
+                await send(
+                    {
+                        "type": "websocket.close",
+                        "code": 4001 if accepted else 1008,
+                        "reason": "access_expired",
+                    }
+                )

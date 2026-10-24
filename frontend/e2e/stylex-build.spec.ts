@@ -1,7 +1,7 @@
-import { expect, test } from "@playwright/test";
 import { openChat } from "./helpers/chat";
+import { expect, test } from "./helpers/test";
 
-test("SX-02/04: JavaScriptなしのSSRにもButtonの生成CSSが適用される", async ({
+test("SX-02/04: JavaScriptなしのSSRにもログインと認証待ちが表示される", async ({
   browser,
 }, testInfo) => {
   const context = await browser.newContext({
@@ -10,17 +10,13 @@ test("SX-02/04: JavaScriptなしのSSRにもButtonの生成CSSが適用される
   });
   try {
     const page = await context.newPage();
-    await page.goto("/");
-    const send = page.getByRole("button", { name: "送信", exact: true });
-    await expect(send).toHaveCSS("width", "32px");
-    await expect(send).toHaveCSS("height", "32px");
-    await expect(send).toBeDisabled();
+    await page.goto("/login");
+    await expect(page.getByLabel("ログインID", { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "ログイン", exact: true }),
+    ).not.toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
     await page.goto("/imports");
-    await expect(page.getByLabel("XMLファイル")).toBeVisible();
-    await expect(page.getByRole("button", { name: "取り込む", exact: true })).toHaveCSS(
-      "background-color",
-      "rgb(2, 101, 220)",
-    );
+    await expect(page.getByRole("status")).toContainText("ログイン状態を確認");
   } finally {
     await context.close();
   }
@@ -37,7 +33,7 @@ test("SX-02/04: 初回HTMLとhydrationでSendの外観を保持する", async ({
   });
   const html = await request.get("/");
   expect(html.status()).toBe(200);
-  expect(await html.text()).toContain("送信");
+  expect(await html.text()).toContain("ログイン状態を確認");
   const chat = await openChat(page);
   await chat.input.fill("確認する質問");
   await expect(chat.send).toBeEnabled();

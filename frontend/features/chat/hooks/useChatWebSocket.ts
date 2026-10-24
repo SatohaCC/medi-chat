@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ensureAuthenticated } from "../../../shared/api/authentication";
 import { MAX_MESSAGE_LENGTH } from "../../../shared/api/chatLimits";
 import { wsBaseUrl } from "../../../shared/api/endpoints";
 import { MAX_TARGET_MEDICINES } from "../../medicine-selection/model/promptSnapshot";
@@ -146,6 +147,19 @@ export function useChatWebSocket({ selectedModel }: UseChatWebSocketOptions) {
 
   useEffect(() => {
     const connection = connectChatWebSocket(wsBaseUrl(), {
+      authorize: ensureAuthenticated,
+      onAuthenticationExpired: () => {
+        if (!activeRequestRef.current) return;
+        activeRequestRef.current = false;
+        setIsStreaming(false);
+        setMessages((prev) =>
+          patchLastAssistant(markLatestExchangeInterrupted(prev), (last) => ({
+            ...last,
+            content: `${last.content}\n\nログインの有効期限が切れたため、回答を中断しました。必要に応じてもう一度送信してください。`,
+            isError: true,
+          })),
+        );
+      },
       onStatusChange: handleStatusChange,
       onMessage: handleServerMessage,
     });

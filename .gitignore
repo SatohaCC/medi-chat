@@ -23,6 +23,7 @@ build/
 storybook-static/
 
 # Environment files
+.auth/
 .env
 .env.*
 !.env.example

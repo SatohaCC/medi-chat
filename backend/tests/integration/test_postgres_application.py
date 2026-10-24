@@ -15,6 +15,7 @@ from backend.tests.integration.test_postgres_registration import (
     pg_publisher as pg_publisher,
 )
 from backend.tests.integration.test_postgres_registration import publish
+from backend.tests.support.authentication import signed_test_headers
 from backend.tests.support.paths import PROJECT_ROOT
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
 from backend.tests.support.registration_oracles import source
@@ -68,7 +69,9 @@ async def test_pg035_038_normal_app_has_snapshot_only_routes_and_owned_shutdown(
     async with (
         app.router.lifespan_context(app),
         httpx.AsyncClient(
-            transport=httpx.ASGITransport(app=app), base_url="http://test"
+            transport=httpx.ASGITransport(app=app),
+            base_url="http://test",
+            headers=signed_test_headers(),
         ) as client,
     ):
         acquired = []
@@ -161,7 +164,9 @@ async def test_pg033_real_process_without_input_access_restarts_from_db(
             try:
                 base = f"http://127.0.0.1:{port}"
                 deadline = time.monotonic() + 20
-                async with httpx.AsyncClient(base_url=base) as client:
+                async with httpx.AsyncClient(
+                    base_url=base, headers=signed_test_headers()
+                ) as client:
                     while True:
                         assert process.poll() is None, (
                             tmp_path / f"server-{restart}.log"

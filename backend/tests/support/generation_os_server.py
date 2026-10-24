@@ -10,6 +10,7 @@ from pathlib import Path
 
 import httpx
 import psutil
+from backend.tests.support.authentication import signed_test_headers
 from backend.tests.support.paths import PROJECT_ROOT
 from backend.tests.support.postgres_fixtures import validate_test_database_url
 
@@ -67,7 +68,9 @@ def main_server(schema: str, root: Path, *, performance: bool = False):
         )
         try:
             with httpx.Client(
-                base_url=f"http://127.0.0.1:{port}", timeout=10
+                base_url=f"http://127.0.0.1:{port}",
+                timeout=10,
+                headers=signed_test_headers(),
             ) as client:
                 deadline = time.monotonic() + 30
                 while time.monotonic() < deadline:

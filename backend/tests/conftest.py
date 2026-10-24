@@ -1,13 +1,26 @@
 """Keep ordinary test runs independent of PostgreSQL credentials."""
 
+from pathlib import Path
+
 import pytest
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
 _LOCAL_ENVIRONMENT = pytest.StashKey[pytest.MonkeyPatch]()
+_AUTH_ENVIRONMENT = pytest.StashKey[pytest.MonkeyPatch]()
 
 
 def pytest_configure(config):
+    authentication = pytest.MonkeyPatch()
+    config.stash[_AUTH_ENVIRONMENT] = authentication
+    # Collection-selection tests copy this hook into an isolated mini-project.
+    # Only the real backend suite needs application signing keys.
+    if (Path(__file__).parent / "support" / "authentication.py").is_file():
+        from backend.tests.support.authentication import authentication_environment
+
+        for name, value in authentication_environment().items():
+            authentication.setenv(name, value)
+        authentication.delenv("AUTH_PRIVATE_KEY_FILE", raising=False)
     if config.getoption("--postgres"):
         return
     # main.app is constructed at import time; construction needs a URL, not a DB.
@@ -39,6 +52,7 @@ def _refuse_local_database_connection(*args, **kwargs):
 
 
 def pytest_unconfigure(config):
+    config.stash[_AUTH_ENVIRONMENT].undo()
     if _LOCAL_ENVIRONMENT in config.stash:
         event.remove(Engine, "do_connect", _refuse_local_database_connection)
         config.stash[_LOCAL_ENVIRONMENT].undo()

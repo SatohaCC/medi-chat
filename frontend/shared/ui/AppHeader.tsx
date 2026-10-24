@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { styles } from "./AppHeader.styles";
+import { LogoutButton } from "./LogoutButton";
 
 interface AppHeaderProps {
   children?: ReactNode;
@@ -62,7 +63,10 @@ export function AppHeader({ children }: AppHeaderProps) {
           </Link>
         </nav>
       </div>
-      {children && <div {...stylex.props(styles.rightSection)}>{children}</div>}
+      <div {...stylex.props(styles.rightSection)}>
+        {children}
+        <LogoutButton />
+      </div>
     </header>
   );
 }

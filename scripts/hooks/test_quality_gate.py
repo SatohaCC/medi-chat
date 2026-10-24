@@ -143,6 +143,61 @@ def test_post_edit_formats_before_quick_checks(monkeypatch):
     assert order == ["format", "check"]
 
 
+def test_post_edit_returns_type_failure_and_stop_blocks(tmp_path, monkeypatch):
+    from scripts.hooks import quality_gate as gate
+
+    source = tmp_path / "backend/main.py"
+    source.parent.mkdir()
+    source.write_text("# test fixture", encoding="utf-8")
+    monkeypatch.setattr(gate, "ROOT", tmp_path)
+    monkeypatch.setattr(gate, "edited_paths", lambda event: [source])
+    monkeypatch.setattr(gate, "format_python", lambda event: 0)
+    monkeypatch.setattr(gate, "changed_paths", lambda root: ["backend/main.py"])
+
+    def execute(*args, **kwargs):
+        return SimpleNamespace(
+            returncode=1,
+            stdout=b'main.py:1: error: Argument "database_schema" has incompatible type "str | None"; expected "str" [arg-type]',
+            stderr=b"",
+        )
+
+    monkeypatch.setattr(gate.subprocess, "run", execute)
+    result = gate.main({"hook_event_name": "PostToolUse"})
+    assert "[arg-type]" in result["hookSpecificOutput"]["additionalContext"]
+    assert gate.main({"hook_event_name": "Stop"})["decision"] == "block"
+
+
+def test_project_mypy_detects_optional_schema_argument(tmp_path):
+    root = Path(__file__).resolve().parents[2]
+    source = tmp_path / "schema_probe.py"
+    source.write_text(
+        "def create_app_lifespan(*, database_schema: str) -> None:\n"
+        "    pass\n"
+        "def configure(schema: str | None) -> None:\n"
+        "    create_app_lifespan(database_schema=schema)\n",
+        encoding="utf-8",
+    )
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "mypy",
+            "--config-file",
+            "backend/pyproject.toml",
+            "--no-incremental",
+            str(source),
+        ],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        check=False,
+    )
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "[arg-type]" in result.stdout
+    assert '"str | None"' in result.stdout
+
+
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows hook launcher")
 def test_registered_windows_launcher_resolves_root_from_subdirectory():
     root = Path(__file__).resolve().parents[2]

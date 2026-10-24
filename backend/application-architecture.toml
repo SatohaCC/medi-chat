@@ -1,4 +1,8 @@
-enforced_features = ["attachment_import", "file_upload", "medicine", "indexing", "retrieval", "chat"]
+enforced_features = ["attachment_import", "file_upload", "medicine", "indexing", "retrieval", "chat", "authentication"]
+
+[features.authentication]
+depends_on = []
+public_modules = ["commands.login", "commands.logout", "commands.refresh", "commands.manage_users", "commands.models", "queries.authenticate", "errors"]
 
 # Explicit feature dependencies and public module contracts. No per-violation ignores.
 [features.attachment_import]

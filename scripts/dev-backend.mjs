@@ -125,7 +125,7 @@ export function createSupervisor({
               } else if (res.status === 401) {
                 // A protected, running server rejects this unauthenticated probe.
                 const body = await res.json().catch(() => null);
-                healthy = body?.detail?.code === "access_required";
+                healthy = body?.detail?.code === "authentication_required";
               }
             } catch {
               healthy = false;

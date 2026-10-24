@@ -75,9 +75,9 @@ export async function openChat(page: Page, options: { candidates?: boolean } = {
       if (!socket) throw new Error("Chat WebSocket is not connected");
       socket.send(JSON.stringify(message));
     },
-    async disconnect() {
+    async disconnect(code = 1001) {
       if (!socket) throw new Error("Chat WebSocket is not connected");
-      await socket.close({ code: 1001, reason: "Test connection interruption" });
+      await socket.close({ code, reason: "Test connection interruption" });
     },
   };
 }

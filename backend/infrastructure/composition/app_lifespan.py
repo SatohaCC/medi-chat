@@ -42,6 +42,7 @@ from ..persistence.postgres_upload import (
 from ..persistence.read_workers import ReadWorkers
 from ..pmda_xml.artifact_mapping import PmdaArtifactEncoder
 from ..pmda_xml.decoder import PmdaXmlDecoder
+from .authentication import compose_authentication
 
 
 def create_app_lifespan(
@@ -65,6 +66,9 @@ def create_app_lifespan(
         application.state.database_engine = engine
         application.state.read_workers = workers
         try:
+            application.state.authentication = await asyncio.to_thread(
+                compose_authentication, engine
+            )
             await workers.run(lambda: verify_postgres_readiness(engine))
             await asyncio.to_thread(janome_initializer)
             runtime = PostgresRuntime(

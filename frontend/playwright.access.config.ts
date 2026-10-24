@@ -13,7 +13,6 @@ export default defineConfig({
     reuseExistingServer: false,
     timeout: 120_000,
     env: {
-      APP_SECRET_KEY: "test-access-key-for-issue-29-only-123456",
       VERCEL: "0",
       MEDI_CHAT_NEXT_DIST_DIR: ".next-e2e-access",
       NEXT_PUBLIC_API_URL: "http://127.0.0.1:3120",

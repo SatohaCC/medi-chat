@@ -120,10 +120,14 @@ def pg_api(pg_engines, monkeypatch):
     from backend.main import create_app
 
     def build(**kwargs):
-        return create_app(
+        from backend.tests.support.authentication import SignedTestActor
+
+        app = create_app(
             database_url=os.environ["TEST_RUNTIME_DATABASE_URL"],
             _database_schema=pg_engines[2],
             **kwargs,
         )
+        app.add_middleware(SignedTestActor)
+        return app
 
     return build

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./helpers/test";
 import { openChat } from "./helpers/chat";
 
 for (const operation of ["pointer", "Enter"] as const) {

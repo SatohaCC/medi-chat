@@ -5,6 +5,10 @@ import os
 from pathlib import Path
 
 import uvicorn
+from backend.tests.support.authentication import (
+    SignedTestActor,
+    authentication_environment,
+)
 from backend.tests.support.postgres_browser_fixture import prepare, selected_url
 
 
@@ -19,10 +23,14 @@ def main() -> None:
     args = parser.parse_args()
     schema = prepare_root(args.root)
     os.environ["MEDI_CHAT_DATABASE_URL"] = selected_url()
+    os.environ.update(authentication_environment())
+    os.environ.pop("AUTH_PRIVATE_KEY_FILE", None)
     from backend.main import create_app
 
+    app = create_app(database_url=selected_url(), _database_schema=schema)
+    app.add_middleware(SignedTestActor)
     uvicorn.run(
-        create_app(database_url=selected_url(), _database_schema=schema),
+        app,
         host="127.0.0.1",
         port=args.port,
     )
