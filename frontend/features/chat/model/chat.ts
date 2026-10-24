@@ -89,6 +89,13 @@ export type WsClientMessage = {
   messages: WsClientHistoryMessage[];
 };
 
+/**
+ * Helper to ensure exhaustiveness checking on discriminated unions at compile-time.
+ */
+export function assertNever(x: never): never {
+  throw new Error(`Unexpected discriminated union member: ${JSON.stringify(x)}`);
+}
+
 export type WsServerMessage =
   | { type: "sources"; sources: SourceItem[] }
   | {
