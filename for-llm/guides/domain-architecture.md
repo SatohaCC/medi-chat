@@ -28,7 +28,7 @@ rootはスクリプト配置から解決する。`--root <repo>`で独立した�
 | DOM005 | 自動検出した全業務Contextに公開IDを1クラスだけ定義。EntityStringIdまたはEntityUUIDを継承し、プロジェクト内の依存先はfoundationのID基底に限定 |
 | DOM006 | 値の計算・型定義等に使う標準ライブラリをVALUE_MODULESに列挙し、それ以外の技術依存を禁止。wildcard import、動的import／実行、open/input/print等も禁止。URLの純粋な解析であるurllib.parseは利用可能 |
 | DOM007 | Domainのdataclassをfrozenにし、業務VO／Entityはfrozen dataclassとして保持。デコレーターの別名・修飾名・継承も確認 |
-| DOM008 | フィールドの可変collectionを禁止。ネスト・文字列注釈・型aliasを解決し、業務モデルの可変な初期値も禁止 |
+| DOM008 | フィールドの可変collectionを禁止。ネスト・文字列注釈・型alias（type文とTypeAlias注釈の両形式）を解決し、業務モデルの可変な初期値も禁止 |
 | DOM009 | 業務VO／Entityのフィールドにstr/int/float/bytes/Any/objectを直接保持しない。Primitive／VOへ分ける。boolの状態フラグは許可 |
 | DOM010 | `create()`の生成ラッパーを禁止し、型付き値を直接コンストラクタへ渡す |
 | DOM011 | 業務VO／Entityのpost-initでフィールドを置換しない。selfフィールドの単純な型検査や_require型の補助メソッドを置かない |

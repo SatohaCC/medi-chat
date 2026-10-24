@@ -241,6 +241,44 @@ def test_imported_type_alias_cannot_hide_invalid_model_field(
     assert any(f.rule == rule for f in check(tmp_path))
 
 
+@pytest.mark.parametrize(
+    "declaration",
+    [
+        "from typing import TypeAlias\nPayload: TypeAlias = {type_source}",
+        "from typing import TypeAlias as Alias\nPayload: Alias = {type_source}",
+        "import typing as t\nPayload: t.TypeAlias = {type_source}",
+    ],
+)
+@pytest.mark.parametrize("imported", [False, True])
+@pytest.mark.parametrize(
+    "type_source,rule", [("list[bool]", "DOM008"), ("str", "DOM009")]
+)
+def test_annotated_alias_cannot_hide_invalid_model_field(
+    tmp_path, declaration, imported, type_source, rule
+):
+    alias = declaration.format(type_source=type_source)
+    files = {}
+    if imported:
+        files["shared/primitives.py"] = alias
+        alias = "from ..shared.primitives import Payload"
+    files["orders/value_objects.py"] = (
+        f"from dataclasses import dataclass\n{alias}\n"
+        "@dataclass(frozen=True)\nclass Value:\n    payload: Payload\n"
+    )
+    write(tmp_path, files)
+    assert any(f.rule == rule for f in check(tmp_path))
+
+
+def test_annotated_immutable_alias_is_allowed(tmp_path):
+    write(
+        tmp_path,
+        {
+            "orders/value_objects.py": "from dataclasses import dataclass\nfrom typing import TypeAlias\nPayload: TypeAlias = tuple[bool, ...]\n@dataclass(frozen=True)\nclass Value:\n    payload: Payload",
+        },
+    )
+    assert check(tmp_path) == []
+
+
 def test_identifier_base_module_alias_is_allowed(tmp_path):
     write(
         tmp_path,

@@ -260,6 +260,14 @@ def check(root: Path, *, context: str | None = None) -> list[Finding]:
                 source.types[node.targets[0].id] = node.value
                 if isinstance(node.value, (ast.Name, ast.Attribute)):
                     source.aliases[node.targets[0].id] = source.name(node.value)
+        for node in ast.walk(tree):
+            if (
+                isinstance(node, ast.AnnAssign)
+                and isinstance(node.target, ast.Name)
+                and node.value is not None
+                and source.name(node.annotation) == "typing.TypeAlias"
+            ):
+                source.types[node.target.id] = node.value
         if path.name == "__init__.py" and any(
             not (
                 isinstance(n, ast.Expr)
