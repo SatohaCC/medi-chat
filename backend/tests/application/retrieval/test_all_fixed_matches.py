@@ -1,5 +1,7 @@
 import pytest
-from backend.application.retrieval.search_policy import detect_fixed_keyword_criteria
+from backend.application.retrieval.queries.policies.selection import (
+    detect_fixed_keyword_criteria,
+)
 from backend.infrastructure.package_insert_definitions.assembly import (
     get_package_insert_definitions,
 )

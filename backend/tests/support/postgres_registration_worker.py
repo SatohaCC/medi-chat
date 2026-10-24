@@ -5,7 +5,7 @@ import json
 import os
 import sys
 
-from backend.application.attachment_import.import_errors import ImportConflict
+from backend.application.attachment_import.errors import ImportConflict
 from backend.infrastructure.persistence.postgres_engine import create_postgres_engine
 from backend.infrastructure.persistence.postgres_registration import (
     PostgresRegistrationPublisher,

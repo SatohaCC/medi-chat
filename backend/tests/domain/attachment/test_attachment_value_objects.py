@@ -3,8 +3,8 @@
 from dataclasses import FrozenInstanceError, replace
 
 import pytest
-from backend.application.indexing.search_models import DocumentRevision
-from backend.application.retrieval.search_models import (
+from backend.application.indexing.queries.models import DocumentRevision
+from backend.application.retrieval.queries.models import (
     EvidenceColumns,
     EvidenceReference,
     EvidenceSection,

@@ -3,10 +3,12 @@
 from dataclasses import dataclass
 from functools import lru_cache
 
-from backend.application.chat.answer_prompt_policy import AnswerPromptPolicy
-from backend.application.chat.standard_policy import build_answer_prompt_policy
-from backend.application.retrieval.search_models import IntentPolicy, TextSearchPolicy
-from backend.application.retrieval.standard_policies import (
+from backend.application.chat.queries.models import AnswerPromptPolicy
+from backend.application.chat.queries.policies.standard import (
+    build_answer_prompt_policy,
+)
+from backend.application.retrieval.queries.models import IntentPolicy, TextSearchPolicy
+from backend.application.retrieval.queries.policies.standard import (
     DEFAULT_INTENT_POLICY,
     DEFAULT_RETRIEVAL_POLICY,
     EvidenceRetrievalPolicy,

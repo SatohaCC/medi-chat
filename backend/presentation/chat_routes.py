@@ -7,7 +7,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
-from ..application.medicine.input_values import InvalidMedicineInput
+from backend.application.medicine.errors import InvalidMedicineInput
+
 from .chat_models import ChatMessage, ChatResponse
 from .chat_service import AppChatService as ChatService
 from .dependencies import get_chat_service

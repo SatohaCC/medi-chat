@@ -7,7 +7,7 @@ from collections.abc import AsyncIterator
 from unittest.mock import Mock, patch
 
 import pytest
-from backend.application.chat.llm_contracts import LLMProvider
+from backend.application.chat.interfaces.llm_provider import LLMProvider
 from backend.presentation.chat_models import ChatMessage
 from backend.tests.support.postgres_fixtures import pg_api as pg_api
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines

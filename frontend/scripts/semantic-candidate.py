@@ -9,11 +9,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from backend.tests.support.postgres_browser_fixture import snapshot as postgres_snapshot
-from backend.application.indexing.attachment_projection import project_active_attachment
+from backend.application.indexing.queries.services.attachment_projection import (
+    project_active_attachment,
+)
 from backend.domain.medicine.identifiers import YjCode
 from backend.infrastructure.index_payloads import encode_registered_units
-from backend.infrastructure.persistence.attachment_document_mapping import document_from_payload
+from backend.infrastructure.persistence.attachment_document_mapping import (
+    document_from_payload,
+)
+from backend.tests.support.postgres_browser_fixture import snapshot as postgres_snapshot
 
 
 class SemanticHTML(HTMLParser):
@@ -48,13 +52,20 @@ def candidate(index):
         if row["generation_id"] == pointer:
             memberships.setdefault(row["version_id"], set()).add(YjCode(row["yj_code"]))
     units = []
-    for row in sorted(records("attachment_versions"), key=lambda item: item["version_id"]):
+    for row in sorted(
+        records("attachment_versions"), key=lambda item: item["version_id"]
+    ):
         if row["version_id"] not in memberships:
             continue
         restored = document_from_payload(row["structure"])
         if restored.document_id.value != document:
             continue
-        content = encode_registered_units(restored, project_active_attachment(restored, frozenset(memberships[row["version_id"]])))
+        content = encode_registered_units(
+            restored,
+            project_active_attachment(
+                restored, frozenset(memberships[row["version_id"]])
+            ),
+        )
         units.extend(json.loads(line) for line in content.splitlines())
     units.sort(key=lambda unit: tuple(map(int, unit["section"]["code"].split("."))))
     source = next((ROOT / "data/pmda/originals").glob(f"*/{document}.xml"))
@@ -81,7 +92,9 @@ def candidate(index):
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
         "v2_artifact": artifact.relative_to(ROOT).as_posix(),
         "v2_artifact_sha256": hashlib.sha256(artifact.read_bytes()).hexdigest(),
-        "fixture_schema": json.loads((index / "postgres-fixture.json").read_text(encoding="utf-8"))["schema"],
+        "fixture_schema": json.loads(
+            (index / "postgres-fixture.json").read_text(encoding="utf-8")
+        )["schema"],
         "database_logical_sha256": snapshot["logical_sha256"],
         "sections": observed,
     }

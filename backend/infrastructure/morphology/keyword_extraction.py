@@ -6,7 +6,7 @@ from typing import Any
 
 from janome.tokenizer import Tokenizer  # type: ignore[import-untyped]
 
-from backend.application.retrieval.search_models import TextSearchPolicy
+from backend.application.retrieval.queries.models import TextSearchPolicy
 
 from ..package_insert_definitions.assembly import get_package_insert_definitions
 from .definition_settings import JanomeMorphologySettings

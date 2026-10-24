@@ -4,16 +4,16 @@ from copy import deepcopy
 from dataclasses import replace
 
 import pytest
-from backend.application.indexing.search_values import EvidenceContextLabel
-from backend.application.retrieval.evidence_payloads import evidence_payload
-from backend.application.retrieval.search_models import (
+from backend.application.indexing.values import EvidenceContextLabel
+from backend.application.retrieval.queries.dtos.evidence import evidence_payload
+from backend.application.retrieval.queries.models import (
     EvidenceDocument,
     EvidenceProduct,
 )
-from backend.application.retrieval.search_policy import (
+from backend.application.retrieval.queries.policies.selection import (
     build_evidence as format_evidence,
 )
-from backend.application.retrieval.search_values import (
+from backend.application.retrieval.values import (
     EvidenceBrandName,
     EvidenceExcerpt,
     EvidenceGenericName,

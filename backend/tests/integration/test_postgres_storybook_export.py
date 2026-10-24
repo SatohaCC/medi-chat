@@ -24,10 +24,10 @@ async def test_pg038_storybook_export_is_readonly_and_returns_public_evidence(
 ):
     import os
 
-    from backend.application.indexing.search_values import SearchSectionCode
-    from backend.application.medicine.product_models import ResolvedMedicine
-    from backend.application.retrieval.search_models import SearchCriteria
-    from backend.application.retrieval.search_values import DetectionSource
+    from backend.application.indexing.values import SearchSectionCode
+    from backend.application.medicine.queries.models import ResolvedMedicine
+    from backend.application.retrieval.queries.models import SearchCriteria
+    from backend.application.retrieval.values import DetectionSource
     from backend.domain.medicine.value_objects import MedicineMatch
     from backend.presentation.chat_dto_mapper import evidence_to_api
 

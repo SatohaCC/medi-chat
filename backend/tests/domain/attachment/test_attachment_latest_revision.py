@@ -3,9 +3,7 @@
 from dataclasses import replace
 
 import pytest
-from backend.application.attachment_import.registration_contract import (
-    registration_version,
-)
+from backend.application.attachment_import.policies import registration_version
 from backend.domain.attachment.exceptions import AttachmentDomainError
 from backend.domain.attachment.primitives import RevisionYearMonth
 from backend.domain.attachment.services import latest_attachment

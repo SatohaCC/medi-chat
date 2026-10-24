@@ -4,8 +4,15 @@ import re
 import httpx
 import pytest
 import pytest_asyncio
-from backend.application.attachment_import.import_document import (
-    AttachmentImportService,
+from backend.application.attachment_import.commands.import_documents import (
+    AttachmentImportCommands,
+)
+from backend.application.attachment_import.queries.import_history import (
+    ImportHistoryQueries,
+)
+from backend.infrastructure.persistence.import_workers import ImportWorkers
+from backend.infrastructure.persistence.original_document_registration import (
+    OriginalDocumentRegistration,
 )
 from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
 from backend.presentation.attachment_import_routes import router
@@ -20,14 +27,19 @@ publisher = pg_publisher
 
 @pytest_asyncio.fixture
 async def client(publisher):
-    service = AttachmentImportService(
-        decoder=PmdaXmlDecoder(),
-        publisher=publisher,
+    service = AttachmentImportCommands(
+        executor=ImportWorkers(),
         reader=publisher.results,
+        registration=OriginalDocumentRegistration(
+            decoder=PmdaXmlDecoder(), publisher=publisher
+        ),
     )
     app = FastAPI()
     app.include_router(router)
     app.state.attachment_import_service = service
+    app.state.attachment_import_queries = ImportHistoryQueries(
+        reader=publisher.results, executor=service._executor
+    )
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app), base_url="http://test"
     ) as client:
@@ -162,7 +174,7 @@ def test_tc106_107_openapi_declares_reuse_and_conflict_metadata():
 async def test_tc107_artifact_conflict_has_declared_list_and_preserves_old_publication(
     client, publisher
 ):
-    from backend.application.attachment_import.import_errors import ImportConflict
+    from backend.application.attachment_import.errors import ImportConflict
 
     assert (await post(client, source("旧公開"))).status_code == 201
     before = digest(publisher.engine)

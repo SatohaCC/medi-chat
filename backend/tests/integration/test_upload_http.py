@@ -4,7 +4,7 @@ import hashlib
 
 import httpx
 import pytest
-from backend.application.attachment_import.import_errors import ImportStorageError
+from backend.application.attachment_import.errors import ImportStorageError
 from backend.tests.support.attachment_import_fixtures import xml_source
 from backend.tests.support.postgres_fixtures import pg_api as pg_api
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
@@ -111,7 +111,7 @@ async def test_transient_failure_keeps_parts_for_retry(pg_api, monkeypatch):
     ):
         raw = xml_source().replace(b"111111111111", b"222222222222")
         path = await send_parts(client, raw)
-        publisher = app.state.attachment_import_service.publisher
+        publisher = app.state.attachment_import_service.registration.publisher
         publish = publisher.publish
 
         def fail(*args, **kwargs):

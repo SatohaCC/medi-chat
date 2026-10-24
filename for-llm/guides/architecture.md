@@ -6,3 +6,5 @@
 - 共通の添付文書定義は[Infrastructure定義README](../../backend/infrastructure/package_insert_definitions/README.md)に従う。検索・Jev・プロンプト・XML変換で別々の対応表を追加しない。
 - レイヤー間・レイヤー内の依存境界は[backend/pyproject.toml](../../backend/pyproject.toml)のImport Linter（24契約）と`backend/tests/architecture/test_architecture_dependencies.py`で機械的に検査する。`Presentation -> Domain`の完全禁止など例外（`ignore_imports`）を増やさない厳格なルールを維持し、`pnpm --filter backend lint`で即座に検証する。
 - モジュール移動や再公開の削除では利用側・テスト・CLI・起動点を確認し、必要な検証を計画する。ファイル移動や構文確認だけでは実行時の互換性を確認したことにしない。
+
+- Applicationの配置・公開範囲・絶対importは[Applicationハーネス](application-architecture.md)の規則と移行状況を参照する。import段階の成功と全規則への適合を区別する。

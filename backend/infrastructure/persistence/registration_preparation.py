@@ -4,17 +4,12 @@ import hashlib
 import json
 from pathlib import PurePosixPath
 
-from backend.application.attachment_import.import_contracts import (
-    AttachmentArtifactEncoder,
-)
-from backend.application.attachment_import.import_errors import (
+from backend.application.attachment_import.errors import (
     ImportLimitExceeded,
     InvalidAttachment,
 )
-from backend.application.attachment_import.registration_contract import (
-    registration_version,
-)
-from backend.application.indexing.attachment_projection import (
+from backend.application.attachment_import.policies import registration_version
+from backend.application.indexing.queries.services.attachment_projection import (
     project_attachment,
 )
 from backend.domain.attachment.exceptions import (
@@ -22,6 +17,7 @@ from backend.domain.attachment.exceptions import (
     MissingRevisionError,
 )
 from backend.domain.attachment.value_objects import RegistrationVersion
+from backend.infrastructure.import_payloads import AttachmentArtifactEncoder
 from backend.infrastructure.index_payloads import (
     MAX_ARTIFACT_BYTES,
 )

@@ -3,8 +3,8 @@
 from dataclasses import replace
 
 import pytest
-from backend.application.retrieval.search_models import SymptomKeywordRule
-from backend.application.retrieval.search_values import SearchPolicyTerm
+from backend.application.retrieval.queries.models import SymptomKeywordRule
+from backend.application.retrieval.values import SearchPolicyTerm
 from backend.domain.foundation.json_types import JsonValue
 
 

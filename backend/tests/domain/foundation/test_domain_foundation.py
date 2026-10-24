@@ -3,8 +3,8 @@
 import uuid
 
 import pytest
-from backend.application.retrieval.search_models import IntentCandidate, SearchCriteria
-from backend.application.retrieval.search_values import (
+from backend.application.retrieval.queries.models import IntentCandidate, SearchCriteria
+from backend.application.retrieval.values import (
     DetectionSource,
     IntentName,
     Probability,

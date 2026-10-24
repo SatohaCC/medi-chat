@@ -2,10 +2,10 @@
 
 import json
 
-from backend.application.attachment_import.registration_contract import (
-    registration_version,
+from backend.application.attachment_import.policies import registration_version
+from backend.application.indexing.queries.services.attachment_projection import (
+    project_active_attachment,
 )
-from backend.application.indexing.attachment_projection import project_active_attachment
 from backend.domain.attachment.entities import AttachmentDocument
 from backend.domain.foundation.json_types import JsonValue
 from backend.infrastructure.index_payloads import (

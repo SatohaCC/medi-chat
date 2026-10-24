@@ -213,7 +213,7 @@ ignore_imports = [
     "backend.application.retrieval.** -> backend.application.medicine.**",
     "backend.application.retrieval.** -> backend.application.indexing.**",
     "backend.application.chat.** -> backend.application.indexing.**",
-    "backend.application.attachment_import.** -> backend.application.indexing.**",
+    "backend.application.attachment_import.** -> backend.application.file_upload.**",
     "backend.application.indexing.** -> backend.application.medicine.**",
 ]
 unmatched_ignore_imports_alerting = "none"
@@ -260,6 +260,7 @@ type = "forbidden"
 source_modules = [
     "backend.infrastructure.evidence_mapping",
     "backend.infrastructure.index_payloads",
+    "backend.infrastructure.import_payloads",
 ]
 forbidden_modules = [
     "backend.infrastructure.*",

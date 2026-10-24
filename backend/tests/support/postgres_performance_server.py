@@ -41,7 +41,8 @@ def create_server():
             original_connect = engine.connect
             original_acquire = runtime.acquire
             service = application.state.attachment_import_service
-            original_decode = service.decoder.decode
+            decoder = service.registration.decoder
+            original_decode = decoder.decode
 
             def measured_decode(source, *, original_filename="source.xml"):
                 started = time.perf_counter()
@@ -166,7 +167,7 @@ def create_server():
                 event.listen(engine, name, callback)
             engine.connect = measured_connect
             runtime.acquire = measured_acquire
-            service.decoder.decode = measured_decode
+            decoder.decode = measured_decode
             try:
                 morphology = type(
                     application.state.chat_service._app_service.keyword_extractor
@@ -177,7 +178,7 @@ def create_server():
             finally:
                 emit("stopped", checkedout=engine.pool.checkedout())
                 runtime.acquire = original_acquire
-                service.decoder.decode = original_decode
+                decoder.decode = original_decode
                 engine.connect = original_connect
                 for name, callback in listeners:
                     event.remove(engine, name, callback)

@@ -3,7 +3,7 @@
 import argparse
 import json
 
-from backend.application.retrieval.standard_policies import (
+from backend.application.retrieval.queries.policies.standard import (
     DEFAULT_INTENT_POLICY,
     DEFAULT_RETRIEVAL_POLICY,
 )

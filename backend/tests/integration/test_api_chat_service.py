@@ -4,8 +4,10 @@ import asyncio
 from collections.abc import AsyncGenerator
 
 import pytest
-from backend.application.chat.chat_models import ChatResponse
-from backend.application.chat.chat_service import ChatApplicationService
+from backend.application.chat.queries.chat import (
+    ChatQueries,
+)
+from backend.application.chat.queries.models import ChatResponse
 from backend.infrastructure.package_insert_definitions.assembly import (
     get_package_insert_definitions,
 )
@@ -51,7 +53,7 @@ async def test_api_service_closes_owned_stream_and_preserves_generation_defaults
         return provider
 
     service = AppChatService(
-        application_service=ChatApplicationService(
+        application_service=ChatQueries(
             snapshot_provider=FixedSnapshotProvider(
                 MedicineReader(), RecordingReader()
             ),
@@ -104,7 +106,7 @@ async def test_prepared_application_reply_is_retained_until_generation(monkeypat
 
     definitions = get_package_insert_definitions()
     service = AppChatService(
-        application_service=ChatApplicationService(
+        application_service=ChatQueries(
             snapshot_provider=FixedSnapshotProvider(
                 MedicineReader(), RecordingReader()
             ),
@@ -203,7 +205,7 @@ async def test_lifespan_composes_application_service_before_api_adapter(monkeypa
     app = FastAPI()
     async with lifespan(app):
         application = received[0]
-        assert isinstance(application, ChatApplicationService)
+        assert isinstance(application, ChatQueries)
         classifier = application.intent_classifier
         assert isinstance(classifier, Classifier)
         assert isinstance(application.keyword_extractor, Keywords)

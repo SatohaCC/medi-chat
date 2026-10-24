@@ -6,11 +6,11 @@ from collections.abc import Mapping
 from dataclasses import fields
 
 import pytest
-from backend.application.chat.chat_models import ChatMessage, ChatResponse
-from backend.application.indexing.search_values import SearchUnitKind
-from backend.application.medicine.product_models import ResolvedMedicine
-from backend.application.retrieval.search_models import Evidence
-from backend.application.retrieval.search_values import (
+from backend.application.chat.queries.models import ChatMessage, ChatResponse
+from backend.application.indexing.values import SearchUnitKind
+from backend.application.medicine.queries.models import ResolvedMedicine
+from backend.application.retrieval.queries.models import Evidence
+from backend.application.retrieval.values import (
     DetectionSource,
     EvidenceExcerpt,
     EvidenceGenericName,
@@ -157,9 +157,9 @@ def response_payload() -> dict[str, JsonValue]:
 
 
 def _application_response(payload):
-    from backend.application.indexing.search_models import DocumentRevision
-    from backend.application.indexing.search_values import SearchUnitId
-    from backend.application.retrieval.search_models import (
+    from backend.application.indexing.queries.models import DocumentRevision
+    from backend.application.indexing.values import SearchUnitId
+    from backend.application.retrieval.queries.models import (
         EvidenceColumns,
         EvidenceReference,
         EvidenceSection,

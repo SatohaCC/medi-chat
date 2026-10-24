@@ -3,7 +3,7 @@
 from dataclasses import FrozenInstanceError
 
 import pytest
-from backend.application.medicine.suggestions import (
+from backend.application.medicine.queries.suggest_medicines import (
     MedicineSuggester,
     SuggestionProduct,
 )

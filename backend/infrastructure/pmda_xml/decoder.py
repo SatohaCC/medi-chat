@@ -1,10 +1,14 @@
 import hashlib
-from dataclasses import dataclass, replace
+from dataclasses import replace
 from pathlib import PurePosixPath
 from typing import Any
 
-from ...application.attachment_import.import_errors import InvalidAttachment
-from ...application.attachment_import.import_models import DecodedAttachment
+from backend.application.attachment_import.errors import InvalidAttachment
+from backend.infrastructure.import_payloads import (
+    AttachmentSourceInformation,
+    DecodedAttachment,
+)
+
 from ...domain.attachment.entities import AttachmentDocument
 from ...domain.attachment.exceptions import AttachmentDomainError
 from ...domain.attachment.identifiers import DocumentId
@@ -49,14 +53,6 @@ from .safe_parser import parse_source
 from .sections import make_section_index, reference_section_code
 from .units import _make_fragments, _scoped_products, context_labels
 from .xml_nodes import build_paths, direct_child, tag_name, text_of
-
-
-@dataclass(frozen=True)
-class SourceInformation:
-    document: dict[str, Any]
-    rows: list[dict[str, Any]]
-    validation: dict[str, Any]
-    events: list[dict[str, object]]
 
 
 def _context(fragment: dict[str, Any]) -> AttachmentContext:
@@ -518,5 +514,5 @@ class PmdaXmlDecoder:
                 "invalid_document_structure", "Original document structure is invalid"
             ) from None
         return DecodedAttachment(
-            model, SourceInformation(document, rows, validation, events)
+            model, AttachmentSourceInformation(document, rows, validation, events)
         )

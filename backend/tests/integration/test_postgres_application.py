@@ -10,7 +10,7 @@ import time
 
 import httpx
 import pytest
-from backend.application.retrieval.intent_contracts import IntentResult
+from backend.application.retrieval.queries.models import IntentResult
 from backend.tests.integration.test_postgres_registration import (
     pg_publisher as pg_publisher,
 )

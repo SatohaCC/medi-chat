@@ -1,6 +1,6 @@
 # バックエンドの構成と命名規則
 
-このバックエンドは、**医薬品情報意思決定支援**という一つの業務ドメインを実装します。医薬品同定と添付文書根拠検索はそのサブドメインで、`application/chat` は両者を組み合わせる回答ユースケース、`presentation` はチャットを届ける配信層です。読み取り中心のため、会話集約、汎用Repository、Unit of Work、ドメインイベントは追加していません。原本文書のRepositoryはDomainの `repositories.py`、根拠検索ポートはApplicationの `evidence_contracts.py` に定義し、PostgreSQL、SQLAlchemy Core、Alembicは外側の層に閉じ込めます。
+このバックエンドは、**医薬品情報意思決定支援**という一つの業務ドメインを実装します。医薬品同定と添付文書根拠検索はそのサブドメインで、`application/chat` は両者を組み合わせる回答ユースケース、`presentation` はチャットを届ける配信層です。読み取り中心のため、会話集約、汎用Repository、Unit of Work、ドメインイベントは追加していません。原本文書のRepositoryはDomainの `repositories.py`、根拠検索ポートはApplicationの `retrieval/queries/readers/evidence_query_reader.py` に定義し、PostgreSQL、SQLAlchemy Core、Alembicは外側の層に閉じ込めます。
 
 ## チャットの入出力上限
 
@@ -33,7 +33,7 @@ RESTとWebSocketは重複のない対象YJコードを1～50件受け付けま�
 | `domain/medicine` | 医薬品の名称・識別子、照合結果を所有する |
 | `domain/foundation` | 業務非依存のPrimitive、Value Object、Entity/Aggregate Rootの基底、宣言型ガード、例外基底 |
 | `domain/shared` | 複数コンテキストで共有する汎用正規化処理を置く。YJコードはmedicineが所有する |
-| `application/chat` | `ChatApplicationService` を中心に、会話から質問を取り出し、retrievalの結果を使って回答を準備・生成する。プロンプトと所有stream終了を担当する |
+| `application/chat` | `ChatQueries` を中心に、会話から質問を取り出し、retrievalの結果を使って回答を準備・生成する。プロンプトと所有stream終了を担当する |
 | `application/medicine` | 医薬品照合カタログ、文書参照との投影、フォームの医薬品候補提示（`MedicineSuggester.from_registered_medicines` による全候補の投影）。候補提示は根拠検索に依存しない |
 | `application/retrieval` | 選択済みYJコードだけから医薬品を解決し、検索条件を生成して根拠を取得・統合する。共通定義の常時取得項目（1・2・8）は質問による絞り込みなしに取得し、WebSocketでは検出器の完了前に配信する。通常検索との重複を除き、取得理由 `always` と通常の取得経路を保持する。常時取得項目を質問意図へ加えない。WebSocketでは固定キーワード・形態素解析の各検出完了時にローカル根拠を累積配信し、Jev完了後に全検出条件の統合根拠で更新する。固定キーワードの配信は形態素解析を待たない。登録済み製品が選択されていない場合は先行配信しない。RESTと回答生成は全検出完了後の根拠を使う |
 | `application/indexing` | 索引構築のユースケース・入出力契約 |
@@ -49,7 +49,7 @@ RESTとWebSocketは重複のない対象YJコードを1～50件受け付けま�
 
 `Evidence`と医薬品の改訂情報は深い値として保持し、公開辞書は独立コピーにします。根拠集合はunit_idで最初に取得した内容を採用し、由来を統合して数値項目順に並べます。検出器の完了順に依存する既存の条件順・最初採用を維持します。PrimitiveやValue Objectの導入は既存の入力形式を狭めず、境界で受けた基本型を内部の明示的な型へ変換します。
 
-医薬品候補の取得は `application/medicine/product_contracts.py` の `MedicineSnapshotProvider` を使い、同じ公開世代のIDと医薬品Readerだけを要求します。根拠検索側の `RetrievalSnapshotProvider` は根拠Readerも提供します。Infrastructureの世代runtimeは両契約を満たし、どちらも `acquire()` の終了まで同じ世代とleaseを保持します。
+医薬品候補の取得は `application/medicine/queries/readers/medicine_query_reader.py` の `MedicineSnapshotProvider` を使い、同じ公開世代のIDと医薬品Readerだけを要求します。根拠検索側の `RetrievalSnapshotProvider` は根拠Readerも提供します。Infrastructureの世代runtimeは両契約を満たし、どちらも `acquire()` の終了まで同じ世代とleaseを保持します。
 
 `infrastructure/sources` は明示した入力ファイルの読取を担当します。原本bytea・完全構造JSONB・検索投影の保存は `persistence/postgres_registration.py`、read-only MVCC読取は `persistence/postgres_runtime.py`、起動時のDB内整合性検証は `persistence/postgres_readiness.py` が担当します。persistenceはXML/source adapterへ依存せず、完全Domain構造は明示mapperで往復します。Composition RootがdecoderをImportServiceへ、encoderをpublisherへ注入し、engine/workersの寿命を所有します。
 
@@ -76,11 +76,11 @@ RESTとWebSocketは重複のない対象YJコードを1～50件受け付けま�
    - `Infrastructure` は `Application`・`Domain`・`Config` に依存し、`Presentation` には依存しません（Composition Rootの配線のみ）。
 3. **レイヤー内部のモジュール階層・独立性の強制**:
    - **Domain内部**: コンテキスト間（`attachment` / `medicine`）は独立し、他コンテキストからは公開ID（`identifiers.py`）のみ参照可能です。さらにコンテキスト内部でも `identifiers -> exceptions -> primitives -> value_objects -> entities -> repositories -> services` の単方向階層を強制しています。
-   - **Application内部**: `chat -> retrieval -> indexing -> medicine`、`retrieval -> medicine` および `attachment_import -> indexing` の有向パイプライン境界を強制し、逆方向参照や循環を防止します。
+   - **Application内部**: `chat -> retrieval -> indexing -> medicine`、`retrieval -> medicine` および `attachment_import -> file_upload` の有向パイプライン境界を強制し、逆方向参照や循環を防止します。
    - **Presentation内部**: `routes -> dependencies -> services (AppChatService) -> mappers -> DTO models` の5段階の階層を強制し、ルーターが `request.app.state` を直接読むことや、DTOモデルが上位サービスを参照することを防ぎます。
    - **Infrastructure内部**: 外部技術アダプター（`llm` / `intent` / `morphology` / `pmda_xml`）間の相互独立、`persistence -> sources` 禁止、`package_insert_definitions` から他アダプターへの依存禁止、`index_payloads` / `evidence_mapping` からアダプターパッケージへの依存禁止を契約化しています。
 
-他コンテキストからの直接importは、所有元の `identifiers.py` に定義する公開ID Primitive（**1コンテキスト＝1公開ID**）に限ります。添付文書の `DocumentId` は `domain/attachment/identifiers.py`、医薬品の `YjCode` は `domain/medicine/identifiers.py` が正本です。それ以外の情報はApplicationで利用側の型へ変換します。検索単位の `SearchUnitId` はDomainの公開IDではなく、`application/indexing/search_values.py` が所有する投影のIDです。
+他コンテキストからの直接importは、所有元の `identifiers.py` に定義する公開ID Primitive（**1コンテキスト＝1公開ID**）に限ります。添付文書の `DocumentId` は `domain/attachment/identifiers.py`、医薬品の `YjCode` は `domain/medicine/identifiers.py` が正本です。それ以外の情報はApplicationで利用側の型へ変換します。検索単位の `SearchUnitId` はDomainの公開IDではなく、`application/indexing/values.py` が所有する投影のIDです。
 各コンテキストの `identifiers.py` のプロジェクト内import先は `domain/foundation/primitives/identifiers.py` だけです。標準ライブラリは利用でき、IDは `EntityUUID` または `EntityStringId` を継承します。文字列ID基底はNFKC正規化・前後の余白除去・空値拒否を行います。
 sharedは各業務コンテキストへ、foundationは業務コンテキスト・sharedへ依存できません。
 domain全体からapplication・infrastructure・presentationへの依存も禁止します。静的な直接・間接依存を検査し、動的importは対象外です。
@@ -143,7 +143,7 @@ backendの実行環境はPython 3.14以上が必要です。
 
 ## 依存関係と実行時の呼出し
 
-`application/chat` は `ChatApplicationService` を通じて `application/retrieval.retrieve_evidence` を呼び、
+`application/chat` は `ChatQueries` を通じて `application/retrieval.retrieve_evidence` を呼び、
 チャットやLLMに依存しない `RetrievalResult` を受け取ります。
 retrievalは会話メッセージ・回答生成・LLM Providerを参照しません。
 この依存方向はImport Linterで間接依存も含めて検査します。
@@ -168,12 +168,12 @@ flowchart LR
 ```mermaid
 flowchart TD
   Routes[REST / WS] --> Adapter[presentation.AppChatService / mapper]
-  Adapter --> AppService[application.chat.ChatApplicationService]
+  Adapter --> AppService[application.chat.ChatQueries]
   AppService --> Prepare[application.chat.prepare_reply]
-  Prepare --> Medicine[RegisteredMedicineReader / MedicineCatalog]
+  Prepare --> Medicine[MedicineQueryReader / MedicineCatalog]
   Prepare --> Detect[意図port / 検索語port / 固定ポリシー]
   Detect --> Select[型付き意図選択]
-  Prepare --> Read[EvidenceRepository]
+  Prepare --> Read[EvidenceQueryReader]
   Read --> Merge[merge_evidence / 不変の根拠結果]
   AppService --> Reply[answer_question / stream_reply]
   Reply --> Prompt[共通プロンプト]
@@ -189,10 +189,11 @@ backend/
 ├── main.py / project_paths.py / alembic.ini
 ├── presentation/        # routes、dependencies、chat_service(DTO adapter)、mapper、公開DTO
 ├── application/
-│   ├── chat/            # ChatApplicationService、prepare_reply、回答生成、prompt、stream終了
+│   ├── chat/            # ChatQueries、prepare_reply、回答生成、prompt、stream終了
 │   ├── medicine/        # 製品解決カタログ、フォームの候補提示(MedicineSuggester)
 │   ├── retrieval/       # intent/keyword契約、条件生成、根拠取得ユースケース
 │   ├── attachment_import/ # 添付文書取り込み・結果読取ユースケース
+│   ├── file_upload/     # 分割転送・原本の一時保存
 │   └── indexing/        # 索引構築契約とユースケース
 ├── domain/
 │   ├── attachment/      # 添付文書 bounded context（責務別の直下モジュール）
@@ -210,7 +211,8 @@ backend/
 │   ├── composition/     # app_lifespan(DI配線)、index verifier、persistence lifespan
 │   ├── cli/             # manage_postgres、structure_pmda_xml
 │   ├── evidence_mapping.py
-│   └── index_payloads.py # XML非依存のJSON/検索単位payload変換
+│   ├── index_payloads.py # XML非依存のJSON/検索単位payload変換
+│   └── import_payloads.py # 解析・成果物生成・公開の内部契約
 ├── config/              # database_settings、generation_settings
 ├── migrations/          # env.pyとversions
 └── tests/               # 現在形式の生成・保存・検索と未管理DB拒否を検証
@@ -219,6 +221,8 @@ backend/
 旧`backend.chat`/`retrieval`/`medicines`/`storage`/`jev`とcompositionの旧サービス再公開は削除しました。ドメインモデルも責務別の正本へ統一し、既知のリポジトリ内利用側は正本へ移行しています。公開起動点は`backend.main:app`/`create_app`、既存REST/WSルート、FastAPI DI関数、用途別CLI moduleです。リポジトリ外の旧Python import利用は確認対象外です。
 
 ## 命名規則
+
+ApplicationはFeature-firstで、commands/queriesのSingle-File Sliceを基本とします。共有サービス・モデル・DTO・外部契約は更新側または参照側へ閉じ、Feature直下のservices/ports/models/DTOと更新・参照を束ねる窓口は置きません。必要な役割だけを置きます。配置・公開範囲・依存・循環は[Applicationハーネス](../for-llm/guides/application-architecture.md)と `scripts/application_architecture.py` を正典として全Featureに強制します。
 
 ファイルは`snake_case`で責務を示し、クラスは`PascalCase`、関数は動詞を先頭にします。APIルートは`*_routes.py`、外部判定adapterは`*_detector.py`/`*_classifier.py`、純粋な業務判断は`*_policy.py`、外部表現の変換は`*_mapping.py`/`*_mapper.py`です。添付文書の編集規約は[Infrastructure定義ソース](../backend/infrastructure/package_insert_definitions/README.md)を参照します。組立束をサービスへ渡さず、用途別policy/settingsだけを注入します。公開APIのスキーマ・項目・ルート名は互換性を維持します。基本型を業務上の意味で包むものは`primitives`、同一性を持たない不変値は`value_objects`、同一性とライフサイクルを持つものは`entities`、複数モデルを組み合わせる処理は`services`へ置きます。
 
@@ -304,11 +308,11 @@ pnpm dev:backend
 attachmentは文書の原文表記・製品参照・構造・出典・改訂・登録を所有します。
 `MedicineDocumentReference` が文書ID・URL・改訂を保持し、Applicationの
 `RegisteredMedicine` が医薬品と文書参照を結びます。
-`application/medicine/product_catalog.py` の `MedicineCatalog` はYJ索引だけを持ち、
+`application/medicine/queries/policies/catalog_matching.py` の `MedicineCatalog` はYJ索引だけを持ち、
 選択済みYJコードの照合と文書付き `ResolvedMedicine` の組立を担当します。
 チャット本文からの名称推測やTrieの構築は行いません。
 DBとJSONの保存形式は維持し、Readerで明示的に両モデルへ変換します。
-フォームの候補提示は `application/medicine/suggestions.py` の `MedicineSuggester` が担当します。
+フォームの候補提示は `application/medicine/queries/suggest_medicines.py` の `MedicineSuggester` が担当します。
 現在の候補データは添付文書掲載製品です。起動時に公開ID・名称だけを
 候補提示用の入力スナップショットへ変換し、添付文書モデルや根拠検索サービスを直接保持しません。
 `MedicineCatalog` は回答準備の製品解決に限定し、フォームのサジェスト操作は持ちません。
@@ -324,15 +328,15 @@ DBとJSONの保存形式は維持し、Readerで明示的に両モデルへ変�
 添付文書掲載製品の参照文字列と改訂情報はattachmentの `PmdaUrl` と
 `AttachmentProductRevision` が所有します。
 attachmentは原本文書の構造と整合性を所有し、Repositoryは文書取得だけを公開します。
-原文から派生する索引用投影 `SearchUnit` と `SearchContent*`、そのID・本文・項目コード等の型は `application/indexing/search_models.py` と `search_values.py` が所有します。
-検索条件・意図判定ポリシー・検索結果 `Evidence` は `application/retrieval/search_models.py`、検索用の値は `search_values.py` に置きます。
-キーワード検出・確率による意図選択・製品範囲の選択・結果の並び替えと統合は `application/retrieval/search_policy.py`、文脈ラベル付き原文の投影は `application/indexing/text_projection.py` が担当します。
+原文から派生する索引用投影 `SearchUnit` と `SearchContent*`、そのID・本文・項目コード等の型は `application/indexing/queries/models.py` と `search_values.py` が所有します。
+検索条件・意図判定ポリシー・検索結果 `Evidence` は `application/retrieval/queries/models.py`、検索用の値は `search_values.py` に置きます。
+キーワード検出・確率による意図選択・製品範囲の選択・結果の並び替えと統合は `application/retrieval/queries/policies/selection.py`、文脈ラベル付き原文の投影は `application/indexing/queries/policies/text_projection.py` が担当します。
 `domain/retrieval` は廃止し、分類と参照項目の対応も根拠取得ユースケースのポリシーとしてApplicationが所有します。
-`EvidenceRepository` と `EvidenceSearchTarget` は `application/retrieval/evidence_contracts.py` に置く検索ポートです。
+`EvidenceQueryReader` と `EvidenceSearchTarget` は `application/retrieval/queries/readers/evidence_query_reader.py` に置く検索ポートです。
 `Evidence` は不変な読み取りモデルであり、公開用payloadへの変換は `evidence_payloads.py` の明示的な関数に分けます。
 根拠の統合は最初の原文と既存の取得経路を保持し、取得経路を和集合にします。番号付き項目・文字列項目・空項目の順、同項目では検索単位ID順の不変タプルを返します。
 検索結果の改訂・参照・項目・表の列は、原表記と未知metadataを保持し、`domain/foundation/value_objects.py` の汎用 `ImmutableMapping` によって入力・出力から独立させます。
-Application内は `chat → retrieval → indexing`、`attachment_import → indexing` を許可し、indexingからretrievalへの逆依存を禁止します。モデルは値とモデル、ポートは値・モデル・ポートに依存でき、値からモデル・実行処理への逆依存は禁止します。
+Application内は `chat → retrieval → indexing`、`attachment_import → file_upload` を許可し、indexingからretrievalへの逆依存を禁止します。モデルは値、ポートはモデル・値・他のポートに依存でき、値からモデル・実行処理への逆依存は禁止します。ポート合成と共有services/policiesは循環禁止です。
 文書内の製品重複と項目の親子関係は `AttachmentDocument` が検証し、
 取得経路は `frozenset[DetectionSource]` で保持し、公開JSONはEnum定義順の配列に変換します。
 経路がない場合は空集合・空配列とし、組み合わせ専用のEnumや対応表は定義しません。
@@ -341,11 +345,17 @@ Application内は `chat → retrieval → indexing`、`attachment_import → ind
 
 `POST /api/attachment-imports`はmultipartの`file`1つを受け取り、`GET /api/attachment-imports/{document_id}/{source_sha256}`は保存結果metadataを返します。新規201・同原本200、入力数/空400、上限413、非XML415、構造/解析422、保存矛盾409、保存IO500。エラーは`detail: {code, message, phase}`で、409は`conflicts`も返します。
 
+取り込みの更新操作は `attachment_import/commands/import_documents.py`、結果・履歴の参照は `queries/import_history.py` に分離します。参照契約は `queries/readers/`、表示DTOは `queries/dtos/`、再送の契約と結果はCommand側が所有します。更新・参照の窓口はそれぞれ直接公開し、共通Facadeは設けません。`file_upload` は原本の転送・整合性確認までを所有し、登録済み文書IDと再送結果は取り込み側の `UploadImportReceipts` が所有します。取り込み側から転送の公開契約への一方向依存だけを許可します。
+
+取り込みの手順とキャンセル後の処置は `AttachmentImportCommands`、実行ポートは `ImportExecutor`、スレッド実行・要求の受付停止・終了待機はInfrastructureの `ImportWorkers` が担当します。Composition Rootで実装を注入します。分割アップロードの完了は読取・登録・完了記録までを一つの要求として実行し、終了時も途中の完了記録を拒否しません。開始要求がキャンセルされてIDを返せなかったセッションは破棄します。commit後の取消では登録を取り消さず、アップロード完了記録まで実施します。
+
+原本の補足情報・デコード結果・成果物・エンコーダ契約はInfrastructureの `import_payloads.py` が所有します。`AttachmentSourceInformation` はデコーダと成果物エンコーダの内部受渡し型です。Applicationへは原本bytesと `ImportResult` を公開し、中間表現を公開しません。原本由来のメタデータ・行・検証・変換イベントを保持し、Domainの添付文書構造とは区別します。原本受付上限はfile_uploadの `UploadSpec`、HTTP分割サイズは `config/upload_settings.py` が所有し、`part_size()` には分割サイズを明示します。
+
 lifespanが取り込みworkerを所有し、decoderとpublisherをevent loop外で実行して終了を待ちます。原本/図bytea、完全構造JSONB、検索投影、active集合、世代pointer、receiptをPostgreSQLに保持します。`PostgresRegistrationPublisher`が一つのDB transactionで公開し、失敗時はrollbackします。新規201・同原本200、Location、エラーcode/message/phase/conflictsと削除済GET410を維持します。
 
 YJごとに最も新しい改訂年月を選択し、同年月の別原本は409、年月なしは422です。A+Bの旧版に新Aが来た場合は旧Bを保持します。参照0payloadの削除失敗はDB由来reasonのcleanup_pendingになり、明示maintenance/登録後の限定再試行で回収します。再送はreceiptを再利用し、削除済み旧版の本文を復活させません。元XML・既存SQLite・手作業データは削除しません。
 
-登録準備は `RegistrationPreparer`、ロック内で読み取った状態からの公開割当計画は `plan_registration()` が担当します。計画は既存Domainの改訂選択規則を使い、Publisherが単一トランザクションで反映します。履歴・再送結果の照会は `AttachmentImportReader` / `PostgresImportQueries`、別トランザクションでの世代・payload清掃は `PostgresRegistrationCleanup` が担当します。commit後の取消で確定済み登録を取り消しません。
+登録準備は `RegistrationPreparer`、ロック内で読み取った状態からの公開割当計画は `plan_registration()` が担当します。計画は既存Domainの改訂選択規則を使い、Publisherが単一トランザクションで反映します。履歴・再送結果の照会は `ImportQueryReader` / `PostgresImportQueries`、別トランザクションでの世代・payload清掃は `PostgresRegistrationCleanup` が担当します。commit後の取消で確定済み登録を取り消しません。
 
 `AttachmentDocument` は本文ブロックと表セルの参照先IDの存在を生成時に検証します。`target_id=None` の参照は許可し、直接生成・XML変換・保存形式復元で同じ不変条件を適用します。
 
@@ -427,4 +437,4 @@ tests/
 
 項目番号・正式名称・階層・項目が扱う範囲は `domain/attachment/value_objects.py` の型付き定義が正本です。項目の範囲は `SectionScope`、名称は `DefinitionTitle`、番号は `NumberedSectionCode` で保持します。原文本文・原文見出しをこの定義で上書きしません。
 
-`application/retrieval/standard_policies.py` が質問意図・検索条件・分類対応を所有し、常時参照は独立した `EvidenceRetrievalPolicy` が所有します。`application/chat/standard_policy.py` は回答指示・表示名を投影します。InfrastructureはXMLタグやSDK設定を持ち、`package_insert_definitions/assembly.py` で各層の型を組み立てます。JSONカタログ・スキーマ・互換読込はありません。参照整合性とDomainの不変条件はPythonモデルの構築時に検証します。
+`application/retrieval/queries/policies/standard.py` が質問意図・検索条件・分類対応を所有し、常時参照は独立した `EvidenceRetrievalPolicy` が所有します。`application/chat/queries/policies/standard.py` は回答指示・表示名を投影します。InfrastructureはXMLタグやSDK設定を持ち、`package_insert_definitions/assembly.py` で各層の型を組み立てます。JSONカタログ・スキーマ・互換読込はありません。参照整合性とDomainの不変条件はPythonモデルの構築時に検証します。

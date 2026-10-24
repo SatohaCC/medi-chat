@@ -237,7 +237,7 @@ def test_http_and_ws_dependencies_can_be_overridden(
         async def prepare_reply(
             self, conversation: Any, product_yj_codes: Any, **kwargs: Any
         ) -> Any:
-            from backend.application.chat.chat_models import (
+            from backend.application.chat.queries.models import (
                 ChatResponse as PreparedReply,
             )
 

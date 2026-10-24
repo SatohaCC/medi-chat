@@ -5,10 +5,14 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from backend.application.chat.answer_prompt_builder import build_answer_messages
-from backend.application.chat.chat_models import ChatMessage, ChatResponse
-from backend.application.indexing.text_projection import format_scoped_text
-from backend.application.medicine.product_models import ResolvedMedicine
+from backend.application.chat.queries.models import ChatMessage, ChatResponse
+from backend.application.chat.queries.policies.answer_prompt import (
+    build_answer_messages,
+)
+from backend.application.indexing.queries.policies.text_projection import (
+    format_scoped_text,
+)
+from backend.application.medicine.queries.models import ResolvedMedicine
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import BrandName, GenericName
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch

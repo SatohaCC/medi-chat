@@ -4,7 +4,7 @@ import os
 import sys
 from pathlib import Path
 
-from backend.application.retrieval.intent_contracts import IntentResult
+from backend.application.retrieval.queries.models import IntentResult
 
 
 class FixedClassifier:

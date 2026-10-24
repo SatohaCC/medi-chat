@@ -4,13 +4,20 @@ from dataclasses import replace
 import httpx
 import pytest
 import pytest_asyncio
-from backend.application.attachment_import.import_document import (
-    AttachmentImportService,
+from backend.application.attachment_import.commands.import_documents import (
+    AttachmentImportCommands,
 )
-from backend.application.attachment_import.import_errors import (
+from backend.application.attachment_import.errors import (
     ImportConflict,
     ImportLimitExceeded,
     ImportStorageError,
+)
+from backend.application.attachment_import.queries.import_history import (
+    ImportHistoryQueries,
+)
+from backend.infrastructure.persistence.import_workers import ImportWorkers
+from backend.infrastructure.persistence.original_document_registration import (
+    OriginalDocumentRegistration,
 )
 from backend.infrastructure.pmda_xml.artifact_mapping import (
     MAX_ARTIFACT_BYTES,
@@ -28,13 +35,18 @@ from fastapi import FastAPI
 
 @pytest_asyncio.fixture
 async def client(pg_publisher):
-    service = AttachmentImportService(
-        decoder=PmdaXmlDecoder(),
-        publisher=pg_publisher,
+    service = AttachmentImportCommands(
+        executor=ImportWorkers(),
         reader=pg_publisher.results,
+        registration=OriginalDocumentRegistration(
+            decoder=PmdaXmlDecoder(), publisher=pg_publisher
+        ),
     )
     app = FastAPI()
     app.state.attachment_import_service = service
+    app.state.attachment_import_queries = ImportHistoryQueries(
+        reader=pg_publisher.results, executor=service._executor
+    )
     app.include_router(router)
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app), base_url="http://test"

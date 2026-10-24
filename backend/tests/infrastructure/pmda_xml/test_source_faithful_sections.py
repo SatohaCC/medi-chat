@@ -3,20 +3,24 @@
 import json
 
 import pytest
-from backend.application.indexing.attachment_projection import (
+from backend.application.indexing.queries.models import (
+    SearchParagraph,
+    SearchTableBlock,
+)
+from backend.application.indexing.queries.services.attachment_projection import (
     project_active_attachment,
     project_attachment,
 )
-from backend.application.indexing.search_models import SearchParagraph, SearchTableBlock
 from backend.domain.attachment.value_objects import AttachmentTableBlock
 from backend.domain.medicine.identifiers import YjCode
+from backend.infrastructure.import_payloads import AttachmentSourceInformation
 from backend.infrastructure.index_payloads import (
     build_index_document,
     encode_registered_units,
     registered_unit_text,
 )
 from backend.infrastructure.pmda_xml.artifact_mapping import PmdaArtifactEncoder
-from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder, SourceInformation
+from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
 from backend.tests.support.attachment_import_fixtures import (
     encoded,
     json_artifact,
@@ -181,7 +185,7 @@ def test_revision_marked_current_is_used_without_reordering_source(previous_firs
             previous + b"</DateOfPreparationOrRevision>",
         )
     decoded = PmdaXmlDecoder().decode(source)
-    assert isinstance(decoded.source_info, SourceInformation)
+    assert isinstance(decoded.source_info, AttachmentSourceInformation)
     _, products = build_index_document(decoded.source_info.document)
     assert products[0].revision["source_label"] == "今回"
     assert products[0].revision["year_month"] == "2026-10"

@@ -5,12 +5,12 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 
 import pytest
-from backend.application.medicine.autocomplete import read_autocomplete_catalog
-from backend.application.medicine.product_contracts import (
+from backend.application.medicine.interfaces.medicine_query_reader import (
+    MedicineQueryReader,
     MedicineSnapshot,
-    RegisteredMedicineReader,
-    SearchGenerationId,
 )
+from backend.application.medicine.queries.catalog import MedicineQueries
+from backend.application.medicine.values import SearchGenerationId
 
 
 @pytest.mark.asyncio
@@ -21,7 +21,7 @@ async def test_catalogue_keeps_and_releases_its_medicine_only_snapshot(fail_read
     @dataclass(frozen=True)
     class Snapshot:
         generation_id: SearchGenerationId
-        medicine_reader: RegisteredMedicineReader
+        medicine_reader: MedicineQueryReader
 
     class Reader:
         async def read_medicines(self):
@@ -46,8 +46,11 @@ async def test_catalogue_keeps_and_releases_its_medicine_only_snapshot(fail_read
     provider = Provider()
     if fail_read:
         with pytest.raises(RuntimeError, match="catalogue read failed"):
-            await read_autocomplete_catalog(provider)
+            await MedicineQueries(runtime=provider).read_autocomplete_catalog()
     else:
-        assert await read_autocomplete_catalog(provider) == (generation_id, [])
+        assert await MedicineQueries(runtime=provider).read_autocomplete_catalog() == (
+            generation_id,
+            [],
+        )
     assert provider.released
     assert not provider.active

@@ -14,15 +14,18 @@ from dataclasses import replace
 import httpx
 import pytest
 import pytest_asyncio
-from backend.application.attachment_import.import_document import (
-    AttachmentImportService,
+from backend.application.attachment_import.commands.import_documents import (
+    AttachmentImportCommands,
 )
-from backend.application.attachment_import.import_errors import (
+from backend.application.attachment_import.errors import (
     ImportCancelled,
     ImportConflict,
     ImportGone,
     ImportStorageError,
     InvalidAttachment,
+)
+from backend.application.attachment_import.queries.import_history import (
+    ImportHistoryQueries,
 )
 from backend.domain.attachment.primitives import AttachmentSha256
 from backend.domain.attachment.value_objects import AttachmentFigure
@@ -30,6 +33,10 @@ from backend.infrastructure.persistence import postgres_schema as s
 from backend.infrastructure.persistence.attachment_document_mapping import (
     document_from_payload,
     document_to_payload,
+)
+from backend.infrastructure.persistence.import_workers import ImportWorkers
+from backend.infrastructure.persistence.original_document_registration import (
+    OriginalDocumentRegistration,
 )
 from backend.infrastructure.persistence.postgres_registration import (
     PostgresRegistrationPublisher,
@@ -66,14 +73,19 @@ def pg_publisher(pg_engines):
 
 @pytest_asyncio.fixture
 async def pg_client(pg_publisher):
-    service = AttachmentImportService(
-        decoder=PmdaXmlDecoder(),
-        publisher=pg_publisher,
+    service = AttachmentImportCommands(
+        executor=ImportWorkers(),
         reader=pg_publisher.results,
+        registration=OriginalDocumentRegistration(
+            decoder=PmdaXmlDecoder(), publisher=pg_publisher
+        ),
     )
     app = FastAPI()
     app.include_router(router)
     app.state.attachment_import_service = service
+    app.state.attachment_import_queries = ImportHistoryQueries(
+        reader=pg_publisher.results, executor=service._executor
+    )
     try:
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=app), base_url="http://test"

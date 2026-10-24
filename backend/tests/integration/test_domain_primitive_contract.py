@@ -4,19 +4,19 @@ import json
 from dataclasses import FrozenInstanceError, replace
 
 import pytest
-from backend.application.chat.chat_models import ChatResponse
-from backend.application.indexing.search_values import (
+from backend.application.chat.queries.models import ChatResponse
+from backend.application.indexing.values import (
     SearchSectionCode,
     SearchUnitId,
     SearchUnitKind,
 )
-from backend.application.retrieval.evidence_payloads import evidence_payload
-from backend.application.retrieval.search_models import (
+from backend.application.retrieval.queries.dtos.evidence import evidence_payload
+from backend.application.retrieval.queries.models import (
     IntentCandidate,
     IntentSelection,
     SearchCriteria,
 )
-from backend.application.retrieval.search_values import (
+from backend.application.retrieval.values import (
     DetectionSource,
     EvidenceExcerpt,
     IntentName,

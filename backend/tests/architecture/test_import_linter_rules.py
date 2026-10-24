@@ -16,6 +16,19 @@ ROOT = PROJECT_ROOT
         ({"application/retrieval/model.py": "from ..chat import model"}, True),
         (
             {
+                "application/attachment_import/model.py": "from ..file_upload import model"
+            },
+            False,
+        ),
+        (
+            {
+                "application/file_upload/model.py": "from ..attachment_import import model"
+            },
+            True,
+        ),
+        ({"infrastructure/import_payloads.py": "from .pmda_xml import model"}, True),
+        (
+            {
                 "application/retrieval/model.py": "from .. import model",
                 "application/model.py": "from .chat import model",
             },
@@ -140,6 +153,8 @@ def test_import_linter_enforces_configured_contracts(tmp_path, sources, broken):
         "application/chat",
         "application/retrieval",
         "application/medicine",
+        "application/attachment_import",
+        "application/file_upload",
         "infrastructure",
         "infrastructure/persistence",
         "infrastructure/sources",
@@ -161,6 +176,7 @@ def test_import_linter_enforces_configured_contracts(tmp_path, sources, broken):
     for stub in (
         "infrastructure/evidence_mapping.py",
         "infrastructure/index_payloads.py",
+        "infrastructure/import_payloads.py",
         "presentation/chat_models.py",
         "presentation/chat_dto_mapper.py",
         "presentation/chat_service.py",

@@ -2,7 +2,7 @@
 
 ## 入力形式と共通モデル
 
-`AttachmentDecoder` は入力を共通の `AttachmentDocument` に変換する境界で、PMDA XML は `PmdaXmlDecoder` が担当する。別の入力形式を追加する場合も、XMLタグやXMLパーサーをDomain/Applicationへ持ち込まず、この境界にアダプターを追加する。検索索引への投影は `application/indexing/attachment_projection.py` が担当する。
+`AttachmentDecoder` は入力を共通の `AttachmentDocument` に変換する境界で、PMDA XML は `PmdaXmlDecoder` が担当する。別の入力形式を追加する場合も、XMLタグやXMLパーサーをDomain/Applicationへ持ち込まず、この境界にアダプターを追加する。検索索引への投影は `application/indexing/queries/services/attachment_projection.py` が担当する。
 
 `AttachmentSection` は項目番号、標準項目名 (`title`)、原文見出し (`header`)、自身の本文 (`body`)、子項目 (`children`) を区別する。`header` は原文にあるときだけ設定し、欠損時は `None` とする。短い本文から推定しない。本文内の原文見出しは `AttachmentParagraph.is_heading` で区別する。
 

@@ -1,7 +1,7 @@
 import pytest
-from backend.application.indexing.search_values import SearchSectionCode
-from backend.application.retrieval.search_models import SearchCriteria
-from backend.application.retrieval.search_values import DetectionSource
+from backend.application.indexing.values import SearchSectionCode
+from backend.application.retrieval.queries.models import SearchCriteria
+from backend.application.retrieval.values import DetectionSource
 from backend.infrastructure.persistence.postgres_runtime import PostgresRuntime
 from backend.infrastructure.persistence.read_workers import ReadWorkers
 from backend.tests.integration.test_postgres_registration import (

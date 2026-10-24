@@ -11,14 +11,17 @@ from sqlalchemy import delete, func, select, text, update
 from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.exc import SQLAlchemyError
 
-from ...application.attachment_import.import_errors import (
-    ImportConflict,
-    ImportGone,
-    ImportLimitExceeded,
-    ImportStorageError,
-    InvalidAttachment,
+from backend.application.attachment_import.commands.models import UploadImportReceipt
+from backend.application.file_upload.commands.models import UploadedSource, UploadSpec
+from backend.application.file_upload.errors import (
+    InvalidUpload,
+    UploadConflict,
+    UploadGone,
+    UploadLimitExceeded,
+    UploadStorageError,
 )
-from ...application.attachment_import.upload_models import UploadedSource, UploadSpec
+from backend.config.upload_settings import CHUNK_BYTES
+
 from .postgres_schema import upload_parts, uploads
 
 MAX_UPLOADS = 16
@@ -34,7 +37,7 @@ class PostgresUploadStore:
             with self.engine.begin() as connection:
                 yield connection
         except SQLAlchemyError:
-            raise ImportStorageError(
+            raise UploadStorageError(
                 "upload_storage_failed", "XMLの一時保存に失敗しました。", phase="upload"
             ) from None
 
@@ -73,7 +76,7 @@ class PostgresUploadStore:
                 ).scalar_one()
                 >= MAX_UPLOADS
             ):
-                raise ImportLimitExceeded(
+                raise UploadLimitExceeded(
                     "upload_capacity",
                     "取り込みが混み合っています。しばらく待って再送してください。",
                     phase="upload",
@@ -92,7 +95,7 @@ class PostgresUploadStore:
 
     def _session(self, connection: Connection, upload_id: str):
         if not re.fullmatch(r"[0-9a-f]{64}", upload_id):
-            raise ImportGone(
+            raise UploadGone(
                 "upload_expired",
                 "取り込みを最初からやり直してください。",
                 phase="upload",
@@ -110,7 +113,7 @@ class PostgresUploadStore:
             .one_or_none()
         )
         if row is None:
-            raise ImportGone(
+            raise UploadGone(
                 "upload_expired",
                 "取り込みを最初からやり直してください。",
                 phase="upload",
@@ -122,21 +125,21 @@ class PostgresUploadStore:
             row = self._session(connection, upload_id)
             spec = UploadSpec(row["filename"], row["byte_size"], row["source_sha256"])
             try:
-                expected = spec.part_size(index)
+                expected = spec.part_size(index, chunk_bytes=CHUNK_BYTES)
             except ValueError:
-                raise InvalidAttachment(
+                raise InvalidUpload(
                     "invalid_upload_part",
                     "送信データの位置が不正です。",
                     phase="upload",
                 ) from None
             if len(content) != expected:
-                raise InvalidAttachment(
+                raise InvalidUpload(
                     "invalid_upload_part",
                     "送信データのサイズが一致しません。",
                     phase="upload",
                 )
             if row["document_id"] is not None:
-                raise ImportConflict(
+                raise UploadConflict(
                     "upload_complete", "このXMLは取り込み済みです。", phase="upload"
                 )
             condition = (
@@ -148,7 +151,7 @@ class PostgresUploadStore:
             ).scalar_one_or_none()
             if existing is not None:
                 if existing != content:
-                    raise ImportConflict(
+                    raise UploadConflict(
                         "upload_part_conflict",
                         "送信済みデータと一致しません。",
                         phase="upload",
@@ -165,7 +168,9 @@ class PostgresUploadStore:
             row = self._session(connection, upload_id)
             spec = UploadSpec(row["filename"], row["byte_size"], row["source_sha256"])
             if row["document_id"] is not None:
-                return UploadedSource(spec, None, row["document_id"])
+                raise UploadGone(
+                    "upload_source_released", "登録済み原本は解放されています。"
+                )
             parts = connection.execute(
                 select(upload_parts.c.part_index, upload_parts.c.content)
                 .where(
@@ -175,20 +180,36 @@ class PostgresUploadStore:
             ).all()
             source = b"".join(part.content for part in parts)
             if len(source) != spec.byte_size:
-                raise ImportConflict(
+                raise UploadConflict(
                     "upload_incomplete", "XMLの送信が完了していません。", phase="upload"
                 )
             if hashlib.sha256(source).hexdigest() != spec.source_sha256:
-                raise InvalidAttachment(
+                raise InvalidUpload(
                     "upload_digest_mismatch",
                     "XMLの整合性を確認できませんでした。再送してください。",
                     phase="upload",
                 )
-            return UploadedSource(spec, source, None)
+            return UploadedSource(spec, source)
 
-    def complete(self, upload_id: str, document_id: str) -> None:
+    def discard(self, upload_id: str) -> None:
         with self._transaction() as connection:
-            self._session(connection, upload_id)
+            connection.execute(delete(uploads).where(uploads.c.upload_id == upload_id))
+
+
+class PostgresUploadImportReceipts:
+    def __init__(self, engine: Engine) -> None:
+        self._store = PostgresUploadStore(engine)
+
+    def find(self, upload_id: str) -> UploadImportReceipt | None:
+        with self._store._transaction() as connection:
+            row = self._store._session(connection, upload_id)
+            if row["document_id"] is None:
+                return None
+            return UploadImportReceipt(row["document_id"], row["source_sha256"])
+
+    def record(self, upload_id: str, document_id: str) -> None:
+        with self._store._transaction() as connection:
+            self._store._session(connection, upload_id)
             connection.execute(
                 update(uploads)
                 .where(uploads.c.upload_id == upload_id)
@@ -197,7 +218,3 @@ class PostgresUploadStore:
             connection.execute(
                 delete(upload_parts).where(upload_parts.c.upload_id == upload_id)
             )
-
-    def discard(self, upload_id: str) -> None:
-        with self._transaction() as connection:
-            connection.execute(delete(uploads).where(uploads.c.upload_id == upload_id))

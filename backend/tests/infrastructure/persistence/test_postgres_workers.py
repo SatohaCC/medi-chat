@@ -7,13 +7,13 @@ from dataclasses import fields, is_dataclass
 
 import httpx
 import pytest
-from backend.application.indexing.search_values import SearchSectionCode
-from backend.application.medicine.product_models import (
+from backend.application.indexing.values import SearchSectionCode
+from backend.application.medicine.queries.models import (
     RegisteredMedicine,
     ResolvedMedicine,
 )
-from backend.application.retrieval.search_models import SearchCriteria
-from backend.application.retrieval.search_values import DetectionSource
+from backend.application.retrieval.queries.models import SearchCriteria
+from backend.application.retrieval.values import DetectionSource
 from backend.domain.foundation.primitives.primitives import BaseFiniteFloat, BaseString
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import BrandName, GenericName, MatchedAlias
@@ -163,10 +163,10 @@ def _assert_plain(value: object) -> None:
             or type(value).__module__.startswith("backend.domain.")
             or type(value).__module__
             in {
-                "backend.application.indexing.search_models",
-                "backend.application.indexing.search_values",
-                "backend.application.retrieval.search_models",
-                "backend.application.retrieval.search_values",
+                "backend.application.indexing.queries.models",
+                "backend.application.indexing.values",
+                "backend.application.retrieval.queries.models",
+                "backend.application.retrieval.values",
             }
         )
         for field in fields(value):

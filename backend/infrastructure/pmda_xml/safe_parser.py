@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 from typing import Never
 from xml.parsers import expat
 
-from ...application.attachment_import.import_errors import (
+from backend.application.attachment_import.errors import (
     ImportLimitExceeded,
     InvalidAttachment,
     UnsupportedAttachment,

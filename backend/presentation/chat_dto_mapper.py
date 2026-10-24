@@ -2,11 +2,11 @@
 
 from copy import deepcopy
 
-from backend.application.medicine.product_models import ResolvedMedicine
-from backend.application.retrieval.evidence_payloads import evidence_payload
-from backend.application.retrieval.search_models import Evidence
+from backend.application.chat.queries.models import ChatMessage, ChatResponse
+from backend.application.medicine.queries.models import ResolvedMedicine
+from backend.application.retrieval.queries.dtos.evidence import evidence_payload
+from backend.application.retrieval.queries.models import Evidence
 
-from ..application.chat.chat_models import ChatMessage, ChatResponse
 from .chat_models import ChatMessage as ApiChatMessage
 from .chat_models import ChatResponse as ApiChatResponse
 from .evidence_models import ChatSource as ApiChatSource

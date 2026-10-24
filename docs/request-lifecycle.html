@@ -1,0 +1,1585 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>medi-chat | リクエストから返却までの処理・関数別徹底解説</title>
+  <style>
+    :root {
+      --bg: #f8faf9;
+      --surface: #ffffff;
+      --surface-subtle: #f1f5f3;
+      --text: #1a2e28;
+      --text-muted: #526b62;
+      --border: #d4e0d9;
+      --primary: #124d40;
+      --primary-light: #e6f3ee;
+      --primary-hover: #0c382e;
+      --accent-pres: #b45309;
+      --accent-pres-bg: #fef3c7;
+      --accent-app: #047857;
+      --accent-app-bg: #d1fae5;
+      --accent-dom: #2563eb;
+      --accent-dom-bg: #dbeafe;
+      --accent-inf: #7c3aed;
+      --accent-inf-bg: #ede9fe;
+      --code-bg: #11231d;
+      --code-text: #e2f1ea;
+      --radius: 12px;
+      --shadow: 0 4px 20px rgba(18, 77, 64, 0.06);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 40px; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", "Noto Sans JP", sans-serif;
+      font-size: 15px;
+      line-height: 1.8;
+    }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, #0e3b31 0%, #175446 100%);
+      color: #ffffff;
+      padding: 60px max(5vw, 24px) 48px;
+      border-bottom: 3px solid #237b67;
+    }
+    .header-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(4px);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-size: clamp(26px, 4vw, 44px);
+      line-height: 1.25;
+      margin: 0 0 16px;
+      letter-spacing: -0.02em;
+    }
+    header p {
+      max-width: 840px;
+      margin: 0 0 24px;
+      font-size: 16px;
+      color: #d1e7dc;
+      line-height: 1.7;
+    }
+    .header-meta {
+      font-size: 13px;
+      color: #9ec8b6;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    /* Navigation */
+    nav {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 0 max(5vw, 24px);
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+    nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      padding: 14px 4px;
+      border-bottom: 3px solid transparent;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    nav a:hover, nav a.active {
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    /* Container */
+    main {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 40px max(4vw, 20px) 100px;
+    }
+
+    section {
+      margin-bottom: 72px;
+    }
+    .section-eyebrow {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: var(--accent-app);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    h2 {
+      font-size: 28px;
+      margin: 0 0 16px;
+      letter-spacing: -0.01em;
+      color: #0c382e;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    h3 {
+      font-size: 20px;
+      margin: 28px 0 14px;
+      color: #124d40;
+    }
+
+    /* Cards & Layout */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+    }
+    .lead {
+      font-size: 17px;
+      color: #2c443b;
+      margin-bottom: 24px;
+      line-height: 1.8;
+    }
+
+    /* Layer Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .badge-pres { background: var(--accent-pres-bg); color: var(--accent-pres); border: 1px solid #fde68a; }
+    .badge-app  { background: var(--accent-app-bg);  color: var(--accent-app);  border: 1px solid #a7f3d0; }
+    .badge-dom  { background: var(--accent-dom-bg);  color: var(--accent-dom);  border: 1px solid #bfdbfe; }
+    .badge-inf  { background: var(--accent-inf-bg);  color: var(--accent-inf);  border: 1px solid #ddd6fe; }
+
+    /* Interactive Tab Switcher */
+    .tab-bar {
+      display: flex;
+      gap: 8px;
+      margin: 20px 0;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.2s;
+    }
+    .tab-btn:hover {
+      background: #e2ece6;
+      color: var(--text);
+    }
+    .tab-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(18, 77, 64, 0.25);
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Diagram Containers */
+    .diagram-wrap {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      overflow-x: auto;
+      margin: 20px 0;
+    }
+    .seq-step {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 16px;
+      padding: 16px;
+      border-bottom: 1px dashed var(--border);
+      align-items: start;
+    }
+    .seq-step:last-child { border-bottom: none; }
+    .step-num {
+      width: 44px;
+      height: 44px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 16px;
+    }
+    .step-body h4 {
+      margin: 0 0 6px;
+      font-size: 16px;
+      color: #124d40;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .step-body p {
+      margin: 0 0 8px;
+      color: #3b5249;
+    }
+
+    /* Function Directory & Filter */
+    .filter-box {
+      margin: 20px 0 28px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .search-input {
+      flex: 1;
+      min-width: 260px;
+      padding: 12px 18px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      background: #ffffff;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .search-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(18, 77, 64, 0.12);
+    }
+    .filter-btn-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .filter-pill {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.2s;
+    }
+    .filter-pill.active {
+      background: #23584c;
+      color: #ffffff;
+      border-color: #23584c;
+    }
+
+    /* Function Spec Cards */
+    .func-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .func-card:hover {
+      box-shadow: 0 6px 20px rgba(18, 77, 64, 0.08);
+    }
+    .func-header {
+      background: #fafcfb;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .func-title-area h3 {
+      margin: 0 0 6px;
+      font-size: 19px;
+      font-family: ui-monospace, Consolas, monospace;
+      color: #0b3d32;
+    }
+    .func-file {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: ui-monospace, Consolas, monospace;
+    }
+    .func-body {
+      padding: 24px;
+    }
+    .sig-box {
+      background: var(--code-bg);
+      color: var(--code-text);
+      padding: 16px 20px;
+      border-radius: 8px;
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      overflow-x: auto;
+      margin-bottom: 20px;
+      border-left: 4px solid #238b72;
+    }
+    .spec-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .spec-item {
+      background: var(--surface-subtle);
+      border-radius: 8px;
+      padding: 14px 18px;
+      border: 1px solid #e1ebe5;
+    }
+    .spec-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #4b6b60;
+      margin-bottom: 6px;
+    }
+    .spec-val {
+      font-size: 13px;
+      font-family: ui-monospace, Consolas, monospace;
+      color: #17382f;
+      word-break: break-all;
+    }
+    .func-desc {
+      margin-bottom: 18px;
+      color: #233b33;
+    }
+    .func-desc ol, .func-desc ul {
+      margin: 8px 0;
+      padding-left: 22px;
+    }
+    .func-desc li {
+      margin-bottom: 6px;
+    }
+    .design-note {
+      background: #fbf7ee;
+      border-left: 4px solid #d97706;
+      padding: 12px 18px;
+      border-radius: 4px 8px 8px 4px;
+      font-size: 13.5px;
+      color: #6b4004;
+      margin-top: 14px;
+    }
+    .design-note strong {
+      color: #92400e;
+    }
+
+    /* Comparison Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 13.5px;
+    }
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      background: #eef5f1;
+      color: #164e42;
+      font-weight: 700;
+    }
+    tr:hover td {
+      background: #f8fcfa;
+    }
+    code {
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 0.9em;
+      background: #eef3f0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #175446;
+    }
+
+    /* Flow Graphic Components */
+    .parallel-box {
+      border: 2px dashed #34d399;
+      background: #f0fdf4;
+      border-radius: 10px;
+      padding: 16px;
+      margin: 14px 0;
+    }
+    .parallel-title {
+      font-weight: 700;
+      font-size: 13px;
+      color: #065f46;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .parallel-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .detector-card {
+      background: #ffffff;
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+      padding: 14px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .detector-card h5 {
+      margin: 0 0 6px;
+      color: #047857;
+      font-size: 14px;
+    }
+    .detector-card p {
+      margin: 0;
+      font-size: 12px;
+      color: #374151;
+      line-height: 1.5;
+    }
+
+    /* Collapsible Details */
+    details {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin: 12px 0;
+      padding: 12px 16px;
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: #164e42;
+      outline: none;
+    }
+    summary:hover {
+      color: #065f46;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px max(5vw, 24px);
+      background: #ffffff;
+      font-size: 13px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    @media (max-width: 840px) {
+      .parallel-grid { grid-template-columns: 1fr; }
+      .spec-grid { grid-template-columns: 1fr; }
+      h2 { font-size: 24px; }
+      .sig-box { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-badge">Architecture &amp; Code Walkthrough</div>
+  <h1>リクエストから返却までの処理・関数別徹底解説</h1>
+  <p>
+    medi-chat において、クライアントから質問（REST または WebSocket）を受け取ってから、医薬品コードの照合・3並行検出器による添付文書根拠検索・プロンプト注入・LLMストリーミング生成を経て回答を返却するまでの全プロセスを、<strong>呼び出される関数ごとにシグネチャ・引数・責務・内部ステップ・設計意図</strong>を交えて丁寧に解説します。
+  </p>
+  <div class="header-meta">
+    <span>対象: FastAPI / DDD 4層アーキテクチャ</span>
+    <span>通信: REST (同期) / WebSocket (リアルタイム先行配信)</span>
+    <span>DB: PostgreSQL 18 (MVCC REPEATABLE READ)</span>
+  </div>
+</header>
+
+<nav id="navbar">
+  <a href="#overview" class="active">1. 全体構造とアーキテクチャ</a>
+  <a href="#sequences">2. 処理フロー（REST vs WebSocket）</a>
+  <a href="#parallel-detection">3. 3並行検出パイプライン</a>
+  <a href="#function-catalog">4. 関数別徹底解説カタログ</a>
+  <a href="#trace-example">5. 実データ・シナリオウォークスルー</a>
+  <a href="#design-summary">6. 設計の勘所と防御機構</a>
+</nav>
+
+<main>
+
+  <!-- Section 1: Overview -->
+  <section id="overview">
+    <div class="section-eyebrow">Architecture Overview</div>
+    <h2>1. 全体構造とアーキテクチャ境界</h2>
+    <p class="lead">
+      medi-chat のバックエンドは<strong>「医薬品情報意思決定支援」</strong>を単一ドメインとし、クリーンアーキテクチャ / DDD の原則に従って厳格に層分離されています。レイヤー間の依存方向は <code>Presentation → Application → Domain ← Infrastructure</code> となっており、AST静的解析と Import Linter（24契約）によって機械的に制約されています。
+    </p>
+
+    <div class="card">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; text-align: center;">
+        <div style="background: var(--accent-pres-bg); border: 1px solid #fde68a; border-radius: 10px; padding: 20px;">
+          <span class="badge badge-pres">Presentation 層</span>
+          <h4 style="margin: 10px 0 6px; color: #92400e;">対話配信・API境界</h4>
+          <p style="margin: 0; font-size: 13px; color: #78350f;">FastAPI Router、Pydantic 公開DTO、WebSocket接続管理、DTO変換アダプター（<code>AppChatService</code>）</p>
+        </div>
+        <div style="background: var(--accent-app-bg); border: 1px solid #a7f3d0; border-radius: 10px; padding: 20px;">
+          <span class="badge badge-app">Application 層</span>
+          <h4 style="margin: 10px 0 6px; color: #065f46;">ユースケース協調</h4>
+          <p style="margin: 0; font-size: 13px; color: #047857;">チャット回答調整（<code>chat</code>）、医薬品照合（<code>medicine</code>）、根拠検索統括（<code>retrieval</code>）、プロンプト生成</p>
+        </div>
+        <div style="background: var(--accent-dom-bg); border: 1px solid #bfdbfe; border-radius: 10px; padding: 20px;">
+          <span class="badge badge-dom">Domain 層</span>
+          <h4 style="margin: 10px 0 6px; color: #1e40af;">純粋な業務規則</h4>
+          <p style="margin: 0; font-size: 13px; color: #1d4ed8;">添付文書モデル（<code>attachment</code>）、YJコード/医薬品マスター（<code>medicine</code>）、不変Primitive・Value Object</p>
+        </div>
+        <div style="background: var(--accent-inf-bg); border: 1px solid #ddd6fe; border-radius: 10px; padding: 20px;">
+          <span class="badge badge-inf">Infrastructure 層</span>
+          <h4 style="margin: 10px 0 6px; color: #5b21b6;">技術アダプター</h4>
+          <p style="margin: 0; font-size: 13px; color: #6d28d9;">PostgreSQL MVCCランタイム、Janome形態素解析、Jev SDK分類、OpenAI/Gemini LLM SDK</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 2: Sequences -->
+  <section id="sequences">
+    <div class="section-eyebrow">Execution Flow</div>
+    <h2>2. 処理フロー（REST API vs WebSocket ストリーミング）</h2>
+    <p>medi-chat には2つの回答経路があります。用途に応じてタブを切り替えて処理順序を確認してください。</p>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('ws-flow')">⚡ WebSocket ストリーミング経路（主経路・先行通知あり）</button>
+      <button class="tab-btn" onclick="switchTab('rest-flow')">📦 REST API 同期経路（POST /api/chat）</button>
+    </div>
+
+    <!-- Tab 1: WebSocket -->
+    <div id="ws-flow" class="tab-content active">
+      <div class="card">
+        <h3>WebSocket ストリーミング処理シーケンス</h3>
+        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 20px;">
+          クライアントがWebSocketでメッセージを送信してから、3つの検出器が順不同で完了し、中間のローカル根拠を先行プッシュしたのち、LLMのトークンが逐次返却されるまでの全行程です。
+        </p>
+
+        <div class="seq-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4><code>stream_chat_response()</code> <span class="badge badge-pres">Presentation</span></h4>
+            <p><strong>リクエスト受信 &amp; 接続検証:</strong> WebSocket接続（<code>/api/ws</code> または <code>/ws/chat</code>）をハンドシェイク。<code>WebSocketChatRequest</code> によるPydanticスキーマ検証（メッセージ数、YJコード件数1〜50、provider/modelのホワイトリスト検証）を実施。</p>
+          </div>
+        </div>
+
+        <div class="seq-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4><code>AppChatService.prepare_reply()</code> <span class="badge badge-pres">Presentation</span></h4>
+            <p><strong>DTO変換 &amp; 先行通知コールバック設定:</strong> API型 <code>ChatMessage</code> を Application型 <code>ChatMessage</code> にマッピングし、中間の検索根拠を即座にWebSocketへ送信する <code>publish_logic</code> コールバックを構築して下位層へ渡す。</p>
+          </div>
+        </div>
+
+        <div class="seq-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4><code>PostgresGenerationRuntime.acquire()</code> <span class="badge badge-inf">Infrastructure</span></h4>
+            <p><strong>一貫性スナップショットの獲得:</strong> PostgreSQLの <code>REPEATABLE READ</code> トランザクションを開始し、公開ポインタ（世代ID）を固定。検索終了まで同一世代の医薬品カタログと添付文書インデックスを確実に参照する。</p>
+          </div>
+        </div>
+
+        <div class="seq-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4><code>MedicineCatalog.match_yj_codes()</code> <span class="badge badge-app">Medicine</span></h4>
+            <p><strong>対象医薬品の解決:</strong> 渡されたYJコード群から登録済み製品を検索。同一成分グループごとに集約した <code>ResolvedMedicine</code> を生成。未登録コードがある場合は注意喚起文（notices）を準備。</p>
+          </div>
+        </div>
+
+        <div class="seq-step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <h4><code>collect_search_criteria()</code> <span class="badge badge-app">Retrieval</span></h4>
+            <p><strong>3並行検出器の実行 &amp; 先行配信:</strong> Jev（外部意図分類）、Janome（形態素解析）、固定キーワードの3タスクを <code>asyncio.create_task</code> で同時起動。常時取得項目（警告・禁忌等）と、先に完了したローカル検出の根拠を <code>{"type": "sources"}</code> で画面に即時プッシュ。</p>
+          </div>
+        </div>
+
+        <div class="seq-step">
+          <div class="step-num">6</div>
+          <div class="step-body">
+            <h4><code>_search_evidence()</code> &amp; <code>merge_evidence()</code> <span class="badge badge-app">Retrieval</span></h4>
+            <p><strong>全検出完了後の最終根拠統合:</strong> 3検出器すべての条件が出揃った後、PostgreSQLトリグラム検索/BM25インデックスから全根拠を取得。検索単位ID（<code>unit_id</code>）で重複排除し、添付文書の項目番号順（1..24）にソートして確定根拠をWebSocketへ通知。</p>
+          </div>
+        </div>
+
+        <div class="seq-step">
+          <div class="step-num">7</div>
+          <div class="step-body">
+            <h4><code>build_answer_messages()</code> <span class="badge badge-app">Chat</span></h4>
+            <p><strong>グラウンディング・プロンプトの組み立て:</strong> 確定した根拠スニペット（出典URL、改訂年月、見出し番号、本文）と厳格な回答ルール（推測回答の禁止、項目名の明記など）を埋め込んだシステムプロンプトを動的生成。</p>
+          </div>
+        </div>
+
+        <div class="seq-step">
+          <div class="step-num">8</div>
+          <div class="step-body">
+            <h4><code>stream_answer()</code> &amp; <code>closing_stream()</code> <span class="badge badge-app">Chat / Infra</span></h4>
+            <p><strong>LLMストリーミング生成 &amp; 逐次トークン返却:</strong> LLM Provider（OpenAI / Gemini）のストリーミング呼び出しを行い、受信トークンごとに <code>{"type": "text_delta", "content": chunk}</code> を送信。完了時に <code>{"type": "text_done"}</code> を送信。クライアント切断時は <code>closing_stream</code> がジェネレータを確実にクローズ。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: REST -->
+    <div id="rest-flow" class="tab-content">
+      <div class="card">
+        <h3>REST API 同期処理シーケンス（POST /api/chat）</h3>
+        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 20px;">
+          中間のイベント配信は行わず、全ての検索とLLM文章生成が完全に終了した後に、回答全文と根拠一覧を含む <code>ChatResponse</code> JSON を一括返却します。
+        </p>
+
+        <div class="seq-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4><code>create_chat_response()</code> <span class="badge badge-pres">Presentation</span></h4>
+            <p><code>POST /api/chat</code> に届いた <code>ChatRequest</code> を FastAPI が受け取り、メッセージ非空チェック等のバリデーションを実施。依存性注入（<code>get_chat_service</code>）経由で <code>AppChatService</code> を取得。</p>
+          </div>
+        </div>
+
+        <div class="seq-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4><code>AppChatService.answer_question()</code> <span class="badge badge-pres">Presentation</span></h4>
+            <p>環境変数デフォルト（provider/model）を補完し、DTOを内部型へ変換して <code>ChatApplicationService.answer_question()</code> を呼び出す。</p>
+          </div>
+        </div>
+
+        <div class="seq-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4><code>app_answer_question()</code> <span class="badge badge-app">Chat</span></h4>
+            <p>まず <code>prepare_reply()</code> を実行して医薬品照合と3検出器による根拠検索を完了。対象医薬品が未解決で確認が必要な場合（<code>needs_clarification=True</code>）はLLMを一切呼ばずに案内文を即時返却。</p>
+          </div>
+        </div>
+
+        <div class="seq-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4><code>build_answer_messages()</code> &amp; LLM全文章結合 <span class="badge badge-app">Chat</span></h4>
+            <p>プロンプトを構築し、Providerのストリームを <code>"".join([chunk async for chunk in ...])</code> で一括集約して回答テキストを生成。</p>
+          </div>
+        </div>
+
+        <div class="seq-step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <h4><code>chat_response_to_api()</code> <span class="badge badge-pres">Presentation</span></h4>
+            <p>内部の <code>ChatResponse</code> を公開用Pydantic DTO <code>ChatResponse</code> にマッピングし、HTTP 200 JSON としてクライアントへ返却。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Parallel Detection -->
+  <section id="parallel-detection">
+    <div class="section-eyebrow">Core Engine</div>
+    <h2>3. 3並行検出パイプラインと先行配信（Speculative Streaming）</h2>
+    <p class="lead">
+      medi-chat の高速な体感応答を支えているのが、<code>application/retrieval/retrieve_evidence.py</code> 内の<strong>並行検出アーキテクチャ</strong>です。ユーザーの質問意図を解釈するために、特性の異なる3つの処理を同時に走らせます。
+    </p>
+
+    <div class="parallel-box">
+      <div class="parallel-title">⚡ asyncio.create_task による同時起動タスク</div>
+      <div class="parallel-grid">
+        <div class="detector-card">
+          <h5>① Jev 意図分類器</h5>
+          <p><strong><code>detect_jev_criteria</code></strong><br>Jev SDK / LLM分類モデルを呼び出し、医療対話特有の意図（効能効果、用法用量、副作用、禁忌など）と確率スコアを判定。適合項目番号（section_codes）を導出。</p>
+        </div>
+        <div class="detector-card">
+          <h5>② Janome 形態素解析</h5>
+          <p><strong><code>detect_morphology_criteria</code></strong><br>スレッドプール（<code>asyncio.to_thread</code>）で実行。質問文から対象薬剤名を除外した上で、症状やキーワード（名詞・動詞原形等）を抽出して全文検索条件を作成。</p>
+        </div>
+        <div class="detector-card">
+          <h5>③ 固定キーワード判定</h5>
+          <p><strong><code>_detect_fixed_keyword_criteria</code></strong><br>スレッドプールで実行。「妊婦」「授乳」「運転」「小児」「腎機能」などの医療特有の高頻度フレーズを正規化マッチし、特定添付文書項目（例: 9.5 妊婦）のコードを即座に付与。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 18px;">
+      <h4 style="margin: 0 0 10px; color: #124d40;">常時取得項目（Always-retrieved Sections）と累積配信</h4>
+      <p style="margin: 0 0 10px;">
+        医薬品の安全性上極めて重要な <strong>1. 警告 (Warning)</strong>、<strong>2. 禁忌 (Contraindications)</strong>、<strong>8. 重要な基本的注意 (Important Precautions)</strong> は、質問の文言によらず常時取得条件（<code>ALWAYS</code>）として自動登録されます。
+      </p>
+      <div style="background: #eef7f2; padding: 14px 18px; border-radius: 8px; border-left: 4px solid #10b981; font-size: 13.5px;">
+        <strong>先行配信の仕組み:</strong> <code>asyncio.as_completed(tasks)</code> ループにより、Jevの外部通信が完了するのを待たず、軽量なローカル検出器（固定キーワード・形態素解析）が終わり次第、その時点での累積根拠が <code>on_logic_criteria</code> コールバックを通じて WebSocket クライアントへ送信されます。これにより、ユーザーはLLMの生成開始前から引用根拠のカードを画面で確認できます。
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4: Function Catalog -->
+  <section id="function-catalog">
+    <div class="section-eyebrow">Function Directory</div>
+    <h2>4. 関数別徹底解説カタログ</h2>
+    <p>リクエストライフサイクルに関与する全主要関数をレイヤーごとに分類・網羅しています。検索ボックスで関数名やキーワードを絞り込めます。</p>
+
+    <!-- Search & Filter -->
+    <div class="filter-box">
+      <input type="search" id="func-filter" class="search-input" placeholder="関数名・モジュール名・キーワードで絞り込み (例: prepare_reply, parse_yj, stream)">
+      <div class="filter-btn-group">
+        <button class="filter-pill active" onclick="filterLayer('all')">すべて表示</button>
+        <button class="filter-pill" onclick="filterLayer('pres')">Presentation</button>
+        <button class="filter-pill" onclick="filterLayer('app')">Application</button>
+        <button class="filter-pill" onclick="filterLayer('retrieval')">Retrieval</button>
+        <button class="filter-pill" onclick="filterLayer('medicine')">Medicine</button>
+        <button class="filter-pill" onclick="filterLayer('infra')">Infrastructure</button>
+      </div>
+    </div>
+
+    <div id="function-list">
+
+      <!-- ================= 4.1 PRESENTATION LAYER ================= -->
+
+      <!-- Func: create_chat_response -->
+      <article class="func-card" data-layer="pres" id="fn-create-chat-response">
+        <div class="func-header">
+          <div class="func-title-area">
+            <h3>create_chat_response()</h3>
+            <div class="func-file">backend/presentation/chat_routes.py : L37</div>
+          </div>
+          <span class="badge badge-pres">Presentation</span>
+        </div>
+        <div class="func-body">
+          <div class="sig-box">@router.post("/api/chat", response_model=ChatResponse, name="chat")
+async def create_chat_response(
+    payload: ChatRequest,
+    service: Annotated[ChatService, Depends(get_chat_service)],
+) -> ChatResponse:</div>
+
+          <div class="spec-grid">
+            <div class="spec-item">
+              <div class="spec-label">入力引数</div>
+              <div class="spec-val">
+                • <code>payload: ChatRequest</code> (message, product_yj_codes, provider, model)<br>
+                • <code>service: AppChatService</code> (FastAPI Depends)
+              </div>
+            </div>
+            <div class="spec-item">
+              <div class="spec-label">戻り値 &amp; 送出例外</div>
+              <div class="spec-val">
+                • 戻り値: <code>ChatResponse</code> (API DTO)<br>
+                • 例外: <code>HTTPException(422)</code> (InvalidMedicineInput時)
+              </div>
+            </div>
+          </div>
+
+          <div class="func-desc">
+            <strong>【処理ステップ】</strong>
+            <ol>
+              <li>Pydanticモデル <code>ChatRequest</code> により、メッセージが空白のみでないこと、YJコード配列が1〜50件の範囲であることを自動バリデーション。</li>
+              <li>入力文字列から <code>ChatMessage(role="user", content=payload.message)</code> のリストを作成。</li>
+              <li><code>service.answer_question()</code> に会話配列、対象YJコード、プロバイダー/モデル指定を渡して同期実行。</li>
+              <li>内部で <code>InvalidMedicineInput</code>（形式不正なYJコード等）が送出された場合は捕捉し、HTTP 422 エラーに変換してクライアントへ通知。</li>
+            </ol>
+          </div>
+
+          <div class="design-note">
+            <strong>設計意図（レイヤー境界保護）:</strong> ルーター関数は直接 <code>application.chat</code> や Domain 層をインポート・参照しません。Presentation内の <code>AppChatService</code> と公開DTOのみを経由することで、FastAPI特有のWeb依存が内部ビジネスロジックに侵入するのを完全に防いでいます。
+          </div>
+        </div>
+      </article>
+
+      <!-- Func: stream_chat_response -->
+      <article class="func-card" data-layer="pres" id="fn-stream-chat-response">
+        <div class="func-header">
+          <div class="func-title-area">
+            <h3>stream_chat_response()</h3>
+            <div class="func-file">backend/presentation/chat_websocket_routes.py : L74</div>
+          </div>
+          <span class="badge badge-pres">Presentation</span>
+        </div>
+        <div class="func-body">
+          <div class="sig-box">@router.websocket("/api/ws", name="websocket_chat")
+@router.websocket("/ws/chat", name="websocket_chat")
+async def stream_chat_response(
+    websocket: WebSocket,
+    service: Annotated[ChatService | None, Depends(get_chat_service)] = None,
+) -> None:</div>
+
+          <div class="spec-grid">
+            <div class="spec-item">
+              <div class="spec-label">入力引数</div>
+              <div class="spec-val">
+                • <code>websocket: WebSocket</code> (FastAPI接続オブジェクト)<br>
+                • <code>service: AppChatService | None</code> (DIサービス)
+              </div>
+            </div>
+            <div class="spec-item">
+              <div class="spec-label">送出イベント（JSON）</div>
+              <div class="spec-val">
+                • <code>retrieval_status</code>, <code>sources</code>, <code>jev_response</code><br>
+                • <code>notices</code>, <code>text_delta</code>, <code>text_done</code>, <code>error</code>
+              </div>
+            </div>
+          </div>
+
+          <div class="func-desc">
+            <strong>【処理ステップ】</strong>
+            <ol>
+              <li>Originヘッダーを検査し、許可されていないオリジンからの接続を 1008 コードで拒否。安全な場合は <code>await websocket.accept()</code>。</li>
+              <li><code>while True</code> ループで <code>websocket.receive_json()</code> を待機。<code>ping</code> に対しては <code>pong</code> を即答。</li>
+              <li><code>WebSocketChatRequest.model_validate(data)</code> で受信メッセージとプロバイダー指定を検証。</li>
+              <li>Jev分類器の準備状況に応じて <code>retrieval_status</code>（stage="jev_searching" または "unavailable"）をクライアントへ通知。</li>
+              <li>先行根拠配信用コールバック <code>publish_logic(sources)</code> を定義し、<code>service.prepare_reply()</code> に渡して回答準備を開始。</li>
+              <li>準備が整ったら（必要なら通知やJev応答を送信後）、<code>closing_stream(service.stream_answer(...))</code> で生成トークンを受信し、<code>{"type": "text_delta", "content": chunk}</code> としてリアルタイム送信。</li>
+              <li>ストリーム終了時に <code>{"type": "text_done"}</code> を送信して1往復を完了。</li>
+            </ol>
+          </div>
+
+          <div class="design-note">
+            <strong>設計意図（切断安全性）:</strong> ユーザーがブラウザを閉じた場合やネットワーク遮断時でも <code>WebSocketDisconnect</code> を安全にキャッチし、リソースリークや孤立タスクの暴走を起こさずに安全にセッションを終了します。
+          </div>
+        </div>
+      </article>
+
+      <!-- Func: AppChatService.answer_question -->
+      <article class="func-card" data-layer="pres" id="fn-app-chat-service-answer">
+        <div class="func-header">
+          <div class="func-title-area">
+            <h3>AppChatService.answer_question()</h3>
+            <div class="func-file">backend/presentation/chat_service.py : L96</div>
+          </div>
+          <span class="badge badge-pres">Presentation</span>
+        </div>
+        <div class="func-body">
+          <div class="sig-box">async def answer_question(
+    self,
+    conversation: Sequence[ApiChatMessage],
+    product_yj_codes: list[str],
+    provider_name: str | None = None,
+    model_name: str | None = None,
+) -> ApiChatResponse:</div>
+
+          <div class="spec-grid">
+            <div class="spec-item">
+              <div class="spec-label">入力引数</div>
+              <div class="spec-val">
+                • <code>conversation: Sequence[ApiChatMessage]</code> (Pydantic DTO)<br>
+                • <code>product_yj_codes: list[str]</code> (YJコード配列)<br>
+                • <code>provider_name / model_name: str | None</code>
+              </div>
+            </div>
+            <div class="spec-item">
+              <div class="spec-label">戻り値</div>
+              <div class="spec-val">
+                • <code>ApiChatResponse</code> (公開用DTO)
+              </div>
+            </div>
+          </div>
+
+          <div class="func-desc">
+            <strong>【処理ステップ】</strong>
+            <ol>
+              <li><code>chat_message_from_api(m)</code> により、Presentation用の <code>ApiChatMessage</code> を Application層の純粋な <code>ChatMessage</code> に変換。</li>
+              <li><code>self.defaults()</code>（<code>read_generation_defaults</code>）から環境変数のデフォルトプロバイダー（OpenAI等）とモデルを取得。引数で明示されていない場合に使用。</li>
+              <li><code>self._app_service.answer_question()</code>（<code>ChatApplicationService</code>）を呼び出し、回答準備から生成までを一貫実行。</li>
+              <li>返却された Application層の <code>ChatResponse</code> を <code>chat_response_to_api()</code> で公開DTOへ再変換して返却。</li>
+            </ol>
+          </div>
+        </div>
+      </article>
+
+      <!-- Func: AppChatService.prepare_reply -->
+      <article class="func-card" data-layer="pres" id="fn-app-chat-service-prepare">
+        <div class="func-header">
+          <div class="func-title-area">
+            <h3>AppChatService.prepare_reply()</h3>
+            <div class="func-file">backend/presentation/chat_service.py : L56</div>
+          </div>
+          <span class="badge badge-pres">Presentation</span>
+        </div>
+        <div class="func-body">
+          <div class="sig-box">async def prepare_reply(
+    self,
+    conversation: Sequence[ApiChatMessage],
+    product_yj_codes: list[str],
+    *,
+    on_logic_sources: Callable[[list[ChatSource]], Awaitable[None]] | None = None,
+) -> ApplicationChatResponse:</div>
+
+          <div class="func-desc">
+            <strong>【処理ステップ】</strong>
+            <ol>
+              <li>APIの会話履歴をApplicationモデルへ変換。</li>
+              <li>下位層の <code>Evidence</code>（内部モデル）を受け取ってAPI用の <code>ChatSource</code>（DTO）に変換するラッパー関数 <code>publish_logic</code> を構築。</li>
+              <li><code>self._app_service.prepare_reply()</code> に委譲し、内部用の <code>ApplicationChatResponse</code> を受け取ってそのまま返す。</li>
+            </ol>
+          </div>
+
+          <div class="design-note">
+            <strong>設計意図（DTO逆変換の禁止）:</strong> 準備された回答データはApplicationモデルのまま後続の <code>stream_answer</code> へ渡されます。一度DTOに落としたものを再度内部モデルに復元する「逆変換」は、リンター（<code>lint:boundaries</code>）のAST検査で厳格に禁止されています。
+          </div>
+        </div>
+      </article>
+
+      <!-- ================= 4.2 APPLICATION LAYER (CHAT) ================= -->
+
+      <!-- Func: ChatApplicationService.prepare_reply -->
+      <article class="func-card" data-layer="app" id="fn-chat-app-service-prepare">
+        <div class="func-header">
+          <div class="func-title-area">
+            <h3>ChatApplicationService.prepare_reply()</h3>
+            <div class="func-file">backend/application/chat/chat_service.py : L66</div>
+          </div>
+          <span class="badge badge-app">Application (Chat)</span>
+        </div>
+        <div class="func-body">
+          <div class="sig-box">async def prepare_reply(
+    self,
+    conversation: Sequence[ChatMessage],
+    product_yj_codes: list[str],
+    *,
+    on_logic_sources: Callable[[list[Evidence]], Awaitable[None]] | None = None,
+) -> ChatResponse:</div>
+
+          <div class="func-desc">
+            <strong>【処理ステップ】</strong>
+            <ol>
+              <li><code>ChatApplicationService</code> が自身にDIされている分類器（<code>intent_classifier</code>）、キーワード抽出器（<code>keyword_extractor</code>）、意図ポリシー（<code>intent_policy</code>）、根拠検索ポリシー（<code>retrieval_policy</code>）、およびスナップショットプロバイダー（<code>snapshot_provider</code>）を取り出す。</li>
+              <li>モジュール関数 <code>answer_preparation.prepare_reply()</code> を呼び出して処理を委譲。</li>
+            </ol>
+          </div>
+        </div>
+      </article>
+
+      <!-- Func: prepare_reply (answer_preparation) -->
+      <article class="func-card" data-layer="app" id="fn-prepare-reply-impl">
+        <div class="func-header">
+          <div class="func-title-area">
+            <h3>prepare_reply() (answer_preparation)</h3>
+            <div class="func-file">backend/application/chat/answer_preparation.py : L18</div>
+          </div>
+          <span class="badge badge-app">Application (Chat)</span>
+        </div>
+        <div class="func-body">
+          <div class="sig-box">async def prepare_reply(
+    conversation: Sequence[ChatMessage],
+    product_yj_codes: list[str],
+    *,
+    intent_classifier: IntentClassifier,
+    keyword_extractor: KeywordExtractor,
+    intent_policy: IntentPolicy,
+    retrieval_policy: EvidenceRetrievalPolicy = DEFAULT_RETRIEVAL_POLICY,
+    snapshot_provider: RetrievalSnapshotProvider,
+    on_logic_sources: SourcesCallback | None = None,
+) -> ChatResponse:</div>
+
+          <div class="func-desc">
+            <strong>【処理ステップ】</strong>
+            <ol>
+              <li>会話履歴を末尾から走査し、最新のユーザーメッセージ（<code>role == "user"</code>）の内容を抽出。</li>
+              <li><code>retrieve_evidence()</code> を呼び出して、医薬品照合と添付文書根拠の検索を実行。</li>
+              <li><code>result.needs_clarification</code>（医薬品コード未指定、またはDB未登録）を判定：
+                <ul>
+                  <li>YJコード未指定の場合: <code>"対象医薬品を@医薬品から選択してください。"</code></li>
+                  <li>DB未登録の場合: <code>"指定されたYJコードのすべてに対応する電子添文が、現在の検索データにありません。"</code></li>
+                </ul>
+              </li>
+              <li>正常取得できた場合は、内部関数 <code>_summarize_evidence(result.sources)</code> を用いて根拠件数と対象項目名（例: 「1. 警告」「8. 重要な基本的注意」）をまとめたデフォルト回答文を生成。</li>
+              <li><code>ChatResponse</code> オブジェクトを構築して返却。</li>
+            </ol>
+          </div>
+        </div>
+      </article>
+
+      <!-- Func: build_answer_messages -->
+      <article class="func-card" data-layer="app" id="fn-build-answer-messages">
+        <div class="func-header">
+          <div class="func-title-area">
+            <h3>build_answer_messages() &amp; build_answer_system_prompt()</h3>
+            <div class="func-file">backend/application/chat/answer_prompt_builder.py : L12 &amp; L118</div>
+          </div>
+          <span class="badge badge-app">Application (Chat)</span>
+        </div>
+        <div class="func-body">
+          <div class="sig-box">def build_answer_messages(
+    reply: ChatResponse,
+    conversation: Sequence[ChatMessage],
+    *,
+    answer_prompt_policy: AnswerPromptPolicy,
+) -> list[dict[str, str]]:</div>
+
+          <div class="func-desc">
+            <strong>【処理ステップ】</strong>
+            <ol>
+              <li><code>build_answer_system_prompt()</code> を呼び出して、グラウンディング用の強固なシステムプロンプトを構築：
+                <ul>
+                  <li><strong>対象医薬品リスト:</strong> 一般名、販売名、YJコードを行列形式で出力。</li>
+                  <li><strong>構造化根拠ブロック:</strong> 取得した <code>Evidence</code> ごとに「[根拠 i] 項目名、出典URL、改訂年月、相互作用表列、抜粋本文」を整形。</li>
+                  <li><strong>医療対話厳格ルール:</strong> 「提示された根拠のみに基づいて回答すること」「推測で回答しないこと」「根拠の項目名・出典URL・改訂情報を明記すること」等を注入。</li>
+                  <li><strong>複合インテント規則:</strong> 複数意図（例: 用法 + 副作用）がある場合はマルチセクション構成ルールを追加。</li>
+                </ul>
+              </li>
+              <li>先頭に <code>{"role": "system", "content": system_prompt}</code> を配置。</li>
+              <li>会話履歴からシステムプロンプト以外のユーザー/アシスタント発言を順番に連結して返却。</li>
+            </ol>
+          </div>
+        </div>
+      </article>
+
+      <!-- Func: stream_reply & closing_stream -->
+      <article class="func-card" data-layer="app" id="fn-stream-reply">
+        <div class="func-header">
+          <div class="func-title-area">
+            <h3>stream_reply() &amp; closing_stream()</h3>
+            <div class="func-file">backend/application/chat/stream_reply.py : L13 / stream_closing.py : L9</div>
+          </div>
+          <span class="badge badge-app">Application (Chat)</span>
+        </div>
+        <div class="func-body">
+          <div class="sig-box">async def stream_reply(
+    reply: ChatResponse,
+    conversation: Sequence[ChatMessage],
+    *,
+    answer_prompt_policy: AnswerPromptPolicy,
+    provider_factory: Callable[[str | None], LLMProvider],
+    provider_name: str | None,
+    model_name: str | None,
+) -> AsyncIterator[str]:</div>
+
+          <div class="func-desc">
+            <strong>【処理ステップ】</strong>
+            <ol>
+              <li><code>reply.needs_clarification</code> が True の場合、LLM Provider をインスタンス化せず、案内文（<code>reply.answer</code>）を単一チャンクとして <code>yield</code> して即時終了。</li>
+              <li>確認不要な場合、<code>provider_factory(provider_name)</code> で LLM Provider（OpenAI / Gemini）を取得。</li>
+              <li><code>build_answer_messages()</code> でメッセージリストを組み立てる。</li>
+              <li><code>provider.stream_reply(messages, model=model_name)</code> を呼び出し、LLMからトークンチャンクが返るたびに <code>yield</code>。</li>
+              <li><code>closing_stream</code> は非同期コンテキストマネージャとして動作し、生成途中でクライアントが切断した場合でも <code>aclose()</code> を呼んでSDKの通信ソケットとバックグラウンドタスクを安全に破棄。</li>
+            </ol>
+          </div>
+        </div>
+      </article>
+
+      <!-- ================= 4.3 APPLICATION LAYER (RETRIEVAL) ================= -->
+
+      <!-- Func: retrieve_evidence -->
+      <article class="func-card" data-layer="retrieval" id="fn-retrieve-evidence">
+        <div class="func-header">
+          <div class="func-title-area">
+            <h3>retrieve_evidence() &amp; _retrieve_evidence()</h3>
+            <div class="func-file">backend/application/retrieval/retrieve_evidence.py : L39 &amp; L65</div>
+          </div>
+          <span class="badge badge-app">Application (Retrieval)</span>
+        </div>
+        <div class="func-body">
+          <div class="sig-box">async def retrieve_evidence(
+    message: str,
+    product_yj_codes: list[str],
+    *,
+    intent_classifier: IntentClassifier,
+    keyword_extractor: KeywordExtractor,
+    intent_policy: IntentPolicy,
+    retrieval_policy: EvidenceRetrievalPolicy = DEFAULT_RETRIEVAL_POLICY,
+    snapshot_provider: RetrievalSnapshotProvider,
+    on_logic_sources: SourcesCallback | None = None,
+) -> RetrievalResult:</div>
+
+          <div class="func-desc">
+            <strong>【処理ステップ】</strong>
+            <ol>
+              <li><code>parse_yj_codes(product_yj_codes)</code> で入力文字列リストを正規化・検証し、Domain Primitive <code>YjCode</code> のタプルを作成。</li>
+              <li><code>async with snapshot_provider.acquire() as snapshot:</code> で PostgreSQL MVCC スナップショットスコープ（<code>medicine_reader</code>, <code>evidence_reader</code>）を獲得。</li>
+              <li><code>MedicineCatalog(await medicine_reader.read_medicines())</code> を生成し、<code>catalog.match_yj_codes(codes)</code> で対象医薬品を解決。</li>
+              <li>未解決の場合（<code>needs_clarification=True</code>）は検索を行わず終了結果を返す。</li>
+              <li><code>catalog.names_for_yj_codes(codes)</code> で対象薬剤の販売名・一般名を取得し、キーワード抽出時の除外語リストを作成。</li>
+              <li>ポリシーで指定された常時取得項目（警告・禁忌等）を <code>always_criteria</code> として準備。</li>
+              <li><code>collect_search_criteria()</code> を呼び出して3並行検出器を実行し、検索条件とJev応答を収集。</li>
+              <li>全条件を束ねて <code>_search_evidence()</code> を実行し、PostgreSQLから確定根拠を取得。</li>
+              <li>指定されたYJコードのうち未登録のものがあれば注意文（<code>notices</code>）を追加し、<code>RetrievalResult</code> を返却。</li>
+            </ol>
+          </div>
+        </div>
+      </article>
+
+      <!-- Func: collect_search_criteria -->
+      <article class="func-card" data-layer="retrieval" id="fn-collect-search-criteria">
+        <div class="func-header">
+          <div class="func-title-area">
+            <h3>collect_search_criteria()</h3>
+            <div class="func-file">backend/application/retrieval/retrieve_evidence.py : L191</div>
+          </div>
+          <span class="badge badge-app">Application (Retrieval)</span>
+        </div>
+        <div class="func-body">
+          <div class="sig-box">async def collect_search_criteria(
+    intent_classifier: IntentClassifier,
+    keyword_extractor: KeywordExtractor,
+    message: str,
+    excluded_terms: list[str],
+    *,
+    intent_policy: IntentPolicy,
+    on_logic_criteria: CriteriaCallback | None = None,
+    on_detectors_started: Callable[[], Awaitable[None]] | None = None,
+):</div>
+
+          <div class="func-desc">
+            <strong>【処理ステップ】</strong>
+            <ol>
+              <li>以下の3タスクを <code>asyncio.create_task()</code> で並行起動：
+                <ul>
+                  <li><code>detect_jev_criteria(...)</code>: Jev意図分類器呼び出し</li>
+                  <li><code>asyncio.to_thread(detect_morphology_criteria, ...)</code>: Janome形態素解析</li>
+                  <li><code>asyncio.to_thread(_detect_fixed_keyword_criteria, ...)</code>: 固定キーワード辞書照合</li>
+                </ul>
+              </li>
+              <li>タスク開始直後に <code>on_detectors_started</code> があれば常時取得項目（警告・禁忌）の初期根拠を配信。</li>
+              <li><code>for completed in asyncio.as_completed(tasks):</code> により、完了したタスクから順次結果を取得。</li>
+              <li>ローカル検出器（形態素・固定キーワード）が完了したら、その条件を <code>logic_criteria</code> に蓄積し、<code>on_logic_criteria(list(logic_criteria))</code> を呼び出してWebSocket経由でクライアントへ累積通知。</li>
+              <li><code>finally</code> 節で未完了タスクがあればキャンセルし、安全に終了を保証。</li>
+            </ol>
+          </div>
+        </div>
+      </article>
+
+      <!-- Func: detect_jev_criteria -->
+      <article class="func-card" data-layer="retrieval" id="fn-detect-jev-criteria">
+        <div class="func-header">
+          <div class="func-title-area">
+            <h3>detect_jev_criteria()</h3>
+            <div class="func-file">backend/application/retrieval/jev_detector.py : L23</div>
+          </div>
+          <span class="badge badge-app">Application (Retrieval)</span>
+        </div>
+        <div class="func-body">
+          <div class="sig-box">async def detect_jev_criteria(
+    classifier: IntentClassifier,
+    request: IntentRequest,
+    *,
+    intent_policy: IntentPolicy,
+    baseline_intent: str | None = None,
+) -> JevDetectionResult:</div>
+
+          <div class="func-desc">
+            <strong>【処理ステップ】</strong>
+            <ol>
+              <li><code>await classifier.classify(request)</code> で Jev SDK / 分類モデルを実行。利用不可（<code>is_available == False</code>）の場合は空結果を即答。</li>
+              <li><code>select_intents()</code> を実行し、候補（candidates）の確率値が閾値（デフォルト0.20）を超えているものをスコア順にソート。</li>
+              <li>プライマリ意図および該当インテントに対応する添付文書項目番号（<code>section_codes</code>）を特定。</li>
+              <li><code>SearchCriteria(source=DetectionSource.JEV, intent=..., section_codes=...)</code> を生成し、Jevの生レスポンスや選定インテントとともに <code>JevDetectionResult</code> に格納して返却。</li>
+            </ol>
+          </div>
+        </div>
+      </article>
+
+      <!-- Func: detect_morphology_criteria -->
+      <article class="func-card" data-layer="retrieval" id="fn-detect-morphology-criteria">
+        <div class="func-header">
+          <div class="func-title-area">
+            <h3>detect_morphology_criteria()</h3>
+            <div class="func-file">backend/application/retrieval/morphology_detector.py : L11</div>
+          </div>
+          <span class="badge badge-app">Application (Retrieval)</span>
+        </div>
+        <div class="func-body">
+          <div class="sig-box">def detect_morphology_criteria(
+    extractor: KeywordExtractor,
+    message: str,
+    excluded_terms: Iterable[str] = (),
+) -> SearchCriteria | None:</div>
+
+          <div class="func-desc">
+            <strong>【処理ステップ】</strong>
+            <ol>
+              <li>質問文から、照合中の医薬品名（販売名、一般名、英名、屋号等）を長い順に文字列置換で除去。またメンション記号（<code>@</code>）も除去。</li>
+              <li>薬品名が消去された文に対し、<code>extractor.extract_keywords(cleaned)</code>（Janome形態素解析）を実行。</li>
+              <li>名詞・症状キーワード等の配列が得られた場合、<code>SearchCriteria(source=DetectionSource.KEYWORD, keywords=...)</code> を作成して返却。キーワードが抽出できなければ <code>None</code> を返す。</li>
+            </ol>
+          </div>
+        </div>
+      </article>
+
+      <!-- Func: merge_evidence -->
+      <article class="func-card" data-layer="retrieval" id="fn-merge-evidence">
+        <div class="func-header">
+          <div class="func-title-area">
+            <h3>merge_evidence() &amp; evidence_section_sort_key()</h3>
+            <div class="func-file">backend/application/retrieval/search_policy.py : L191 &amp; L203</div>
+          </div>
+          <span class="badge badge-app">Application (Retrieval)</span>
+        </div>
+        <div class="func-body">
+          <div class="sig-box">def merge_evidence(
+    batches: Iterable[tuple[Iterable[Evidence], DetectionSource]],
+) -> tuple[Evidence, ...]:</div>
+
+          <div class="func-desc">
+            <strong>【処理ステップ】</strong>
+            <ol>
+              <li>各検出バッチ（常時、Jev、形態素、固定キーワード）から返された根拠を順次精査。</li>
+              <li>辞書 <code>hits: dict[SearchUnitId, tuple[Evidence, set[DetectionSource]]]</code> により、同一の検索単位ID（<code>unit_id</code>）を持つ根拠を1つに集約。</li>
+              <li>初出の根拠オブジェクトを保持しつつ、取得経路（<code>retrieved_by</code>）は和集合（set union）として更新（例: Jev と KEYWORD の両方でヒットしたことを記録）。</li>
+              <li><code>evidence_section_sort_key</code> により、添付文書の公式項目番号（例: 1. 警告 → 2. 禁忌 → 8. 注意 → 9.5 妊婦 → 11. 副作用）、文字列項目、空項目の順に厳密ソートして不変タプルを返却。</li>
+            </ol>
+          </div>
+        </div>
+      </article>
+
+      <!-- ================= 4.4 DOMAIN / MEDICINE ================= -->
+
+      <!-- Func: parse_yj_codes -->
+      <article class="func-card" data-layer="medicine" id="fn-parse-yj-codes">
+        <div class="func-header">
+          <div class="func-title-area">
+            <h3>parse_yj_codes()</h3>
+            <div class="func-file">backend/application/medicine/input_values.py : L10</div>
+          </div>
+          <span class="badge badge-dom">Domain / Medicine</span>
+        </div>
+        <div class="func-body">
+          <div class="sig-box">def parse_yj_codes(codes: Sequence[str]) -> tuple[YjCode, ...]:</div>
+
+          <div class="func-desc">
+            <strong>【処理ステップ】</strong>
+            <ol>
+              <li>渡された文字列配列の各要素に対して前後の空白除去・NFKC正規化を適用。</li>
+              <li>重複が存在する場合は <code>InvalidMedicineInput("重複したYJコードは指定できません")</code> を送出。</li>
+              <li><code>YjCode(code)</code> を生成し、12桁の英数字パターンを検証。違反時は <code>DomainValidationError</code> を捕捉して <code>InvalidMedicineInput</code> に変換。</li>
+              <li>検証済みの不変タプル <code>tuple[YjCode, ...]</code> を返却。</li>
+            </ol>
+          </div>
+        </div>
+      </article>
+
+      <!-- Func: MedicineCatalog.match_yj_codes -->
+      <article class="func-card" data-layer="medicine" id="fn-medicine-catalog-match">
+        <div class="func-header">
+          <div class="func-title-area">
+            <h3>MedicineCatalog.match_yj_codes() &amp; names_for_yj_codes()</h3>
+            <div class="func-file">backend/application/medicine/product_catalog.py : L127 &amp; L131</div>
+          </div>
+          <span class="badge badge-app">Medicine Catalog</span>
+        </div>
+        <div class="func-body">
+          <div class="sig-box">def match_yj_codes(self, codes: Sequence[YjCode]) -> list[ResolvedMedicine]:
+def names_for_yj_codes(self, codes: Sequence[YjCode]) -> list[str]:</div>
+
+          <div class="func-desc">
+            <strong>【処理ステップ】</strong>
+            <ol>
+              <li><code>_index_medicines()</code> で構築された <code>dict[YjCode, tuple[RegisteredMedicine, ...]]</code> インデックスを参照。</li>
+              <li>指定されたYJコードに対応する登録医薬品を取得し、成分ID（<code>ingredient_id</code>）ごとにグループ化（<code>_ProductGroup</code>）。</li>
+              <li>グループから重複を除いた販売名一覧、YJコード一覧、添付文書ID一覧をまとめ、不変な <code>ResolvedMedicine</code> のリストを生成。</li>
+              <li><code>names_for_yj_codes()</code> では、照合された医薬品の販売名、一般名、英名、ひらがな名、および「SW」などの屋号括弧内文字列を網羅的に抽出し、形態素解析の除外語リストとして返却。</li>
+            </ol>
+          </div>
+        </div>
+      </article>
+
+      <!-- ================= 4.5 INFRASTRUCTURE ================= -->
+
+      <!-- Func: PostgresGenerationRuntime.acquire -->
+      <article class="func-card" data-layer="infra" id="fn-postgres-acquire">
+        <div class="func-header">
+          <div class="func-title-area">
+            <h3>PostgresGenerationRuntime.acquire()</h3>
+            <div class="func-file">backend/infrastructure/persistence/postgres_runtime.py : L150</div>
+          </div>
+          <span class="badge badge-inf">Infrastructure (Persistence)</span>
+        </div>
+        <div class="func-body">
+          <div class="sig-box">@asynccontextmanager
+async def acquire(self) -> AsyncIterator[RetrievalSnapshot]:</div>
+
+          <div class="spec-grid">
+            <div class="spec-item">
+              <div class="spec-label">トランザクション分離</div>
+              <div class="spec-val">PostgreSQL <code>REPEATABLE READ</code>, <code>READ ONLY</code></div>
+            </div>
+            <div class="spec-item">
+              <div class="spec-label">スコープ提供物</div>
+              <div class="spec-val"><code>medicine_reader</code>, <code>evidence_reader</code>, <code>generation_id</code></div>
+            </div>
+          </div>
+
+          <div class="func-desc">
+            <strong>【処理ステップ】</strong>
+            <ol>
+              <li>接続プールからコネクションを払い出し、<code>SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY</code> を設定。</li>
+              <li>現在の公開ポインタテーブルからアクティブな世代ID（<code>SearchGenerationId</code>）を読み取り、固定。</li>
+              <li>同一コネクションとスレッドロック（直列化機構）を内包する <code>PostgresMedicineReader</code> と <code>PostgresEvidenceReader</code> を構築し、<code>RetrievalSnapshot</code> にパッケージして <code>yield</code>。</li>
+              <li>コンテキストブロック終了時にコネクションを安全にプールへ返却。他プロセスが裏で新XMLを取り込んで旧版をDELETEしても、MVCCにより当リクエストの読取一貫性を完全に保証。</li>
+            </ol>
+          </div>
+        </div>
+      </article>
+
+      <!-- Func: PostgresEvidenceReader.search -->
+      <article class="func-card" data-layer="infra" id="fn-postgres-evidence-search">
+        <div class="func-header">
+          <div class="func-title-area">
+            <h3>PostgresEvidenceReader.search()</h3>
+            <div class="func-file">backend/infrastructure/persistence/postgres_runtime.py : L260</div>
+          </div>
+          <span class="badge badge-inf">Infrastructure (Persistence)</span>
+        </div>
+        <div class="func-body">
+          <div class="sig-box">async def search(
+    self,
+    criteria: SearchCriteria,
+    medicines: Sequence[ResolvedMedicine],
+) -> list[Evidence]:</div>
+
+          <div class="func-desc">
+            <strong>【処理ステップ】</strong>
+            <ol>
+              <li>対象医薬品の文書ID（<code>document_ids</code>）およびYJコード集合を抽出。</li>
+              <li>検索条件が <code>section_codes</code> 指定（Jevや固定キーワード）の場合、該当する添付文書の章番号（前方一致: 例: "9.5" は "9.5.1" にも合致）に属する <code>search_units</code> をSQLクエリ。</li>
+              <li>検索条件が <code>keywords</code> 指定（形態素解析）の場合、PostgreSQLの <code>pg_trgm</code> による trigram phrase 照合と BM25 互換ランキングを用いて適合ユニットを検索。</li>
+              <li>取得した生JSONBデータを <code>build_evidence()</code> に渡し、製品名・出典URL・改訂情報を付与した <code>Evidence</code> ドメインモデルを生成して返却。</li>
+            </ol>
+          </div>
+        </div>
+      </article>
+
+      <!-- Func: OpenAIProvider / GeminiProvider -->
+      <article class="func-card" data-layer="infra" id="fn-llm-providers">
+        <div class="func-header">
+          <div class="func-title-area">
+            <h3>OpenAIProvider / GeminiProvider.stream_reply()</h3>
+            <div class="func-file">backend/infrastructure/llm/openai_provider.py &amp; gemini_provider.py</div>
+          </div>
+          <span class="badge badge-inf">Infrastructure (LLM)</span>
+        </div>
+        <div class="func-body">
+          <div class="sig-box">async def stream_reply(
+    self,
+    messages: Sequence[dict[str, str]],
+    model: str | None = None,
+) -> AsyncIterator[str]:</div>
+
+          <div class="func-desc">
+            <strong>【処理ステップ】</strong>
+            <ol>
+              <li>OpenAI SDK または Google GenAI SDK のクライアントを呼び出し。</li>
+              <li>OpenAI の場合: <code>await client.chat.completions.create(model=..., messages=..., stream=True)</code> を実行し、<code>delta.content</code> を逐次 <code>yield</code>。</li>
+              <li>Gemini の場合: <code>generate_content_stream()</code> を実行し、ストリーミングチャンクのテキストを逐次 <code>yield</code>。</li>
+              <li>APIエラー、レートリミット、認証失敗時は <code>LLMProviderError</code> へ標準化して送出し、プレゼンテーション層のエラーハンドラへ伝播。</li>
+            </ol>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- Section 5: Concrete Walkthrough -->
+  <section id="trace-example">
+    <div class="section-eyebrow">Concrete Scenario</div>
+    <h2>5. 実データ・シナリオウォークスルー</h2>
+    <p class="lead">
+      具体的なリクエスト例を用いて、各関数の間でデータがどのように変換・受け渡されていくかを追跡します。
+    </p>
+
+    <div class="card">
+      <div style="background: #11231d; color: #a7f3d0; padding: 14px 20px; border-radius: 8px; font-family: ui-monospace, monospace; margin-bottom: 20px;">
+        <strong>【シナリオ】</strong><br>
+        • 対象薬剤: レクサプロ錠10mg (YJコード: <code>1179054F1023</code>)<br>
+        • 質問本文: <code>"レクサプロと併用してはいけない薬（併用禁忌）は何ですか？"</code>
+      </div>
+
+      <div class="seq-step">
+        <div class="step-num">A</div>
+        <div class="step-body">
+          <h4>入力受信と形式検証</h4>
+          <p>
+            <code>stream_chat_response</code> が <code>{"product_yj_codes": ["1179054F1023"], "messages": [{"role": "user", "content": "..."}]}</code> を受信。
+            <code>parse_yj_codes</code> が <code>YjCode("1179054F1023")</code> へ変換。
+          </p>
+        </div>
+      </div>
+
+      <div class="seq-step">
+        <div class="step-num">B</div>
+        <div class="step-body">
+          <h4>医薬品解決と除外語導出</h4>
+          <p>
+            <code>MedicineCatalog.match_yj_codes</code> がデータベースから一般名「エスシタロプラムシュウ酸塩」、販売名「レクサプロ錠10mg」、文書ID「1179054F1023_01」を特定。<br>
+            除外語リストとして <code>["レクサプロ錠10mg", "レクサプロ", "エスシタロプラムシュウ酸塩"]</code> が導出される。
+          </p>
+        </div>
+      </div>
+
+      <div class="seq-step">
+        <div class="step-num">C</div>
+        <div class="step-body">
+          <h4>3並行検出器の判定</h4>
+          <p>
+            • <strong>Jev分類器:</strong> 意図「相互作用（併用禁忌）」スコア 0.94 → 項目番号 <code>["10.1"]</code> (併用禁忌)<br>
+            • <strong>固定キーワード:</strong> 「併用禁忌」にマッチ → 項目番号 <code>["10.1"]</code><br>
+            • <strong>形態素解析:</strong> 薬剤名を除外した「併用 薬」からキーワード <code>["相互作用", "併用"]</code> を抽出。<br>
+            • <strong>常時取得:</strong> 項目 <code>["1", "2", "8"]</code>（警告・禁忌・基本的注意）を自動付加。
+          </p>
+        </div>
+      </div>
+
+      <div class="seq-step">
+        <div class="step-num">D</div>
+        <div class="step-body">
+          <h4>根拠の取得と統合（merge_evidence）</h4>
+          <p>
+            <code>PostgresEvidenceReader</code> が該当添付文書から「10.1 併用禁忌」の表データを取得（MAO阻害剤: セレギリン塩酸塩、ラサギリンメシル酸塩等）。
+            <code>merge_evidence</code> が項目番号順（2. 禁忌 → 10.1 併用禁忌）にソートして重複排除。
+          </p>
+        </div>
+      </div>
+
+      <div class="seq-step">
+        <div class="step-num">E</div>
+        <div class="step-body">
+          <h4>プロンプト注入とLLM生成</h4>
+          <p>
+            <code>build_answer_system_prompt</code> が「10.1 併用禁忌」のセレギリン塩酸塩（エフピー）等の記載を埋め込み、「推測せず表の記載通りに回答せよ」というルールをLLMに指示。
+            OpenAI/Gemini が「レクサプロの併用禁忌として、MAO阻害剤（セレギリン塩酸塩等）が指定されています（項目 10.1 参照）...」という文章をストリーミング返却。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 6: Design Defenses -->
+  <section id="design-summary">
+    <div class="section-eyebrow">Design Principles</div>
+    <h2>6. 設計の勘所と防御機構まとめ</h2>
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 28%;">設計課題</th>
+            <th style="width: 32%;">採用したアーキテクチャ</th>
+            <th style="width: 40%;">もたらされるメリット</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>外部LLMや通信の遅延</strong></td>
+            <td>3並行検出器 + 先行配信（Speculative Streaming）</td>
+            <td>JevやLLMを待たずに、手元のローカル辞書・形態素解析で判明した根拠を先行プッシュ。体感レスポンスを劇的に向上。</td>
+          </tr>
+          <tr>
+            <td><strong>データ更新中の読取不整合</strong></td>
+            <td>PostgreSQL MVCC REPEATABLE READ + 公開世代ポインタ</td>
+            <td>バックグラウンドで新XMLが取り込まれても、質問処理中は最初に固定した同一世代スナップショットを一貫して読み取る。</td>
+          </tr>
+          <tr>
+            <td><strong>クライアント中断時のリソース浪費</strong></td>
+            <td><code>closing_stream</code> + 非同期ジェネレータクローズ</td>
+            <td>ユーザーがタブを閉じた瞬間に、LLM API呼び出しや待機タスクを <code>aclose()</code> で即時中断。無駄な課金とソケット枯渇を防止。</td>
+          </tr>
+          <tr>
+            <td><strong>レイヤー破壊・DTO逆変換のバグ</strong></td>
+            <td>Import Linter 24契約 + AST境界検査</td>
+            <td>ルーターがDBを直読みしたり、出力用DTOを内部モデルに復元するような保守困難な依存関係をコミット前に機械的に遮断。</td>
+          </tr>
+          <tr>
+            <td><strong>LLMのハルシネーション（幻覚）</strong></td>
+            <td>厳格なグラウンディングプロンプト + 未登録時の回答停止</td>
+            <td>対象医薬品が不明な場合はLLMを一切呼ばずに即案内を返却。取得根拠の項目番号・出典URL・改訂年月の明記をプロンプトで強制。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <p>medi-chat Architecture &amp; Code Walkthrough Documentation · 医薬品添付文書根拠引用チャット</p>
+  <p style="margin-top: 6px; font-size: 12px; color: #829a90;">Powered by FastAPI, PostgreSQL 18, React Spectrum &amp; Next.js</p>
+</footer>
+
+<script>
+  // Tab Switching
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+    event.currentTarget.classList.add('active');
+    const target = document.getElementById(tabId);
+    if (target) target.classList.add('active');
+  }
+
+  // Layer Filter
+  function filterLayer(layer) {
+    document.querySelectorAll('.filter-pill').forEach(btn => btn.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+
+    const cards = document.querySelectorAll('.func-card');
+    cards.forEach(card => {
+      if (layer === 'all' || card.getAttribute('data-layer') === layer) {
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  // Keyword Search
+  const filterInput = document.getElementById('func-filter');
+  if (filterInput) {
+    filterInput.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      const cards = document.querySelectorAll('.func-card');
+      cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        if (!q || text.includes(q)) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  }
+
+  // Active Navbar Highlight on Scroll
+  window.addEventListener('scroll', () => {
+    const sections = document.querySelectorAll('section');
+    const scrollPos = window.scrollY + 100;
+    sections.forEach(sec => {
+      if (scrollPos >= sec.offsetTop && scrollPos < sec.offsetTop + sec.offsetHeight) {
+        const id = sec.getAttribute('id');
+        document.querySelectorAll('nav a').forEach(a => {
+          a.classList.toggle('active', a.getAttribute('href') === `#${id}`);
+        });
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

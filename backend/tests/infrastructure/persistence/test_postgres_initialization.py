@@ -1,7 +1,7 @@
 """PG-007/008: strict initial figure inventory and CLI byte preservation."""
 
 import pytest
-from backend.application.attachment_import.import_errors import InvalidAttachment
+from backend.application.attachment_import.errors import InvalidAttachment
 from backend.infrastructure.cli.manage_postgres import load_inputs
 from backend.tests.support.attachment_import_fixtures import xml_source
 

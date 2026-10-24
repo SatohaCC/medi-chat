@@ -5,12 +5,12 @@ from contextlib import suppress
 from copy import deepcopy
 
 import pytest
-from backend.application.medicine.product_catalog import _ProductGroup
-from backend.application.medicine.product_models import (
+from backend.application.medicine.queries.models import (
     RegisteredMedicine,
     ResolvedMedicine,
 )
-from backend.application.retrieval.search_values import DetectionSource, Probability
+from backend.application.medicine.queries.policies.catalog_matching import _ProductGroup
+from backend.application.retrieval.values import DetectionSource, Probability
 from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.attachment.primitives import PmdaUrl
 from backend.domain.attachment.value_objects import (

@@ -2,8 +2,15 @@ import hashlib
 
 import httpx
 import pytest
-from backend.application.attachment_import.import_document import (
-    AttachmentImportService,
+from backend.application.attachment_import.commands.import_documents import (
+    AttachmentImportCommands,
+)
+from backend.application.attachment_import.queries.import_history import (
+    ImportHistoryQueries,
+)
+from backend.infrastructure.persistence.import_workers import ImportWorkers
+from backend.infrastructure.persistence.original_document_registration import (
+    OriginalDocumentRegistration,
 )
 from backend.infrastructure.persistence.postgres_registration import (
     PostgresRegistrationPublisher,
@@ -23,12 +30,19 @@ async def test_history_retains_deleted_versions_orders_pages_and_avoids_payloads
 ):
     engine = pg_engines[1]
     publisher = PostgresRegistrationPublisher(engine, encoder=PmdaArtifactEncoder())
-    service = AttachmentImportService(
-        decoder=PmdaXmlDecoder(), publisher=publisher, reader=publisher.results
+    service = AttachmentImportCommands(
+        executor=ImportWorkers(),
+        reader=publisher.results,
+        registration=OriginalDocumentRegistration(
+            decoder=PmdaXmlDecoder(), publisher=publisher
+        ),
     )
     app = FastAPI()
     app.include_router(router)
     app.state.attachment_import_service = service
+    app.state.attachment_import_queries = ImportHistoryQueries(
+        reader=publisher.results, executor=service._executor
+    )
     queries = []
 
     def capture(_conn, _cursor, statement, _parameters, _context, _many):

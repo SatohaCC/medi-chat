@@ -1,0 +1,260 @@
+"""質問から添付文書の根拠を取得する技術非依存のユースケース。"""
+
+import asyncio
+from collections.abc import Awaitable, Callable
+from copy import deepcopy
+
+from backend.application.medicine.interfaces.medicine_query_reader import (
+    MedicineQueryReader,
+)
+from backend.application.medicine.queries.models import ResolvedMedicine
+from backend.application.medicine.queries.policies.catalog_matching import (
+    MedicineCatalog,
+)
+from backend.application.medicine.values import parse_yj_codes
+from backend.application.retrieval.interfaces.evidence_query_reader import (
+    EvidenceQueryReader,
+)
+from backend.application.retrieval.interfaces.intent_classifier import (
+    IntentClassifier,
+)
+from backend.application.retrieval.interfaces.keyword_extractor import (
+    KeywordExtractor,
+)
+from backend.application.retrieval.interfaces.snapshot_provider import (
+    RetrievalSnapshotProvider,
+)
+from backend.application.retrieval.queries.models import (
+    Evidence,
+    IntentPolicy,
+    IntentRequest,
+    JevDetectionResult,
+    RetrievalResult,
+    SearchCriteria,
+)
+from backend.application.retrieval.queries.policies.selection import (
+    detect_fixed_keyword_criteria as _detect_fixed_keyword_criteria,
+)
+from backend.application.retrieval.queries.policies.selection import merge_evidence
+from backend.application.retrieval.queries.policies.standard import (
+    DEFAULT_RETRIEVAL_POLICY,
+    EvidenceRetrievalPolicy,
+)
+from backend.application.retrieval.queries.services.intent_detection import (
+    detect_jev_criteria,
+)
+from backend.application.retrieval.queries.services.keyword_detection import (
+    detect_morphology_criteria,
+)
+from backend.application.retrieval.values import DetectionSource
+from backend.domain.medicine.identifiers import YjCode
+
+SourcesCallback = Callable[[list[Evidence]], Awaitable[None]]
+CriteriaCallback = Callable[[list[SearchCriteria]], Awaitable[None]]
+
+
+async def retrieve_evidence(
+    message: str,
+    product_yj_codes: list[str],
+    *,
+    intent_classifier: IntentClassifier,
+    keyword_extractor: KeywordExtractor,
+    intent_policy: IntentPolicy,
+    retrieval_policy: EvidenceRetrievalPolicy = DEFAULT_RETRIEVAL_POLICY,
+    snapshot_provider: RetrievalSnapshotProvider,
+    on_logic_sources: SourcesCallback | None = None,
+) -> RetrievalResult:
+    codes = parse_yj_codes(product_yj_codes)
+    async with snapshot_provider.acquire() as snapshot:
+        return await _retrieve_evidence(
+            message,
+            codes,
+            medicine_reader=snapshot.medicine_reader,
+            evidence_reader=snapshot.evidence_reader,
+            intent_classifier=intent_classifier,
+            keyword_extractor=keyword_extractor,
+            intent_policy=intent_policy,
+            retrieval_policy=retrieval_policy,
+            on_logic_sources=on_logic_sources,
+        )
+
+
+async def _retrieve_evidence(
+    message: str,
+    product_yj_codes: tuple[YjCode, ...],
+    *,
+    medicine_reader: MedicineQueryReader,
+    evidence_reader: EvidenceQueryReader,
+    intent_classifier: IntentClassifier,
+    keyword_extractor: KeywordExtractor,
+    intent_policy: IntentPolicy,
+    retrieval_policy: EvidenceRetrievalPolicy,
+    on_logic_sources: SourcesCallback | None = None,
+) -> RetrievalResult:
+    medicine_catalog = MedicineCatalog(await medicine_reader.read_medicines())
+    resolved = medicine_catalog.match_yj_codes(product_yj_codes)
+    needs_clarification = not resolved
+    excluded_terms = medicine_catalog.names_for_yj_codes(product_yj_codes)
+
+    search_batches: dict[SearchCriteria, tuple[Evidence, ...]] = {}
+    always_criteria = (
+        [
+            SearchCriteria(
+                source=DetectionSource.ALWAYS,
+                section_codes=retrieval_policy.always_retrieved_sections,
+            )
+        ]
+        if retrieval_policy.always_retrieved_sections and not needs_clarification
+        else []
+    )
+
+    async def publish_logic(
+        criteria: list[SearchCriteria], *, skip_empty: bool = False
+    ) -> None:
+        if on_logic_sources is not None and not needs_clarification:
+            sources = await _search_evidence(
+                evidence_reader,
+                tuple(resolved),
+                always_criteria + criteria,
+                cache=search_batches,
+            )
+            if sources or not skip_empty:
+                await on_logic_sources(sources)
+
+    async def publish_initial_sources() -> None:
+        await publish_logic([], skip_empty=True)
+
+    criteria, jev_response, qualifying_intents = await collect_search_criteria(
+        intent_classifier,
+        keyword_extractor,
+        message,
+        excluded_terms,
+        intent_policy=intent_policy,
+        on_logic_criteria=publish_logic if on_logic_sources is not None else None,
+        on_detectors_started=(
+            publish_initial_sources
+            if always_criteria and on_logic_sources is not None
+            else None
+        ),
+    )
+
+    intent = (
+        ", ".join(
+            dict.fromkeys(
+                item.intent.value
+                for item in criteria
+                if item.intent is not None and item.intent.value
+            )
+        )
+        or intent_policy.fallback_intent.value
+    )
+    if qualifying_intents:
+        intent = ", ".join(qualifying_intents)
+    if needs_clarification:
+        return RetrievalResult(
+            intent=intent,
+            retrieval_strategy="product_code_lookup",
+            resolved_medicines=resolved,
+            needs_clarification=True,
+            notices=[
+                "検索対象の構造化データに登録されているYJコードを指定してください。"
+            ],
+            jev_response=deepcopy(jev_response),
+            qualifying_intents=qualifying_intents,
+        )
+    sources = await _search_evidence(
+        evidence_reader,
+        tuple(resolved),
+        always_criteria + criteria,
+        cache=search_batches,
+    )
+    resolved_codes = {code for group in resolved for code in group.yj_codes}
+    unregistered_codes = [
+        code.value for code in product_yj_codes if code.value not in resolved_codes
+    ]
+    notices = []
+    if unregistered_codes:
+        notices.append(
+            f"指定されたYJコード（{', '.join(unregistered_codes)}）は電子添文データが未登録のため、検索対象外として回答を作成しました。"
+        )
+    return RetrievalResult(
+        intent=intent,
+        retrieval_strategy="three_detectors",
+        resolved_medicines=resolved,
+        sources=sources,
+        notices=notices,
+        jev_response=deepcopy(jev_response),
+        qualifying_intents=qualifying_intents,
+    )
+
+
+async def _search_evidence(
+    reader: EvidenceQueryReader,
+    medicines: tuple[ResolvedMedicine, ...],
+    criteria: list[SearchCriteria],
+    *,
+    cache: dict[SearchCriteria, tuple[Evidence, ...]] | None = None,
+) -> list[Evidence]:
+    if cache is None:
+        cache = {}
+    batches = []
+    for condition in criteria:
+        if condition not in cache:
+            cache[condition] = tuple(await reader.search(condition, medicines))
+        batches.append((cache[condition], condition.source))
+    return list(merge_evidence(batches))
+
+
+async def collect_search_criteria(
+    intent_classifier: IntentClassifier,
+    keyword_extractor: KeywordExtractor,
+    message: str,
+    excluded_terms: list[str],
+    *,
+    intent_policy: IntentPolicy,
+    on_logic_criteria: CriteriaCallback | None = None,
+    on_detectors_started: Callable[[], Awaitable[None]] | None = None,
+):
+    """各ローカル検出の条件を累積通知し、全検出完了後の条件を返す。"""
+    tasks = [
+        asyncio.create_task(
+            detect_jev_criteria(
+                intent_classifier, IntentRequest(message), intent_policy=intent_policy
+            )
+        ),
+        asyncio.create_task(
+            asyncio.to_thread(
+                detect_morphology_criteria, keyword_extractor, message, excluded_terms
+            )
+        ),
+        asyncio.create_task(
+            asyncio.to_thread(_detect_fixed_keyword_criteria, message, intent_policy)
+        ),
+    ]
+    criteria: list[SearchCriteria] = []
+    logic_criteria: list[SearchCriteria] = []
+    jev_response = None
+    qualifying_intents: tuple[str, ...] = ()
+    try:
+        if on_detectors_started is not None:
+            await on_detectors_started()
+        for completed in asyncio.as_completed(tasks):
+            result = await completed
+            if isinstance(result, JevDetectionResult):
+                criteria.extend(result.search_criteria)
+                jev_response = result.raw_response
+                qualifying_intents = result.qualifying_intents
+            else:
+                if result is not None:
+                    conditions = result if isinstance(result, tuple) else (result,)
+                    criteria.extend(conditions)
+                    logic_criteria.extend(conditions)
+                    if conditions and on_logic_criteria is not None:
+                        await on_logic_criteria(list(logic_criteria))
+    finally:
+        for task in tasks:
+            if not task.done():
+                task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+
+    return criteria, jev_response, qualifying_intents

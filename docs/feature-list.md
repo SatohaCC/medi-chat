@@ -47,18 +47,18 @@
 
 | ID | 機能 | 現在の内容 | 主な実装 |
 | --- | --- | --- | --- |
-| SEARCH-01 | ルールベース意図判定 | 禁忌、用法用量、妊婦、腎機能、副作用などをキーワードで判定する | `backend/application/retrieval/search_policy.py` |
+| SEARCH-01 | ルールベース意図判定 | 禁忌、用法用量、妊婦、腎機能、副作用などをキーワードで判定する | `backend/application/retrieval/queries/policies/selection.py` |
 | SEARCH-02 | セクション検索 | 意図をPMDAセクション番号に変換して検索する | `backend/infrastructure/persistence/evidence_reader.py` |
-| SEARCH-03 | 全文キーワード検索 | Janomeで質問からキーワードを抽出し、対象薬の文書全体を検索する | `backend/application/retrieval/morphology_detector.py`, `backend/infrastructure/morphology/janome_keyword_extractor.py` |
-| SEARCH-04 | 複数薬剤の相互作用検索 | 指定薬の相互作用セクションを通常の検索条件で取得する。2剤間専用の直接記載判定は現行実装に含まれない | `backend/application/chat/answer_preparation.py`, `backend/infrastructure/persistence/evidence_reader.py` |
-| SEARCH-05 | Jev意図判定 | AIで複数の候補意図・確信度を判定し、該当セクションを追加取得する | `backend/application/retrieval/jev_detector.py`, `backend/infrastructure/intent/jev_classifier.py` |
-| SEARCH-06 | 検索結果マージ | ルール、Jev、キーワードの結果をIDで重複排除し、取得元を表示する | `backend/application/retrieval/search_policy.py` |
+| SEARCH-03 | 全文キーワード検索 | Janomeで質問からキーワードを抽出し、対象薬の文書全体を検索する | `backend/application/retrieval/queries/services/keyword_detection.py`, `backend/infrastructure/morphology/janome_keyword_extractor.py` |
+| SEARCH-04 | 複数薬剤の相互作用検索 | 指定薬の相互作用セクションを通常の検索条件で取得する。2剤間専用の直接記載判定は現行実装に含まれない | `backend/application/chat/queries/services/reply_preparation.py`, `backend/infrastructure/persistence/evidence_reader.py` |
+| SEARCH-05 | Jev意図判定 | AIで複数の候補意図・確信度を判定し、該当セクションを追加取得する | `backend/application/retrieval/queries/services/intent_detection.py`, `backend/infrastructure/intent/jev_classifier.py` |
+| SEARCH-06 | 検索結果マージ | ルール、Jev、キーワードの結果をIDで重複排除し、取得元を表示する | `backend/application/retrieval/queries/policies/selection.py` |
 
 ### D. 回答生成
 
 | ID | 機能 | 現在の内容 | 主な実装 |
 | --- | --- | --- | --- |
-| ANSWER-01 | 根拠付き回答 | 検索結果を根拠として回答を生成する | `backend/application/chat/answer_prompt_builder.py` |
+| ANSWER-01 | 根拠付き回答 | 検索結果を根拠として回答を生成する | `backend/application/chat/queries/policies/answer_prompt.py` |
 | ANSWER-02 | LLM切替 | OpenAI / Gemini とモデルを選択できる | `backend/infrastructure/llm/`, `ChatHeader` |
 | ANSWER-03 | ストリーミング | WebSocketで回答トークンを逐次表示する | `/api/ws`, `/ws/chat`, `useChatWebSocket` |
 | ANSWER-04 | REST回答 | RESTで根拠検索し、必要なら非ストリーミングLLM回答を返す | `POST /api/chat` |

@@ -59,7 +59,9 @@ def test_canonical_title_projection_preserves_raw_text(tmp_path: Path) -> None:
 
 
 def test_tc01_single_source_bytes_and_tc03_constructor_ownership() -> None:
-    from backend.application.chat.chat_service import ChatApplicationService
+    from backend.application.chat.queries.chat import (
+        ChatQueries,
+    )
     from backend.domain.attachment.value_objects import SectionDefinition
     from backend.infrastructure.intent.jev_classifier import JevIntentClassifier
     from backend.infrastructure.morphology.janome_keyword_extractor import (
@@ -82,7 +84,7 @@ def test_tc01_single_source_bytes_and_tc03_constructor_ownership() -> None:
         "scope",
     }
     for constructor, required in (
-        (ChatApplicationService, {"intent_policy", "answer_prompt_policy"}),
+        (ChatQueries, {"intent_policy", "answer_prompt_policy"}),
         (AppChatService, {"application_service"}),
         (JevIntentClassifier, {"classification_settings"}),
         (JanomeKeywordExtractor, {"search_policy", "morphology_settings"}),

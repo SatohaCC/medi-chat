@@ -2,7 +2,7 @@
 
 import httpx
 import pytest
-from backend.application.attachment_import.import_errors import ImportCancelled
+from backend.application.attachment_import.errors import ImportCancelled
 from backend.infrastructure.persistence import postgres_schema as schema
 from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
 from backend.tests.integration.test_postgres_registration import (

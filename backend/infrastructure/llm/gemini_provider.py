@@ -8,7 +8,8 @@ import os
 from collections.abc import AsyncIterator
 from typing import Any
 
-from ...application.chat.stream_closing import closing_stream
+from backend.application.chat.queries.services.stream_lifetime import closing_stream
+
 from .provider_errors import LLMRequestError, LLMUnavailableError
 from .provider_interface import LLMProvider
 

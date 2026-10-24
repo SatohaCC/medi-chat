@@ -4,22 +4,26 @@ import asyncio
 import threading
 from contextlib import asynccontextmanager
 
+import backend.application.retrieval.queries.services.evidence_retrieval as retrieval
 import pytest
 from backend import main
-from backend.application.chat.answer_preparation import prepare_reply
-from backend.application.chat.chat_models import ChatMessage
-from backend.application.chat.chat_service import ChatApplicationService
-from backend.application.retrieval import retrieve_evidence as retrieval
-from backend.application.retrieval.jev_detector import JevDetectionResult
-from backend.application.retrieval.search_models import SearchCriteria
-from backend.application.retrieval.search_values import (
+from backend.application.chat.queries.chat import (
+    ChatQueries,
+)
+from backend.application.chat.queries.models import ChatMessage
+from backend.application.chat.queries.services.reply_preparation import prepare_reply
+from backend.application.medicine.values import SearchGenerationId
+from backend.application.retrieval.interfaces.snapshot_provider import (
+    RetrievalSnapshot,
+)
+from backend.application.retrieval.queries.models import (
+    JevDetectionResult,
+    SearchCriteria,
+)
+from backend.application.retrieval.values import (
     DetectionSource,
     IntentName,
     SearchKeyword,
-)
-from backend.application.retrieval.snapshot_contracts import (
-    RetrievalSnapshot,
-    SearchGenerationId,
 )
 from backend.infrastructure.package_insert_definitions.assembly import (
     get_package_insert_definitions,
@@ -191,7 +195,7 @@ def test_websocket_sends_logic_before_jev_then_replaces_with_integrated_sources(
     monkeypatch.setattr(retrieval, "detect_morphology_criteria", lambda *args: None)
     provider = RecordingProvider()
     service = AppChatService(
-        application_service=ChatApplicationService(
+        application_service=ChatQueries(
             snapshot_provider=FixedSnapshotProvider(
                 MedicineReader(), OrderedEvidenceReader(True)
             ),
@@ -369,8 +373,8 @@ def test_startup_initializes_janome_off_event_loop_before_accepting_requests(
 def test_all_detectors_start_together_and_generation_waits_for_last(
     monkeypatch, jev_available, last_detector
 ):
-    from backend.application.retrieval.intent_contracts import IntentResult
-    from backend.application.retrieval.search_values import IntentName
+    from backend.application.retrieval.queries.models import IntentResult
+    from backend.application.retrieval.values import IntentName
 
     started = {name: threading.Event() for name in ("logic", "keyword", "jev")}
     release = {name: threading.Event() for name in started}
@@ -401,7 +405,7 @@ def test_all_detectors_start_together_and_generation_waits_for_last(
     provider = RecordingProvider()
     definitions = get_package_insert_definitions()
     service = AppChatService(
-        application_service=ChatApplicationService(
+        application_service=ChatQueries(
             snapshot_provider=FixedSnapshotProvider(
                 MedicineReader(), OrderedEvidenceReader(False)
             ),

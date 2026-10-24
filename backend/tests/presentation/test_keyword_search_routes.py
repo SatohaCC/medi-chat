@@ -7,7 +7,7 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
-from backend.application.retrieval.intent_contracts import IntentRequest, IntentResult
+from backend.application.retrieval.queries.models import IntentRequest, IntentResult
 from backend.tests.support.postgres_public_application import (
     original_application_factory,
 )

@@ -6,7 +6,8 @@ import os
 
 import typesafe_sdk as ts
 
-from ...application.retrieval.intent_contracts import IntentRequest, IntentResult
+from backend.application.retrieval.queries.models import IntentRequest, IntentResult
+
 from ...domain.foundation.json_types import JsonValue
 from ..package_insert_definitions.assembly import get_package_insert_definitions
 from .definition_settings import JevClassificationSettings

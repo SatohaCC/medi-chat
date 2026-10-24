@@ -10,15 +10,22 @@ from html.parser import HTMLParser
 from xml.etree import ElementTree as ET
 
 import pytest
-from backend.application.chat.answer_question import answer_question
-from backend.application.chat.chat_models import ChatMessage
-from backend.application.indexing.search_values import SearchSectionCode
-from backend.application.medicine.product_catalog import MedicineCatalog
-from backend.application.retrieval.evidence_payloads import evidence_payload
-from backend.application.retrieval.intent_contracts import IntentResult
-from backend.application.retrieval.retrieve_evidence import retrieve_evidence
-from backend.application.retrieval.search_models import IntentCandidate, SearchCriteria
-from backend.application.retrieval.search_values import (
+from backend.application.chat.queries.models import ChatMessage
+from backend.application.chat.queries.services.answer_question import answer_question
+from backend.application.indexing.values import SearchSectionCode
+from backend.application.medicine.queries.policies.catalog_matching import (
+    MedicineCatalog,
+)
+from backend.application.retrieval.queries.dtos.evidence import evidence_payload
+from backend.application.retrieval.queries.models import (
+    IntentCandidate,
+    IntentResult,
+    SearchCriteria,
+)
+from backend.application.retrieval.queries.services.evidence_retrieval import (
+    retrieve_evidence,
+)
+from backend.application.retrieval.values import (
     DetectionSource,
     IntentName,
     Probability,

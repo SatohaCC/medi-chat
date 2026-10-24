@@ -6,15 +6,19 @@ from sqlalchemy import func, select, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SQLAlchemyError
 
-from backend.application.attachment_import.import_errors import (
+from backend.application.attachment_import.commands.models import ImportResult
+from backend.application.attachment_import.errors import (
     ImportGone,
     ImportNotFound,
     ImportStorageError,
 )
-from backend.application.attachment_import.import_models import (
+from backend.application.attachment_import.queries.dtos.import_views import (
+    ImportDetail,
     ImportPage,
-    ImportResult,
+    ImportProductView,
+    ImportRevisionView,
     ImportSummary,
+    ImportWarningView,
 )
 from backend.infrastructure.index_payloads import (
     result_from_dict,
@@ -27,8 +31,36 @@ class PostgresImportQueries:
     def __init__(self, engine: Engine):
         self.engine = engine
 
-    def read_result(self, document_id: str, digest: str) -> ImportResult:
-        return self.result(f"{document_id}:{digest}", get=True)
+    def read_result(self, document_id: str, digest: str) -> ImportDetail:
+        stored = self.result(f"{document_id}:{digest}", get=True)
+        return ImportDetail(
+            document_id=stored.document_id,
+            source_sha256=stored.source_sha256,
+            validation_status=stored.validation_status,
+            section_count=stored.section_count,
+            search_unit_count=stored.search_unit_count,
+            products=tuple(
+                ImportProductView(p.yj_code, p.brand_name) for p in stored.products
+            ),
+            revisions=tuple(
+                ImportRevisionView(r.source_label, r.year_month, r.version)
+                for r in stored.revisions
+            ),
+            warnings=tuple(
+                ImportWarningView(w.code, w.reference) for w in stored.warnings
+            ),
+            transformer_version=stored.transformer_version,
+            reused=stored.reused,
+            status=stored.status,
+            search_index_updated=stored.search_index_updated,
+            generation_id=stored.generation_id,
+            registration_sequence=stored.registration_sequence,
+            active_yj_codes=stored.active_yj_codes,
+            replaced_yj_codes=stored.replaced_yj_codes,
+            deleted_version_ids=stored.deleted_version_ids,
+            cleanup_pending=stored.cleanup_pending,
+            artifacts_deleted=stored.artifacts_deleted,
+        )
 
     def replay_result(self, document_id: str, digest: str) -> ImportResult:
         """Replay a retained receipt even after its original payload was reclaimed."""
@@ -77,7 +109,10 @@ class PostgresImportQueries:
                             filename=r["filename"],
                             registration_sequence=r["sequence"],
                             revised_at=r["revised_at"],
-                            products=result_from_dict(r["result"]).products,
+                            products=tuple(
+                                ImportProductView(p["yj_code"], p["brand_name"])
+                                for p in r["result"]["products"]
+                            ),
                             active_yj_codes=tuple(active.get(r["version_id"], ())),
                             artifacts_deleted=r["artifacts_deleted"],
                         )

@@ -9,9 +9,9 @@
 - `current-v4/`: 原本フォルダと重複しない取り込みXMLを1件だけ保持。旧SQLite・世代・構造化出力は削除済みで、runtimeは読みません。
 - 過去の`imports/`（原本は`originals/`とbyte一致）と`migration-artifacts/`（pytestキャッシュ）は削除済みです。
 - 変換正本: `backend.infrastructure.pmda_xml`、入口: `backend.infrastructure.cli.structure_pmda_xml`
-- 辞書の純粋変換: `backend.application.medicine.autocomplete`、CSV境界: `backend.infrastructure.sources.yj_csv`
+- 辞書の純粋変換: `backend.application.medicine.queries.policies.catalog_matching.project_registered_product`、CSV境界: `backend.infrastructure.sources.yj_csv`
 
-項目・列の共有定義は[型付き定義と技術設定のREADME](../../backend/infrastructure/package_insert_definitions/README.md)に従います。項目番号・正式名称・Scopeと相互作用列は[Domainの定義](../../backend/domain/attachment/value_objects.py)、XMLタグとの対応は[XML設定](../../backend/infrastructure/package_insert_definitions/xml_settings.py)を編集します。常時取得項目や質問に応じた検索方針は[Applicationの検索方針](../../backend/application/retrieval/standard_policies.py)で別に管理します。原文見出しと本文を共有定義で上書きしません。
+項目・列の共有定義は[型付き定義と技術設定のREADME](../../backend/infrastructure/package_insert_definitions/README.md)に従います。項目番号・正式名称・Scopeと相互作用列は[Domainの定義](../../backend/domain/attachment/value_objects.py)、XMLタグとの対応は[XML設定](../../backend/infrastructure/package_insert_definitions/xml_settings.py)を編集します。常時取得項目や質問に応じた検索方針は[Applicationの検索方針](../../backend/application/retrieval/queries/policies/standard.py)で別に管理します。原文見出しと本文を共有定義で上書きしません。
 
 ## 実行方法
 

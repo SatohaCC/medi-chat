@@ -13,7 +13,7 @@ from alembic.config import Config
 from sqlalchemy import delete, insert, select, text
 from sqlalchemy.exc import SQLAlchemyError
 
-from backend.application.attachment_import.import_errors import AttachmentImportError
+from backend.application.attachment_import.errors import AttachmentImportError
 from backend.config.runtime_environment import load_runtime_environment
 from backend.domain.foundation.json_types import JsonValue
 from backend.infrastructure.persistence import postgres_schema as s
