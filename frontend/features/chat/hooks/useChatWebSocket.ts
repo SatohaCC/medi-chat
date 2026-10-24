@@ -32,6 +32,10 @@ interface UseChatWebSocketOptions {
 /**
  * Pure helper to immutably patch the latest assistant message in the conversation.
  */
+export function assertNever(x: never): never {
+  throw new Error(`Unexpected discriminated union member: ${JSON.stringify(x)}`);
+}
+
 function patchLastAssistant(
   messages: Message[],
   updater: (last: Message) => Message,
@@ -142,6 +146,9 @@ export function useChatWebSocket({ selectedModel }: UseChatWebSocketOptions) {
         );
         setIsStreaming(false);
         break;
+
+      default:
+        return assertNever(data);
     }
   }, []);
 

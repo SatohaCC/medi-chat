@@ -10,6 +10,43 @@ interface ChatWebSocketHandlers {
 export interface ChatWebSocketConnection {
   send: (data: string) => boolean;
   disconnect: () => void;
+  [Symbol.dispose]?: () => void;
+}
+
+/**
+ * Type guard validating that unknown data conforms to WsServerMessage.
+ */
+export function isWsServerMessage(data: unknown): data is WsServerMessage {
+  if (typeof data !== "object" || data === null) {
+    return false;
+  }
+
+  const candidate = data as { type?: unknown };
+  if (typeof candidate.type !== "string") {
+    return false;
+  }
+
+  switch (candidate.type) {
+    case "text_delta":
+      return typeof (candidate as { content?: unknown }).content === "string";
+    case "text_done":
+      return true;
+    case "sources":
+      return Array.isArray((candidate as { sources?: unknown }).sources);
+    case "retrieval_status":
+      return typeof (candidate as { stage?: unknown }).stage === "string";
+    case "jev_response":
+      return (
+        typeof (candidate as { data?: unknown }).data === "object" &&
+        (candidate as { data?: unknown }).data !== null
+      );
+    case "notices":
+      return Array.isArray((candidate as { notices?: unknown }).notices);
+    case "error":
+      return typeof (candidate as { content?: unknown }).content === "string";
+    default:
+      return false;
+  }
 }
 
 /** Owns the socket and retry timer for one connection lifecycle. */
@@ -55,14 +92,20 @@ export function connectChatWebSocket(
     ws.onmessage = (event) => {
       if (!isCurrent()) return;
 
-      let message: WsServerMessage;
+      let raw: unknown;
       try {
-        message = JSON.parse(event.data) as WsServerMessage;
+        raw = JSON.parse(event.data);
       } catch (error) {
         console.error("Failed to parse WebSocket message", error);
         return;
       }
-      onMessage(message);
+
+      if (!isWsServerMessage(raw)) {
+        console.warn("Unrecognized or malformed WebSocket message", raw);
+        return;
+      }
+
+      onMessage(raw);
     };
 
     ws.onclose = (event) => {
@@ -87,7 +130,7 @@ export function connectChatWebSocket(
 
   connect();
 
-  return {
+  const connection: ChatWebSocketConnection = {
     send(data) {
       if (stopped || socket?.readyState !== WebSocket.OPEN) return false;
       socket.send(data);
@@ -101,4 +144,12 @@ export function connectChatWebSocket(
       ws?.close();
     },
   };
+
+  if (typeof Symbol !== "undefined" && "dispose" in Symbol) {
+    connection[Symbol.dispose] = () => {
+      connection.disconnect();
+    };
+  }
+
+  return connection;
 }

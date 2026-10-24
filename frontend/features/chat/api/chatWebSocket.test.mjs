@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { connectChatWebSocket } from "./chatWebSocket.ts";
+import { connectChatWebSocket, isWsServerMessage } from "./chatWebSocket.ts";
 
 function setup(t, handlers = {}) {
   const originalWebSocket = globalThis.WebSocket;
@@ -209,4 +209,55 @@ test("TC-07: 通信エラーで切断し、重複せず再接続する", (t) => 
   socket.open();
   assert.equal(sockets.length, 2);
   assert.equal(statuses.at(-1), "connected");
+});
+
+test("TC-WS-01: 不正な形式の WebSocket メッセージを受信した際に安全に無視・スキップする", (t) => {
+  const { connection: _connection, sockets, messages } = setup(t);
+  sockets[0].open();
+
+  // 1. type なしのオブジェクト
+  sockets[0].receive(JSON.stringify({}));
+  // 2. null
+  sockets[0].receive("null");
+  // 3. 文字列プリミティブ
+  sockets[0].receive(JSON.stringify("just a string"));
+  // 4. 未知の type
+  sockets[0].receive(JSON.stringify({ type: "unknown_future_message" }));
+  // 5. 正常なメッセージ
+  sockets[0].receive(JSON.stringify({ type: "text_delta", content: "hello" }));
+
+  assert.equal(messages.length, 1);
+  assert.deepEqual(messages[0], { type: "text_delta", content: "hello" });
+});
+
+test("TC-WS-02: 有効な WsServerMessage 型が isWsServerMessage で正常に判定される", () => {
+  assert.equal(isWsServerMessage({ type: "text_delta", content: "chunk" }), true);
+  assert.equal(isWsServerMessage({ type: "text_done" }), true);
+  assert.equal(isWsServerMessage({ type: "notices", notices: ["notice1"] }), true);
+  assert.equal(isWsServerMessage({ type: "sources", sources: [] }), true);
+  assert.equal(isWsServerMessage({ type: "retrieval_status", stage: "complete" }), true);
+  assert.equal(isWsServerMessage({ type: "jev_response", data: {} }), true);
+  assert.equal(isWsServerMessage({ type: "error", content: "fail" }), true);
+
+  // 異常系
+  assert.equal(isWsServerMessage(null), false);
+  assert.equal(isWsServerMessage(undefined), false);
+  assert.equal(isWsServerMessage("string"), false);
+  assert.equal(isWsServerMessage(123), false);
+  assert.equal(isWsServerMessage({}), false);
+  assert.equal(isWsServerMessage({ type: "unknown" }), false);
+});
+
+test("TC-WS-03: ChatWebSocketConnection の Symbol.dispose による明示的リソース破棄", (t) => {
+  const { connection, sockets, timers } = setup(t);
+  sockets[0].close();
+  assert.equal(timers.size, 1);
+
+  if (typeof Symbol.dispose === "symbol" && typeof connection[Symbol.dispose] === "function") {
+    connection[Symbol.dispose]();
+    assert.equal(timers.size, 0);
+    assert.equal(connection.send("テスト"), false);
+  } else {
+    assert.fail("Symbol.dispose が connection に実装されていません");
+  }
 });
