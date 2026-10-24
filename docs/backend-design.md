@@ -83,7 +83,9 @@ RESTとWebSocketは重複のない対象YJコードを1～50件受け付けま�
 他コンテキストからの直接importは、所有元の `identifiers.py` に定義する公開ID Primitive（**1コンテキスト＝1公開ID**）に限ります。添付文書の `DocumentId` は `domain/attachment/identifiers.py`、医薬品の `YjCode` は `domain/medicine/identifiers.py` が正本です。それ以外の情報はApplicationで利用側の型へ変換します。検索単位の `SearchUnitId` はDomainの公開IDではなく、`application/indexing/values.py` が所有する投影のIDです。
 各コンテキストの `identifiers.py` のプロジェクト内import先は `domain/foundation/primitives/identifiers.py` だけです。標準ライブラリは利用でき、IDは `EntityUUID` または `EntityStringId` を継承します。文字列ID基底はNFKC正規化・前後の余白除去・空値拒否を行います。
 sharedは各業務コンテキストへ、foundationは業務コンテキスト・sharedへ依存できません。
-domain全体からapplication・infrastructure・presentationへの依存も禁止します。静的な直接・間接依存を検査し、動的importは対象外です。
+Domainの構造規則と禁止例の検証は[Domainハーネス](../for-llm/guides/domain-architecture.md)を参照してください。標準lintとCIで強制し、新規コンテキストも自動検出します。
+
+domain全体からapplication・infrastructure・presentationへの依存も禁止します。静的な直接・間接依存を検査し、Domainハーネスでは動的import自体も禁止します。
 `backend.domain.*` を独立性契約の対象とするため、新規コンテキストにも自動適用されます。公開IDとfoundation・sharedへの依存を許可し、共通基盤から業務コンテキストへの逆依存は禁止します。`identifiers.py` から内部モデルへの依存も禁止し、公開IDモジュールを迂回経路にしません。
 
 `domain/foundation` は他のコンテキストに依存しません。単一値を包む新しい型は

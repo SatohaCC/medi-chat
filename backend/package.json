@@ -9,7 +9,7 @@
     "test": "uv run --locked pytest",
     "test:postgres": "uv run --locked pytest --postgres -m \"postgres and not source_data\"",
     "test:backend": "pnpm run test",
-    "lint": "uv run --locked ruff check . && pnpm run lint:imports && pnpm run lint:boundaries && pnpm run lint:application && pnpm run lint:application:harness",
+    "lint": "uv run --locked ruff check . && pnpm run lint:imports && pnpm run lint:boundaries && pnpm run lint:application && pnpm run lint:application:harness && pnpm run lint:domain && pnpm run lint:domain:harness",
     "lint:imports": "cd .. && uv run --project backend --locked lint-imports --config backend/pyproject.toml",
     "lint:boundaries": "uv run --locked pytest tests/architecture/test_architecture_dependencies.py -k response_dto -q",
     "format": "uv run --locked ruff format .",
@@ -24,6 +24,8 @@
     "db:export": "cd .. && uv run --project backend --locked python -m backend.infrastructure.cli.manage_postgres --database-env MEDI_CHAT_DATABASE_URL export",
     "lint:application": "cd .. && uv run --project backend --locked python scripts/application_architecture.py",
     "lint:application:audit": "cd .. && uv run --project backend --locked python scripts/application_architecture.py",
-    "lint:application:harness": "uv run --locked pytest tests/architecture/test_application_harness.py -q"
+    "lint:application:harness": "uv run --locked pytest tests/architecture/test_application_harness.py -q",
+    "lint:domain": "cd .. && uv run --project backend --locked python scripts/domain_architecture.py",
+    "lint:domain:harness": "uv run --locked pytest tests/architecture/test_domain_harness.py -q"
   }
 }
