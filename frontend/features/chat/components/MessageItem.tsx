@@ -104,7 +104,7 @@ export function MessageItem({
 
         {message.isInterrupted && message.role === "assistant" && (
           <div role="status" {...stylex.props(styles.statusText)}>
-            通信が切断され、回答が中断されました。未完了の回答です。
+            回答は中断されました。未完了の回答です。送信後の到達状況は不明です。
           </div>
         )}
 

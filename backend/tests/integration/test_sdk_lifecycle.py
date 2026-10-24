@@ -40,6 +40,7 @@ class LifecycleStream:
         self.path = path
         self.index = 0
         self.closed = False
+        self.close_calls = 0
         self.waiting = asyncio.Event()
 
     def __aiter__(self) -> LifecycleStream:
@@ -64,6 +65,7 @@ class LifecycleStream:
 
     async def aclose(self) -> None:
         self.closed = True
+        self.close_calls += 1
 
     async def iterate(self) -> AsyncIterator[SimpleNamespace]:
         try:
@@ -164,6 +166,7 @@ async def _assert_ws_closes_stream(
             "text": json.dumps(
                 {
                     "type": "message",
+                    "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                     "product_yj_codes": ["1234567A0000"],
                     "messages": [{"role": "user", "content": "質問"}],
                     "provider": provider,
@@ -201,6 +204,7 @@ async def _assert_ws_closes_stream(
     assert any(
         item["type"] == "websocket.send" and "first" in item["text"] for item in sent
     )
+    assert response.close_calls == 1
     assert response.closed, "WS send disconnect left SDK stream open"
     close.assert_awaited_once()
     if provider == "gemini":
@@ -321,6 +325,7 @@ async def test_owned_sdk_resources_close_on_all_exit_paths(
             assert len(tail) == 1 and "SDK lifecycle failure" in tail[0]
         else:
             assert [chunk async for chunk in output] == ["second"]
+        assert response.close_calls == 1
         assert response.closed, "owned SDK stream was left open"
         client_close.assert_awaited_once()
         if provider_name == "gemini":

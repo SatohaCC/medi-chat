@@ -8,6 +8,16 @@ Vercel向けのNeon接続・10MiB XML分割取り込み・移行手順は[デプ
 
 RESTとWebSocketは重複のない対象YJコードを1～50件受け付けます。WebSocketは1回につき最大50メッセージ、各本文は最大4,000文字です。画面は会話全文を保持し、送信には直近24件の完了した往復と今回の質問を使います。失敗・中断・空の回答・4,000文字を超える本文がある往復は送信履歴から除外し、本文の途中切断は行いません。
 
+### WebSocket の要求と接続寿命
+
+`/api/ws` と `/ws/chat` は同じ契約です。`message` と `abort` はUUID v4文字列の `request_id` が必須です。`sources`、`retrieval_status`、`jev_response`、`notices`、`text_delta` と終端の `text_done` / `error` / `aborted` は、そのIDをcanonical表記で返します。旧形式は受理しません。本文等の入力不正は当該IDの `error`、ID不正・不正JSON・非objectは `connection_error` (`invalid_payload`)、未知typeは `unsupported_type` です。接続は後続の有効要求を処理できます。
+
+Presentationが接続あたり1つの生成taskを所有し、準備・無音生成・終了処理中も受信します。別要求と同ID重複は `control_error` (`busy`)、非activeへのabortは `not_active` です。受理した要求の終端は接続維持中に1つだけ確定します。abortはtaskをcancelし、準備・stream・SDK・DBの所有終了をjoinした後に `aborted` を返します。切断でもcancel/joinし、全sendを直列化します。native workerの強制停止や外部サービスの課金停止は保証しません。clientはIDとsocket世代を照合し、中断往復を次の履歴から除外します。
+
+JSON `ping` / `pong` はUUID v4の `ping_id` を対応付けます。前景openの正常受信から30秒でpingを1件、対応pongを5秒待ちます。業務受信はidleを延長しますが発行済pingの締切は延長しません。timeout/送信例外は旧socketを一度だけ失効させ、既存backoffで再接続します。hidden中は監視timerを止め、復帰時に新pingのpongを確認してから業務送信を許可します。背景timerの遅延やOS sleep中の35秒以内検知は保証しません。
+
+clientは通常の接続待ちだけ未送信1件を60秒保留できます。受付時の本文・対象YJ・model・完了履歴・入力tokenをcopyし、復旧時に期限を再確認して一度だけ送ります。取消・期限・認証拒否・unmountで後から送らず、取消/期限の質問は元contextを表示して明示再編集できます。別draftは保持/置換を選べます。transportの `sent` はブラウザsend呼出し成功であり受領ackではありません。`not_open` は未送信、`uncertain` は試行後の到達不明です。送信後切断/uncertainは中断表示にし自動再送しません。恒久queue、replay、冪等実行保証はありません。request ID・保留・接続管理はDomain/DB契約へ持ち込みません。
+
 起動時の環境設定は、既存のプロセス環境を優先します。未設定値だけをdotenvから補い、読み込むファイルはリポジトリルートの`.env.local`だけです。DB管理CLIも同じ設定を読み込みます。`PYTHON_DOTENV_DISABLED=1`ではファイルを読みません。
 
 `pnpm dev:backend`の起動監視は`/api?__medi_chat_dev_monitor=1`を使用します。開発用Uvicornログ設定で、このloopback監視の200/401だけをアクセスログから除外します。認証は通常どおり実行し、一般の401や監視のサーバーエラーは記録します。応答停止時の自動再起動も維持します。

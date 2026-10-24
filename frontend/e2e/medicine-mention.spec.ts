@@ -2,6 +2,7 @@ import { expect, type Page, test, type WebSocketRoute } from "./helpers/test";
 
 interface ChatRequest {
   type: string;
+  request_id: string;
   provider: string;
   model: string;
   product_yj_codes: string[];
@@ -103,7 +104,12 @@ async function setupMedicineChat(
     send,
     respond(message: unknown) {
       if (!socket) throw new Error("Socket not connected");
-      socket.send(JSON.stringify(message));
+      socket.send(
+        JSON.stringify({
+          request_id: requests.at(-1)?.request_id,
+          ...(message as object),
+        }),
+      );
     },
     async disconnect() {
       if (!socket) throw new Error("Socket not connected");
@@ -431,4 +437,34 @@ test("50 targets are sent intact; 51 targets are blocked with an explanation", a
   await expect(chat.send).toBeDisabled();
   await chat.input.press("Enter");
   expect(chat.requests).toHaveLength(1);
+});
+
+test("WR-044 token-bearing unsent question restores PromptFieldValue and targets", async ({
+  page,
+}) => {
+  const chat = await setupMedicineChat(page);
+  await chat.input.focus();
+  await page.keyboard.type("併用のテスト ");
+  await page.keyboard.type("@ロキ");
+  await page.getByRole("menuitem", { name: /ロキソニン/ }).click();
+  await page.clock.install();
+  await page.clock.pauseAt(new Date(Date.now() + 1000));
+  await chat.disconnect();
+  await expect(page.getByText("disconnected", { exact: true })).toBeVisible();
+  await chat.send.click();
+  await expect(page.getByRole("region", { name: "未送信の保留" })).toContainText(
+    "@ロキソニン錠60mg",
+  );
+  await page.getByRole("button", { name: "保留を取消", exact: true }).click();
+  await page.getByRole("button", { name: "再編集", exact: true }).click();
+  await expect(chat.input).toContainText("ロキソニン錠60mg");
+  await expect(chat.tier1).toContainText("イグザレルト錠15mg");
+  await expect(chat.tier1).toContainText("ロキソニン錠60mg");
+  expect(chat.requests).toHaveLength(0);
+  await page.clock.fastForward(6000);
+  expect(chat.requests).toHaveLength(0);
+  await chat.send.click();
+  await expect.poll(() => chat.requests.length).toBe(1);
+  expect(chat.requests[0].product_yj_codes).toEqual([igzEntry.y, rokiEntry.y]);
+  expect(chat.requests[0].messages[0].content).toContain("@ロキソニン錠60mg");
 });

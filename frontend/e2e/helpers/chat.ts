@@ -1,16 +1,25 @@
 import { expect, type Page, type WebSocketRoute } from "@playwright/test";
 import type { WsServerMessage } from "../../features/chat/model/chat";
 
+type MockResponse<E = WsServerMessage> = E extends { request_id: string }
+  ? Omit<E, "request_id"> & { request_id?: string }
+  : E;
+
 interface ChatRequest {
   type: string;
+  request_id: string;
   provider: string;
   model: string;
   product_yj_codes: string[];
   messages: { role: string; content: string }[];
 }
 
-export async function openChat(page: Page, options: { candidates?: boolean } = {}) {
+export async function openChat(
+  page: Page,
+  options: { candidates?: boolean; respondToPing?: boolean } = {},
+) {
   const requests: ChatRequest[] = [];
+  const controls: { type: string; request_id?: string; ping_id?: string }[] = [];
   let socket: WebSocketRoute | undefined;
   await page.route("**/api/medicines", (route) =>
     route.fulfill({
@@ -60,7 +69,15 @@ export async function openChat(page: Page, options: { candidates?: boolean } = {
   );
   await page.routeWebSocket("**/api/ws", (ws) => {
     socket = ws;
-    ws.onMessage((message) => requests.push(JSON.parse(String(message))));
+    ws.onMessage((message) => {
+      const data = JSON.parse(String(message));
+      if (data.type === "message") requests.push(data);
+      else {
+        controls.push(data);
+        if (data.type === "ping" && options.respondToPing !== false)
+          ws.send(JSON.stringify({ type: "pong", ping_id: data.ping_id }));
+      }
+    });
   });
   await page.goto("/");
   await expect(page.getByText("connected", { exact: true })).toBeVisible();
@@ -69,11 +86,14 @@ export async function openChat(page: Page, options: { candidates?: boolean } = {
   ).toBeVisible();
   return {
     requests,
+    controls,
     input: page.getByRole("textbox", { name: "質問を入力" }),
     send: page.getByRole("button", { name: /送信|Send/ }),
-    respond(message: WsServerMessage) {
+    respond(message: MockResponse) {
       if (!socket) throw new Error("Chat WebSocket is not connected");
-      socket.send(JSON.stringify(message));
+      socket.send(
+        JSON.stringify({ request_id: requests.at(-1)?.request_id, ...message }),
+      );
     },
     async disconnect(code = 1001) {
       if (!socket) throw new Error("Chat WebSocket is not connected");

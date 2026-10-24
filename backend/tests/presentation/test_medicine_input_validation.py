@@ -69,6 +69,7 @@ def test_websocket_rejects_invalid_yj_and_keeps_connection(client):
         socket.send_json(
             {
                 "type": "message",
+                "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                 "product_yj_codes": ["short"],
                 "messages": [{"role": "user", "content": "テスト質問"}],
             }
@@ -78,8 +79,13 @@ def test_websocket_rejects_invalid_yj_and_keeps_connection(client):
             response = socket.receive_json()
         assert response["type"] == "error"
         assert response["content"] == "Invalid product_yj_codes"
-        socket.send_json({"type": "ping"})
-        assert socket.receive_json() == {"type": "pong"}
+        socket.send_json(
+            {"type": "ping", "ping_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280"}
+        )
+        assert socket.receive_json() == {
+            "type": "pong",
+            "ping_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
+        }
 
 
 @pytest.mark.parametrize("value", [12, True, None, {}, []])
@@ -113,6 +119,7 @@ def test_all_input_routes_reject_duplicate_normalized_codes(client, second):
         socket.send_json(
             {
                 "type": "message",
+                "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                 "product_yj_codes": codes,
                 "messages": [{"role": "user", "content": "テスト質問"}],
             }
@@ -122,8 +129,13 @@ def test_all_input_routes_reject_duplicate_normalized_codes(client, second):
             response = socket.receive_json()
         assert response["type"] == "error"
         assert response["content"] == "product_yj_codes must not contain duplicates"
-        socket.send_json({"type": "ping"})
-        assert socket.receive_json() == {"type": "pong"}
+        socket.send_json(
+            {"type": "ping", "ping_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280"}
+        )
+        assert socket.receive_json() == {
+            "type": "pong",
+            "ping_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
+        }
 
 
 @pytest.fixture
@@ -162,13 +174,23 @@ def test_unavailable_service_still_rejects_invalid_codes(
         socket.send_json(
             {
                 "type": "message",
+                "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                 "product_yj_codes": codes,
                 "messages": [{"role": "user", "content": "テスト質問"}],
             }
         )
-        assert socket.receive_json() == {"type": "error", "content": error}
-        socket.send_json({"type": "ping"})
-        assert socket.receive_json() == {"type": "pong"}
+        assert socket.receive_json() == {
+            "type": "error",
+            "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
+            "content": error,
+        }
+        socket.send_json(
+            {"type": "ping", "ping_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280"}
+        )
+        assert socket.receive_json() == {
+            "type": "pong",
+            "ping_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
+        }
 
 
 def test_unavailable_service_preserves_valid_input_responses(unavailable_client):
@@ -182,11 +204,13 @@ def test_unavailable_service_preserves_valid_input_responses(unavailable_client)
         socket.send_json(
             {
                 "type": "message",
+                "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                 "product_yj_codes": ["1234567A0000"],
                 "messages": [{"role": "user", "content": "テスト質問"}],
             }
         )
         assert socket.receive_json() == {
             "type": "error",
+            "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
             "content": "Medicine corpus is not ready",
         }

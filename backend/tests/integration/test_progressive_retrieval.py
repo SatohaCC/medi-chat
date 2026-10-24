@@ -214,12 +214,14 @@ def test_websocket_sends_logic_before_jev_then_replaces_with_integrated_sources(
             socket.send_json(
                 {
                     "type": "message",
+                    "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                     "product_yj_codes": ["1234567A0000"],
                     "messages": [{"role": "user", "content": "質問"}],
                 }
             )
             assert socket.receive_json() == {
                 "type": "retrieval_status",
+                "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                 "stage": "jev_searching",
             }
             early = socket.receive_json()
@@ -424,6 +426,7 @@ def test_all_detectors_start_together_and_generation_waits_for_last(
             socket.send_json(
                 {
                     "type": "message",
+                    "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                     "product_yj_codes": ["1234567A0000"],
                     "messages": [{"role": "user", "content": "質問"}],
                 }
@@ -431,6 +434,7 @@ def test_all_detectors_start_together_and_generation_waits_for_last(
             status = socket.receive_json()
             assert status == {
                 "type": "retrieval_status",
+                "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                 "stage": "jev_searching" if jev_available else "unavailable",
             }
             for event in started.values():

@@ -46,6 +46,7 @@ def test_RESTとWebSocketで回答と根拠とLLM入力が一致する(pg_api) -
             socket.send_json(
                 {
                     "type": "message",
+                    "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                     "messages": [{"role": "user", "content": "副作用の頭痛について"}],
                     "product_yj_codes": ["1234567A0000"],
                     "provider": "openai",

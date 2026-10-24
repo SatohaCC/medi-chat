@@ -7,22 +7,27 @@ export function assertNever(x: never): never {
 export interface ChatState {
   readonly messages: Message[];
   readonly isStreaming: boolean;
+  readonly isStopping: boolean;
   readonly status: ConnectionStatus;
   readonly activeRequest: boolean;
+  readonly activeRequestId: string | null;
 }
 
 export const initialChatState: ChatState = {
   messages: [],
   isStreaming: false,
+  isStopping: false,
   status: "disconnected",
   activeRequest: false,
+  activeRequestId: null,
 };
 
 export type ChatAction =
   | { type: "server_message"; message: WsServerMessage }
-  | { type: "start_message"; userContent: string }
+  | { type: "start_message"; userContent: string; requestId: string }
   | { type: "status_change"; status: ConnectionStatus }
-  | { type: "auth_expired" };
+  | { type: "auth_expired" }
+  | { type: "stop_request" };
 
 export function patchLastAssistant(
   messages: readonly Message[],
@@ -37,9 +42,7 @@ export function patchLastAssistant(
   return next;
 }
 
-export function markLatestExchangeInterrupted(
-  messages: readonly Message[],
-): Message[] {
+export function markLatestExchangeInterrupted(messages: readonly Message[]): Message[] {
   const assistantIndex = messages.length - 1;
   const userIndex = assistantIndex - 1;
   const assistant = messages[assistantIndex];
@@ -56,8 +59,17 @@ export function markLatestExchangeInterrupted(
 
 export function chatReducer(state: ChatState, action: ChatAction): ChatState {
   switch (action.type) {
+    case "stop_request":
+      return state.activeRequest ? { ...state, isStopping: true } : state;
     case "server_message": {
       const { message } = action;
+      if (
+        !state.activeRequest ||
+        !("request_id" in message) ||
+        message.request_id !== state.activeRequestId ||
+        message.type === "control_error"
+      )
+        return state;
       switch (message.type) {
         case "text_delta":
           return {
@@ -105,18 +117,31 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
             })),
           };
 
+        case "aborted":
+          return {
+            ...state,
+            activeRequest: false,
+            activeRequestId: null,
+            isStreaming: false,
+            isStopping: false,
+            messages: markLatestExchangeInterrupted(state.messages),
+          };
         case "text_done":
           return {
             ...state,
             activeRequest: false,
+            activeRequestId: null,
             isStreaming: false,
+            isStopping: false,
           };
 
         case "error":
           return {
             ...state,
             activeRequest: false,
+            activeRequestId: null,
             isStreaming: false,
+            isStopping: false,
             messages: patchLastAssistant(state.messages, (last) => ({
               ...last,
               content: message.content,
@@ -133,11 +158,12 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       return {
         ...state,
         activeRequest: true,
+        activeRequestId: action.requestId,
         isStreaming: true,
         messages: [
           ...state.messages,
-          { role: "user", content: action.userContent },
-          { role: "assistant", content: "" },
+          { role: "user", content: action.userContent, requestId: action.requestId },
+          { role: "assistant", content: "", requestId: action.requestId },
         ],
       };
 
@@ -153,7 +179,9 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
         ...state,
         status: "disconnected",
         activeRequest: false,
+        activeRequestId: null,
         isStreaming: false,
+        isStopping: false,
         messages: state.activeRequest
           ? markLatestExchangeInterrupted(state.messages)
           : state.messages,
@@ -165,7 +193,9 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       return {
         ...state,
         activeRequest: false,
+        activeRequestId: null,
         isStreaming: false,
+        isStopping: false,
         messages: patchLastAssistant(
           markLatestExchangeInterrupted(state.messages),
           (last) => ({

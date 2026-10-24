@@ -42,6 +42,7 @@ def test_only_selected_codes_are_used_and_connections_are_released(
                 ws.send_json(
                     {
                         "type": "message",
+                        "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                         "messages": [{"role": "user", "content": message}],
                         "product_yj_codes": codes,
                     }
@@ -58,8 +59,13 @@ def test_only_selected_codes_are_used_and_connections_are_released(
                         sources = event["sources"]
                     if event["type"] == "text_done":
                         break
-                ws.send_json({"type": "ping"})
-                assert ws.receive_json() == {"type": "pong"}
+                ws.send_json(
+                    {"type": "ping", "ping_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280"}
+                )
+                assert ws.receive_json() == {
+                    "type": "pong",
+                    "ping_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
+                }
         if codes == ["1234567A0000"]:
             assert sources
             assert all(source["product_yj_codes"] == codes for source in sources)

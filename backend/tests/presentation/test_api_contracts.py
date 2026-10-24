@@ -127,15 +127,21 @@ def test_ws_public_events_match_baseline(
     with client:
         # 1. Ping-pong
         with client.websocket_connect("/ws/chat") as ws:
-            ws.send_json({"type": "ping"})
+            ws.send_json(
+                {"type": "ping", "ping_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280"}
+            )
             pong = ws.receive_json()
-            assert pong == {"type": "pong"}
+            assert pong == {
+                "type": "pong",
+                "ping_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
+            }
 
         # 2. Input validation error (missing product_yj_codes)
         with client.websocket_connect("/ws/chat") as ws:
             ws.send_json(
                 {
                     "type": "message",
+                    "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                     "messages": [{"role": "user", "content": "こんにちは"}],
                 }
             )
@@ -148,6 +154,7 @@ def test_ws_public_events_match_baseline(
             ws.send_json(
                 {
                     "type": "message",
+                    "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                     "product_yj_codes": ["1234567A0000"],
                     "messages": [],
                 }
@@ -160,6 +167,7 @@ def test_ws_public_events_match_baseline(
             ws.send_json(
                 {
                     "type": "message",
+                    "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                     "product_yj_codes": ["999999999999"],
                     "messages": [{"role": "user", "content": "薬の飲み方"}],
                 }
@@ -183,6 +191,7 @@ def test_ws_public_events_match_baseline(
             ws.send_json(
                 {
                     "type": "message",
+                    "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                     "provider": "openai",
                     "product_yj_codes": ["1234567A0000"],
                     "messages": [{"role": "user", "content": "頭痛"}],
@@ -295,6 +304,7 @@ def test_http_and_ws_dependencies_can_be_overridden(
             ws.send_json(
                 {
                     "type": "message",
+                    "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                     "product_yj_codes": ["1234567A0000"],
                     "messages": [{"role": "user", "content": "テスト"}],
                 }
@@ -338,6 +348,7 @@ def test_existing_provider_and_invalid_ws_behaviors_are_preserved(
             ws.send_json(
                 {
                     "type": "message",
+                    "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                     "provider": "unsupported_provider",
                     "product_yj_codes": ["1234567A0000"],
                     "messages": [{"role": "user", "content": "こんにちは"}],
@@ -352,6 +363,7 @@ def test_existing_provider_and_invalid_ws_behaviors_are_preserved(
             ws.send_json(
                 {
                     "type": "message",
+                    "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                     "provider": "openai",
                     "model": "unsupported_model_xyz",
                     "product_yj_codes": ["1234567A0000"],
@@ -366,12 +378,18 @@ def test_existing_provider_and_invalid_ws_behaviors_are_preserved(
         with client.websocket_connect("/ws/chat") as ws:
             ws.send_json("not a json dict")
             data = ws.receive_json()
-            assert data["type"] == "error"
+            assert data["type"] == "connection_error"
+            assert data["code"] == "invalid_payload"
             assert "Payload must be a JSON object" in data["content"]
             # Connection stays open to send ping
-            ws.send_json({"type": "ping"})
+            ws.send_json(
+                {"type": "ping", "ping_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280"}
+            )
             pong = ws.receive_json()
-            assert pong == {"type": "pong"}
+            assert pong == {
+                "type": "pong",
+                "ping_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
+            }
 
         # 4. Fallback mock responses when API key is unset
         with (
@@ -381,6 +399,7 @@ def test_existing_provider_and_invalid_ws_behaviors_are_preserved(
             ws.send_json(
                 {
                     "type": "message",
+                    "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                     "provider": "openai",
                     "product_yj_codes": ["1234567A0000"],
                     "messages": [{"role": "user", "content": "副作用について"}],

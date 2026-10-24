@@ -10,6 +10,7 @@ def test_chat_accepts_up_to_fifty_distinct_products(count, request_type):
     codes = [f"{i:012}" for i in range(count)]
     request = request_type.model_validate(
         {
+            "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
             "product_yj_codes": codes,
             "message": "テスト質問",
             "messages": [{"role": "user", "content": "テスト質問"}],
@@ -24,6 +25,7 @@ def test_chat_rejects_out_of_range_product_counts(count, request_type):
     with pytest.raises(ValidationError):
         request_type.model_validate(
             {
+                "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                 "product_yj_codes": [f"{i:012}" for i in range(count)],
                 "message": "テスト質問",
                 "messages": [{"role": "user", "content": "テスト質問"}],

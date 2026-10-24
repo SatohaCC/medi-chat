@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useRef } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { ensureAuthenticated } from "../../../shared/api/authentication";
 import { MAX_MESSAGE_LENGTH } from "../../../shared/api/chatLimits";
 import { wsBaseUrl } from "../../../shared/api/endpoints";
@@ -16,6 +16,12 @@ import {
   markLatestExchangeInterrupted,
   patchLastAssistant,
 } from "../model/chatReducer";
+import {
+  ChatRequestLifecycle,
+  type PendingRequest,
+  type RequestContext,
+  type UnsentRequest,
+} from "../model/chatRequestLifecycle";
 import { buildRequestHistory } from "../model/requestHistory";
 
 export { assertNever } from "../model/chat";
@@ -24,13 +30,16 @@ export { patchLastAssistant, markLatestExchangeInterrupted };
 export interface SendRequest {
   content: string;
   productYjCodes: readonly string[];
+  context?: RequestContext;
 }
 
 export type SendResult =
-  | { ok: true }
+  | { ok: true; disposition: "sent" | "queued"; requestId: string }
   | {
       ok: false;
       reason:
+        | "queue_full"
+        | "uncertain"
         | "not_connected"
         | "empty_target"
         | "busy"
@@ -46,37 +55,55 @@ interface UseChatWebSocketOptions {
 export function useChatWebSocket({ selectedModel }: UseChatWebSocketOptions) {
   const [state, dispatch] = useReducer(chatReducer, initialChatState);
   const connectionRef = useRef<ChatWebSocketConnection | null>(null);
-  const activeRequestRef = useRef(false);
+  const lifecycleRef = useRef<ChatRequestLifecycle | null>(null);
+  const [pending, setPending] = useState<PendingRequest | null>(null);
+  const [unsent, setUnsent] = useState<UnsentRequest[]>([]);
 
   const handleStatusChange = useCallback((status: ConnectionStatus) => {
     if (status === "disconnected") {
-      activeRequestRef.current = false;
+      lifecycleRef.current?.disconnected();
     }
     dispatch({ type: "status_change", status });
   }, []);
 
   const handleServerMessage = useCallback((message: WsServerMessage) => {
-    if (message.type === "text_done" || message.type === "error") {
-      activeRequestRef.current = false;
-    }
-    dispatch({ type: "server_message", message });
+    lifecycleRef.current?.receive(message);
   }, []);
 
   const handleAuthenticationExpired = useCallback(() => {
-    activeRequestRef.current = false;
+    lifecycleRef.current?.authenticationExpired();
     dispatch({ type: "auth_expired" });
   }, []);
 
   useEffect(() => {
+    const lifecycle = new ChatRequestLifecycle({
+      send: (payload) => connectionRef.current?.send(payload) ?? "not_open",
+      ready: () => connectionRef.current?.isReady() ?? false,
+      canQueue: () => connectionRef.current?.canQueue() ?? true,
+      start: (userContent, requestId) =>
+        dispatch({ type: "start_message", userContent, requestId }),
+      abort: (request_id) =>
+        connectionRef.current?.send(JSON.stringify({ type: "abort", request_id })) ===
+        "sent",
+      event: (message) => dispatch({ type: "server_message", message }),
+      pending: (next, rejected) => {
+        setPending(next);
+        if (rejected) setUnsent((previous) => [...previous, rejected]);
+      },
+    });
+    lifecycleRef.current = lifecycle;
     const connection = connectChatWebSocket(wsBaseUrl(), {
       authorize: ensureAuthenticated,
       onAuthenticationExpired: handleAuthenticationExpired,
       onStatusChange: handleStatusChange,
       onMessage: handleServerMessage,
+      onReady: () => lifecycle.flush(),
     });
     connectionRef.current = connection;
 
     return () => {
+      lifecycle.dispose();
+      lifecycleRef.current = null;
       connectionRef.current = null;
       connection.disconnect();
     };
@@ -94,11 +121,14 @@ export function useChatWebSocket({ selectedModel }: UseChatWebSocketOptions) {
       if (Array.from(content).length > MAX_MESSAGE_LENGTH) {
         return { ok: false, reason: "message_too_long" };
       }
-      if (state.status !== "connected" || !connectionRef.current) {
+      if (
+        !connectionRef.current ||
+        (state.status === "connected" && !connectionRef.current.isReady())
+      ) {
         return { ok: false, reason: "not_connected" };
       }
       // Check both React state and synchronous ref to prevent overlapping sends in the same tick
-      if (state.isStreaming || activeRequestRef.current) {
+      if (state.isStreaming || lifecycleRef.current?.activeId) {
         return { ok: false, reason: "busy" };
       }
 
@@ -107,25 +137,38 @@ export function useChatWebSocket({ selectedModel }: UseChatWebSocketOptions) {
 
       const clientMessage: WsClientMessage = {
         type: "message",
+        request_id: crypto.randomUUID(),
         provider,
         model,
         product_yj_codes: [...request.productYjCodes],
         messages: requestMessages,
       };
 
-      const sent = connectionRef.current.send(clientMessage);
-      if (!sent) {
-        return { ok: false, reason: "not_connected" };
-      }
-
-      activeRequestRef.current = true;
-      dispatch({ type: "start_message", userContent: content });
-      return { ok: true };
+      return (
+        lifecycleRef.current?.send(clientMessage, content, request.context) ?? {
+          ok: false,
+          reason: "not_connected",
+        }
+      );
     },
     [selectedModel, state.isStreaming, state.messages, state.status],
   );
 
+  const abortRequest = useCallback(() => {
+    if (lifecycleRef.current?.abort()) dispatch({ type: "stop_request" });
+  }, []);
+
+  const cancelPending = useCallback(
+    (requestId: string) => lifecycleRef.current?.cancelPending(requestId),
+    [],
+  );
+
   return {
+    pending,
+    unsent,
+    cancelPending,
+    abortRequest,
+    isStopping: state.isStopping,
     messages: state.messages,
     isStreaming: state.isStreaming,
     status: state.status,

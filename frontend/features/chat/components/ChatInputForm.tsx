@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@react-spectrum/s2/Button";
 import type { PromptFieldValue } from "@react-spectrum/ai";
 import type { MedicineEntry, SelectedMedicineItem } from "../../medicine-selection";
 import { MedicinePromptDock } from "../../medicine-selection";
@@ -20,6 +21,8 @@ export interface ChatInputFormProps {
   status: ConnectionStatus;
   isStreaming: boolean;
   canSend: boolean;
+  isStopping?: boolean;
+  onAbort?: () => void;
 }
 
 export function ChatInputForm({
@@ -34,26 +37,40 @@ export function ChatInputForm({
   onChangePrompt,
   onSubmit,
   medicineEntries,
-  status,
   isStreaming,
   canSend,
+  isStopping = false,
+  onAbort,
 }: ChatInputFormProps) {
   return (
-    <MedicinePromptDock
-      baseline={baseline}
-      onAddBaseline={onAddBaseline}
-      onRemoveBaseline={onRemoveBaseline}
-      onClearBaseline={onClearBaseline}
-      additional={additional}
-      onRemoveAdditional={onRemoveAdditional}
-      onClearAdditional={onClearAdditional}
-      prompt={prompt}
-      onChangePrompt={onChangePrompt}
-      onSubmit={onSubmit}
-      medicineEntries={medicineEntries}
-      disabled={status !== "connected"}
-      isStreaming={isStreaming}
-      canSend={canSend}
-    />
+    <>
+      {isStreaming && (
+        <div role="status">
+          {isStopping ? (
+            "停止中"
+          ) : (
+            <Button variant="secondary" onPress={onAbort}>
+              回答を停止
+            </Button>
+          )}
+        </div>
+      )}
+      <MedicinePromptDock
+        baseline={baseline}
+        onAddBaseline={onAddBaseline}
+        onRemoveBaseline={onRemoveBaseline}
+        onClearBaseline={onClearBaseline}
+        additional={additional}
+        onRemoveAdditional={onRemoveAdditional}
+        onClearAdditional={onClearAdditional}
+        prompt={prompt}
+        onChangePrompt={onChangePrompt}
+        onSubmit={onSubmit}
+        medicineEntries={medicineEntries}
+        disabled={false}
+        isStreaming={isStreaming}
+        canSend={canSend}
+      />
+    </>
   );
 }

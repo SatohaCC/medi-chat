@@ -42,7 +42,9 @@ class ChatWebSocketRouteTests(unittest.TestCase):
 
     def test_websocket_ping_pong(self) -> None:
         with self.client.websocket_connect("/api/ws") as websocket:
-            websocket.send_json({"type": "ping"})
+            websocket.send_json(
+                {"type": "ping", "ping_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280"}
+            )
             data = websocket.receive_json()
             self.assertEqual(data["type"], "pong")
 
@@ -54,6 +56,7 @@ class ChatWebSocketRouteTests(unittest.TestCase):
             websocket.send_json(
                 {
                     "type": "message",
+                    "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                     "provider": "gemini",
                     "product_yj_codes": ["3339003F5020"],
                     "messages": [{"role": "user", "content": "こんにちは"}],
@@ -82,6 +85,7 @@ class ChatWebSocketRouteTests(unittest.TestCase):
             websocket.send_json(
                 {
                     "type": "message",
+                    "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                     "provider": "openai",
                     "product_yj_codes": ["3339003F5020"],
                     "messages": [{"role": "user", "content": "おはよう"}],
@@ -110,6 +114,7 @@ class ChatWebSocketRouteTests(unittest.TestCase):
             websocket.send_json(
                 {
                     "type": "message",
+                    "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                     "provider": "openai",
                     "product_yj_codes": ["3339003F5020"],
                     "messages": [
@@ -169,6 +174,7 @@ class ChatWebSocketRouteTests(unittest.TestCase):
             websocket.send_json(
                 {
                     "type": "message",
+                    "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                     "provider": "openai",
                     "product_yj_codes": ["3339003F5020"],
                     "messages": [{"role": "user", "content": "1日何回飲む？"}],
@@ -206,6 +212,7 @@ class ChatWebSocketRouteTests(unittest.TestCase):
             websocket.send_json(
                 {
                     "type": "message",
+                    "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                     "provider": "openai",
                     "product_yj_codes": ["3339003F5020"],
                     "messages": [
@@ -234,6 +241,7 @@ class ChatWebSocketRouteTests(unittest.TestCase):
             websocket.send_json(
                 {
                     "type": "message",
+                    "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                     "messages": [{"role": "user", "content": "こんにちは"}],
                 }
             )
@@ -246,6 +254,7 @@ class ChatWebSocketRouteTests(unittest.TestCase):
             websocket.send_json(
                 {
                     "type": "message",
+                    "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                     "product_yj_codes": ["3339003F5020"],
                     "messages": [],
                 }
@@ -258,6 +267,7 @@ class ChatWebSocketRouteTests(unittest.TestCase):
             websocket.send_json(
                 {
                     "type": "message",
+                    "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                     "provider": "openai",
                     "model": "unsupported-model-x",
                     "product_yj_codes": ["3339003F5020"],

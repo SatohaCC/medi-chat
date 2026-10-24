@@ -34,6 +34,7 @@ export type RetrievalStatus = "jev_searching" | "complete" | "unavailable";
 export type ConnectionStatus = "connecting" | "connected" | "disconnected";
 
 export interface Message {
+  requestId?: string;
   role: "user" | "assistant";
   content: string;
   isError?: boolean;
@@ -83,6 +84,7 @@ export interface WsClientHistoryMessage {
 
 export type WsClientMessage = {
   type: "message";
+  request_id: string;
   provider: string;
   model: string;
   product_yj_codes: string[];
@@ -96,7 +98,7 @@ export function assertNever(x: never): never {
   throw new Error(`Unexpected discriminated union member: ${JSON.stringify(x)}`);
 }
 
-export type WsServerMessage =
+export type WsRequestEvent = { request_id: string } & (
   | { type: "sources"; sources: SourceItem[] }
   | {
       type: "retrieval_status";
@@ -107,4 +109,21 @@ export type WsServerMessage =
   | { type: "notices"; notices: string[] }
   | { type: "text_delta"; content: string }
   | { type: "text_done" }
-  | { type: "error"; content: string };
+  | { type: "error"; content: string }
+  | { type: "aborted" }
+);
+
+export type WsServerMessage =
+  | WsRequestEvent
+  | { type: "pong"; ping_id: string }
+  | {
+      type: "connection_error";
+      code: "invalid_payload" | "unsupported_type";
+      content: string;
+    }
+  | {
+      type: "control_error";
+      request_id: string;
+      code: "busy" | "not_active";
+      content: string;
+    };
