@@ -10,9 +10,14 @@ import {
   SelectValue,
 } from "react-aria-components";
 import { styles } from "./Select.styles";
+export interface SelectOption {
+  readonly value: string;
+  readonly label: string;
+}
+
 export interface SelectProps {
   value: string;
-  options: { value: string; label: string }[];
+  options: readonly SelectOption[];
   onValueChange: (value: string) => void;
   label: string;
   disabled?: boolean;

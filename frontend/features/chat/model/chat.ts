@@ -49,11 +49,13 @@ export interface ModelOption {
   label: string;
 }
 
-export const AVAILABLE_MODELS: ModelOption[] = [
+export const AVAILABLE_MODELS = [
   { value: "openai:gpt-6-luna", label: "OpenAI (GPT-6 Luna)" },
   { value: "openai:gpt-5.6-luna", label: "OpenAI (GPT-5.6 Luna)" },
   //   { value: "gemini:gemini-3.8-flash", label: "Google (Gemini 3.8 Flash)" },
-];
+] as const satisfies readonly ModelOption[];
+
+export type AvailableModel = (typeof AVAILABLE_MODELS)[number]["value"];
 
 export type WsServerMessage =
   | { type: "sources"; sources: SourceItem[] }
