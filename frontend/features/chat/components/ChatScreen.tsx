@@ -14,7 +14,7 @@ import {
 } from "../../medicine-selection";
 import { useChatScroll } from "../hooks/useChatScroll";
 import { useChatWebSocket } from "../hooks/useChatWebSocket";
-import { extractHighlightWords } from "../model/highlightWords";
+import { useEvidencePanelState } from "../hooks/useEvidencePanelState";
 import { ChatHeader } from "./ChatHeader";
 import { ChatInputForm } from "./ChatInputForm";
 import { MessageList } from "./MessageList";
@@ -22,7 +22,6 @@ import { SourceEvidencePanel } from "./SourceEvidencePanel";
 
 export function ChatScreen() {
   const [selectedModel, setSelectedModel] = useState("openai:gpt-6-luna");
-  const [openEvidenceIndex, setOpenEvidenceIndex] = useState<number | null>(null);
   const { messageListRef, scrollToLatestUserMessage } = useChatScroll();
 
   const { entries, activeMedicines } = useMedicineEntries();
@@ -87,52 +86,21 @@ export function ChatScreen() {
     selectedModel,
   });
 
-  const [evidencePaneTab, setEvidencePaneTab] = useState<"sources" | "jev">("sources");
-
-  const handleToggleEvidence = useCallback(
-    (index: number, tab: "sources" | "jev" = "sources") => {
-      if (openEvidenceIndex === index && evidencePaneTab === tab) {
-        setOpenEvidenceIndex(null);
-      } else {
-        setOpenEvidenceIndex(index);
-        setEvidencePaneTab(tab);
-      }
-    },
-    [openEvidenceIndex, evidencePaneTab],
-  );
-
-  const activeEvidenceMessage =
-    openEvidenceIndex !== null ? messages[openEvidenceIndex] : undefined;
-  const showEvidencePane =
-    activeEvidenceMessage?.role === "assistant" &&
-    ((Array.isArray(activeEvidenceMessage.sources) &&
-      activeEvidenceMessage.sources.length > 0) ||
-      Boolean(activeEvidenceMessage.jevResponse) ||
-      activeEvidenceMessage.retrievalStatus === "complete");
-
-  const activeUserQuery = useMemo(() => {
-    if (openEvidenceIndex === null) return "";
-    for (let i = openEvidenceIndex - 1; i >= 0; i--) {
-      if (messages[i]?.role === "user") {
-        return messages[i].content;
-      }
-    }
-    return "";
-  }, [messages, openEvidenceIndex]);
-
-  const activeEvidenceSources = activeEvidenceMessage?.sources;
-  const evidenceHighlightWords = useMemo(() => {
-    const medicineNames = [
-      ...entries.flatMap((entry) => [entry.n, entry.g]),
-      ...baseline.map((medicine) => medicine.name),
-      ...persistentAdditional.map((medicine) => medicine.name),
-      ...(activeEvidenceSources ?? []).flatMap((source) => [
-        source.product_name,
-        source.generic_name,
-      ]),
-    ];
-    return extractHighlightWords(activeUserQuery, medicineNames);
-  }, [activeUserQuery, entries, baseline, persistentAdditional, activeEvidenceSources]);
+  const {
+    openEvidenceIndex,
+    evidencePaneTab,
+    setEvidencePaneTab,
+    handleToggleEvidence,
+    closeEvidence,
+    activeEvidenceMessage,
+    showEvidencePane,
+    evidenceHighlightWords,
+  } = useEvidencePanelState({
+    messages,
+    entries,
+    baseline,
+    persistentAdditional,
+  });
 
   const handleSendMessage = useCallback(
     (promptVal: PromptFieldValue) => {
@@ -295,7 +263,7 @@ export function ChatScreen() {
             jevResponse={activeEvidenceMessage.jevResponse}
             activeTab={evidencePaneTab}
             onTabChange={setEvidencePaneTab}
-            onClose={() => setOpenEvidenceIndex(null)}
+            onClose={closeEvidence}
             highlightWords={evidenceHighlightWords}
           />
         )}
