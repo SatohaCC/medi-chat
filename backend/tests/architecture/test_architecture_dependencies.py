@@ -11,23 +11,12 @@ from pathlib import Path
 import pytest
 from backend.tests.support.paths import BACKEND_ROOT
 from scripts.application_architecture import ROLE_DEPENDENCIES, module_role
+from scripts.domain_architecture import check as check_domain
 
 
 def test_domain_models_do_not_define_create_wrappers() -> None:
-    violations = []
-    for path in (BACKEND_ROOT / "domain").rglob("*.py"):
-        tree = ast.parse(path.read_text(encoding="utf-8"))
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef):
-                for member in node.body:
-                    if (
-                        isinstance(member, (ast.FunctionDef, ast.AsyncFunctionDef))
-                        and member.name == "create"
-                    ):
-                        violations.append(
-                            f"{path.relative_to(BACKEND_ROOT)}:{member.lineno}"
-                        )
-    assert not violations, violations
+    findings = check_domain(BACKEND_ROOT.parent)
+    assert not [f for f in findings if f.rule in ["DOM010"]]
 
 
 LAYER_NAMES = ("domain", "application", "infrastructure", "presentation")
@@ -77,16 +66,6 @@ OS_IO_FUNCTIONS = {
 }
 
 
-ALLOWED_DOMAIN_CONTEXT_FILES = {
-    "__init__.py",
-    "identifiers.py",
-    "exceptions.py",
-    "primitives.py",
-    "value_objects.py",
-    "entities.py",
-    "repositories.py",
-    "services.py",
-}
 ALLOWED_DOMAIN_INTERNAL_DEPENDENCIES: dict[str, set[str]] = {
     "__init__": set(),
     "identifiers": set(),
@@ -1458,104 +1437,18 @@ def test_infrastructure_root_contains_only_allowed_packages_and_payload_modules(
 
 
 def test_domain_context_files_follow_canonical_flat_structure() -> None:
-    """各ドメインコンテキスト直下に責務別の正本ファイル以外のファイルやサブディレクトリを追加させない。"""
-    generated = {"__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
-    domain_root = BACKEND_ROOT / "domain"
-    violations: list[str] = []
-
-    for context_dir in sorted(domain_root.iterdir()):
-        if context_dir.name in generated:
-            continue
-        if not context_dir.is_dir():
-            if context_dir.name != "__init__.py":
-                violations.append(
-                    f"{context_dir.relative_to(BACKEND_ROOT)}: domain直下にはコンテキストパッケージのみ配置してください"
-                )
-            continue
-        if context_dir.name == "foundation":
-            continue
-        for child in sorted(context_dir.iterdir()):
-            if child.name in generated:
-                continue
-            if child.is_dir():
-                violations.append(
-                    f"{child.relative_to(BACKEND_ROOT)}: サブディレクトリは作成せず直下の正本モジュールに配置してください"
-                )
-            elif (
-                child.suffix == ".py" and child.name not in ALLOWED_DOMAIN_CONTEXT_FILES
-            ):
-                allowed_list = ", ".join(sorted(ALLOWED_DOMAIN_CONTEXT_FILES))
-                violations.append(
-                    f"{child.relative_to(BACKEND_ROOT)}: 許可されたファイル名 ({allowed_list}) 以外は配置できません"
-                )
-
-    assert not violations, "ドメインコンテキストの構成違反:\n" + "\n".join(violations)
+    findings = check_domain(BACKEND_ROOT.parent)
+    assert not [f for f in findings if f.rule in ["DOM001"]]
 
 
 def test_each_domain_context_exposes_exactly_one_public_identifier() -> None:
-    """各ドメインコンテキストの identifiers.py は1つの公開IDクラスのみを定義する（1 Domain = 1 ID）。"""
-    expected = {
-        "attachment": ["DocumentId"],
-        "medicine": ["YjCode"],
-    }
-    actual: dict[str, list[str]] = {}
-    for context_name in sorted(expected):
-        identifiers_file = BACKEND_ROOT / "domain" / context_name / "identifiers.py"
-        tree = ast.parse(identifiers_file.read_text(encoding="utf-8"))
-        actual[context_name] = [
-            node.name for node in tree.body if isinstance(node, ast.ClassDef)
-        ]
-    assert actual == expected
+    findings = check_domain(BACKEND_ROOT.parent)
+    assert not [f for f in findings if f.rule in ["DOM005"]]
 
 
 def test_domain_dataclasses_are_frozen_and_use_immutable_collections() -> None:
-    """ドメイン内の全 @dataclass が frozen=True かつミュータブルな list/dict/set をフィールドに持たないことを検証する。"""
-    domain_root = BACKEND_ROOT / "domain"
-    mutable_types = {"list", "dict", "set", "List", "Dict", "Set"}
-    violations: list[str] = []
-
-    for path in sorted(domain_root.rglob("*.py")):
-        rel = path.relative_to(BACKEND_ROOT).as_posix()
-        tree = ast.parse(path.read_text(encoding="utf-8"), filename=rel)
-        for node in ast.walk(tree):
-            if not isinstance(node, ast.ClassDef):
-                continue
-            for dec in node.decorator_list:
-                is_dataclass = (
-                    isinstance(dec, ast.Name) and dec.id == "dataclass"
-                ) or (
-                    isinstance(dec, ast.Call)
-                    and isinstance(dec.func, ast.Name)
-                    and dec.func.id == "dataclass"
-                )
-                if not is_dataclass:
-                    continue
-                is_frozen = False
-                if isinstance(dec, ast.Call):
-                    for kw in dec.keywords:
-                        if (
-                            kw.arg == "frozen"
-                            and isinstance(kw.value, ast.Constant)
-                            and kw.value.value is True
-                        ):
-                            is_frozen = True
-                if not is_frozen:
-                    violations.append(
-                        f"{rel}:{node.lineno}: {node.name} には @dataclass(frozen=True) を指定してください"
-                    )
-                for item in node.body:
-                    if (
-                        isinstance(item, ast.AnnAssign)
-                        and item.annotation is not None
-                        and isinstance(item.target, ast.Name)
-                    ):
-                        for sub in ast.walk(item.annotation):
-                            if isinstance(sub, ast.Name) and sub.id in mutable_types:
-                                violations.append(
-                                    f"{rel}:{item.lineno}: {node.name}.{item.target.id} にミュータブルな {sub.id} は使用せず tuple / frozenset / ImmutableMapping を使用してください"
-                                )
-
-    assert not violations, "ドメインモデルの不変性違反:\n" + "\n".join(violations)
+    findings = check_domain(BACKEND_ROOT.parent)
+    assert not [f for f in findings if f.rule in ["DOM007", "DOM008"]]
 
 
 def test_response_dto_boundaries_in_presentation() -> None:

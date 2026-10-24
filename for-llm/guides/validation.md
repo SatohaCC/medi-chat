@@ -12,6 +12,7 @@ pnpm-workspaceの`python.enabled=false`でpnpmの別Python環境管理を停止�
 | backendテスト | `pnpm test:backend`、限定時は`pnpm --filter backend exec pytest tests/<対象>.py` |
 | 実PostgreSQL（CI） | `pnpm test:postgres`（`postgres and not source_data`。接続設定不足は失敗） |
 | backendlint | `pnpm --filter backend lint` |
+| Domainハーネス | `pnpm --filter backend lint:domain`、検出能力の回帰は`pnpm --filter backend lint:domain:harness` |
 | backendformat確認 | `pnpm --filter backend exec ruff format --check .` |
 | Python型検査（Pyright） | `pnpm typecheck:python` |
 

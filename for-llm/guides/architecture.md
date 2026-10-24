@@ -8,3 +8,4 @@
 - モジュール移動や再公開の削除では利用側・テスト・CLI・起動点を確認し、必要な検証を計画する。ファイル移動や構文確認だけでは実行時の互換性を確認したことにしない。
 
 - Applicationの配置・公開範囲・絶対importは[Applicationハーネス](application-architecture.md)の規則と移行状況を参照する。import段階の成功と全規則への適合を区別する。
+- Domainの配置・依存・公開ID・不変性は[Domainハーネス](domain-architecture.md)で強制する。新規コンテキストにも自動適用し、構造検査と業務上の不変条件のテストを区別する。

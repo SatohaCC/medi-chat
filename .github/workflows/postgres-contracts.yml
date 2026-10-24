@@ -56,6 +56,8 @@ jobs:
       - run: uv sync --project backend --locked
       - name: Enforce all Application architecture rules
         run: uv run --project backend --locked python scripts/application_architecture.py
+      - name: Enforce all Domain architecture rules
+        run: uv run --project backend --locked python scripts/domain_architecture.py
       - run: uv run --project backend --locked python -m backend.infrastructure.cli.export_search_guide --check
       - run: pnpm vercel:requirements:check
       - run: node --experimental-strip-types --test frontend/shared/server/accessToken.test.mjs scripts/dev-backend.test.mjs scripts/root-environment.test.mjs
