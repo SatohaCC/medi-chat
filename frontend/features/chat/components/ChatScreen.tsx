@@ -148,6 +148,7 @@ export function ChatScreen() {
     if (!question.context) return;
     setPrompt(new PromptFieldValue([...question.context.promptSegments]));
     setBaseline(question.context.targets.map((medicine) => ({ ...medicine })));
+    setSelectedModel(question.context.model);
     setPersistentAdditional([]);
     setInputKey((previous) => previous + 1);
     setRestoreChoice(null);

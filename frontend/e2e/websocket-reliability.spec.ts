@@ -1,4 +1,4 @@
-import { expect, test } from "./helpers/test";
+import { expect, type Page, test } from "./helpers/test";
 import { openChat } from "./helpers/chat";
 
 test("WR-007 WR-009 real hook ignores foreign terminal and duplicate send", async ({
@@ -261,4 +261,182 @@ test("WR-047 real hook marks attempted send uncertain and requires explicit new-
   expect(chat.requests[0].messages).toEqual([
     { role: "user", content: "到達不明のテスト質問" },
   ]);
+});
+
+const restoreModels = {
+  current: { value: "openai:gpt-6-luna", label: "OpenAI (GPT-6 Luna)" },
+  previous: { value: "openai:gpt-5.6-luna", label: "OpenAI (GPT-5.6 Luna)" },
+};
+
+async function chooseRestoreModel(page: Page, model: typeof restoreModels.current) {
+  await page.getByRole("button", { name: "回答モデル" }).click();
+  await page.getByRole("option", { name: model.label, exact: true }).click();
+  await expect(page.getByRole("button", { name: "回答モデル" })).toContainText(
+    model.label,
+  );
+}
+
+async function savedRestoreQuestion(
+  page: Page,
+  reason: "cancelled" | "expired",
+  reverse = false,
+) {
+  const chat = await openChat(page);
+  const saved = reverse ? restoreModels.previous : restoreModels.current;
+  const current = reverse ? restoreModels.current : restoreModels.previous;
+  await chooseRestoreModel(page, saved);
+  await chat.input.fill("復元するテスト質問 ");
+  await chat.input.press("End");
+  await page.keyboard.type("@テスト医薬品B");
+  await page.getByRole("menuitem", { name: "テスト医薬品B", exact: true }).click();
+  await page.clock.install();
+  await page.clock.pauseAt(new Date(Date.now() + 1000));
+  await chat.disconnect();
+  await expect(page.getByText("disconnected", { exact: true })).toBeVisible();
+  await page.evaluate(() => {
+    const original = crypto.randomUUID.bind(crypto);
+    const observed: string[] = [];
+    (window as unknown as { restoreObservedIds: string[] }).restoreObservedIds = observed;
+    crypto.randomUUID = () => {
+      const id = original() as `${string}-${string}-${string}-${string}-${string}`;
+      observed.push(id);
+      return id;
+    };
+  });
+  await chat.send.click();
+  await expect(page.getByRole("region", { name: "未送信の保留" })).toBeVisible();
+  const pendingId = await page.evaluate(
+    () => (window as unknown as { restoreObservedIds: string[] }).restoreObservedIds[0],
+  );
+  if (reason === "cancelled") {
+    await page.getByRole("button", { name: "保留を取消", exact: true }).click();
+  } else {
+    const time = await page.evaluate(() => Date.now());
+    await page.clock.setSystemTime(new Date(time + 60000));
+  }
+  await page.clock.fastForward(6000);
+  await expect(page.getByText("connected", { exact: true })).toBeVisible();
+  const card = page.getByRole("region", { name: "未送信の質問" });
+  const assertSaved = async () => {
+    await expect(card).toContainText(reason === "cancelled" ? "取消" : "期限切れ");
+    await expect(card).toContainText("復元するテスト質問");
+    await expect(card).toContainText("テスト医薬品A、テスト医薬品B");
+    await expect(card).toContainText(saved.value);
+  };
+  await assertSaved();
+  await chooseRestoreModel(page, current);
+  expect(chat.requests).toHaveLength(0);
+  expect(chat.controls.filter((control) => control.type === "abort")).toHaveLength(0);
+  const assertRestored = async () => {
+    await expect(chat.input).toContainText("復元するテスト質問");
+    await expect(chat.input).toContainText("テスト医薬品B");
+    await expect(page.getByTestId("tier-1-prescription")).toContainText("テスト医薬品A");
+    await expect(page.getByTestId("tier-1-prescription")).toContainText("テスト医薬品B");
+    await expect(page.getByRole("button", { name: "回答モデル" })).toContainText(
+      saved.label,
+    );
+    await assertSaved();
+  };
+  const assertSent = async (model: typeof saved, draft = false) => {
+    expect(chat.requests).toHaveLength(0);
+    await chat.send.click();
+    await expect.poll(() => chat.requests.length).toBe(1);
+    const sent = chat.requests[0];
+    expect(sent.request_id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    );
+    expect(sent.request_id).not.toBe(pendingId);
+    expect(pendingId).toMatch(/^[0-9a-f-]{36}$/i);
+    expect(sent.provider).toBe("openai");
+    expect(sent.model).toBe(model.value.split(":")[1]);
+    expect(sent.product_yj_codes).toEqual(
+      draft ? ["1141007F1063"] : ["3339003F5020", "1141007F1063"],
+    );
+    expect(sent.messages).toHaveLength(1);
+    expect(sent.messages[0].role).toBe("user");
+    if (draft) expect(sent.messages[0].content).toBe("現在の別テストdraft");
+    else {
+      expect(sent.messages[0].content).toContain("復元するテスト質問");
+      expect(sent.messages[0].content).toContain("@テスト医薬品B");
+    }
+    await assertSaved();
+  };
+  return { chat, saved, current, card, assertSaved, assertRestored, assertSent };
+}
+
+test("WR-044-R1 cancelled empty draft restores saved model and token", async ({
+  page,
+}) => {
+  const state = await savedRestoreQuestion(page, "cancelled");
+  await state.card.getByRole("button", { name: "再編集", exact: true }).click();
+  await expect(page.getByRole("region", { name: "再編集の確認" })).toHaveCount(0);
+  await state.assertRestored();
+  await state.assertSent(state.saved);
+});
+
+test("WR-044-R1 expired empty draft restores saved model and token", async ({ page }) => {
+  const state = await savedRestoreQuestion(page, "expired");
+  await state.card.getByRole("button", { name: "再編集", exact: true }).click();
+  await expect(page.getByRole("region", { name: "再編集の確認" })).toHaveCount(0);
+  await state.assertRestored();
+  await state.assertSent(state.saved);
+});
+
+for (const reason of ["cancelled", "expired"] as const) {
+  for (const choice of ["keep", "replace"] as const) {
+    const caseId = choice === "keep" ? "WR-045-R1" : "WR-045-R2";
+    test(`${caseId} ${reason} ${choice} preserves explicit model choice`, async ({
+      page,
+    }) => {
+      const state = await savedRestoreQuestion(page, reason);
+      const tier = page.getByTestId("tier-1-prescription");
+      await tier.getByRole("button", { name: "全解除", exact: true }).click();
+      await page.getByRole("button", { name: "処方薬を追加", exact: true }).click();
+      await page.getByRole("option", { name: /^テスト医薬品B/ }).click();
+      await state.chat.input.fill("現在の別テストdraft");
+      const assertCurrent = async () => {
+        await expect(state.chat.input).toContainText("現在の別テストdraft");
+        await expect(tier).toContainText("テスト医薬品B");
+        await expect(tier).not.toContainText("テスト医薬品A");
+        await expect(page.getByRole("button", { name: "回答モデル" })).toContainText(
+          state.current.label,
+        );
+        expect(state.chat.requests).toHaveLength(0);
+        await state.assertSaved();
+      };
+      await state.card.getByRole("button", { name: "再編集", exact: true }).click();
+      await expect(page.getByRole("region", { name: "再編集の確認" })).toBeVisible();
+      await assertCurrent();
+      await page
+        .getByRole("button", {
+          name: choice === "keep" ? "現在の入力を保持" : "元の質問に置換",
+          exact: true,
+        })
+        .click();
+      await expect(page.getByRole("region", { name: "再編集の確認" })).toHaveCount(0);
+      if (choice === "keep") {
+        await assertCurrent();
+        await state.assertSent(state.current, true);
+      } else {
+        await state.assertRestored();
+        await state.assertSent(state.saved);
+      }
+    });
+  }
+}
+
+test("WR-045-R3 cancelled restore then deliberate model change and repeated restore", async ({
+  page,
+}) => {
+  const state = await savedRestoreQuestion(page, "cancelled", true);
+  await state.card.getByRole("button", { name: "再編集", exact: true }).click();
+  await state.assertRestored();
+  await chooseRestoreModel(page, state.current);
+  await state.assertSent(state.current);
+  state.chat.respond({ type: "text_done" });
+  await expect(state.chat.input).toBeEnabled();
+  await expect(state.chat.input).toHaveText("");
+  await state.card.getByRole("button", { name: "再編集", exact: true }).click();
+  await state.assertRestored();
+  expect(state.chat.requests).toHaveLength(1);
 });
