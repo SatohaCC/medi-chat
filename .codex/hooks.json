@@ -1,0 +1,19 @@
+{
+  "description": "Run Ruff fixes and formatting on Python files edited by Codex.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "^(apply_patch|Edit|Write)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "r=$(git rev-parse --show-toplevel) && uv run --project \"$r/backend\" --locked python \"$r/scripts/format_edited_python.py\"",
+            "commandWindows": "powershell.exe -NoProfile -NonInteractive -Command \"$r = git rev-parse --show-toplevel; if ($LASTEXITCODE -ne 0) { exit 1 }; & (Join-Path $r 'backend/.venv/Scripts/python.exe') (Join-Path $r 'scripts/format_edited_python.py'); exit $LASTEXITCODE\"",
+            "timeout": 120,
+            "statusMessage": "Fixing and formatting edited Python files with Ruff"
+          }
+        ]
+      }
+    ]
+  }
+}
