@@ -2,7 +2,7 @@
 
 import { PromptFieldValue } from "@react-spectrum/ai";
 import * as stylex from "@stylexjs/stylex";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { styles as layout } from "../../../shared/ui/PageLayout.styles";
 import {
   buildPayloadContent,
@@ -12,6 +12,7 @@ import {
   type SelectedMedicineItem,
   useMedicineEntries,
 } from "../../medicine-selection";
+import { useChatScroll } from "../hooks/useChatScroll";
 import { useChatWebSocket } from "../hooks/useChatWebSocket";
 import { extractHighlightWords } from "../model/highlightWords";
 import { ChatHeader } from "./ChatHeader";
@@ -22,7 +23,7 @@ import { SourceEvidencePanel } from "./SourceEvidencePanel";
 export function ChatScreen() {
   const [selectedModel, setSelectedModel] = useState("openai:gpt-6-luna");
   const [openEvidenceIndex, setOpenEvidenceIndex] = useState<number | null>(null);
-  const messageListRef = useRef<HTMLElement | null>(null);
+  const { messageListRef, scrollToLatestUserMessage } = useChatScroll();
 
   const { entries, activeMedicines } = useMedicineEntries();
 
@@ -151,32 +152,10 @@ export function ChatScreen() {
         setPrompt(new PromptFieldValue([]));
         setInputKey((prev) => prev + 1);
 
-        requestAnimationFrame(() => {
-          const container = messageListRef.current;
-          if (!container) return;
-          const userMessages = container.querySelectorAll<HTMLElement>(
-            '[data-message-role="user"]',
-          );
-          const latestUserMessage = userMessages[userMessages.length - 1];
-          if (latestUserMessage) {
-            const prefersReducedMotion =
-              typeof window !== "undefined" &&
-              window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-            const containerRect = container.getBoundingClientRect();
-            const messageRect = latestUserMessage.getBoundingClientRect();
-            const targetScrollTop = Math.max(
-              0,
-              container.scrollTop + (messageRect.top - containerRect.top) - 20,
-            );
-            container.scrollTo({
-              top: targetScrollTop,
-              behavior: prefersReducedMotion ? "auto" : "smooth",
-            });
-          }
-        });
+        scrollToLatestUserMessage();
       }
     },
-    [targetState, isStreaming, sendMessage],
+    [targetState, isStreaming, sendMessage, scrollToLatestUserMessage],
   );
 
   const handleAddBaseline = useCallback((medicine: SelectedMedicineItem) => {
