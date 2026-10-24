@@ -44,24 +44,28 @@ temp/
 graphify-out/
 *.log
 yj
-reference
-.agents/
+/docs/reference/
+/.agents/*
+!/.agents/README.md
+!/.agents/guides/
+!/.agents/lessons/
+!/.agents/archive/
+!/.agents/agents/
+!/.agents/skills/
+/.agents/skills/*
+!/.agents/skills/feature-pipeline/
 skills-lock.json
 .vscode/
 .vercel/
-.codex
+/.codex/*
+!/.codex/hooks.json
 
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Shared agent guidance is versioned; local task records remain private.
-/for-llm/*
-!/for-llm/README.md
-!/for-llm/guides/
-!/for-llm/lessons/
-!/for-llm/archive/
+# Local task records stay under .agents/work/ and are excluded above.
 
 # Package insert source/body datasets are supplied locally, not redistributed.
 /data/pmda/originals/

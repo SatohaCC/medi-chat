@@ -76,13 +76,11 @@ test("history loads, paginates, refreshes after import, and fits mobile", async 
   await expect(
     history.getByText("登録履歴のみ表示しています。", { exact: false }),
   ).toBeVisible();
-  await page
-    .getByLabel("XMLファイル")
-    .setInputFiles({
-      name: "追加テスト.xml",
-      mimeType: "text/xml",
-      buffer: Buffer.from("<test/>"),
-    });
+  await page.getByLabel("XMLファイル").setInputFiles({
+    name: "追加テスト.xml",
+    mimeType: "text/xml",
+    buffer: Buffer.from("<test/>"),
+  });
   await page.getByRole("button", { name: "取り込む", exact: true }).click();
   await expect(
     history.getByRole("heading", { name: "追加テスト.xml", exact: true }),

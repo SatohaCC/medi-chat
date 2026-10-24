@@ -19,7 +19,7 @@ Domainは外側の層に依存せず、PresentationはApplicationを通して処
 
 ## 開発コマンド
 
-リポジトリルートから実行します。環境設定とDBの準備は[ローカル開発](../docs/local-development.md)を参照してください。
+リポジトリルートから実行します。環境設定とDBの準備は[ローカル開発](../docs/development/local-development.md)を参照してください。
 
 ```bash
 pnpm dev:backend
@@ -30,8 +30,8 @@ pnpm test:backend
 
 ## 詳細資料
 
-- [設計・依存方向・型とモデルの方針](../docs/backend-design.md)
-- [DB運用・マイグレーション](../docs/backend-design.md#データベース運用とマイグレーション)
-- [添付文書の取り込み・登録](../docs/attachment-import.md)
+- [設計・依存方向・型とモデルの方針](../docs/architecture/backend-design.md)
+- [DB運用・マイグレーション](../docs/architecture/backend-design.md#データベース運用とマイグレーション)
+- [添付文書の取り込み・登録](../docs/development/attachment-import.md)
 - [共通定義の編集方法](infrastructure/package_insert_definitions/README.md)
-- [テストと検証](../docs/local-development.md#検証)
+- [テストと検証](../docs/development/local-development.md#検証)

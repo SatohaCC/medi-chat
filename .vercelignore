@@ -13,7 +13,7 @@
 **/.ruff_cache
 **/.next*
 /data
-for-llm
+docs/reference
 tmp
 temp
 graphify-out

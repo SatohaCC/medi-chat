@@ -187,10 +187,12 @@ test("always retrieved evidence keeps both the safety and question-based reasons
 });
 
 test("progressive panel distinguishes always retrieved evidence from logic hits", () => {
-  const html = renderToStaticMarkup(createElement(SourceEvidencePanel, {
-    sources: [{ ...source, retrieved_by: ["always", "logic"] }],
-    retrievalStatus: "jev_searching",
-  }));
+  const html = renderToStaticMarkup(
+    createElement(SourceEvidencePanel, {
+      sources: [{ ...source, retrieved_by: ["always", "logic"] }],
+      retrievalStatus: "jev_searching",
+    }),
+  );
   assert.ok(html.includes("常時取得：1件"));
   assert.ok(html.includes("ロジック：1件"));
   assert.ok(html.includes("合計：1件"));

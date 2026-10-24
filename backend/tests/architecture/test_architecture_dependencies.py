@@ -10,8 +10,8 @@ from pathlib import Path
 
 import pytest
 from backend.tests.support.paths import BACKEND_ROOT
-from scripts.application_architecture import ROLE_DEPENDENCIES, module_role
-from scripts.domain_architecture import check as check_domain
+from scripts.checks.application_architecture import ROLE_DEPENDENCIES, module_role
+from scripts.checks.domain_architecture import check as check_domain
 
 
 def test_domain_models_do_not_define_create_wrappers() -> None:

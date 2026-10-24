@@ -54,13 +54,11 @@ jobs:
           python-version: "3.14"
       - run: pnpm install --frozen-lockfile
       - run: uv sync --project backend --locked
-      - name: Enforce all Application architecture rules
-        run: uv run --project backend --locked python scripts/application_architecture.py
-      - name: Enforce all Domain architecture rules
-        run: uv run --project backend --locked python scripts/domain_architecture.py
-      - run: uv run --project backend --locked python -m backend.infrastructure.cli.export_search_guide --check
-      - run: pnpm vercel:requirements:check
-      - run: node --experimental-strip-types --test frontend/shared/server/accessToken.test.mjs scripts/dev-backend.test.mjs scripts/root-environment.test.mjs
+      - name: Backend tests, architecture, lint, formatting and types
+        run: pnpm quality:backend
+      - name: Development tooling and generated contracts
+        run: pnpm quality:scripts
+      - run: node --experimental-strip-types --test frontend/shared/server/accessToken.test.mjs
       - name: Initialize this job's disposable service with separated roles
         env:
           POSTGRES_USER: postgres
@@ -71,12 +69,5 @@ jobs:
           docker exec -i \
             -e POSTGRES_USER -e POSTGRES_OWNER_PASSWORD -e POSTGRES_RUNTIME_PASSWORD \
             '${{ job.services.postgres.id }}' bash < scripts/postgres/init.sh
-      - name: Local tests without a database or private source data
-        run: pnpm test:backend -m "not source_data" -q
       - name: All real PostgreSQL tests using synthetic source data
         run: pnpm test:postgres -q
-      - name: Architecture, lint and Python types
-        run: |
-          pnpm --filter backend lint
-          pnpm --filter backend exec uv run --locked ruff format --check .
-          pnpm typecheck:python

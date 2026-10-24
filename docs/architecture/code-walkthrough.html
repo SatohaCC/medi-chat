@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>medi-chat | 現在のコードを読む</title><style>*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:30px}body{margin:0;background:#f4f5f0;color:#20342f;font-family:system-ui,-apple-system,"Segoe UI","Noto Sans JP",sans-serif;font-size:15px;line-height:1.85}a{color:#146b60;text-underline-offset:4px}header{background:#133f38;color:#fff;padding:65px max(6vw,24px) 50px}header .eyebrow{color:#9dd9c4;letter-spacing:.18em;font-size:12px}h1{font-size:clamp(32px,5vw,62px);line-height:1.3;letter-spacing:-.04em;margin:18px 0}header p{max-width:780px;color:#d5e8df}header .meta{font-size:12px;color:#b6cfc5}nav{display:flex;gap:10px;flex-wrap:wrap;margin-top:30px}nav a{padding:6px 15px;border:1px solid #71968a;border-radius:30px;color:white;text-decoration:none;font-size:13px}main{max-width:1160px;margin:auto;padding:25px 26px 80px}section{margin:45px 0 65px}h2{font-size:28px;line-height:1.5;margin:8px 0 20px}h3{font-size:18px;margin:0 0 12px}.num{font-size:12px;letter-spacing:.15em;color:#577a6b}.lead{font-size:18px;max-width:900px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px}.card,.panel{background:white;border:1px solid #d7e1d7;border-radius:16px;padding:24px}.card p{margin:10px 0}.tag{font-size:11px;border-radius:5px;background:#edf4ef;padding:3px 7px;color:#467263}.cite{display:inline-block;font-family:ui-monospace,monospace;font-size:11px;overflow-wrap:anywhere}.layers{display:grid;grid-template-columns:1.4fr 50px 1.4fr 50px 1.4fr;align-items:center;gap:8px}.layer{text-align:center;background:#fff;border:1px solid #c5d6cc;border-radius:12px;padding:24px 10px}.layer strong{display:block;font-size:19px}.layer small{display:block;color:#647a70}.arrow{text-align:center;font-size:27px;color:#5e8672}.infra{margin-top:14px;background:#dfece3;padding:18px 22px;border-radius:12px}.note{border-left:3px solid #bb8641;background:#fbf3e4;padding:15px 20px;margin:22px 0;font-size:14px}.tabs{display:flex;gap:9px;margin:20px 0}.tabs button{border:1px solid #b9cebe;background:white;border-radius:24px;padding:10px 22px;cursor:pointer;font:inherit}.tabs button[aria-pressed=true]{background:#164e42;color:white;border-color:#164e42}.flow{display:grid;grid-template-columns:300px 1fr;gap:22px}.steps{display:grid;gap:7px}.steps button{text-align:left;border:1px solid #d6e0d8;background:#fff;padding:12px 16px;border-radius:9px;cursor:pointer;color:#344d41;font:inherit;font-size:13px}.steps button[aria-current=step]{background:#dfeee3;border-color:#448866;font-weight:700}.stage{background:white;border-radius:16px;padding:32px;border:1px solid #d7e1d7}.stage h3{font-size:25px;margin-top:15px}.stage p{font-size:17px}.controls{display:flex;gap:12px;margin-top:30px}.controls button{background:#edf3ed;border:1px solid #c1d2c6;border-radius:7px;padding:8px 18px;cursor:pointer}.controls button:disabled{opacity:.4;cursor:default}button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #ce8a35;outline-offset:4px}table{border-collapse:collapse;width:100%;background:#fff;font-size:13px}th,td{text-align:left;vertical-align:top;padding:14px 16px;border-bottom:1px solid #e0e7df}th{background:#e6eee6;color:#415e4d}.tablewrap{overflow-x:auto;border-radius:12px;border:1px solid #d7e1d7}code{font-family:ui-monospace,Consolas,monospace;font-size:.88em;overflow-wrap:anywhere}details{border:1px solid #d3dfd4;background:white;border-radius:9px;margin:10px 0;padding:12px 18px;scroll-margin-top:25px}summary{cursor:pointer;font:12px ui-monospace,monospace;overflow-wrap:anywhere}summary small{float:right;color:#698070}pre{overflow:auto;background:#152e28;color:#d6eadc;padding:20px;border-radius:10px;line-height:1.65;font-size:12px;max-height:510px}details p{font-size:12px}.search{width:100%;border:1px solid #b7cdbd;border-radius:9px;font:inherit;padding:12px 16px;margin:12px 0}.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}.timeline{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:18px;background:#e8efe6;border-radius:12px}.timeline code{background:white;padding:6px 10px;border-radius:5px}footer{font-size:12px;color:#62786c;border-top:1px solid #cdd9ce;padding-top:22px}@media(max-width:760px){.grid,.two,.flow{grid-template-columns:1fr}.layers{grid-template-columns:1fr}.arrow{transform:rotate(90deg)}main{padding:10px 18px 60px}header{padding:40px 23px}.steps{grid-template-columns:1fr 1fr}.stage{padding:23px}h2{font-size:24px}summary small{float:none;display:block}.tablewrap{max-width:100%}}@media print{nav,.tabs,.controls,.search{display:none}body{background:white}header{background:white;color:#133f38;padding:20px}header p,header .meta{color:#334}section{break-inside:avoid}.flow{display:block}.steps{display:none}details{break-inside:avoid}pre{max-height:none;white-space:pre-wrap}.grid{grid-template-columns:1fr 1fr}}</style></head><body><header><div class="eyebrow">CODE EXPLORER / 2026.10.17</div><h1>medi-chat のコードを読む。</h1><p>医薬品を選び、添付文書の根拠を探し、回答を届ける。<br>現在の実装を、責務・データの流れ・公開世代の3つの視点でたどります。</p><div class="meta">探索時点: HEAD e06485e · 現在のソースを確認した静的解説 · 外部ライブラリ・CDN不要</div><nav><a href="#overview">全体像</a><a href="#boundaries">DDDの境界</a><a href="#flows">処理をたどる</a><a href="#protocol">画面と通信</a><a href="#lifecycle">整合性とDI</a><a href="#reading">読む順番</a><a href="#evidence">ソース抜粋</a></nav></header><main>
+<section id="overview"><div class="num">01 / SYSTEM MAP</div><h2>検索と回答生成を、別の責務として組み合わせる。</h2><p class="lead">Next.jsの画面からFastAPIへ問い合わせ、登録済みの医薬品と添付文書から根拠を取得します。その結果をApplicationのチャット処理がLLMへ渡し、WebSocketで本文と出典を画面へ返します。</p><div class="layers"><div class="layer"><strong>Presentation</strong><small>REST / WebSocket・DTO変換</small></div><div class="arrow">→</div><div class="layer"><strong>Application</strong><small>検索・回答・取り込みの調整</small></div><div class="arrow">→</div><div class="layer"><strong>Domain</strong><small>医薬品・文書・検索の規則</small></div></div><div class="infra"><strong>Infrastructure → Application / Domainの抽象</strong><br>SQLite・SQLAlchemy、PMDA XML、Janome、Jev、LLMを実装。Composition Rootが具体的な部品を接続します。</div><p class="cite">図の矢印はソースの依存方向。実行時は注入したポートを通じてInfrastructureの処理が呼ばれます。</p><a class="cite" href="#src-entry">main.py:36 ↗</a> <a class="cite" href="#src-composition">app_lifespan.py:40 ↗</a><div class="note">現在の構成を説明しています。READMEやSkillの理想形だけから実装を推測せず、Graphifyの探索結果を入口に実ファイルを確認しました。性能値や設計上の完全性は、この探索では測定・検証していません。</div></section>
+<section id="boundaries"><div class="num">02 / OWNERSHIP</div><h2>DDDの境界は「何を守るか」で分かれている。</h2><div class="grid"><article class="card"><span class="tag">domain / medicine</span><h3>医薬品そのものと名称照合</h3><p><code>Medicine</code>はYJコードを識別子に、レセプト名・YJ名・適用日などを保持。<code>MedicineProduct</code>は名称照合用の不変情報で、一般名等から照合グループを導出します。</p><p>添付文書の本文・節構造は持ちません。</p><a class="cite" href="#src-medicine">entities.py:18 ↗</a></article><article class="card"><span class="tag">domain / attachment</span><h3>原本の文書内整合性</h3><p><code>AttachmentDocument</code>は文書全体のAggregate Root。製品・項目・参照先の重複と、節の親が存在することを生成時に検証します。</p><p>原本の改訂年月による版選択も、この責務の規則です。</p><a class="cite" href="#src-attachment">entities.py:21 ↗</a> <a class="cite" href="#src-revision">services.py:7 ↗</a></article><article class="card"><span class="tag">domain / retrieval</span><h3>検索単位と根拠の統合</h3><p><code>SearchUnit</code>は索引内の本文単位。文書ID、節、テキスト、構造化ブロック、出典URL等を持ちます。質問から検索条件を作り、検索結果を統合する規則を担います。</p><a class="cite" href="#src-unit">entities.py:22 ↗</a> <a class="cite" href="#src-retrieve">retrieve_evidence.py:33 ↗</a></article></div><p>同じ原本から作られても、AttachmentDocumentとSearchUnitは用途が異なります。前者は原文の整合性、後者は検索・根拠提示の単位です。Applicationのindexingが検索向けの投影を調整します。</p><div class="two"><div class="card"><h3>公開IDだけを越境させる</h3><p>Domainコンテキスト間は原則独立。Import Linterではfoundation・shared・公開<code>identifiers</code>を明示した許可範囲にしています。IDモジュール自体から内部モデルを再公開しない境界も定義されています。</p><a class="cite" href="#src-contracts">pyproject.toml:271 ↗</a></div><div class="card"><h3>chatはユースケースの調整役</h3><p><code>application/chat</code>は検索とLLM生成を束ねます。名前が似た<code>presentation/AppChatService</code>は公開DTOの変換役、<code>ChatApplicationService</code>が会話処理の調整役です。</p><a class="cite" href="#src-adapter">chat_service.py:36 ↗</a> <a class="cite" href="#src-chat">chat_service.py:25 ↗</a></div></div></section>
+<section id="flows"><div class="num">03 / FOLLOW THE EXECUTION</div><h2>1つの要求が通る道をたどる。</h2><p>経路と段階を選ぶと、入力から結果までの担当と処理が切り替わります。</p><div class="tabs" aria-label="処理経路"><button data-flow="chat" aria-pressed="true">チャット回答</button><button data-flow="import" aria-pressed="false">XML取り込み・公開</button></div><div class="flow"><div class="steps" aria-label="処理段階" id="steps"></div><article class="stage" aria-live="polite"><span class="tag" id="stage-layer"></span><h3 id="stage-title"></h3><p id="stage-text"></p><a class="cite" id="stage-ref"></a><div class="controls"><button id="prev">← 前へ</button><button id="next">次へ →</button></div></article></div><noscript><p>段階の切り替えにはJavaScriptが必要です。全体像と以下のソース抜粋はそのまま読めます。</p></noscript><div class="note"><strong>先行通知の条件:</strong> 3つの検出は並行動作しますが、ローカル検出の根拠を先行通知するのは、対象医薬品に確認が不要で、コールバックが設定された場合です。現在のWebSocketルートはJevが利用可能なときにこのコールバックを設定しています。Jevの結果を含めた最終根拠は、その後に通知します。 <a class="cite" href="#src-parallel">retrieve_evidence.py:162 ↗</a> <a class="cite" href="#src-ws">chat_websocket_routes.py:133 ↗</a></div></section>
+<section id="protocol"><div class="num">04 / UI & EVENTS</div><h2>根拠と本文は、別々のイベントで届く。</h2><div class="timeline"><code>retrieval_status</code><span>→</span><code>sources（複数回の場合あり）</code><span>→</span><code>text_delta × N</code><span>→</span><code>text_done</code></div><p class="cite">通常経路の概略。確認要求・Jev未利用などで省略されるイベントがあり、Jev利用時にはjev_responseも送信されます。</p><div class="tablewrap"><table><thead><tr><th>イベント</th><th>バックエンドの意味</th><th>フロントエンドの扱い</th></tr></thead><tbody><tr><td><code>sources</code></td><td>途中の累積根拠、または最終根拠</td><td>最新assistantのsourcesを置換。受信ごとに追記して重複を増やさない。</td></tr><tr><td><code>text_delta</code></td><td>生成本文の断片</td><td>最新assistantのcontentへ追加。</td></tr><tr><td><code>retrieval_status / jev_response</code></td><td>検索進行と分類の情報</td><td>本文と別のメッセージ属性を更新。</td></tr><tr><td><code>text_done / error</code></td><td>完了、または処理失敗</td><td>進行中の要求と生成中フラグを解除。</td></tr></tbody></table></div><p><a class="cite" href="#src-ws">chat_websocket_routes.py:133 ↗</a> <a class="cite" href="#src-ui">useChatWebSocket.ts:64 ↗</a></p><div class="two"><article class="card"><h3>画面はfeaturesごとに分割</h3><p><code>frontend/app</code>がチャット・検索・取り込みの入口。<code>features/chat</code>、<code>medicine-selection</code>、<code>keyword-search</code>、<code>attachment-import</code>にUI、hook、API、型が分かれています。チャット画面はStyleXを使用します。</p><a class="cite" href="../../frontend/features/chat/components/ChatScreen.tsx">ChatScreen.tsx ↗</a></article><article class="card"><h3>接続の所有と会話状態を分離</h3><p><code>connectChatWebSocket</code>がsocket・再接続timer・古いsocketの無効化を所有。hookがメッセージ状態を管理します。切断時は進行中の往復を中断扱いにして、次の送信履歴から除外します。</p><a class="cite" href="#src-retry">chatWebSocket.ts:50 ↗</a> <a class="cite" href="#src-ui">useChatWebSocket.ts:64 ↗</a></article></div></section>
+<section id="lifecycle"><div class="num">05 / CONSISTENCY & LIFETIME</div><h2>公開の整合性と、読取の寿命を分けて守る。</h2><div class="grid"><article class="card"><h3>版選択は改訂年月</h3><p>同じYJに対して新しい改訂を採用し、古い原本で巻き戻しません。同年月の異なる原本は競合。再送の扱いと受付順序は永続化側が管理します。</p><a class="cite" href="#src-revision">services.py:7 ↗</a> <a class="cite" href="#src-publisher">registration_publisher.py:186 ↗</a></article><article class="card"><h3>読取は同じ公開世代</h3><p>医薬品解決から根拠取得までsnapshotを保持。別の公開が起きても、その要求には取得済み世代を使用。lease解放はfinallyと取消処理で保護されています。</p><a class="cite" href="#src-lease">generation_runtime.py:403 ↗</a> <a class="cite" href="#src-retrieve">retrieve_evidence.py:33 ↗</a></article><article class="card"><h3>LLM生成は取得の後</h3><p>根拠取得を終えた結果を使って生成します。確認が必要なら確認文を返して終了し、providerを生成しません。検索と回答生成を別々に追える構成です。</p><a class="cite" href="#src-guard">stream_reply.py:22 ↗</a></article></div><div class="panel" style="margin-top:18px"><h3>Composition Rootがリソースを所有する</h3><p>lifespanで索引の準備状態を確認し、Janomeを初期化。Reader・Jev・検索ポリシー・チャットアダプターを構築します。通常起動ではPublisherの回復処理とGenerationRuntimeのwarmupを行い、チャットへsnapshot_providerを注入します。</p><p>終了時はimport worker、Jev、read workerを閉じてからEngineをdispose。read-only probeでは回復・公開登録の通常経路を避けた専用の確認経路を使います。</p><a class="cite" href="#src-composition">app_lifespan.py:40 ↗</a></div><div class="panel" style="margin-top:18px"><h3>定義の原本は一つ、渡すモデルは用途別</h3><p><code>package_insert_catalog.json</code>が正式項目名・意図・検索・XML対応等の定義元。loaderとcompositionがattachment、retrieval、回答プロンプト、Jev、Janome、XML用のモデル・設定へ分け、各利用側には必要なものを渡します。正式項目名で原文の見出しを上書きする設計ではありません。</p><a class="cite" href="#src-definitions">README.md:1 ↗</a></div></section>
+<section id="reading"><div class="num">06 / READING ROUTE</div><h2>目的別に、ここから読む。</h2><div class="tablewrap"><table><thead><tr><th>知りたいこと</th><th>入口</th><th>次に読む場所</th></tr></thead><tbody><tr><td>起動とDI</td><td><a class="cite" href="#src-entry">main.py:36 ↗</a></td><td><a class="cite" href="#src-composition">app_lifespan.py:40 ↗</a></td></tr><tr><td>質問から根拠まで</td><td><a class="cite" href="#src-chat">chat_service.py:25 ↗</a></td><td><a class="cite" href="#src-retrieve">retrieve_evidence.py:33 ↗</a> <a class="cite" href="#src-parallel">retrieve_evidence.py:162 ↗</a></td></tr><tr><td>公開DTOと生成の境界</td><td><a class="cite" href="#src-adapter">chat_service.py:36 ↗</a></td><td><a class="cite" href="#src-guard">stream_reply.py:22 ↗</a> <a class="cite" href="#src-ws">chat_websocket_routes.py:133 ↗</a></td></tr><tr><td>文書モデルと版選択</td><td><a class="cite" href="#src-attachment">entities.py:21 ↗</a></td><td><a class="cite" href="#src-revision">services.py:7 ↗</a> <a class="cite" href="#src-publisher">registration_publisher.py:186 ↗</a></td></tr><tr><td>登録中も読取を守る仕組み</td><td><a class="cite" href="#src-publisher">registration_publisher.py:186 ↗</a></td><td><a class="cite" href="#src-lease">generation_runtime.py:403 ↗</a></td></tr><tr><td>画面の状態と再接続</td><td><a class="cite" href="#src-ui">useChatWebSocket.ts:64 ↗</a></td><td><a class="cite" href="#src-retry">chatWebSocket.ts:50 ↗</a></td></tr></tbody></table></div><div class="note"><strong>検証範囲:</strong> このHTMLはソース・設定・READMEと既存グラフの静的探索に基づきます。Import Linterには24契約が定義されていますが、今回アプリのlint・テスト・実DB・外部Jev/LLM通信は実行していません。HTML自体の検証と、アプリの動作検証は区別しています。</div></section>
+<section id="evidence"><div class="num">07 / SOURCE EVIDENCE</div><h2>説明の根拠になった実装。</h2><p>ファイル名で絞り込めます。行番号付きの抜粋は探索時点のスナップショットです。ソースへのリンクはリポジトリ内の相対パスです。</p><label for="source-filter">ソースを検索</label><input class="search" id="source-filter" type="search" placeholder="例: generation / retrieval / entities"><div id="source-list"><details id="src-entry"><summary><span>backend/main.py</span><small>L36–69</small></summary><p><a href="../../backend/main.py">ファイル全体を開く</a> · 以下は探索時点の抜粋です。</p><pre><code>  36  def create_app(
+  37      structured_dir: Path | None = None,
+  38      index_path: Path | None = None,
+  39      llm_provider_factory: Callable[[str | None], Any] | None = None,
+  40      *,
+  41      database_url: str | None = None,
+  42      import_directory: Path | None = None,
+  43      _readonly_probe: bool = False,
+  44  ) -&gt; FastAPI:
+  45      &quot;&quot;&quot;FastAPI アプリケーションインスタンスを生成・設定する&quot;&quot;&quot;
+  46      definitions = get_package_insert_definitions()
+  47      settings = resolve_database_settings(
+  48          structured_dir=structured_dir,
+  49          index_path=index_path,
+  50          database_url=database_url,
+  51      )
+  52      lifespan = create_app_lifespan(
+  53          definitions=definitions,
+  54          settings=settings,
+  55          chat_service_factory=AppChatService,
+  56          llm_provider_factory=llm_provider_factory,
+  57          import_directory=import_directory,
+  58          readonly_probe=_readonly_probe,
+  59          intent_classifier_cls=JevIntentClassifier,
+  60          keyword_extractor_cls=JanomeKeywordExtractor,
+  61          publisher_cls=SqliteRegistrationPublisher,
+  62          janome_initializer=get_janome_tokenizer,
+  63      )
+  64  
+  65      application = FastAPI(
+  66          title=&quot;medi-chat API&quot;,
+  67          description=&quot;Search PMDA package inserts and real-time streaming AI chat.&quot;,
+  68          version=&quot;0.2.0&quot;,
+  69          lifespan=lifespan,</code></pre></details><details id="src-composition"><summary><span>backend/infrastructure/composition/app_lifespan.py</span><small>L40–79</small></summary><p><a href="../../backend/infrastructure/composition/app_lifespan.py">ファイル全体を開く</a> · 以下は探索時点の抜粋です。</p><pre><code>  40  def create_app_lifespan(
+  41      *,
+  42      definitions: PackageInsertDefinitions,
+  43      settings: DatabaseSettings,
+  44      chat_service_factory: Callable[..., Any],
+  45      llm_provider_factory: Callable[[str | None], Any] | None = None,
+  46      import_directory: Path | None = None,
+  47      readonly_probe: bool = False,
+  48      intent_classifier_cls: type[JevIntentClassifier] = JevIntentClassifier,
+  49      keyword_extractor_cls: type[JanomeKeywordExtractor] = JanomeKeywordExtractor,
+  50      publisher_cls: type[SqliteRegistrationPublisher] = SqliteRegistrationPublisher,
+  51      janome_initializer: Callable[[], Any] = get_janome_tokenizer,
+  52  ) -&gt; Callable[[FastAPI], AbstractAsyncContextManager[None]]:
+  53      &quot;&quot;&quot;FastAPI アプリケーションの lifespan コンテキストマネージャを生成する。&quot;&quot;&quot;
+  54  
+  55      @asynccontextmanager
+  56      async def lifespan(application: FastAPI) -&gt; AsyncIterator[None]:
+  57          if readonly_probe:
+  58              await asyncio.to_thread(verify_no_recovery_work, settings.index_path)
+  59          else:
+  60              await asyncio.to_thread(recover_sqlite_journal, settings.index_path)
+  61          await asyncio.to_thread(
+  62              verify_index_readiness, settings.structured_dir, settings.index_path
+  63          )
+  64          await asyncio.to_thread(janome_initializer)
+  65          engine = create_readonly_engine(settings.index_path)
+  66          workers = ReadWorkers(max_workers=4)
+  67          application.state.index_engine = engine
+  68          application.state.read_workers = workers
+  69  
+  70          index_reader = SqlAlchemyIndexReader(engine, workers=workers)
+  71          medicine_reader = SqlAlchemyMedicineReader(engine, workers=workers)
+  72          evidence_reader = SqlAlchemyEvidenceReader(
+  73              engine, workers=workers, text_search_policy=definitions.text_search_policy
+  74          )
+  75          application.state.index_reader = index_reader
+  76          application.state.medicine_reader = medicine_reader
+  77          application.state.evidence_reader = evidence_reader
+  78  
+  79          medicines = await medicine_reader.read_medicines()</code></pre></details><details id="src-adapter"><summary><span>backend/presentation/chat_service.py</span><small>L36–67</small></summary><p><a href="../../backend/presentation/chat_service.py">ファイル全体を開く</a> · 以下は探索時点の抜粋です。</p><pre><code>  36  class AppChatService:
+  37      &quot;&quot;&quot;RESTおよびWebSocket向けのDTO変換を行い、ChatApplicationServiceへ委譲するアダプター。&quot;&quot;&quot;
+  38  
+  39      _DELEGATED_ATTRS = frozenset(
+  40          {
+  41              &quot;medicine_reader&quot;,
+  42              &quot;evidence_reader&quot;,
+  43              &quot;intent_classifier&quot;,
+  44              &quot;keyword_extractor&quot;,
+  45              &quot;intent_policy&quot;,
+  46              &quot;answer_prompt_policy&quot;,
+  47              &quot;provider_factory&quot;,
+  48              &quot;snapshot_provider&quot;,
+  49          }
+  50      )
+  51  
+  52      def __init__(
+  53          self,
+  54          *,
+  55          medicine_reader: RegisteredMedicineReader,
+  56          evidence_reader: EvidenceRepository,
+  57          intent_classifier: IntentClassifier,
+  58          keyword_extractor: KeywordExtractor,
+  59          intent_policy: IntentPolicy,
+  60          answer_prompt_policy: AnswerPromptPolicy,
+  61          provider_factory: Callable[[str | None], LLMProvider],
+  62          defaults: Callable[[], GenerationDefaults] = read_generation_defaults,
+  63          snapshot_provider: RetrievalSnapshotProvider | None = None,
+  64          application_service: ChatApplicationService | None = None,
+  65      ) -&gt; None:
+  66          self._app_service = (
+  67              application_service</code></pre></details><details id="src-chat"><summary><span>backend/application/chat/chat_service.py</span><small>L25–59</small></summary><p><a href="../../backend/application/chat/chat_service.py">ファイル全体を開く</a> · 以下は探索時点の抜粋です。</p><pre><code>  25  class ChatApplicationService:
+  26      &quot;&quot;&quot;医薬品解決・根拠検索・回答生成の各ユースケースを束ねるアプリケーションサービス。&quot;&quot;&quot;
+  27  
+  28      def __init__(
+  29          self,
+  30          *,
+  31          medicine_reader: RegisteredMedicineReader,
+  32          evidence_reader: EvidenceRepository,
+  33          intent_classifier: IntentClassifier,
+  34          keyword_extractor: KeywordExtractor,
+  35          intent_policy: IntentPolicy,
+  36          answer_prompt_policy: AnswerPromptPolicy,
+  37          provider_factory: Callable[[str | None], LLMProvider],
+  38          snapshot_provider: RetrievalSnapshotProvider | None = None,
+  39      ) -&gt; None:
+  40          self.medicine_reader = medicine_reader
+  41          self.evidence_reader = evidence_reader
+  42          self.intent_classifier = intent_classifier
+  43          self.keyword_extractor = keyword_extractor
+  44          self.intent_policy = intent_policy
+  45          self.answer_prompt_policy = answer_prompt_policy
+  46          self.provider_factory = provider_factory
+  47          self.snapshot_provider = snapshot_provider
+  48  
+  49      @property
+  50      def is_jev_available(self) -&gt; bool:
+  51          return getattr(self.intent_classifier, &quot;is_available&quot;, True)
+  52  
+  53      async def search_keywords(
+  54          self,
+  55          query: str,
+  56          product_yj_codes: Sequence[str] = (),
+  57      ) -&gt; tuple[Evidence, ...]:
+  58          return await search_evidence_by_keywords(
+  59              query,</code></pre></details><details id="src-retrieve"><summary><span>backend/application/retrieval/retrieve_evidence.py</span><small>L33–70</small></summary><p><a href="../../backend/application/retrieval/retrieve_evidence.py">ファイル全体を開く</a> · 以下は探索時点の抜粋です。</p><pre><code>  33  async def retrieve_evidence(
+  34      message: str,
+  35      product_yj_codes: list[str],
+  36      *,
+  37      medicine_reader: RegisteredMedicineReader,
+  38      evidence_reader: EvidenceRepository,
+  39      intent_classifier: IntentClassifier,
+  40      keyword_extractor: KeywordExtractor,
+  41      intent_policy: IntentPolicy,
+  42      snapshot_provider: RetrievalSnapshotProvider | None = None,
+  43      on_logic_sources: SourcesCallback | None = None,
+  44  ) -&gt; RetrievalResult:
+  45      if snapshot_provider is not None:
+  46          async with snapshot_provider.acquire() as snapshot:
+  47              return await retrieve_evidence(
+  48                  message,
+  49                  product_yj_codes,
+  50                  medicine_reader=snapshot.medicine_reader,
+  51                  evidence_reader=snapshot.evidence_reader,
+  52                  intent_classifier=intent_classifier,
+  53                  keyword_extractor=keyword_extractor,
+  54                  intent_policy=intent_policy,
+  55                  on_logic_sources=on_logic_sources,
+  56              )
+  57      medicine_catalog = MedicineCatalog(await medicine_reader.read_medicines())
+  58      resolved = medicine_catalog.resolve_medicines(message, product_yj_codes)
+  59      needs_clarification = (
+  60          not resolved
+  61          or not medicine_catalog.covers_requested_products(resolved, product_yj_codes)
+  62      )
+  63      excluded_terms = medicine_catalog.aliases_for_yj_codes(product_yj_codes)
+  64      reason = None
+  65      if not needs_clarification:
+  66          questions = recognize_product_questions(
+  67              message, medicine_catalog.original_product_names()
+  68          )
+  69          reason = product_identity_reason(
+  70              tuple(</code></pre></details><details id="src-parallel"><summary><span>backend/application/retrieval/retrieve_evidence.py</span><small>L162–210</small></summary><p><a href="../../backend/application/retrieval/retrieve_evidence.py">ファイル全体を開く</a> · 以下は探索時点の抜粋です。</p><pre><code> 162  async def collect_search_criteria(
+ 163      intent_classifier: IntentClassifier,
+ 164      keyword_extractor: KeywordExtractor,
+ 165      message: str,
+ 166      excluded_terms: list[str],
+ 167      *,
+ 168      intent_policy: IntentPolicy,
+ 169      on_logic_criteria: CriteriaCallback | None = None,
+ 170  ):
+ 171      &quot;&quot;&quot;各ローカル検出の条件を累積通知し、全検出完了後の条件を返す。&quot;&quot;&quot;
+ 172      tasks = [
+ 173          asyncio.create_task(
+ 174              detect_jev_criteria(
+ 175                  intent_classifier, IntentRequest(message), intent_policy=intent_policy
+ 176              )
+ 177          ),
+ 178          asyncio.create_task(
+ 179              asyncio.to_thread(
+ 180                  detect_morphology_criteria, keyword_extractor, message, excluded_terms
+ 181              )
+ 182          ),
+ 183          asyncio.create_task(
+ 184              asyncio.to_thread(_detect_fixed_keyword_criteria, message, intent_policy)
+ 185          ),
+ 186      ]
+ 187      criteria: list[SearchCriteria] = []
+ 188      logic_criteria: list[SearchCriteria] = []
+ 189      jev_response = None
+ 190      qualifying_intents: tuple[str, ...] = ()
+ 191      try:
+ 192          for completed in asyncio.as_completed(tasks):
+ 193              result = await completed
+ 194              if isinstance(result, JevDetectionResult):
+ 195                  criteria.extend(result.search_criteria)
+ 196                  jev_response = result.raw_response
+ 197                  qualifying_intents = result.qualifying_intents
+ 198              else:
+ 199                  if result is not None:
+ 200                      criteria.append(result)
+ 201                      logic_criteria.append(result)
+ 202                      if on_logic_criteria is not None:
+ 203                          await on_logic_criteria(list(logic_criteria))
+ 204      finally:
+ 205          for task in tasks:
+ 206              if not task.done():
+ 207                  task.cancel()
+ 208          await asyncio.gather(*tasks, return_exceptions=True)
+ 209  
+ 210      return criteria, jev_response, qualifying_intents</code></pre></details><details id="src-ws"><summary><span>backend/presentation/chat_websocket_routes.py</span><small>L133–189</small></summary><p><a href="../../backend/presentation/chat_websocket_routes.py">ファイル全体を開く</a> · 以下は探索時点の抜粋です。</p><pre><code> 133              jev_was_searched = service.is_jev_available
+ 134              if not service.is_jev_available:
+ 135                  await websocket.send_json(
+ 136                      {&quot;type&quot;: &quot;retrieval_status&quot;, &quot;stage&quot;: &quot;unavailable&quot;}
+ 137                  )
+ 138              else:
+ 139                  await websocket.send_json(
+ 140                      {&quot;type&quot;: &quot;retrieval_status&quot;, &quot;stage&quot;: &quot;jev_searching&quot;}
+ 141                  )
+ 142  
+ 143              async def publish_logic(sources: list[ChatSource]) -&gt; None:
+ 144                  await websocket.send_json(
+ 145                      {&quot;type&quot;: &quot;sources&quot;, &quot;sources&quot;: [s.model_dump() for s in sources]}
+ 146                  )
+ 147  
+ 148              reply = await service.prepare_reply(
+ 149                  payload.messages,
+ 150                  payload.product_yj_codes,
+ 151                  on_logic_sources=publish_logic if jev_was_searched else None,
+ 152              )
+ 153  
+ 154              if not reply.needs_clarification:
+ 155                  if reply.sources:
+ 156                      await websocket.send_json(
+ 157                          {
+ 158                              &quot;type&quot;: &quot;sources&quot;,
+ 159                              &quot;sources&quot;: [s.model_dump() for s in reply.sources],
+ 160                          }
+ 161                      )
+ 162                  if reply.jev_response is not None:
+ 163                      await websocket.send_json(
+ 164                          {&quot;type&quot;: &quot;jev_response&quot;, &quot;data&quot;: reply.jev_response}
+ 165                      )
+ 166                  if jev_was_searched:
+ 167                      await websocket.send_json(
+ 168                          {
+ 169                              &quot;type&quot;: &quot;retrieval_status&quot;,
+ 170                              &quot;stage&quot;: &quot;complete&quot;,
+ 171                              &quot;jev_response&quot;: reply.jev_response,
+ 172                          }
+ 173                      )
+ 174  
+ 175              async with closing_stream(
+ 176                  service.stream_answer(
+ 177                      reply, payload.messages, payload.provider, payload.model
+ 178                  )
+ 179              ) as response:
+ 180                  async for chunk in response:
+ 181                      await websocket.send_json({&quot;type&quot;: &quot;text_delta&quot;, &quot;content&quot;: chunk})
+ 182  
+ 183              await websocket.send_json({&quot;type&quot;: &quot;text_done&quot;})
+ 184  
+ 185      except WebSocketDisconnect:
+ 186          pass
+ 187      except Exception as exc:
+ 188          with suppress(Exception):
+ 189              await websocket.send_json({&quot;type&quot;: &quot;error&quot;, &quot;content&quot;: str(exc)})</code></pre></details><details id="src-guard"><summary><span>backend/application/chat/stream_reply.py</span><small>L22–33</small></summary><p><a href="../../backend/application/chat/stream_reply.py">ファイル全体を開く</a> · 以下は探索時点の抜粋です。</p><pre><code>  22      if reply.needs_clarification:
+  23          yield reply.answer
+  24          return
+  25      provider = provider_factory(provider_name)
+  26      messages = build_answer_messages(
+  27          reply, conversation, answer_prompt_policy=answer_prompt_policy
+  28      )
+  29      async with closing_stream(
+  30          stream_answer(provider, messages, model=model_name)
+  31      ) as response:
+  32          async for chunk in response:
+  33              yield chunk</code></pre></details><details id="src-medicine"><summary><span>backend/domain/medicine/entities.py</span><small>L18–49</small></summary><p><a href="../../backend/domain/medicine/entities.py">ファイル全体を開く</a> · 以下は探索時点の抜粋です。</p><pre><code>  18  class Medicine:
+  19      &quot;&quot;&quot;YJコードを識別子とする医薬品コード対応表の一製品。&quot;&quot;&quot;
+  20  
+  21      yj_code: YjCode
+  22      receipt_code: ReceiptCode
+  23      receipt_name: MedicineName
+  24      yj_name: MedicineName
+  25      effective_from: date
+  26      generic_name_code: GenericNameCode | None = None
+  27      generic_prescription_name: GenericPrescriptionName | None = None
+  28      effective_until: date | None = None
+  29      receipt_discontinued_on: date | None = None
+  30      yj_discontinued_on: date | None = None
+  31  
+  32  
+  33  @dataclass(frozen=True, slots=True)
+  34  class MedicineProduct:
+  35      &quot;&quot;&quot;医薬品の名称照合に使う不変情報。コード対応表・文書から独立する。&quot;&quot;&quot;
+  36  
+  37      yj_code: YjCode | None
+  38      brand_name: str
+  39      generic_name: str
+  40      english_name: str
+  41      hiragana_name: str
+  42  
+  43      @property
+  44      def match_group_id(self) -&gt; ProductGroupId | None:
+  45          &quot;&quot;&quot;名称照合の分類。一般名がなければ製品コードで区別する。&quot;&quot;&quot;
+  46          value = normalize_match_text(self.generic_name) or (
+  47              self.yj_code.value if self.yj_code is not None else &quot;&quot;
+  48          )
+  49          return ProductGroupId(value) if value else None</code></pre></details><details id="src-attachment"><summary><span>backend/domain/attachment/entities.py</span><small>L21–57</small></summary><p><a href="../../backend/domain/attachment/entities.py">ファイル全体を開く</a> · 以下は探索時点の抜粋です。</p><pre><code>  21  class AttachmentDocument:
+  22      &quot;&quot;&quot;添付文書全体の整合性を所有するAggregate Root。&quot;&quot;&quot;
+  23  
+  24      document_id: DocumentId
+  25      source: AttachmentSource
+  26      revisions: tuple[AttachmentRevision, ...] = ()
+  27      products: tuple[AttachmentProduct, ...] = ()
+  28      sections: tuple[AttachmentSection, ...] = ()
+  29      reference_targets: tuple[AttachmentReferenceTarget, ...] = ()
+  30  
+  31      def __post_init__(self) -&gt; None:
+  32          if len({r.reference_id for r in self.reference_targets}) != len(
+  33              self.reference_targets
+  34          ):
+  35              raise AttachmentDomainError(
+  36                  &quot;an attachment cannot contain duplicate reference targets&quot;
+  37              )
+  38          if len({p.product_code for p in self.products}) != len(self.products):
+  39              raise AttachmentDomainError(
+  40                  &quot;an attachment cannot contain duplicate products&quot;
+  41              )
+  42  
+  43          section_codes = {s.code for s in self.sections}
+  44          if len(section_codes) != len(self.sections):
+  45              raise AttachmentDomainError(
+  46                  &quot;an attachment cannot contain duplicate sections&quot;
+  47              )
+  48  
+  49          if any(
+  50              s.parent_code and s.parent_code not in section_codes for s in self.sections
+  51          ):
+  52              raise AttachmentDomainError(&quot;section parent must exist in the document&quot;)
+  53  
+  54      @property
+  55      def current_revision(self) -&gt; AttachmentRevision | None:
+  56          &quot;&quot;&quot;原本の並び順で先頭にある現行改訂を返す。&quot;&quot;&quot;
+  57          return self.revisions[0] if self.revisions else None</code></pre></details><details id="src-unit"><summary><span>backend/domain/retrieval/entities.py</span><small>L22–35</small></summary><p><a href="../../backend/domain/retrieval/entities.py">ファイル全体を開く</a> · 以下は探索時点の抜粋です。</p><pre><code>  22  class SearchUnit:
+  23      &quot;&quot;&quot;検索対象となる添付文書内の本文単位Entity。&quot;&quot;&quot;
+  24  
+  25      unit_id: SearchUnitId
+  26      document_id: DocumentId
+  27      section_code: SearchUnitSectionCode
+  28      kind: SearchUnitKind
+  29      text: SearchUnitText
+  30      product_codes: tuple[SearchUnitProductCode, ...] = ()
+  31      source_url: SearchUnitUrl | None = None
+  32      context_labels: tuple[EvidenceContextLabel, ...] = ()
+  33      blocks: tuple[SearchContentBlock, ...] = ()
+  34      revisions: tuple[DocumentRevision, ...] = ()
+  35      section_title: SearchUnitText | None = None</code></pre></details><details id="src-revision"><summary><span>backend/domain/attachment/services.py</span><small>L7–19</small></summary><p><a href="../../backend/domain/attachment/services.py">ファイル全体を開く</a> · 以下は探索時点の抜粋です。</p><pre><code>   7  def latest_attachment(
+   8      current: RegistrationVersion | None, candidate: RegistrationVersion
+   9  ) -&gt; RegistrationVersion:
+  10      &quot;&quot;&quot;登録順を使わず新しい原本を選ぶ。同年月の別原本は曖昧として拒否する。&quot;&quot;&quot;
+  11      if current is None or candidate.revised_at.value &gt; current.revised_at.value:
+  12          return candidate
+  13      if candidate.version_id == current.version_id:
+  14          return current
+  15      if candidate.revised_at == current.revised_at:
+  16          raise ConflictingRevisionError(
+  17              &quot;different originals have the same revision month&quot;
+  18          )
+  19      return current</code></pre></details><details id="src-import"><summary><span>backend/application/attachment_import/import_document.py</span><small>L44–84</small></summary><p><a href="../../backend/application/attachment_import/import_document.py">ファイル全体を開く</a> · 以下は探索時点の抜粋です。</p><pre><code>  44      async def import_document(
+  45          self, source: bytes, *, original_filename: str
+  46      ) -&gt; ImportResult:
+  47          cancelled = threading.Event()
+  48  
+  49          def check_cancel() -&gt; None:
+  50              if cancelled.is_set():
+  51                  raise ImportCancelled
+  52  
+  53          def operation() -&gt; ImportResult:
+  54              check_cancel()
+  55              decoded = self.decoder.decode(source, original_filename=original_filename)
+  56              if self.publisher is not None:
+  57                  return self.publisher.publish(
+  58                      decoded, source, check_cancel=check_cancel
+  59                  )
+  60              check_cancel()
+  61              digest = hashlib.sha256(source).hexdigest()
+  62              try:
+  63                  existing = self.store.read(decoded.document.document_id, digest)
+  64              except ImportNotFound:
+  65                  pass
+  66              else:
+  67                  return replace(existing, reused=True)
+  68              check_cancel()
+  69              bundle = self.encoder.encode(
+  70                  decoded.document,
+  71                  project_attachment(decoded.document),
+  72                  decoded.source_info,
+  73              )
+  74              check_cancel()
+  75              return self.store.commit(bundle, source, check_cancel=check_cancel)
+  76  
+  77          return await self._run(operation, cancelled)
+  78  
+  79      async def _run(self, operation: Callable[[], T], cancelled: threading.Event) -&gt; T:
+  80          with self._lock:
+  81              if self._closed:
+  82                  raise RuntimeError(&quot;Import service is closed&quot;)
+  83              native = self._executor.submit(operation)
+  84          result = asyncio.wrap_future(native)</code></pre></details><details id="src-publisher"><summary><span>backend/infrastructure/persistence/registration_publisher.py</span><small>L186–222</small></summary><p><a href="../../backend/infrastructure/persistence/registration_publisher.py">ファイル全体を開く</a> · 以下は探索時点の抜粋です。</p><pre><code> 186      def publish_inputs(
+ 187          self,
+ 188          inputs: tuple[RegistrationInput, ...],
+ 189          *,
+ 190          initial: bool = False,
+ 191          check_cancel: Callable[[], None] = lambda: None,
+ 192      ) -&gt; tuple[ImportResult, ...]:
+ 193          from .sqlite_recovery import recover_sqlite_journal, verify_schema_readiness
+ 194  
+ 195          recover_sqlite_journal(self.index_path)
+ 196          verify_schema_readiness(self.index_path)
+ 197          try:
+ 198              for item in inputs:
+ 199                  registration_version(item.decoded.document)
+ 200          except MissingOrInvalidYjError:
+ 201              raise InvalidAttachment(
+ 202                  &quot;missing_or_invalid_yj&quot;,
+ 203                  &quot;Every listed product must have a valid YJ code&quot;,
+ 204                  phase=&quot;validation&quot;,
+ 205              ) from None
+ 206          except MissingRevisionError as exc:
+ 207              raise InvalidAttachment(
+ 208                  &quot;missing_revision&quot;,
+ 209                  &quot;A revision month is required to select the latest document&quot;,
+ 210                  phase=&quot;validation&quot;,
+ 211              ) from exc
+ 212          engine = self._engine()
+ 213          phase = &quot;artifact&quot;
+ 214          attempt: RegistrationAttempt | None = None
+ 215          published = False
+ 216          try:
+ 217              with self._lock(check_cancel):
+ 218                  attempt = RegistrationAttempt(self.store.root)
+ 219                  with engine.connect() as connection:
+ 220                      before = _load_active(connection)
+ 221                      records = {
+ 222                          row[&quot;version_id&quot;]: dict(row)</code></pre></details><details id="src-lease"><summary><span>backend/infrastructure/persistence/generation_runtime.py</span><small>L403–426</small></summary><p><a href="../../backend/infrastructure/persistence/generation_runtime.py">ファイル全体を開く</a> · 以下は探索時点の抜粋です。</p><pre><code> 403      async def acquire(self):
+ 404          acquisition = asyncio.create_task(self.workers.run(self._acquire))
+ 405          try:
+ 406              lease_id, generation = await asyncio.shield(acquisition)
+ 407          except asyncio.CancelledError:
+ 408              while not acquisition.done():
+ 409                  with suppress(asyncio.CancelledError):
+ 410                      await asyncio.shield(acquisition)
+ 411              lease_id, _ = acquisition.result()
+ 412              await self._finish_release(lease_id)
+ 413              raise
+ 414          reader = _SnapshotReader(generation, self.workers, self._text_search_policy)
+ 415          try:
+ 416              yield RetrievalSnapshot(
+ 417                  generation.generation_id,
+ 418                  reader,
+ 419                  reader,
+ 420                  generation.document_count,
+ 421                  generation.unit_count,
+ 422              )
+ 423          finally:
+ 424              await self._finish_release(lease_id, reader)
+ 425  
+ 426      async def catalogue(self) -&gt; MedicineSuggester:</code></pre></details><details id="src-ui"><summary><span>frontend/features/chat/hooks/useChatWebSocket.ts</span><small>L64–125</small></summary><p><a href="../../frontend/features/chat/hooks/useChatWebSocket.ts">ファイル全体を開く</a> · 以下は探索時点の抜粋です。</p><pre><code>  64    const handleServerMessage = useCallback((data: WsServerMessage) =&gt; {
+  65      switch (data.type) {
+  66        case &quot;text_delta&quot;:
+  67          setMessages((prev) =&gt;
+  68            patchLastAssistant(prev, (last) =&gt; ({
+  69              ...last,
+  70              content: last.content + data.content,
+  71            })),
+  72          );
+  73          break;
+  74  
+  75        case &quot;sources&quot;:
+  76          setMessages((prev) =&gt;
+  77            patchLastAssistant(prev, (last) =&gt; ({
+  78              ...last,
+  79              sources: data.sources,
+  80            })),
+  81          );
+  82          break;
+  83  
+  84        case &quot;retrieval_status&quot;:
+  85          setMessages((prev) =&gt;
+  86            patchLastAssistant(prev, (last) =&gt; ({
+  87              ...last,
+  88              retrievalStatus: data.stage,
+  89              jevResponse: data.jev_response ?? last.jevResponse,
+  90            })),
+  91          );
+  92          break;
+  93  
+  94        case &quot;jev_response&quot;:
+  95          setMessages((prev) =&gt;
+  96            patchLastAssistant(prev, (last) =&gt; ({
+  97              ...last,
+  98              jevResponse: data.data,
+  99            })),
+ 100          );
+ 101          break;
+ 102  
+ 103        case &quot;text_done&quot;:
+ 104          activeRequestRef.current = false;
+ 105          setIsStreaming(false);
+ 106          break;
+ 107  
+ 108        case &quot;error&quot;:
+ 109          activeRequestRef.current = false;
+ 110          setMessages((prev) =&gt;
+ 111            patchLastAssistant(prev, (last) =&gt; ({
+ 112              ...last,
+ 113              content: data.content,
+ 114              isError: true,
+ 115            })),
+ 116          );
+ 117          setIsStreaming(false);
+ 118          break;
+ 119      }
+ 120    }, []);
+ 121  
+ 122    useEffect(() =&gt; {
+ 123      const connection = connectChatWebSocket(wsBaseUrl(), {
+ 124        onStatusChange: handleStatusChange,
+ 125        onMessage: handleServerMessage,</code></pre></details><details id="src-retry"><summary><span>frontend/features/chat/api/chatWebSocket.ts</span><small>L50–69</small></summary><p><a href="../../frontend/features/chat/api/chatWebSocket.ts">ファイル全体を開く</a> · 以下は探索時点の抜粋です。</p><pre><code>  50      ws.onclose = () =&gt; {
+  51        if (!isCurrent()) return;
+  52        socket = null;
+  53        onStatusChange(&quot;disconnected&quot;);
+  54  
+  55        const delay = Math.min(1000 * 2 ** attempt, 5000) + Math.random() * 1000;
+  56        attempt += 1;
+  57        reconnectTimer = setTimeout(connect, delay);
+  58      };
+  59  
+  60      ws.onerror = () =&gt; {
+  61        if (isCurrent()) ws.close();
+  62      };
+  63    }
+  64  
+  65    connect();
+  66  
+  67    return {
+  68      send(data) {
+  69        if (stopped || socket?.readyState !== WebSocket.OPEN) return false;</code></pre></details><details id="src-contracts"><summary><span>backend/pyproject.toml</span><small>L271–312</small></summary><p><a href="../../backend/pyproject.toml">ファイル全体を開く</a> · 以下は探索時点の抜粋です。</p><pre><code> 271  name = &quot;Domain contexts are independent&quot;
+ 272  type = &quot;independence&quot;
+ 273  modules = [&quot;backend.domain.*&quot;]
+ 274  ignore_imports = [
+ 275      &quot;backend.domain.** -&gt; backend.domain.foundation&quot;,
+ 276      &quot;backend.domain.** -&gt; backend.domain.foundation.**&quot;,
+ 277      &quot;backend.domain.** -&gt; backend.domain.shared&quot;,
+ 278      &quot;backend.domain.** -&gt; backend.domain.shared.**&quot;,
+ 279      &quot;backend.domain.** -&gt; backend.domain.*.identifiers&quot;,
+ 280  ]
+ 281  unmatched_ignore_imports_alerting = &quot;none&quot;
+ 282  
+ 283  [[tool.importlinter.contracts]]
+ 284  name = &quot;Foundation does not depend on business vocabulary&quot;
+ 285  type = &quot;forbidden&quot;
+ 286  source_modules = [&quot;backend.domain.foundation&quot;]
+ 287  forbidden_modules = [&quot;backend.domain.*&quot;]
+ 288  
+ 289  [[tool.importlinter.contracts]]
+ 290  name = &quot;Shared does not depend on business contexts&quot;
+ 291  type = &quot;forbidden&quot;
+ 292  source_modules = [&quot;backend.domain.shared&quot;]
+ 293  forbidden_modules = [&quot;backend.domain.*&quot;]
+ 294  ignore_imports = [
+ 295      &quot;backend.domain.shared.** -&gt; backend.domain.foundation&quot;,
+ 296      &quot;backend.domain.shared.** -&gt; backend.domain.foundation.**&quot;,
+ 297  ]
+ 298  unmatched_ignore_imports_alerting = &quot;none&quot;
+ 299  
+ 300  [[tool.importlinter.contracts]]
+ 301  name = &quot;Public identifiers do not expose business implementation&quot;
+ 302  type = &quot;forbidden&quot;
+ 303  source_modules = [&quot;backend.domain.*.identifiers&quot;]
+ 304  forbidden_modules = [&quot;backend.**&quot;]
+ 305  as_packages = false
+ 306  ignore_imports = [
+ 307      &quot;backend.domain.*.identifiers -&gt; backend.domain.foundation.primitives.identifiers&quot;,
+ 308  ]
+ 309  unmatched_ignore_imports_alerting = &quot;none&quot;
+ 310  
+ 311  [[tool.importlinter.contracts]]
+ 312  name = &quot;Domain primitives do not depend on value objects, entities, repositories, or services&quot;</code></pre></details><details id="src-definitions"><summary><span>backend/infrastructure/package_insert_definitions/README.md</span><small>L1–24</small></summary><p><a href="../../backend/infrastructure/package_insert_definitions/README.md">ファイル全体を開く</a> · 以下は探索時点の抜粋です。</p><pre><code>   1  # 添付文書の定義ソース
+   2  
+   3  編集先は [package_insert_catalog.json](../package_insert_catalog.json) 一つです。schema_version、意図ID、項目番号、列IDは既存の保存形式・公開契約なので維持します。
+   4  
+   5  - `sections.&lt;番号&gt;.title` は正式名称の正本です。attachmentのSectionTaxonomyへ読み込み、Applicationのdefinition_projectionから各利用側へ写します。原文見出し・本文・出典・改訂をこの名称で上書きしません。親はNumberedSectionCodeから導出します。
+   6  - `display_title` / `classification_title` は用途別の別名だけを指定します。省略時は正式名称を使います。
+   7  - 意図の `sections` は検索対象の番号配列です。固定キーワードはkeyword_priorityが小さい順で最初の一致を採用します。exclude_from_text_searchがtrueの語は除外語へ派生し、additional_stop_wordsへ重ねて定義しません。
+   8  - Jevのclassification.descriptionは説明だけを持ち、番号と名称は参照から生成します。classification.sectionsの省略時は検索対象の最初の項目です。SDK用criteriaはInfrastructureで生成します。
+   9  - 回答指示の `{section:10.1}` はApplicationで正式名称へ展開します。answer_guidance.minimum_medicinesは専用指示の薬剤数下限です。
+  10  - 相互作用列のID・名称・順はattachmentの定義です。XMLタグはPmdaXmlSettings、回答列はApplicationのAnswerPromptPolicyへ投影します。XMLの汎用タグは祖先文脈で解決します。
+  11  - 除外語・症状言い換え・見出し判定はretrievalのTextSearchPolicy、ignored_noun_suffixesはJanomeMorphologySettingsが所有します。
+  12  - 技術アダプター向けの設定dataclass（`JevClassificationSettings`、`JanomeMorphologySettings`、`PmdaXmlSettings` 等）は [definition_settings.py](../definition_settings.py) が所有します。これにより `package_insert_definitions` は他のインフラアダプター（`intent` / `morphology` / `pmda_xml`）に依存せず、各アダプター側が `definition_settings.py` を参照する単方向依存をImport Linterで強制しています。
+  13  
+  14  loaderはJSON IOとスキーマ・参照の検証を行い、不変な用途別モデルを組み立てます。get_package_insert_definitionsはプロセス内で共有し、JSON変更後は再起動が必要です。任意pathのload_package_insert_definitionsは独立して検証します。既定pathはこのファイル配置を基準に解決し、cwdに依存しません。
+  15  
+  16  読込結果の束は `infrastructure/composition/app_lifespan.py` / `main.py` / CLI などのInfrastructure組立地点だけで展開し、サービスへはintent/text/answer/XML/Jev/Janomeの必要な用途だけを渡します。schema_models/schema_validationはこのIO境界の内部入力表現で、利用側から参照しません。encoderはdecoderが確定した原本・検索投影・source情報を使い、定義を再読込しません。
+  17  
+  18  検証はリポジトリrootから行います。
+  19  
+  20  ```bash
+  21  uv run --project backend --locked python -c &quot;from backend.infrastructure.package_insert_definitions.loader import get_package_insert_definitions; get_package_insert_definitions()&quot;
+  22  pnpm test:backend
+  23  pnpm --filter backend lint
+  24  pnpm --filter backend exec uv run --locked ruff format --check .</code></pre></details></div></section><footer>2026-10-17 · medi-chat / HEAD e06485e · 静的コード探索から作成。ソースが変更された場合、抜粋・行番号・説明の再確認が必要です。</footer></main><script>const flows={"chat": [{"title": "画面から質問を送信", "layer": "frontend / hook", "text": "YJコード、会話履歴、provider・modelを送信します。生成中は次の送信を抑止。中断・エラーになった履歴は次回送信から外します。", "ref": "ui"}, {"title": "公開契約を検証・変換", "layer": "presentation", "text": "WebSocketの入力をPydanticで検証し、AppChatServiceが公開DTOをApplicationの型へ変換します。AppChatServiceとChatApplicationServiceは別の責務です。", "ref": "adapter"}, {"title": "同じ世代で医薬品を同定", "layer": "application / retrieval", "text": "snapshot_provider.acquire()の内側で登録医薬品を読み、選択YJと質問内の名称を照合します。不足や矛盾があれば確認が必要な結果を返します。", "ref": "retrieve"}, {"title": "3つの検出を並行実行", "layer": "application + ports", "text": "固定キーワード、Janomeによる形態素解析、Jevによる意図分類をタスク化し、完了した順で処理します。順番は固定ではありません。", "ref": "parallel"}, {"title": "根拠を検索・統合", "layer": "retrieval", "text": "SearchCriteriaごとの検索結果を要求内でキャッシュし、merge_evidenceで統合。条件を満たす場合はローカル検出の累積根拠を先行通知し、最後に最終根拠を返します。", "ref": "retrieve"}, {"title": "取得を終了し回答を生成", "layer": "application / chat", "text": "根拠取得のスコープを抜けてleaseを解放した後、準備済みの根拠から回答メッセージを組み立てます。確認が必要な場合はLLMを呼ばず確認文を返します。", "ref": "guard"}, {"title": "イベントで画面を更新", "layer": "presentation → frontend", "text": "sourcesは最新の累積リストで置換し、text_deltaは回答末尾へ追加。text_doneで生成中フラグを解除します。接続断では進行中の往復を中断扱いにします。", "ref": "ui"}], "import": [{"title": "XMLを受け取る", "layer": "presentation", "text": "ブラウザの/importsからmultipartでXMLを送ります。通常起動時のComposition Rootが、保存だけでなく公開登録するPublisherを注入しています。", "ref": "composition"}, {"title": "原本を解釈する", "layer": "application + XML adapter", "text": "AttachmentImportServiceがdecoderを呼び、AttachmentDocument等へ変換します。処理は専用workerに所有させ、取消時にもworkerの終了・後始末を待ちます。", "ref": "import"}, {"title": "改訂年月で公開先を選ぶ", "layer": "domain / attachment", "text": "同じYJの候補は原本の改訂年月で比較。新しい原本を採用し、古い候補で巻き戻さず、同年月の別原本は競合にします。登録順では選びません。", "ref": "revision"}, {"title": "成果物と検索世代を公開", "layer": "infrastructure", "text": "SqliteRegistrationPublisherが原本・成果物・再送識別・公開参照を管理。active製品や検索索引、世代の更新をSQLiteのトランザクションへまとめます。ファイルの所有と回復処理も担います。", "ref": "publisher"}, {"title": "読取中の旧世代を保護", "layer": "infrastructure / generation", "text": "GenerationRuntimeは取得時に世代を確保してleaseを登録。更新が公開されても進行中の取得へ別世代を混ぜず、取得終了・取消時に解放します。", "ref": "lease"}, {"title": "新しい要求へ反映する", "layer": "application + infrastructure", "text": "次の要求は公開世代の更新を検出します。旧成果物はactive参照や生存ownerのleaseを確認してからcleanupします。同じ原本の再送で旧版を復活させません。", "ref": "publisher"}]};const refs={"entry": {"path": "backend/main.py", "line": 36}, "composition": {"path": "backend/infrastructure/composition/app_lifespan.py", "line": 40}, "adapter": {"path": "backend/presentation/chat_service.py", "line": 36}, "chat": {"path": "backend/application/chat/chat_service.py", "line": 25}, "retrieve": {"path": "backend/application/retrieval/retrieve_evidence.py", "line": 33}, "parallel": {"path": "backend/application/retrieval/retrieve_evidence.py", "line": 162}, "ws": {"path": "backend/presentation/chat_websocket_routes.py", "line": 133}, "guard": {"path": "backend/application/chat/stream_reply.py", "line": 22}, "medicine": {"path": "backend/domain/medicine/entities.py", "line": 18}, "attachment": {"path": "backend/domain/attachment/entities.py", "line": 21}, "unit": {"path": "backend/domain/retrieval/entities.py", "line": 22}, "revision": {"path": "backend/domain/attachment/services.py", "line": 7}, "import": {"path": "backend/application/attachment_import/import_document.py", "line": 44}, "publisher": {"path": "backend/infrastructure/persistence/registration_publisher.py", "line": 186}, "lease": {"path": "backend/infrastructure/persistence/generation_runtime.py", "line": 403}, "ui": {"path": "frontend/features/chat/hooks/useChatWebSocket.ts", "line": 64}, "retry": {"path": "frontend/features/chat/api/chatWebSocket.ts", "line": 50}, "contracts": {"path": "backend/pyproject.toml", "line": 271}, "definitions": {"path": "backend/infrastructure/package_insert_definitions/README.md", "line": 1}};let active='chat',index=0;const el=id=>document.getElementById(id);function render(){const items=flows[active];document.querySelectorAll('[data-flow]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.flow===active)));el('steps').replaceChildren(...items.map((s,i)=>{const b=document.createElement('button');b.textContent=String(i+1).padStart(2,'0')+'  '+s.title;if(i===index)b.setAttribute('aria-current','step');b.onclick=()=>{index=i;render()};return b}));const s=items[index];el('stage-layer').textContent=s.layer;el('stage-title').textContent=s.title;el('stage-text').textContent=s.text;el('stage-ref').textContent=refs[s.ref].path+':'+refs[s.ref].line+' ↗';el('stage-ref').href='#src-'+s.ref;el('prev').disabled=index===0;el('next').disabled=index===items.length-1}document.querySelectorAll('[data-flow]').forEach(b=>b.onclick=()=>{active=b.dataset.flow;index=0;render()});el('prev').onclick=()=>{if(index>0){index--;render()}};el('next').onclick=()=>{if(index<flows[active].length-1){index++;render()}};el('source-filter').oninput=e=>{const term=e.target.value.toLowerCase();document.querySelectorAll('#source-list details').forEach(d=>d.hidden=!d.querySelector('summary').textContent.toLowerCase().includes(term))};document.querySelectorAll('a[href^="#src-"]').forEach(a=>a.addEventListener('click',()=>{const d=el(a.hash.slice(1));if(d){d.hidden=false;d.open=true}}));document.addEventListener('click',e=>{const a=e.target.closest('a[href^="#src-"]');if(a){const d=el(a.hash.slice(1));if(d){d.hidden=false;d.open=true}}});render();</script></body></html>

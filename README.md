@@ -19,7 +19,7 @@ pnpm install --frozen-lockfile
 uv sync --project backend --locked --group dev
 ```
 
-[ローカル開発手順](docs/local-development.md)に従って環境変数・PostgreSQL・原本データを準備した後、起動します。
+[ローカル開発手順](docs/development/local-development.md)に従って環境変数・PostgreSQL・原本データを準備した後、起動します。
 
 ```bash
 pnpm dev
@@ -49,12 +49,12 @@ pnpm dev
 
 ## ドキュメント
 
-- [ローカル開発・DBの準備](docs/local-development.md)
+- [ローカル開発・DBの準備](docs/development/local-development.md)
 - [バックエンドの概要](backend/README.md)
-- [バックエンドの設計・依存ルール](docs/backend-design.md)
-- [添付文書の取り込み・登録](docs/attachment-import.md)
+- [バックエンドの設計・依存ルール](docs/architecture/backend-design.md)
+- [添付文書の取り込み・登録](docs/development/attachment-import.md)
 - [PMDAデータの作業案内](data/pmda/README.md)
 - [共通定義の編集方法](backend/infrastructure/package_insert_definitions/README.md)
-- [デプロイ手順](docs/vercel-deployment.md)
+- [デプロイ手順](docs/development/vercel-deployment.md)
 - [機能一覧](docs/feature-list.md)
-- [エージェント向け資料](for-llm/README.md)
+- [エージェント向け資料](.agents/README.md)
