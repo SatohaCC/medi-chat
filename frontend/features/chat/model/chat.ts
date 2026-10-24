@@ -57,6 +57,38 @@ export const AVAILABLE_MODELS = [
 
 export type AvailableModel = (typeof AVAILABLE_MODELS)[number]["value"];
 
+export interface ParsedModelOption {
+  provider: string;
+  model: string;
+}
+
+/**
+ * Safely parses a model identifier like "openai:gpt-6-luna" into provider and model components.
+ */
+export function parseModelOption(modelValue: string): ParsedModelOption {
+  const delimiterIndex = modelValue.indexOf(":");
+  if (delimiterIndex === -1) {
+    return { provider: "", model: modelValue };
+  }
+  return {
+    provider: modelValue.slice(0, delimiterIndex),
+    model: modelValue.slice(delimiterIndex + 1),
+  };
+}
+
+export interface WsClientHistoryMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export type WsClientMessage = {
+  type: "message";
+  provider: string;
+  model: string;
+  product_yj_codes: string[];
+  messages: WsClientHistoryMessage[];
+};
+
 export type WsServerMessage =
   | { type: "sources"; sources: SourceItem[] }
   | {

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { parseModelOption } from "../model/chat.ts";
 import { connectChatWebSocket, isWsServerMessage } from "./chatWebSocket.ts";
 
 function setup(t, handlers = {}) {
@@ -260,4 +261,37 @@ test("TC-WS-03: ChatWebSocketConnection の Symbol.dispose による明示的リ
   } else {
     assert.fail("Symbol.dispose が connection に実装されていません");
   }
+});
+
+test("TC-WS-04: ChatWebSocketConnection.send はオブジェクトを自動で JSON シリアライズして送信する", (t) => {
+  const { connection, sockets } = setup(t);
+  sockets[0].open();
+
+  const clientMessage = {
+    type: "message",
+    provider: "openai",
+    model: "gpt-6-luna",
+    product_yj_codes: ["3339003F5020"],
+    messages: [{ role: "user", content: "こんにちは" }],
+  };
+
+  const ok = connection.send(clientMessage);
+  assert.equal(ok, true);
+  assert.equal(sockets[0].sent.length, 1);
+  assert.equal(sockets[0].sent[0], JSON.stringify(clientMessage));
+});
+
+test("TC-WS-05: parseModelOption はモデル指定文字列を provider と model に安全に分解する", () => {
+  assert.deepEqual(parseModelOption("openai:gpt-6-luna"), {
+    provider: "openai",
+    model: "gpt-6-luna",
+  });
+  assert.deepEqual(parseModelOption("google:gemini-3.8-flash:experimental"), {
+    provider: "google",
+    model: "gemini-3.8-flash:experimental",
+  });
+  assert.deepEqual(parseModelOption("invalid-format"), {
+    provider: "",
+    model: "invalid-format",
+  });
 });

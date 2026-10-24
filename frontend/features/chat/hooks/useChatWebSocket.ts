@@ -4,7 +4,13 @@ import { MAX_MESSAGE_LENGTH } from "../../../shared/api/chatLimits";
 import { wsBaseUrl } from "../../../shared/api/endpoints";
 import { MAX_TARGET_MEDICINES } from "../../medicine-selection/model/promptSnapshot";
 import { type ChatWebSocketConnection, connectChatWebSocket } from "../api/chatWebSocket";
-import type { ConnectionStatus, Message, WsServerMessage } from "../model/chat";
+import {
+  type ConnectionStatus,
+  type Message,
+  type WsClientMessage,
+  type WsServerMessage,
+  parseModelOption,
+} from "../model/chat";
 import { buildRequestHistory } from "../model/requestHistory";
 
 export interface SendRequest {
@@ -198,18 +204,17 @@ export function useChatWebSocket({ selectedModel }: UseChatWebSocketOptions) {
       }
 
       const requestMessages = buildRequestHistory(messages, content);
+      const { provider, model } = parseModelOption(selectedModel);
 
-      const [provider, model] = selectedModel.split(":");
+      const clientMessage: WsClientMessage = {
+        type: "message",
+        provider,
+        model,
+        product_yj_codes: [...request.productYjCodes],
+        messages: requestMessages,
+      };
 
-      const sent = connectionRef.current.send(
-        JSON.stringify({
-          type: "message",
-          provider,
-          model,
-          product_yj_codes: [...request.productYjCodes],
-          messages: requestMessages,
-        }),
-      );
+      const sent = connectionRef.current.send(clientMessage);
       if (!sent) {
         return { ok: false, reason: "not_connected" };
       }

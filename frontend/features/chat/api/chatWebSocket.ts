@@ -1,4 +1,4 @@
-import type { ConnectionStatus, WsServerMessage } from "../model/chat";
+import type { ConnectionStatus, WsClientMessage, WsServerMessage } from "../model/chat";
 
 interface ChatWebSocketHandlers {
   onStatusChange: (status: ConnectionStatus) => void;
@@ -8,7 +8,7 @@ interface ChatWebSocketHandlers {
 }
 
 export interface ChatWebSocketConnection {
-  send: (data: string) => boolean;
+  send: (data: string | WsClientMessage) => boolean;
   disconnect: () => void;
   [Symbol.dispose]?: () => void;
 }
@@ -133,7 +133,8 @@ export function connectChatWebSocket(
   const connection: ChatWebSocketConnection = {
     send(data) {
       if (stopped || socket?.readyState !== WebSocket.OPEN) return false;
-      socket.send(data);
+      const payload = typeof data === "string" ? data : JSON.stringify(data);
+      socket.send(payload);
       return true;
     },
     disconnect() {
