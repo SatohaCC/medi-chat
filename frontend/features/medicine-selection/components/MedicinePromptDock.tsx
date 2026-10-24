@@ -22,6 +22,8 @@ export interface MedicinePromptDockProps {
   onSubmit: (prompt: PromptFieldValue) => void;
   medicineEntries: MedicineEntry[];
   isStreaming?: boolean;
+  isStopping?: boolean;
+  onAbort?: () => void;
   disabled?: boolean;
   canSend?: boolean;
 }
@@ -39,6 +41,8 @@ export function MedicinePromptDock({
   onSubmit,
   medicineEntries,
   isStreaming = false,
+  isStopping = false,
+  onAbort,
   disabled = false,
   canSend = true,
 }: MedicinePromptDockProps) {
@@ -235,6 +239,8 @@ export function MedicinePromptDock({
             onSubmit={onSubmit}
             medicineEntries={medicineEntries}
             isStreaming={isStreaming}
+            isStopping={isStopping}
+            onAbort={onAbort}
             disabled={disabled}
             canSend={canSend}
           />

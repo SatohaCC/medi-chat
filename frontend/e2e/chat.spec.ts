@@ -33,7 +33,9 @@ for (const operation of ["pointer", "Enter", "Space", "input Enter"] as const) {
       { role: "user", content: "確認する質問" },
     ]);
     expect(chat.requests[0].product_yj_codes).toEqual(["3339003F5020"]);
-    await expect(chat.send).toBeDisabled();
+    await expect(
+      page.getByRole("button", { name: "回答を停止", exact: true }),
+    ).toBeEnabled();
     await page.keyboard.press("Enter");
     await page.keyboard.press("Space");
     expect(chat.requests).toHaveLength(1);
@@ -89,7 +91,9 @@ test("空白の質問を送れず、回答中は追加入力・二重送信を�
   await expect.poll(() => chat.requests.length).toBe(1);
   await expect(chat.input).toHaveText("");
   await expect(chat.input).toBeDisabled();
-  await expect(chat.send).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "回答を停止", exact: true }),
+  ).toBeEnabled();
   chat.respond({ type: "text_delta", content: "テスト回答です。" });
   await expect(page.locator('[data-message-role="assistant"]')).toContainText(
     "テスト回答です。",

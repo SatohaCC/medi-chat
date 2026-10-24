@@ -79,7 +79,8 @@ async function setupMedicineChat(
     socket = ws;
     ws.onMessage((msg) => {
       try {
-        requests.push(JSON.parse(String(msg)));
+        const message = JSON.parse(String(msg));
+        if (message.type === "message") requests.push(message);
       } catch {
         // ignore non-json
       }

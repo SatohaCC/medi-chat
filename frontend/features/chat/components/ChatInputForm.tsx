@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@react-spectrum/s2/Button";
 import type { PromptFieldValue } from "@react-spectrum/ai";
 import type { MedicineEntry, SelectedMedicineItem } from "../../medicine-selection";
 import { MedicinePromptDock } from "../../medicine-selection";
@@ -43,34 +42,23 @@ export function ChatInputForm({
   onAbort,
 }: ChatInputFormProps) {
   return (
-    <>
-      {isStreaming && (
-        <div role="status">
-          {isStopping ? (
-            "停止中"
-          ) : (
-            <Button variant="secondary" onPress={onAbort}>
-              回答を停止
-            </Button>
-          )}
-        </div>
-      )}
-      <MedicinePromptDock
-        baseline={baseline}
-        onAddBaseline={onAddBaseline}
-        onRemoveBaseline={onRemoveBaseline}
-        onClearBaseline={onClearBaseline}
-        additional={additional}
-        onRemoveAdditional={onRemoveAdditional}
-        onClearAdditional={onClearAdditional}
-        prompt={prompt}
-        onChangePrompt={onChangePrompt}
-        onSubmit={onSubmit}
-        medicineEntries={medicineEntries}
-        disabled={false}
-        isStreaming={isStreaming}
-        canSend={canSend}
-      />
-    </>
+    <MedicinePromptDock
+      baseline={baseline}
+      onAddBaseline={onAddBaseline}
+      onRemoveBaseline={onRemoveBaseline}
+      onClearBaseline={onClearBaseline}
+      additional={additional}
+      onRemoveAdditional={onRemoveAdditional}
+      onClearAdditional={onClearAdditional}
+      prompt={prompt}
+      onChangePrompt={onChangePrompt}
+      onSubmit={onSubmit}
+      medicineEntries={medicineEntries}
+      disabled={false}
+      isStreaming={isStreaming}
+      isStopping={isStopping}
+      onAbort={onAbort}
+      canSend={canSend}
+    />
   );
 }

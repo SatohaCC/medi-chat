@@ -9,7 +9,9 @@ test("WR-007 WR-009 real hook ignores foreign terminal and duplicate send", asyn
   await chat.send.click();
   await expect.poll(() => chat.requests.length).toBe(1);
   chat.respond({ type: "text_done", request_id: "b871f25a-1eb7-4c5e-8c6e-4511dce60280" });
-  await expect(chat.send).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "回答を停止", exact: true }),
+  ).toBeEnabled();
   chat.respond({ type: "text_delta", content: "部分テスト回答" });
   await expect(page.getByText("部分テスト回答", { exact: true })).toBeVisible();
   chat.respond({ type: "text_done" });
@@ -17,7 +19,9 @@ test("WR-007 WR-009 real hook ignores foreign terminal and duplicate send", asyn
   await chat.send.click();
   await expect.poll(() => chat.requests.length).toBe(2);
   chat.respond({ type: "text_done", request_id: chat.requests[0].request_id });
-  await expect(chat.send).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "回答を停止", exact: true }),
+  ).toBeEnabled();
 });
 
 test("WR-019 WR-049 stopping waits for terminal and excludes partial history", async ({
@@ -29,16 +33,28 @@ test("WR-019 WR-049 stopping waits for terminal and excludes partial history", a
   await expect.poll(() => chat.requests.length).toBe(1);
   chat.respond({ type: "text_delta", content: "部分テスト回答" });
   const stop = page.getByRole("button", { name: "回答を停止", exact: true });
+  await stop.evaluate((button) =>
+    button.setAttribute("data-action-identity", "retained"),
+  );
+  await expect(page.getByTestId("medicine-prompt-field").getByRole("button")).toHaveCount(
+    1,
+  );
+  await chat.input.dispatchEvent("keydown", { key: "Enter", code: "Enter" });
+  expect(chat.controls.filter((control) => control.type === "abort")).toHaveLength(0);
   await stop.focus();
   await stop.press("Enter");
   await expect(page.getByText("停止中", { exact: true })).toBeVisible();
-  await expect(chat.send).toBeDisabled();
+  const stopping = page.getByRole("button", { name: "停止中", exact: true });
+  await expect(stopping).toBeDisabled();
+  await expect(stopping).toHaveAttribute("data-action-identity", "retained");
+  await stopping.dispatchEvent("click");
   await expect.poll(() => chat.controls.filter((c) => c.type === "abort").length).toBe(1);
   expect(chat.controls.find((c) => c.type === "abort")?.request_id).toBe(
     chat.requests[0].request_id,
   );
   chat.respond({ type: "aborted" });
   await expect(page.getByText("部分テスト回答", { exact: true })).toBeVisible();
+  await expect(chat.send).toHaveAttribute("data-action-identity", "retained");
   await chat.input.fill("テスト質問B");
   await chat.send.click();
   await expect.poll(() => chat.requests.length).toBe(2);

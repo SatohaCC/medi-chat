@@ -8,6 +8,7 @@ import {
 } from "@react-spectrum/ai";
 import { Button } from "@react-spectrum/s2/Button";
 import Send from "@react-spectrum/s2/icons/ArrowUpSend";
+import Stop from "@react-spectrum/s2/icons/StopProcessing";
 import * as stylex from "@stylexjs/stylex";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TokenFieldContext } from "react-aria-components/TokenField";
@@ -23,6 +24,8 @@ export interface MedicinePromptFieldProps {
   onSubmit: (prompt: PromptFieldValue) => void;
   medicineEntries: MedicineEntry[];
   isStreaming?: boolean;
+  isStopping?: boolean;
+  onAbort?: () => void;
   disabled?: boolean;
   canSend?: boolean;
 }
@@ -33,6 +36,8 @@ export function MedicinePromptField({
   onSubmit,
   medicineEntries,
   isStreaming = false,
+  isStopping = false,
+  onAbort,
   disabled = false,
   canSend = true,
 }: MedicinePromptFieldProps) {
@@ -128,12 +133,17 @@ export function MedicinePromptField({
           <Button
             variant="primary"
             staticColor="auto"
-            aria-label="送信"
-            isDisabled={Boolean(blocked)}
-            onPress={() => handleSubmit(value)}
+            aria-label={isStreaming ? (isStopping ? "停止中" : "回答を停止") : "送信"}
+            isDisabled={isStreaming ? isStopping : Boolean(blocked)}
+            onPress={() => {
+              if (isStreaming) {
+                if (!isStopping) onAbort?.();
+              } else handleSubmit(value);
+            }}
           >
-            <Send />
+            {isStreaming ? <Stop /> : <Send />}
           </Button>
+          {isStopping && <span role="status">停止中</span>}
         </div>
       </PromptField>
       {tooLong && (
