@@ -3,7 +3,7 @@
 from pathlib import Path
 
 import pytest
-from scripts.application_architecture import check, main
+from scripts.checks.application_architecture import check, main
 
 CONFIG = {
     "features": {
@@ -300,7 +300,7 @@ def test_public_module_import_forms_are_equivalent(tmp_path, source):
 
 
 def test_cli_uses_script_root_when_called_from_another_directory(tmp_path, monkeypatch):
-    import scripts.application_architecture as harness
+    import scripts.checks.application_architecture as harness
     from backend.tests.support.paths import BACKEND_ROOT
 
     monkeypatch.chdir(tmp_path)

@@ -10,7 +10,7 @@ import { cleanupFixture } from "./helpers/postgres-fixture";
 const root = resolve("..");
 const evidence = resolve(
   process.env.MEDI_CHAT_E2E_EVIDENCE ||
-    "../for-llm/progress/20261010-browser-xml-import-evidence/unit-16",
+    "../.agents/work/20261010-browser-xml-import/evidence/unit-16",
 );
 
 test("TC137 real browser three confirmations and normal single/pair without API interception", async ({

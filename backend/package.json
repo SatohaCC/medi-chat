@@ -22,10 +22,10 @@
     "db:rebuild": "cd .. && uv run --project backend --locked python -m backend.infrastructure.cli.manage_postgres --database-env MEDI_CHAT_MIGRATION_DATABASE_URL rebuild --confirm-schema public",
     "db:maintenance": "cd .. && uv run --project backend --locked python -m backend.infrastructure.cli.manage_postgres --database-env MEDI_CHAT_DATABASE_URL maintenance",
     "db:export": "cd .. && uv run --project backend --locked python -m backend.infrastructure.cli.manage_postgres --database-env MEDI_CHAT_DATABASE_URL export",
-    "lint:application": "cd .. && uv run --project backend --locked python scripts/application_architecture.py",
-    "lint:application:audit": "cd .. && uv run --project backend --locked python scripts/application_architecture.py",
+    "lint:application": "cd .. && uv run --project backend --locked python scripts/checks/application_architecture.py",
+    "lint:application:audit": "cd .. && uv run --project backend --locked python scripts/checks/application_architecture.py",
     "lint:application:harness": "uv run --locked pytest tests/architecture/test_application_harness.py -q",
-    "lint:domain": "cd .. && uv run --project backend --locked python scripts/domain_architecture.py",
+    "lint:domain": "cd .. && uv run --project backend --locked python scripts/checks/domain_architecture.py",
     "lint:domain:harness": "uv run --locked pytest tests/architecture/test_domain_harness.py -q"
   }
 }

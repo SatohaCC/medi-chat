@@ -27,7 +27,9 @@ export const styles = stylex.create({
   },
   item: {
     backgroundColor: "var(--assistant-bg)",
-    border: "1px solid var(--border)",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "var(--border)",
     borderRadius: 8,
     padding: 16,
     minWidth: 0,
@@ -64,7 +66,13 @@ export const styles = stylex.create({
     backgroundColor: "var(--bg)",
     whiteSpace: "nowrap",
   },
-  active: { color: "var(--fg)", fontWeight: 600, border: "1px solid var(--border)" },
+  active: {
+    color: "var(--fg)",
+    fontWeight: 600,
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "var(--border)",
+  },
   fingerprint: {
     fontSize: 11,
     color: "var(--muted)",

@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
-from scripts.domain_architecture import check, main
+from scripts.checks.domain_architecture import check, main
 
 
 def write(root: Path, files: dict[str, str]) -> None:
@@ -302,9 +302,9 @@ def test_standard_lint_and_ci_enforce_domain_harness():
         "scripts"
     ]
     assert "pnpm run lint:domain && pnpm run lint:domain:harness" in scripts["lint"]
-    assert "scripts/domain_architecture.py" in scripts["lint:domain"]
+    assert "scripts/checks/domain_architecture.py" in scripts["lint:domain"]
     assert "test_domain_harness.py" in scripts["lint:domain:harness"]
-    assert "python scripts/domain_architecture.py" in (
+    assert "pnpm quality:backend" in (
         root / ".github/workflows/postgres-contracts.yml"
     ).read_text(encoding="utf-8")
 

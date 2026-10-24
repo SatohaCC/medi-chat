@@ -1,3 +1,15 @@
 # 原本のSHA-256をOS間で一致させるため、XMLの改行を変換しない。
 data_tools/data/**/*.xml -text
 scripts/postgres/*.sh text eol=lf
+
+# Frontend source files use the same line endings as Biome on every OS.
+frontend/**/*.ts text eol=lf
+frontend/**/*.tsx text eol=lf
+frontend/**/*.js text eol=lf
+frontend/**/*.jsx text eol=lf
+frontend/**/*.mjs text eol=lf
+frontend/**/*.cjs text eol=lf
+frontend/**/*.css text eol=lf
+frontend/**/*.json text eol=lf
+# Fixture bytes are provenance-bearing inputs, not formatting targets.
+frontend/**/fixtures/** -text

@@ -32,17 +32,6 @@ dev = [
     "ruff>=0.16.9",
 ]
 
-[tool.pytest.ini_options]
-markers = [
-    "postgres: requires the explicitly configured real PostgreSQL test database",
-    "source_data: requires untracked PMDA originals or generated source artifacts",
-]
-pythonpath = [".."]
-testpaths = ["tests"]
-filterwarnings = [
-    "ignore::DeprecationWarning:google.genai.types",
-]
-
 [tool.importlinter]
 root_package = "backend"
 

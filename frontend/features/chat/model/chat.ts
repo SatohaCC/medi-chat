@@ -1,4 +1,4 @@
-import type {JevResponseData} from "./jev";
+import type { JevResponseData } from "./jev";
 
 export interface SourceReference {
   kind?: string;
@@ -52,7 +52,7 @@ export interface ModelOption {
 export const AVAILABLE_MODELS: ModelOption[] = [
   { value: "openai:gpt-6-luna", label: "OpenAI (GPT-6 Luna)" },
   { value: "openai:gpt-5.6-luna", label: "OpenAI (GPT-5.6 Luna)" },
-//   { value: "gemini:gemini-3.8-flash", label: "Google (Gemini 3.8 Flash)" },
+  //   { value: "gemini:gemini-3.8-flash", label: "Google (Gemini 3.8 Flash)" },
 ];
 
 export type WsServerMessage =
