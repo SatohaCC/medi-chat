@@ -18,7 +18,7 @@ from backend.application.retrieval.queries.services.intent_detection import (
 )
 from backend.application.retrieval.values import IntentName, Probability
 from backend.infrastructure.intent.jev_intent_mapping import map_jev_intent_result
-from backend.infrastructure.package_insert_definitions.assembly import (
+from backend.infrastructure.package_insert_definitions.definition_assembly import (
     get_package_insert_definitions,
 )
 from backend.tests.application.chat.test_answer_preparation import MedicineReader

@@ -15,11 +15,11 @@ from .config.origin_settings import read_allowed_origins
 from .config.runtime_environment import load_runtime_environment
 from .infrastructure.composition.app_lifespan import create_app_lifespan
 from .infrastructure.intent.jev_classifier import JevIntentClassifier
+from .infrastructure.morphology.janome_keyword_extraction import get_janome_tokenizer
 from .infrastructure.morphology.janome_keyword_extractor import (
     JanomeKeywordExtractor,
 )
-from .infrastructure.morphology.keyword_extraction import get_janome_tokenizer
-from .infrastructure.package_insert_definitions.assembly import (
+from .infrastructure.package_insert_definitions.definition_assembly import (
     get_package_insert_definitions,
 )
 from .presentation.access_control import AccessControlMiddleware

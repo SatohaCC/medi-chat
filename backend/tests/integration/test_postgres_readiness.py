@@ -3,15 +3,15 @@
 import copy
 
 import pytest
-from backend.infrastructure.persistence import postgres_schema as s
-from backend.infrastructure.persistence.postgres_readiness import (
-    verify_postgres_readiness,
-)
-from backend.infrastructure.persistence.registration_models import (
+from backend.infrastructure.persistence.registration.registration_payloads import (
     FigureInput,
     PostgresRegistrationInput,
 )
-from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
+from backend.infrastructure.persistence.runtime.postgres_readiness import (
+    verify_postgres_readiness,
+)
+from backend.infrastructure.persistence.schemas import attachment_tables as s
+from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
 from backend.tests.integration.test_postgres_registration import (
     pg_publisher as pg_publisher,
 )
@@ -127,7 +127,7 @@ def test_pg004_035_runtime_select_permission_failure_is_private(
 def test_pg004_035_unavailable_connection_is_private_and_has_no_fallback(pg_engines):
     import socket
 
-    from backend.infrastructure.persistence.postgres_engine import (
+    from backend.infrastructure.persistence.runtime.postgres_engine import (
         create_postgres_engine,
     )
 

@@ -55,8 +55,10 @@ from backend.infrastructure.intent.jev_classifier import JevIntentClassifier
 from backend.infrastructure.morphology.janome_keyword_extractor import (
     JanomeKeywordExtractor,
 )
-from backend.infrastructure.package_insert_definitions import assembly
-from backend.infrastructure.package_insert_definitions.assembly import (
+from backend.infrastructure.package_insert_definitions import (
+    definition_assembly as assembly,
+)
+from backend.infrastructure.package_insert_definitions.definition_assembly import (
     build_package_insert_definitions,
     get_package_insert_definitions,
 )
@@ -64,7 +66,7 @@ from backend.infrastructure.package_insert_definitions.xml_settings import (
     DEFAULT_XML_TAGS,
     build_xml_settings,
 )
-from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
+from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
 from backend.tests.support.definition_fixtures import supplementary_definitions
 
 

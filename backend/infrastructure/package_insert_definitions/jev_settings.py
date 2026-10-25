@@ -9,8 +9,9 @@ from backend.application.retrieval.queries.policies.standard import (
     ClassificationRule,
 )
 from backend.domain.attachment.value_objects import SectionTaxonomy
-
-from .definition_settings import JevClassificationSettings
+from backend.infrastructure.package_insert_definitions.definition_settings import (
+    JevClassificationSettings,
+)
 
 
 def build_jev_settings(

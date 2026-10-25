@@ -8,7 +8,7 @@ import pytest
 
 
 def test_purpose_models_keep_same_default_targets_and_labels() -> None:
-    from backend.infrastructure.package_insert_definitions.assembly import (
+    from backend.infrastructure.package_insert_definitions.definition_assembly import (
         get_package_insert_definitions,
     )
 
@@ -69,9 +69,13 @@ def test_tc01_single_source_bytes_and_tc03_constructor_ownership() -> None:
     )
 
     # Definition source is Python; JSON source/loader are no longer supported.
-    from backend.infrastructure.package_insert_definitions import assembly
-    from backend.infrastructure.persistence.postgres_runtime import PostgresRuntime
-    from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
+    from backend.infrastructure.package_insert_definitions import (
+        definition_assembly as assembly,
+    )
+    from backend.infrastructure.persistence.queries.postgres_search_snapshot_provider import (
+        PostgresRuntime,
+    )
+    from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
     from backend.presentation.chat_service import AppChatService
     from backend.project_paths import PROJECT_ROOT
 
@@ -108,7 +112,7 @@ def test_tc01_single_source_bytes_and_tc03_constructor_ownership() -> None:
     ],
 )
 def test_tc04_every_purpose_nested_mapping_is_readonly(member: str) -> None:
-    from backend.infrastructure.package_insert_definitions.assembly import (
+    from backend.infrastructure.package_insert_definitions.definition_assembly import (
         get_package_insert_definitions,
     )
 

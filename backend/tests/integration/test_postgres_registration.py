@@ -29,24 +29,27 @@ from backend.application.attachment_import.queries.import_history import (
 )
 from backend.domain.attachment.primitives import AttachmentSha256
 from backend.domain.attachment.value_objects import AttachmentFigure
-from backend.infrastructure.persistence import postgres_schema as s
-from backend.infrastructure.persistence.attachment_document_mapping import (
+from backend.infrastructure.document_import.original_document_registration_adapter import (
+    OriginalDocumentRegistration,
+)
+from backend.infrastructure.persistence.mappings.attachment_document_mapping import (
     document_from_payload,
     document_to_payload,
 )
-from backend.infrastructure.persistence.import_workers import ImportWorkers
-from backend.infrastructure.persistence.original_document_registration import (
-    OriginalDocumentRegistration,
+from backend.infrastructure.persistence.queries.postgres_import_query_reader import (
+    PostgresImportQueries,
 )
-from backend.infrastructure.persistence.postgres_registration import (
+from backend.infrastructure.persistence.registration.postgres_registration_publisher import (
     PostgresRegistrationPublisher,
 )
-from backend.infrastructure.persistence.registration_models import (
+from backend.infrastructure.persistence.registration.registration_payloads import (
     FigureInput,
     PostgresRegistrationInput,
 )
-from backend.infrastructure.pmda_xml.artifact_mapping import PmdaArtifactEncoder
-from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
+from backend.infrastructure.persistence.runtime.import_workers import ImportWorkers
+from backend.infrastructure.persistence.schemas import attachment_tables as s
+from backend.infrastructure.pmda_xml.pmda_artifact_encoder import PmdaArtifactEncoder
+from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
 from backend.presentation.attachment_import_routes import router
 from backend.tests.infrastructure.persistence.test_attachment_document_mapping import (
     complete_document,
@@ -84,7 +87,7 @@ async def pg_client(pg_publisher):
     app.include_router(router)
     app.state.attachment_import_service = service
     app.state.attachment_import_queries = ImportHistoryQueries(
-        reader=pg_publisher.results, executor=service._executor
+        reader=PostgresImportQueries(pg_publisher.engine), executor=service._executor
     )
     try:
         async with httpx.AsyncClient(
@@ -151,9 +154,9 @@ def test_pg006_007_009_original_and_figures_export_in_new_process(
     script = """
 import hashlib,json,os
 from sqlalchemy import select
-from backend.infrastructure.persistence.postgres_engine import create_postgres_engine
-from backend.infrastructure.persistence import postgres_schema as s
-from backend.infrastructure.persistence.attachment_document_mapping import document_from_payload
+from backend.infrastructure.persistence.runtime.postgres_engine import create_postgres_engine
+from backend.infrastructure.persistence.schemas import attachment_tables as s
+from backend.infrastructure.persistence.mappings.attachment_document_mapping import document_from_payload
 engine=create_postgres_engine(os.environ['TEST_RUNTIME_DATABASE_URL'],schema=os.environ['PG_EXPORT_SCHEMA'])
 with engine.connect() as c:
  row=c.execute(select(s.versions).where(s.versions.c.version_id==os.environ['PG_EXPORT_VERSION'])).mappings().one()
@@ -195,7 +198,9 @@ def test_pg011_resend_does_not_reencode_or_revive_a_known_receipt(
     if deleted:
         publish(pg_publisher, source("テスト更新済み", revised_at="2026-11"))
     before = (
-        pg_publisher.results.read_result(first.document_id, first.source_sha256)
+        PostgresImportQueries(pg_publisher.engine).read_result(
+            first.document_id, first.source_sha256
+        )
         if not deleted
         else None
     )
@@ -230,9 +235,9 @@ def test_pg011_receipt_reuse_and_real_input_hash(pg_engines, pg_publisher):
     assert first.generation_id == reused.generation_id
     assert first.active_yj_codes == ("111111111111",)
     assert (
-        pg_publisher.results.read_result(
-            first.document_id, first.source_sha256
-        ).registration_sequence
+        PostgresImportQueries(pg_publisher.engine)
+        .read_result(first.document_id, first.source_sha256)
+        .registration_sequence
         == 1
     )
     with pg_engines[1].connect() as connection:
@@ -250,7 +255,7 @@ def test_pg012_revision_priority_and_no_regression(pg_publisher, order):
         for result in results
         if result.source_sha256 == hashlib.sha256(new).hexdigest()
     )
-    assert pg_publisher.results.read_result(
+    assert PostgresImportQueries(pg_publisher.engine).read_result(
         newest.document_id, newest.source_sha256
     ).active_yj_codes == ("111111111111",)
     with pg_publisher.engine.connect() as connection:
@@ -293,7 +298,7 @@ def test_pg015_partial_old_yj_remains_active(pg_publisher):
         pg_publisher, source("テスト旧共通", ("111111111111", "222222222222"))
     )
     new = publish(pg_publisher, source("テストA新版", revised_at="2026-11"))
-    assert pg_publisher.results.read_result(
+    assert PostgresImportQueries(pg_publisher.engine).read_result(
         old.document_id, old.source_sha256
     ).active_yj_codes == ("222222222222",)
     assert new.active_yj_codes == ("111111111111",)
@@ -452,7 +457,9 @@ def test_pg020_022_cleanup_deletes_payload_and_replay_never_revives(
     old_id = f"{old.document_id}:{old.source_sha256}"
     assert new.deleted_version_ids == (old_id,)
     with pytest.raises(ImportGone) as failure:
-        pg_publisher.results.read_result(old.document_id, old.source_sha256)
+        PostgresImportQueries(pg_publisher.engine).read_result(
+            old.document_id, old.source_sha256
+        )
     assert (
         failure.value.code == "version_deleted" and failure.value.phase == "publication"
     )
@@ -505,7 +512,9 @@ def test_pg021_cleanup_failure_is_pending_and_retries_atomically(
         ).scalar_one()
     pg_publisher.maintenance.fault = lambda phase: None
     pg_publisher.maintenance.cleanup()
-    result = pg_publisher.results.read_result(new.document_id, new.source_sha256)
+    result = PostgresImportQueries(pg_publisher.engine).read_result(
+        new.document_id, new.source_sha256
+    )
     assert result.deleted_version_ids == (old_id,) and result.cleanup_pending == ()
 
 
@@ -995,9 +1004,9 @@ def test_pg009_handwritten_complete_domain_restored_from_jsonb_in_new_process(
     script = """
 import os,json
 from sqlalchemy import select
-from backend.infrastructure.persistence.postgres_engine import create_postgres_engine
-from backend.infrastructure.persistence import postgres_schema as s
-from backend.infrastructure.persistence.attachment_document_mapping import document_from_payload
+from backend.infrastructure.persistence.runtime.postgres_engine import create_postgres_engine
+from backend.infrastructure.persistence.schemas import attachment_tables as s
+from backend.infrastructure.persistence.mappings.attachment_document_mapping import document_from_payload
 from backend.tests.infrastructure.persistence.test_attachment_document_mapping import observe
 engine=create_postgres_engine(os.environ['TEST_RUNTIME_DATABASE_URL'],schema=os.environ['PG_EXPORT_SCHEMA'])
 with engine.connect() as connection:
@@ -1086,7 +1095,7 @@ def test_pg021_real_database_error_rolls_back_cleanup_and_two_maintenance_runs_c
             ).scalar_one()
         pg_publisher.maintenance.cleanup()
         pg_publisher.maintenance.cleanup()
-        assert pg_publisher.results.read_result(
+        assert PostgresImportQueries(pg_publisher.engine).read_result(
             new.document_id, new.source_sha256
         ).deleted_version_ids == (old_id,)
     finally:

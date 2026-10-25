@@ -16,15 +16,15 @@ from backend.application.attachment_import.interfaces.upload_import_receipts imp
     UploadImportReceipts,
 )
 from backend.application.file_upload.commands.models import UploadedSource, UploadSpec
-from backend.infrastructure.import_payloads import (
+from backend.infrastructure.document_import.attachment_contracts import (
     AttachmentDecoder,
     AttachmentRegistrationPublisher,
 )
-from backend.infrastructure.persistence.import_workers import ImportWorkers
-from backend.infrastructure.persistence.original_document_registration import (
+from backend.infrastructure.document_import.original_document_registration_adapter import (
     OriginalDocumentRegistration,
 )
-from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
+from backend.infrastructure.persistence.runtime.import_workers import ImportWorkers
+from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
 from backend.tests.support.attachment_import_fixtures import encoded, xml_source
 
 

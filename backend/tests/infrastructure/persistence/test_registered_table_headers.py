@@ -7,11 +7,11 @@ from backend.application.indexing.queries.services.attachment_projection import 
     project_active_attachment,
 )
 from backend.domain.medicine.identifiers import YjCode
-from backend.infrastructure.index_payloads import (
+from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
+from backend.infrastructure.serialization.search_payload_codec import (
     encode_registered_units,
     registered_unit_text,
 )
-from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
 from backend.tests.support.paths import PROJECT_ROOT
 
 CASES = [

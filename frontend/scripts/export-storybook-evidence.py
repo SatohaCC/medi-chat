@@ -20,12 +20,16 @@ from backend.application.retrieval.values import DetectionSource
 from backend.config.database_settings import resolve_postgres_database_settings
 from backend.config.runtime_environment import load_runtime_environment
 from backend.domain.medicine.value_objects import MedicineMatch
-from backend.infrastructure.persistence.postgres_engine import create_postgres_engine
-from backend.infrastructure.persistence.postgres_readiness import (
+from backend.infrastructure.persistence.queries.postgres_search_snapshot_provider import (
+    PostgresRuntime,
+)
+from backend.infrastructure.persistence.runtime.postgres_engine import (
+    create_postgres_engine,
+)
+from backend.infrastructure.persistence.runtime.postgres_readiness import (
     verify_postgres_readiness,
 )
-from backend.infrastructure.persistence.postgres_runtime import PostgresRuntime
-from backend.infrastructure.persistence.read_workers import ReadWorkers
+from backend.infrastructure.persistence.runtime.read_workers import ReadWorkers
 from backend.presentation.chat_dto_mapper import evidence_to_api
 
 

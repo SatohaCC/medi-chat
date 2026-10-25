@@ -18,7 +18,7 @@ from backend.domain.foundation.primitives.primitives import BaseFiniteFloat, Bas
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import BrandName, GenericName, MatchedAlias
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
-from backend.infrastructure.persistence.read_workers import ReadWorkers
+from backend.infrastructure.persistence.runtime.read_workers import ReadWorkers
 from backend.tests.support.postgres_fixtures import pg_api as pg_api
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
 from sqlalchemy import event

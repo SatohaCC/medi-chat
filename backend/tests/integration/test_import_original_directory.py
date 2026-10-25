@@ -2,10 +2,10 @@
 
 import os
 
-from backend.infrastructure.persistence.registration_models import (
+from backend.infrastructure.persistence.registration.registration_payloads import (
     PostgresRegistrationInput as RegistrationInput,
 )
-from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
+from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
 from backend.tests.integration.test_postgres_registration import (
     pg_publisher as pg_publisher,
 )

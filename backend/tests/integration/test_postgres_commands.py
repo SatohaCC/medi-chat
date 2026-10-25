@@ -5,9 +5,11 @@ import subprocess
 import sys
 
 import pytest
-from backend.infrastructure.persistence import postgres_schema
-from backend.infrastructure.persistence.postgres_readiness import (
+from backend.infrastructure.persistence.runtime.postgres_readiness import (
     verify_postgres_readiness,
+)
+from backend.infrastructure.persistence.schemas import (
+    attachment_tables as postgres_schema,
 )
 from backend.tests.integration.test_postgres_registration import (
     pg_publisher as pg_publisher,
@@ -175,7 +177,7 @@ def test_pg043_rebuild_from_complete_db_structure_preserves_publication_and_byte
         connection.execute(postgres_schema.unit_products.delete())
     with pytest.raises(RuntimeError, match="payload_integrity_invalid"):
         verify_postgres_readiness(pg_engines[1])
-    script = "from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder; PmdaXmlDecoder.decode=lambda *a, **k: (_ for _ in ()).throw(AssertionError('DB rebuild must restore the complete structure')); from backend.infrastructure.cli.manage_postgres import main; raise SystemExit(main())"
+    script = "from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder; PmdaXmlDecoder.decode=lambda *a, **k: (_ for _ in ()).throw(AssertionError('DB rebuild must restore the complete structure')); from backend.infrastructure.cli.manage_postgres import main; raise SystemExit(main())"
     result = subprocess.run(
         [
             sys.executable,

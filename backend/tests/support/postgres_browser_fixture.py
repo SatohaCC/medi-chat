@@ -10,15 +10,17 @@ from pathlib import Path
 from alembic import command
 from alembic.config import Config
 from backend.infrastructure.cli.manage_postgres import load_inputs
-from backend.infrastructure.persistence.postgres_engine import create_postgres_engine
-from backend.infrastructure.persistence.postgres_readiness import (
-    verify_postgres_readiness,
-)
-from backend.infrastructure.persistence.postgres_registration import (
+from backend.infrastructure.persistence.registration.postgres_registration_publisher import (
     PostgresRegistrationPublisher,
 )
-from backend.infrastructure.pmda_xml.artifact_mapping import PmdaArtifactEncoder
-from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
+from backend.infrastructure.persistence.runtime.postgres_engine import (
+    create_postgres_engine,
+)
+from backend.infrastructure.persistence.runtime.postgres_readiness import (
+    verify_postgres_readiness,
+)
+from backend.infrastructure.pmda_xml.pmda_artifact_encoder import PmdaArtifactEncoder
+from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
 from backend.project_paths import BACKEND_DIR, PROJECT_ROOT
 from backend.tests.support.attachment_import_fixtures import xml_source
 from backend.tests.support.postgres_fixtures import validate_test_database_url

@@ -111,7 +111,7 @@ forbidden_modules = [
 ]
 as_packages = false
 ignore_imports = [
-    "backend.infrastructure.composition.configured_probe -> backend.main",
+    "backend.infrastructure.cli.configured_probe -> backend.main",
 ]
 unmatched_ignore_imports_alerting = "none"
 
@@ -231,15 +231,23 @@ forbidden_modules = [
 [[tool.importlinter.contracts]]
 name = "Infrastructure adapters do not depend on composition or CLI"
 type = "forbidden"
-source_modules = ["backend.infrastructure.*"]
+source_modules = [
+    "backend.infrastructure.persistence",
+    "backend.infrastructure.document_import",
+    "backend.infrastructure.serialization",
+    "backend.infrastructure.llm",
+    "backend.infrastructure.intent",
+    "backend.infrastructure.morphology",
+    "backend.infrastructure.pmda_xml",
+    "backend.infrastructure.sources",
+    "backend.infrastructure.authentication",
+    "backend.infrastructure.package_insert_definitions",
+]
+as_packages = true
 forbidden_modules = [
     "backend.infrastructure.composition",
     "backend.infrastructure.cli",
 ]
-ignore_imports = [
-    "backend.infrastructure.cli.** -> backend.infrastructure.composition.**",
-]
-unmatched_ignore_imports_alerting = "none"
 
 [[tool.importlinter.contracts]]
 name = "Package insert definitions do not depend on other infrastructure adapters"
@@ -251,12 +259,20 @@ forbidden_modules = ["backend.infrastructure.*"]
 name = "Infrastructure payload mappers do not depend on adapter packages"
 type = "forbidden"
 source_modules = [
-    "backend.infrastructure.evidence_mapping",
-    "backend.infrastructure.index_payloads",
-    "backend.infrastructure.import_payloads",
+    "backend.infrastructure.serialization",
+    "backend.infrastructure.document_import.attachment_payloads",
+    "backend.infrastructure.document_import.attachment_contracts",
 ]
 forbidden_modules = [
-    "backend.infrastructure.*",
+    "backend.infrastructure.persistence",
+    "backend.infrastructure.llm",
+    "backend.infrastructure.intent",
+    "backend.infrastructure.morphology",
+    "backend.infrastructure.pmda_xml",
+    "backend.infrastructure.sources",
+    "backend.infrastructure.authentication",
+    "backend.infrastructure.composition",
+    "backend.infrastructure.cli",
 ]
 
 [[tool.importlinter.contracts]]

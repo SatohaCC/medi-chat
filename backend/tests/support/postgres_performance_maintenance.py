@@ -5,9 +5,11 @@ import os
 import time
 from pathlib import Path
 
-from backend.infrastructure.persistence.postgres_engine import create_postgres_engine
-from backend.infrastructure.persistence.postgres_registration_cleanup import (
+from backend.infrastructure.persistence.maintenance.postgres_registration_cleanup import (
     PostgresRegistrationCleanup,
+)
+from backend.infrastructure.persistence.runtime.postgres_engine import (
+    create_postgres_engine,
 )
 from sqlalchemy import text
 

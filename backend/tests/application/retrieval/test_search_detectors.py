@@ -11,7 +11,7 @@ from backend.application.retrieval.queries.services.keyword_detection import (
 from backend.infrastructure.morphology.janome_keyword_extractor import (
     JanomeKeywordExtractor,
 )
-from backend.infrastructure.package_insert_definitions.assembly import (
+from backend.infrastructure.package_insert_definitions.definition_assembly import (
     get_package_insert_definitions,
 )
 

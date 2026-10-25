@@ -13,33 +13,41 @@ from alembic.config import Config
 from sqlalchemy import delete, insert, select, text
 from sqlalchemy.exc import SQLAlchemyError
 
+import backend.infrastructure.persistence.schemas.attachment_tables as s
 from backend.application.attachment_import.errors import AttachmentImportError
 from backend.config.runtime_environment import load_runtime_environment
 from backend.domain.foundation.json_types import JsonValue
-from backend.infrastructure.persistence import postgres_schema as s
-from backend.infrastructure.persistence.attachment_document_mapping import (
-    document_from_payload,
-)
-from backend.infrastructure.persistence.postgres_engine import create_postgres_engine
-from backend.infrastructure.persistence.postgres_integrity import PROJECTION_FINGERPRINT
-from backend.infrastructure.persistence.postgres_projection import projection_records
-from backend.infrastructure.persistence.postgres_readiness import (
-    verify_postgres_readiness,
-)
-from backend.infrastructure.persistence.postgres_registration import (
-    PostgresRegistrationPublisher,
-)
-from backend.infrastructure.persistence.postgres_registration_cleanup import (
+from backend.infrastructure.persistence.maintenance.postgres_registration_cleanup import (
     PostgresRegistrationCleanup,
 )
-from backend.infrastructure.persistence.postgres_upload import PostgresUploadStore
-from backend.infrastructure.persistence.registration_models import (
+from backend.infrastructure.persistence.mappings.attachment_document_mapping import (
+    document_from_payload,
+)
+from backend.infrastructure.persistence.mappings.search_projection_mapping import (
+    projection_records,
+)
+from backend.infrastructure.persistence.registration.postgres_registration_publisher import (
+    PostgresRegistrationPublisher,
+)
+from backend.infrastructure.persistence.registration.registration_payloads import (
     FigureInput,
     PostgresRegistrationInput,
 )
-from backend.infrastructure.pmda_xml.artifact_mapping import PmdaArtifactEncoder
-from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
-from backend.infrastructure.pmda_xml.safe_parser import parse_source
+from backend.infrastructure.persistence.runtime.postgres_engine import (
+    create_postgres_engine,
+)
+from backend.infrastructure.persistence.runtime.postgres_integrity import (
+    PROJECTION_FINGERPRINT,
+)
+from backend.infrastructure.persistence.runtime.postgres_readiness import (
+    verify_postgres_readiness,
+)
+from backend.infrastructure.persistence.stores.postgres_upload_store import (
+    PostgresUploadStore,
+)
+from backend.infrastructure.pmda_xml.pmda_artifact_encoder import PmdaArtifactEncoder
+from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
+from backend.infrastructure.pmda_xml.xml_safe_parser import parse_source
 from backend.project_paths import BACKEND_DIR, resolve_project_path
 
 

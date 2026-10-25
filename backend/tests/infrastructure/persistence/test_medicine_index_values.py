@@ -3,7 +3,9 @@
 import pytest
 from backend.domain.foundation.exceptions import DomainValidationError
 from backend.domain.medicine.primitives import BrandName
-from backend.infrastructure.index_payloads import build_index_document
+from backend.infrastructure.serialization.search_payload_codec import (
+    build_index_document,
+)
 
 
 def payload(product=None, generic=None):

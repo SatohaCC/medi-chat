@@ -6,10 +6,14 @@ from backend.application.indexing.queries.services.attachment_projection import 
     project_active_attachment,
 )
 from backend.domain.medicine.identifiers import YjCode
-from backend.infrastructure.evidence_mapping import build_evidence
-from backend.infrastructure.import_payloads import AttachmentSourceInformation
-from backend.infrastructure.index_payloads import encode_registered_units
-from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
+from backend.infrastructure.document_import.attachment_payloads import (
+    AttachmentSourceInformation,
+)
+from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
+from backend.infrastructure.serialization.evidence_mapping import build_evidence
+from backend.infrastructure.serialization.search_payload_codec import (
+    encode_registered_units,
+)
 from backend.presentation.chat_dto_mapper import evidence_to_api
 from backend.tests.support.paths import PROJECT_ROOT
 

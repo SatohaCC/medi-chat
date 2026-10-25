@@ -22,7 +22,7 @@ from backend.application.retrieval.values import (
 )
 from backend.domain.foundation.json_types import JsonValue
 from backend.domain.medicine.identifiers import YjCode
-from backend.infrastructure.evidence_mapping import build_evidence
+from backend.infrastructure.serialization.evidence_mapping import build_evidence
 from backend.tests.application.retrieval.test_evidence_collection import make_evidence
 
 

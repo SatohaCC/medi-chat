@@ -18,16 +18,20 @@ from backend.application.retrieval.values import DetectionSource
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import BrandName, MatchedAlias
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
-from backend.infrastructure.package_insert_definitions import assembly as loader
-from backend.infrastructure.persistence import postgres_schema as schema
-from backend.infrastructure.persistence.postgres_registration import (
+from backend.infrastructure.package_insert_definitions import (
+    definition_assembly as loader,
+)
+from backend.infrastructure.persistence.queries.postgres_search_snapshot_provider import (
+    PostgresRuntime,
+)
+from backend.infrastructure.persistence.registration.postgres_registration_publisher import (
     PostgresRegistrationPublisher,
 )
-from backend.infrastructure.persistence.postgres_runtime import PostgresRuntime
-from backend.infrastructure.persistence.read_workers import ReadWorkers
-from backend.infrastructure.pmda_xml.artifact_mapping import PmdaArtifactEncoder
-from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
-from backend.infrastructure.pmda_xml.transform import transform
+from backend.infrastructure.persistence.runtime.read_workers import ReadWorkers
+from backend.infrastructure.persistence.schemas import attachment_tables as schema
+from backend.infrastructure.pmda_xml.pmda_artifact_encoder import PmdaArtifactEncoder
+from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
+from backend.infrastructure.pmda_xml.xml_file_transformer import transform
 from backend.tests.support.attachment_import_fixtures import xml_source
 from backend.tests.support.authentication import signed_test_headers
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
@@ -78,15 +82,15 @@ async def test_tc19_all_entries_keep_injected_definition_without_reload(
 
     for name in (
         "backend.main",
-        "backend.infrastructure.package_insert_definitions.assembly",
-        "backend.infrastructure.pmda_xml.artifacts",
-        "backend.infrastructure.pmda_xml.decoder",
-        "backend.infrastructure.pmda_xml.sections",
-        "backend.infrastructure.pmda_xml.units",
-        "backend.infrastructure.pmda_xml.xml_nodes",
-        "backend.infrastructure.pmda_xml.transform",
-        "backend.infrastructure.persistence.postgres_runtime",
-        "backend.infrastructure.persistence.postgres_registration",
+        "backend.infrastructure.package_insert_definitions.definition_assembly",
+        "backend.infrastructure.pmda_xml.artifact_builder",
+        "backend.infrastructure.pmda_xml.pmda_xml_decoder",
+        "backend.infrastructure.pmda_xml.section_mapping",
+        "backend.infrastructure.pmda_xml.search_unit_mapping",
+        "backend.infrastructure.pmda_xml.xml_node_mapping",
+        "backend.infrastructure.pmda_xml.xml_file_transformer",
+        "backend.infrastructure.persistence.queries.postgres_search_snapshot_provider",
+        "backend.infrastructure.persistence.registration.postgres_registration_publisher",
         "backend.infrastructure.intent.jev_classifier",
     ):
         monkeypatch.setattr(
@@ -284,7 +288,9 @@ async def test_tc21_injected_heading_policy_reaches_old_scope_and_new_request(
     first = publisher.publish(decoder.decode(old), old)
     workers = ReadWorkers()
     runtime = PostgresRuntime(pg_engines[1], workers=workers, text_search_policy=policy)
-    from backend.infrastructure.persistence import postgres_runtime
+    from backend.infrastructure.persistence.queries import (
+        postgres_search_snapshot_provider as postgres_runtime,
+    )
 
     real_heading_judgment = postgres_runtime.is_scope_heading_only
     judgments = []
@@ -300,14 +306,14 @@ async def test_tc21_injected_heading_policy_reaches_old_scope_and_new_request(
         pytest.fail("injected runtime policy returned to definition source")
 
     for name in (
-        "backend.infrastructure.package_insert_definitions.assembly",
-        "backend.infrastructure.persistence.postgres_runtime",
-        "backend.infrastructure.persistence.postgres_registration",
-        "backend.infrastructure.pmda_xml.decoder",
-        "backend.infrastructure.pmda_xml.units",
-        "backend.infrastructure.pmda_xml.sections",
-        "backend.infrastructure.pmda_xml.xml_nodes",
-        "backend.infrastructure.pmda_xml.artifacts",
+        "backend.infrastructure.package_insert_definitions.definition_assembly",
+        "backend.infrastructure.persistence.queries.postgres_search_snapshot_provider",
+        "backend.infrastructure.persistence.registration.postgres_registration_publisher",
+        "backend.infrastructure.pmda_xml.pmda_xml_decoder",
+        "backend.infrastructure.pmda_xml.search_unit_mapping",
+        "backend.infrastructure.pmda_xml.section_mapping",
+        "backend.infrastructure.pmda_xml.xml_node_mapping",
+        "backend.infrastructure.pmda_xml.artifact_builder",
     ):
         monkeypatch.setattr(
             import_module(name), "get_package_insert_definitions", forbid, raising=False

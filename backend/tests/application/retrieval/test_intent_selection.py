@@ -4,7 +4,7 @@ import pytest
 from backend.application.retrieval.queries.models import IntentCandidate
 from backend.application.retrieval.queries.policies.selection import select_intents
 from backend.application.retrieval.values import IntentName, Probability
-from backend.infrastructure.package_insert_definitions.assembly import (
+from backend.infrastructure.package_insert_definitions.definition_assembly import (
     get_package_insert_definitions,
 )
 

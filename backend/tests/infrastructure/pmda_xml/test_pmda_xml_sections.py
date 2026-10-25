@@ -3,7 +3,7 @@
 import xml.etree.ElementTree as ET
 
 import pytest
-from backend.infrastructure.pmda_xml.sections import (
+from backend.infrastructure.pmda_xml.section_mapping import (
     make_section_index,
     reference_section_code,
 )

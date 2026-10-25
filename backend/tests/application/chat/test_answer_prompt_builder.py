@@ -26,7 +26,7 @@ from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import BrandName, GenericName
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
-from backend.infrastructure.package_insert_definitions.assembly import (
+from backend.infrastructure.package_insert_definitions.definition_assembly import (
     get_package_insert_definitions,
 )
 

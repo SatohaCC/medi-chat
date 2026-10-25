@@ -115,13 +115,12 @@ ALLOWED_INFRASTRUCTURE_PACKAGES = {
     "package_insert_definitions",
     "persistence",
     "pmda_xml",
+    "serialization",
+    "document_import",
     "sources",
 }
 ALLOWED_INFRASTRUCTURE_ROOT_FILES = {
     "__init__.py",
-    "evidence_mapping.py",
-    "index_payloads.py",
-    "import_payloads.py",
 }
 
 
@@ -281,7 +280,7 @@ def _allowed_module(module: str, *, caller: str) -> bool:
             return False
         caller_pkg = caller_parts[2]
         target_pkg = module_parts[2]
-        if caller_pkg in INFRASTRUCTURE_ROOT_PAYLOAD_MODULES:
+        if caller_pkg in {"serialization", "document_import"}:
             return target_pkg == caller_pkg
         if caller_pkg == "package_insert_definitions":
             return target_pkg == "package_insert_definitions" and len(module_parts) >= 4
@@ -320,7 +319,7 @@ def _allowed_module(module: str, *, caller: str) -> bool:
     if caller_layer == "infrastructure" and (
         module == "backend.main" or module.startswith("backend.main.")
     ):
-        return caller == "backend.infrastructure.composition.configured_probe"
+        return caller == "backend.infrastructure.cli.configured_probe"
     dependency_layer = next(
         (
             layer
@@ -352,7 +351,7 @@ def _allowed_module(module: str, *, caller: str) -> bool:
         ("from ..attachment.identifiers import DocumentId\n", False),
         ("from ..shared.services import normalize_match_text\n", False),
         (
-            "from backend.infrastructure.package_insert_definitions.assembly import PackageInsertDefinitions\n",
+            "from backend.infrastructure.package_insert_definitions.definition_assembly import PackageInsertDefinitions\n",
             False,
         ),
         ("from ..foundation.primitives.base import DomainPrimitive\n", False),
@@ -662,8 +661,8 @@ def test_new_public_module_paths_are_importable_without_legacy_packages() -> Non
     public_modules = (
         "backend.presentation.chat_service",
         "backend.presentation.chat_routes",
-        "backend.infrastructure.llm.provider_factory",
-        "backend.infrastructure.persistence.postgres_readiness",
+        "backend.infrastructure.llm.llm_provider_factory",
+        "backend.infrastructure.persistence.runtime.postgres_readiness",
         "backend.infrastructure.cli.manage_postgres",
     )
     for module in public_modules:
@@ -886,9 +885,9 @@ def test_domain_has_no_compatibility_facades() -> None:
         ),
         (
             "backend.application.fixture",
-            "from backend.infrastructure.package_insert_definitions.assembly import get_package_insert_definitions\n",
+            "from backend.infrastructure.package_insert_definitions.definition_assembly import get_package_insert_definitions\n",
             1,
-            "import backend.infrastructure.package_insert_definitions.assembly.get_package_insert_definitions",
+            "import backend.infrastructure.package_insert_definitions.definition_assembly.get_package_insert_definitions",
         ),
         (
             "backend.domain.fixture",
@@ -945,8 +944,8 @@ def test_domain_has_no_compatibility_facades() -> None:
             "import backend.domain.attachment.repositories.EvidenceQueryReader",
         ),
         (
-            "backend.infrastructure.persistence.postgres_registration",
-            "from ..composition.app_lifespan import create_app_lifespan\n",
+            "backend.infrastructure.persistence.registration.postgres_registration_publisher",
+            "from ...composition.app_lifespan import create_app_lifespan\n",
             1,
             "import backend.infrastructure.composition.app_lifespan.create_app_lifespan",
         ),
@@ -981,8 +980,8 @@ def test_domain_has_no_compatibility_facades() -> None:
             "import backend.domain.attachment.repositories",
         ),
         (
-            "backend.infrastructure.persistence.postgres_registration",
-            "from ..composition import app_lifespan\n",
+            "backend.infrastructure.persistence.registration.postgres_registration_publisher",
+            "from ...composition import app_lifespan\n",
             1,
             "import backend.infrastructure.composition.app_lifespan",
         ),
@@ -1053,19 +1052,19 @@ def test_domain_has_no_compatibility_facades() -> None:
             "import backend.application.retrieval.queries.services.evidence_retrieval.retrieve_evidence",
         ),
         (
-            "backend.infrastructure.persistence.postgres_registration",
-            "from ..sources.yj_csv import project_yj_row\n",
+            "backend.infrastructure.persistence.registration.postgres_registration_publisher",
+            "from ...sources.yj_csv_reader import project_yj_row\n",
             1,
-            "import backend.infrastructure.sources.yj_csv.project_yj_row",
+            "import backend.infrastructure.sources.yj_csv_reader.project_yj_row",
         ),
         (
-            "backend.infrastructure.persistence.postgres_registration",
-            'def f(x: "backend.infrastructure.sources.yj_csv.project_yj_row") -> None:\n    pass\n',
+            "backend.infrastructure.persistence.registration.postgres_registration_publisher",
+            'def f(x: "backend.infrastructure.sources.yj_csv_reader.project_yj_row") -> None:\n    pass\n',
             1,
-            "annotation backend.infrastructure.sources.yj_csv.project_yj_row",
+            "annotation backend.infrastructure.sources.yj_csv_reader.project_yj_row",
         ),
         (
-            "backend.infrastructure.llm.provider_factory",
+            "backend.infrastructure.llm.llm_provider_factory",
             'def f(x: "backend.infrastructure.intent.jev_intent_detector.JevIntentDetector") -> None:\n    pass\n',
             1,
             "annotation backend.infrastructure.intent.jev_intent_detector.JevIntentDetector",
@@ -1131,22 +1130,22 @@ def test_domain_has_no_compatibility_facades() -> None:
             "import backend.presentation.search_routes.router",
         ),
         (
-            "backend.infrastructure.package_insert_definitions.assembly",
-            "from ..intent.definition_settings import JevClassificationSettings\n",
+            "backend.infrastructure.package_insert_definitions.definition_assembly",
+            "from ..intent.jev_classifier import JevIntentClassifier\n",
             1,
-            "import backend.infrastructure.intent.definition_settings.JevClassificationSettings",
+            "import backend.infrastructure.intent.jev_classifier.JevIntentClassifier",
         ),
         (
-            "backend.infrastructure.evidence_mapping",
-            "from .persistence.postgres_runtime import PostgresRuntime\n",
+            "backend.infrastructure.serialization.evidence_mapping",
+            "from ..persistence.queries.postgres_search_snapshot_provider import PostgresRuntime\n",
             1,
-            "import backend.infrastructure.persistence.postgres_runtime.PostgresRuntime",
+            "import backend.infrastructure.persistence.queries.postgres_search_snapshot_provider.PostgresRuntime",
         ),
         (
-            "backend.infrastructure.persistence.postgres_registration",
-            "from ..pmda_xml.artifact_mapping import result_from_dict\n",
+            "backend.infrastructure.persistence.registration.postgres_registration_publisher",
+            "from ...pmda_xml.pmda_artifact_encoder import PmdaArtifactEncoder\n",
             1,
-            "import backend.infrastructure.pmda_xml.artifact_mapping.result_from_dict",
+            "import backend.infrastructure.pmda_xml.pmda_artifact_encoder.PmdaArtifactEncoder",
         ),
     ],
 )
@@ -1299,37 +1298,37 @@ def test_import_linter_contracts_detect_submodule_violations() -> None:
         ),
         (
             "Persistence does not depend on input sources",
-            "backend.infrastructure.persistence.postgres_registration",
-            "backend.infrastructure.sources.yj_csv",
+            "backend.infrastructure.persistence.registration.postgres_registration_publisher",
+            "backend.infrastructure.sources.yj_csv_reader",
         ),
         (
             "Persistence does not depend on other technology adapters",
-            "backend.infrastructure.persistence.postgres_registration",
-            "backend.infrastructure.pmda_xml.artifact_mapping",
+            "backend.infrastructure.persistence.registration.postgres_registration_publisher",
+            "backend.infrastructure.pmda_xml.pmda_artifact_encoder",
         ),
         (
             "Persistence does not depend on other technology adapters",
-            "backend.infrastructure.persistence.postgres_runtime",
+            "backend.infrastructure.persistence.queries.postgres_search_snapshot_provider",
             "backend.infrastructure.intent.jev_classifier",
         ),
         (
             "Infrastructure adapters do not depend on composition or CLI",
-            "backend.infrastructure.persistence.postgres_registration",
+            "backend.infrastructure.persistence.registration.postgres_registration_publisher",
             "backend.infrastructure.composition.app_lifespan",
         ),
         (
             "Package insert definitions do not depend on other infrastructure adapters",
-            "backend.infrastructure.package_insert_definitions.assembly",
-            "backend.infrastructure.intent.definition_settings",
+            "backend.infrastructure.package_insert_definitions.definition_assembly",
+            "backend.infrastructure.intent.jev_classifier",
         ),
         (
             "Infrastructure payload mappers do not depend on adapter packages",
-            "backend.infrastructure.evidence_mapping",
-            "backend.infrastructure.persistence.postgres_runtime",
+            "backend.infrastructure.serialization.evidence_mapping",
+            "backend.infrastructure.persistence.queries.postgres_search_snapshot_provider",
         ),
         (
             "External technology adapters are independent",
-            "backend.infrastructure.llm.provider_factory",
+            "backend.infrastructure.llm.llm_provider_factory",
             "backend.infrastructure.intent.jev_intent_detector",
         ),
         (

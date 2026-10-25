@@ -3,8 +3,11 @@
 import httpx
 import pytest
 from backend.application.attachment_import.errors import ImportCancelled
-from backend.infrastructure.persistence import postgres_schema as schema
-from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
+from backend.infrastructure.persistence.queries.postgres_import_query_reader import (
+    PostgresImportQueries,
+)
+from backend.infrastructure.persistence.schemas import attachment_tables as schema
+from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
 from backend.tests.integration.test_postgres_registration import (
     pg_publisher as pg_publisher,
 )
@@ -83,7 +86,9 @@ async def test_pg021_pending_startup_has_no_cleanup_writes_then_explicit_mainten
     assert digest(pg_engines[0]) == before
     pg_publisher.fault = lambda _: None
     pg_publisher.maintenance.cleanup()
-    after = pg_publisher.results.read_result(result.document_id, result.source_sha256)
+    after = PostgresImportQueries(pg_publisher.engine).read_result(
+        result.document_id, result.source_sha256
+    )
     assert after.status == "registered"
     assert after.registration_sequence == result.registration_sequence
     assert after.generation_id == result.generation_id

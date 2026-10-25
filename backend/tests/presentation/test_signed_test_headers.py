@@ -5,7 +5,7 @@ from types import SimpleNamespace
 from backend.application.authentication.queries.authenticate import Authenticate
 from backend.config.authentication_settings import read_authentication_settings
 from backend.config.origin_settings import read_allowed_origins
-from backend.infrastructure.authentication.tokens import JwtTokens
+from backend.infrastructure.authentication.access_refresh_tokens import JwtTokens
 from backend.presentation.access_control import AccessControlMiddleware
 from backend.tests.support.authentication import signed_test_headers
 from fastapi import FastAPI, WebSocket

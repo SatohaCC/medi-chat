@@ -5,11 +5,13 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 
 from backend.application.chat.queries.services.stream_lifetime import closing_stream
-
-from .error_messages import format_llm_error
-from .mock_response import stream_mock_response
-from .provider_errors import LLMRequestError, LLMUnavailableError
-from .provider_interface import LLMProvider
+from backend.infrastructure.llm.llm_error_messages import format_llm_error
+from backend.infrastructure.llm.llm_provider_base import LLMProvider
+from backend.infrastructure.llm.llm_provider_errors import (
+    LLMRequestError,
+    LLMUnavailableError,
+)
+from backend.infrastructure.llm.mock_response_stream import stream_mock_response
 
 
 class FallbackLLMProvider(LLMProvider):

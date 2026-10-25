@@ -10,8 +10,10 @@ from backend.application.retrieval.queries.models import SearchCriteria
 from backend.application.retrieval.values import DetectionSource, SearchKeyword
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import BrandName, MatchedAlias
-from backend.infrastructure.persistence.postgres_runtime import PostgresRuntime
-from backend.infrastructure.persistence.read_workers import ReadWorkers
+from backend.infrastructure.persistence.queries.postgres_search_snapshot_provider import (
+    PostgresRuntime,
+)
+from backend.infrastructure.persistence.runtime.read_workers import ReadWorkers
 from backend.tests.application.indexing.test_active_attachment_projection import (
     mixed_source,
 )
@@ -164,10 +166,10 @@ async def test_pg031_more_than_four_hundred_results_have_no_limit(
 ):
     from backend.application.medicine.queries.models import ResolvedMedicine
     from backend.domain.medicine.value_objects import MedicineMatch
-    from backend.infrastructure.persistence.registration_models import (
+    from backend.infrastructure.persistence.registration.registration_payloads import (
         PostgresRegistrationInput,
     )
-    from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
+    from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
 
     codes = tuple(f"{number:012d}" for number in range(1, 451))
     originals = tuple(

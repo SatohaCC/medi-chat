@@ -12,7 +12,7 @@ from backend.application.file_upload.errors import (
     UploadLimitExceeded,
 )
 from backend.config.upload_settings import CHUNK_BYTES
-from backend.infrastructure.persistence.postgres_upload import (
+from backend.infrastructure.persistence.stores.postgres_upload_store import (
     PostgresUploadImportReceipts,
     PostgresUploadStore,
 )
@@ -95,7 +95,9 @@ def test_invalid_upload_spec(size, digest):
 
 
 def test_session_capacity_and_completed_sessions_release_admission(pg_engines):
-    from backend.infrastructure.persistence.postgres_upload import MAX_UPLOADS
+    from backend.infrastructure.persistence.stores.postgres_upload_store import (
+        MAX_UPLOADS,
+    )
 
     store = PostgresUploadStore(pg_engines[1])
     ids = [store.create(spec(b"test")) for _ in range(MAX_UPLOADS)]

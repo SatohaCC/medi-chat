@@ -22,12 +22,14 @@ from backend.application.authentication.errors import (
 from backend.config.authentication_settings import read_authentication_settings
 from backend.config.database_settings import resolve_postgres_database_settings
 from backend.config.runtime_environment import load_runtime_environment
-from backend.infrastructure.authentication.credentials import LocalCredentials
-from backend.infrastructure.authentication.tokens import RefreshSecrets
-from backend.infrastructure.persistence.postgres_authentication import (
+from backend.infrastructure.authentication.access_refresh_tokens import RefreshSecrets
+from backend.infrastructure.authentication.local_credentials import LocalCredentials
+from backend.infrastructure.persistence.runtime.postgres_engine import (
+    create_postgres_engine,
+)
+from backend.infrastructure.persistence.stores.postgres_authentication_store import (
     PostgresAuthentication,
 )
-from backend.infrastructure.persistence.postgres_engine import create_postgres_engine
 
 
 def main() -> None:

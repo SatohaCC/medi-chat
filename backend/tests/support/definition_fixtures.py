@@ -33,7 +33,7 @@ from backend.domain.attachment.value_objects import (
     SectionDefinition,
     SectionTaxonomy,
 )
-from backend.infrastructure.package_insert_definitions.assembly import (
+from backend.infrastructure.package_insert_definitions.definition_assembly import (
     build_package_insert_definitions,
 )
 from backend.infrastructure.package_insert_definitions.jev_settings import (

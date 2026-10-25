@@ -1,7 +1,7 @@
 import hashlib
 
 import pytest
-from backend.infrastructure.persistence import postgres_schema as schema
+from backend.infrastructure.persistence.schemas import attachment_tables as schema
 from backend.tests.presentation.test_registration_http import client as client
 from backend.tests.presentation.test_registration_http import post
 from backend.tests.presentation.test_registration_http import publisher as publisher

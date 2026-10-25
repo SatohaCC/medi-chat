@@ -15,15 +15,18 @@ from backend.application.attachment_import.errors import (
 from backend.application.attachment_import.queries.import_history import (
     ImportHistoryQueries,
 )
-from backend.infrastructure.persistence.import_workers import ImportWorkers
-from backend.infrastructure.persistence.original_document_registration import (
+from backend.infrastructure.document_import.original_document_registration_adapter import (
     OriginalDocumentRegistration,
 )
-from backend.infrastructure.pmda_xml.artifact_mapping import (
+from backend.infrastructure.persistence.queries.postgres_import_query_reader import (
+    PostgresImportQueries,
+)
+from backend.infrastructure.persistence.runtime.import_workers import ImportWorkers
+from backend.infrastructure.pmda_xml.pmda_artifact_encoder import (
     MAX_ARTIFACT_BYTES,
     PmdaArtifactEncoder,
 )
-from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
+from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
 from backend.presentation.attachment_import_routes import router
 from backend.tests.integration.test_postgres_registration import (
     pg_publisher as pg_publisher,
@@ -45,7 +48,7 @@ async def client(pg_publisher):
     app = FastAPI()
     app.state.attachment_import_service = service
     app.state.attachment_import_queries = ImportHistoryQueries(
-        reader=pg_publisher.results, executor=service._executor
+        reader=PostgresImportQueries(pg_publisher.engine), executor=service._executor
     )
     app.include_router(router)
     async with httpx.AsyncClient(

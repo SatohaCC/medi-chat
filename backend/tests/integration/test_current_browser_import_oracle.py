@@ -5,7 +5,7 @@ import json
 import runpy
 
 import pytest
-from backend.infrastructure.persistence import postgres_schema as schema
+from backend.infrastructure.persistence.schemas import attachment_tables as schema
 from backend.tests.integration.test_postgres_registration import (
     pg_publisher as pg_publisher,
 )

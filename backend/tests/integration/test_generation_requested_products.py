@@ -2,8 +2,10 @@ import pytest
 from backend.application.indexing.values import SearchSectionCode
 from backend.application.retrieval.queries.models import SearchCriteria
 from backend.application.retrieval.values import DetectionSource
-from backend.infrastructure.persistence.postgres_runtime import PostgresRuntime
-from backend.infrastructure.persistence.read_workers import ReadWorkers
+from backend.infrastructure.persistence.queries.postgres_search_snapshot_provider import (
+    PostgresRuntime,
+)
+from backend.infrastructure.persistence.runtime.read_workers import ReadWorkers
 from backend.tests.integration.test_postgres_registration import (
     pg_publisher as pg_publisher,
 )

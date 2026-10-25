@@ -7,7 +7,7 @@ import unittest
 from backend.application.retrieval.queries.policies.selection import (
     detect_intents_from_keywords,
 )
-from backend.infrastructure.package_insert_definitions.assembly import (
+from backend.infrastructure.package_insert_definitions.definition_assembly import (
     get_package_insert_definitions,
 )
 

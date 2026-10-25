@@ -1,0 +1,122 @@
+# Infrastructure Architecture Configuration
+# Declared adapters, internal roles, allowed dependencies, and public module contracts.
+# No per-violation ignores.
+# persistence roles name directories; other roles name flat modules using the
+# checker's suffix vocabulary (CLI uses its explicit command vocabulary).
+
+[adapters.persistence]
+roles = ["schemas", "stores", "queries", "registration", "records", "mappings", "runtime", "maintenance"]
+allowed_dependencies = ["serialization", "document_import", "package_insert_definitions"]
+
+[adapters.persistence.public]
+"stores/postgres_authentication_store" = { symbols = ["PostgresAuthentication"], consumers = ["composition", "cli"] }
+"stores/postgres_upload_store" = { symbols = ["PostgresUploadStore", "PostgresUploadImportReceipts"], consumers = ["composition", "cli"] }
+"queries/postgres_import_query_reader" = { symbols = ["PostgresImportQueries"], consumers = ["composition", "cli"] }
+"queries/postgres_search_snapshot_provider" = { symbols = ["PostgresRuntime"], consumers = ["composition", "cli", "frontend/scripts"] }
+"registration/postgres_registration_publisher" = { symbols = ["PostgresRegistrationPublisher"], consumers = ["composition", "cli"] }
+"registration/postgres_import_replay_reader" = { symbols = ["PostgresImportReplayReader"], consumers = ["composition", "cli", "persistence.registration"] }
+"runtime/postgres_engine" = { symbols = ["create_postgres_engine"], consumers = ["composition", "cli", "backend/migrations/postgres/env.py", "frontend/scripts"] }
+"runtime/read_workers" = { symbols = ["ReadWorkers"], consumers = ["composition", "cli", "frontend/scripts"] }
+"runtime/import_workers" = { symbols = ["ImportWorkers"], consumers = ["composition", "cli"] }
+"runtime/postgres_readiness" = { symbols = ["verify_postgres_readiness"], consumers = ["composition", "cli", "frontend/scripts"] }
+"maintenance/postgres_registration_cleanup" = { symbols = ["PostgresRegistrationCleanup"], consumers = ["composition", "cli", "persistence.registration"] }
+"schemas/metadata" = { symbols = ["metadata"], consumers = ["backend/migrations", "cli/manage_postgres", "persistence"] }
+"schemas/attachment_tables" = { symbols = ["uploads", "upload_parts", "receipts", "versions", "assets", "units", "unit_products", "active", "generations", "memberships", "state"], consumers = ["backend/migrations", "cli/manage_postgres", "persistence", "frontend/scripts"] }
+"schemas/authentication_tables" = { symbols = ["users", "identities", "credentials", "families", "refresh_tokens", "attempts", "AUTH_TABLES"], consumers = ["backend/migrations", "cli/manage_postgres", "persistence"] }
+"runtime/postgres_integrity" = { symbols = ["PROJECTION_FINGERPRINT"], consumers = ["backend/migrations", "cli/manage_postgres", "persistence.runtime.postgres_readiness"] }
+"registration/registration_payloads" = { symbols = ["FigureInput", "PostgresRegistrationInput"], consumers = ["cli/manage_postgres"] }
+"mappings/attachment_document_mapping" = { symbols = ["document_from_payload"], consumers = ["cli/manage_postgres", "frontend/scripts"] }
+"mappings/search_projection_mapping" = { symbols = ["projection_records"], consumers = ["cli/manage_postgres"] }
+
+[adapters.document_import]
+roles = ["attachment_payloads", "attachment_contracts", "original_document_registration_adapter"]
+allowed_dependencies = []
+
+[adapters.document_import.public]
+"attachment_payloads" = { symbols = ["AttachmentSourceInformation", "DecodedAttachment", "ArtifactFile", "ArtifactBundle"], consumers = ["pmda_xml", "persistence", "composition", "cli"] }
+"attachment_contracts" = { symbols = ["AttachmentDecoder", "AttachmentArtifactEncoder", "AttachmentRegistrationPublisher"], consumers = ["pmda_xml", "persistence", "composition", "cli"] }
+"original_document_registration_adapter" = { symbols = ["OriginalDocumentRegistration"], consumers = ["composition", "cli"] }
+
+[adapters.serialization]
+roles = ["import_result_codec", "search_payload_codec", "search_text_renderer", "evidence_mapping", "json_payload_values"]
+allowed_dependencies = []
+
+[adapters.serialization.public]
+"import_result_codec" = { symbols = ["result_dict", "result_from_dict"], consumers = ["persistence", "pmda_xml", "cli"] }
+"search_payload_codec" = { symbols = ["MAX_ARTIFACT_BYTES", "SEARCH_SCHEMA_VERSION", "DOCUMENT_SCHEMA_VERSION", "json_bytes", "registered_unit_text", "unit_matches_sections", "encode_registered_units", "build_index_unit", "build_index_document"], consumers = ["persistence", "pmda_xml", "cli", "frontend/scripts"] }
+"evidence_mapping" = { symbols = ["build_evidence", "is_scope_heading_only"], consumers = ["persistence", "cli", "frontend/scripts"] }
+
+[adapters.llm]
+roles = ["llm_provider_base", "llm_provider_factory", "openai_provider", "gemini_provider", "fallback_provider", "mock_response_stream", "llm_provider_errors", "llm_error_messages"]
+allowed_dependencies = []
+
+[adapters.llm.public]
+"llm_provider_factory" = { symbols = ["create_llm_provider"], consumers = ["composition", "cli"] }
+
+[adapters.intent]
+roles = ["jev_classifier", "jev_intent_mapping"]
+allowed_dependencies = ["package_insert_definitions"]
+
+[adapters.intent.public]
+"jev_classifier" = { symbols = ["JevIntentClassifier"], consumers = ["composition", "backend.main"] }
+
+[adapters.morphology]
+roles = ["janome_keyword_extractor", "janome_keyword_extraction"]
+allowed_dependencies = ["package_insert_definitions"]
+
+[adapters.morphology.public]
+"janome_keyword_extractor" = { symbols = ["JanomeKeywordExtractor"], consumers = ["composition", "backend.main"] }
+"janome_keyword_extraction" = { symbols = ["get_janome_tokenizer", "extract_search_keywords"], consumers = ["composition", "backend.main"] }
+
+[adapters.pmda_xml]
+roles = ["pmda_xml_decoder", "pmda_artifact_encoder", "xml_safe_parser", "section_mapping", "xml_file_transformer", "search_unit_mapping", "xml_node_mapping", "artifact_builder"]
+allowed_dependencies = ["document_import", "serialization", "package_insert_definitions"]
+
+[adapters.pmda_xml.public]
+"pmda_xml_decoder" = { symbols = ["PmdaXmlDecoder"], consumers = ["composition", "cli"] }
+"pmda_artifact_encoder" = { symbols = ["PmdaArtifactEncoder"], consumers = ["composition", "cli"] }
+"xml_file_transformer" = { symbols = ["transform"], consumers = ["composition", "cli", "frontend/scripts"] }
+"xml_safe_parser" = { symbols = ["parse_source"], consumers = ["cli/manage_postgres"] }
+
+[adapters.sources]
+roles = ["yj_csv_reader"]
+allowed_dependencies = []
+
+[adapters.sources.public]
+"yj_csv_reader" = { symbols = ["project_yj_row", "parse_yj_csv"], consumers = ["cli"] }
+
+[adapters.authentication]
+roles = ["local_credentials", "access_refresh_tokens"]
+allowed_dependencies = []
+
+[adapters.authentication.public]
+"local_credentials" = { symbols = ["LocalCredentials"], consumers = ["composition", "cli"] }
+"access_refresh_tokens" = { symbols = ["JwtTokens", "RefreshSecrets"], consumers = ["composition", "cli"] }
+
+[adapters.package_insert_definitions]
+roles = ["definition_assembly", "definition_settings", "jev_settings", "xml_settings"]
+allowed_dependencies = []
+
+[adapters.package_insert_definitions.public]
+"definition_assembly" = { symbols = ["PackageInsertDefinitions", "build_package_insert_definitions", "get_package_insert_definitions"], consumers = ["composition", "cli", "backend.main", "persistence", "pmda_xml", "intent", "morphology"] }
+"definition_settings" = { symbols = ["JevClassificationSettings", "JanomeMorphologySettings", "XmlSectionBinding", "XmlColumnBinding", "PmdaXmlSettings"], consumers = ["composition", "cli", "backend.main", "persistence", "pmda_xml", "intent", "morphology"] }
+
+[adapters.composition]
+roles = ["app_lifespan", "authentication_composition"]
+allowed_dependencies = ["authentication", "cli", "document_import", "intent", "llm", "morphology", "package_insert_definitions", "persistence", "pmda_xml", "serialization", "sources"]
+
+[adapters.composition.public]
+"app_lifespan" = { symbols = ["create_app_lifespan"], consumers = ["backend.main"] }
+
+[adapters.cli]
+roles = ["authentication", "build_autocomplete_index", "configured_e2e_gate", "export_search_guide", "manage_postgres", "structure_pmda_xml", "configured_probe"]
+allowed_dependencies = ["composition", "authentication", "document_import", "intent", "llm", "morphology", "package_insert_definitions", "persistence", "pmda_xml", "serialization", "sources"]
+
+[adapters.cli.public]
+"authentication" = { symbols = ["main"], consumers = [] }
+"build_autocomplete_index" = { symbols = ["main"], consumers = [] }
+"configured_e2e_gate" = { symbols = ["main"], consumers = [] }
+"export_search_guide" = { symbols = ["main"], consumers = [] }
+"manage_postgres" = { symbols = ["main"], consumers = [] }
+"structure_pmda_xml" = { symbols = ["main"], consumers = [] }
+"configured_probe" = { symbols = ["probe_factory"], consumers = [] }

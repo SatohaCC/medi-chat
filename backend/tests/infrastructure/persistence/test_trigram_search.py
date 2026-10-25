@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 from backend.domain.shared.services import normalize_search_text
-from backend.infrastructure.persistence.trigram_search import phrase_scores
+from backend.infrastructure.persistence.queries.trigram_search import phrase_scores
 
 ORACLE = json.loads(
     (Path(__file__).parents[2] / "fixtures/postgres_trigram_oracle.json").read_text(

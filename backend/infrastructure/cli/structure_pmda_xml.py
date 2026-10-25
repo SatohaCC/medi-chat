@@ -17,9 +17,15 @@ import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from ...project_paths import PROJECT_ROOT, resolve_project_path
-from ..pmda_xml.transform import transform
-from ..pmda_xml.xml_nodes import relative_path
+from backend.infrastructure.pmda_xml.xml_file_transformer import transform
+from backend.project_paths import PROJECT_ROOT, resolve_project_path
+
+
+def relative_path(path: Path) -> str:
+    try:
+        return path.resolve().relative_to(PROJECT_ROOT).as_posix()
+    except ValueError:
+        return path.name
 
 
 def main() -> int:
@@ -140,11 +146,19 @@ def _register(args: argparse.Namespace) -> int:
     from sqlalchemy.exc import SQLAlchemyError
 
     from backend.application.attachment_import.errors import AttachmentImportError
-
-    from ..persistence.postgres_engine import create_postgres_engine
-    from ..persistence.postgres_registration import PostgresRegistrationPublisher
-    from ..pmda_xml.artifact_mapping import PmdaArtifactEncoder
-    from .manage_postgres import load_inputs, load_single_input
+    from backend.infrastructure.cli.manage_postgres import (
+        load_inputs,
+        load_single_input,
+    )
+    from backend.infrastructure.persistence.registration.postgres_registration_publisher import (
+        PostgresRegistrationPublisher,
+    )
+    from backend.infrastructure.persistence.runtime.postgres_engine import (
+        create_postgres_engine,
+    )
+    from backend.infrastructure.pmda_xml.pmda_artifact_encoder import (
+        PmdaArtifactEncoder,
+    )
 
     if args.output_dir is not None:
         print(

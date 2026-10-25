@@ -18,31 +18,51 @@ from backend.application.attachment_import.queries.import_history import (
 from backend.application.chat.queries.chat import (
     ChatQueries,
 )
-from backend.infrastructure.persistence.import_workers import ImportWorkers
-from backend.infrastructure.persistence.original_document_registration import (
+from backend.config.database_settings import PostgresDatabaseSettings
+from backend.config.generation_settings import read_generation_defaults
+from backend.infrastructure.composition.authentication_composition import (
+    compose_authentication,
+)
+from backend.infrastructure.document_import.original_document_registration_adapter import (
     OriginalDocumentRegistration,
 )
-
-from ...config.database_settings import PostgresDatabaseSettings
-from ...config.generation_settings import read_generation_defaults
-from ..intent.jev_classifier import JevIntentClassifier
-from ..llm.provider_factory import create_llm_provider
-from ..morphology.janome_keyword_extractor import JanomeKeywordExtractor
-from ..morphology.keyword_extraction import get_janome_tokenizer
-from ..package_insert_definitions.assembly import PackageInsertDefinitions
-from ..persistence.postgres_engine import create_postgres_engine
-from ..persistence.postgres_import_queries import PostgresImportQueries
-from ..persistence.postgres_readiness import verify_postgres_readiness
-from ..persistence.postgres_registration import PostgresRegistrationPublisher
-from ..persistence.postgres_runtime import PostgresRuntime
-from ..persistence.postgres_upload import (
+from backend.infrastructure.intent.jev_classifier import JevIntentClassifier
+from backend.infrastructure.llm.llm_provider_factory import create_llm_provider
+from backend.infrastructure.morphology.janome_keyword_extraction import (
+    get_janome_tokenizer,
+)
+from backend.infrastructure.morphology.janome_keyword_extractor import (
+    JanomeKeywordExtractor,
+)
+from backend.infrastructure.package_insert_definitions.definition_assembly import (
+    PackageInsertDefinitions,
+)
+from backend.infrastructure.persistence.queries.postgres_import_query_reader import (
+    PostgresImportQueries,
+)
+from backend.infrastructure.persistence.queries.postgres_search_snapshot_provider import (
+    PostgresRuntime,
+)
+from backend.infrastructure.persistence.registration.postgres_import_replay_reader import (
+    PostgresImportReplayReader,
+)
+from backend.infrastructure.persistence.registration.postgres_registration_publisher import (
+    PostgresRegistrationPublisher,
+)
+from backend.infrastructure.persistence.runtime.import_workers import ImportWorkers
+from backend.infrastructure.persistence.runtime.postgres_engine import (
+    create_postgres_engine,
+)
+from backend.infrastructure.persistence.runtime.postgres_readiness import (
+    verify_postgres_readiness,
+)
+from backend.infrastructure.persistence.runtime.read_workers import ReadWorkers
+from backend.infrastructure.persistence.stores.postgres_upload_store import (
     PostgresUploadImportReceipts,
     PostgresUploadStore,
 )
-from ..persistence.read_workers import ReadWorkers
-from ..pmda_xml.artifact_mapping import PmdaArtifactEncoder
-from ..pmda_xml.decoder import PmdaXmlDecoder
-from .authentication import compose_authentication
+from backend.infrastructure.pmda_xml.pmda_artifact_encoder import PmdaArtifactEncoder
+from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
 
 
 def create_app_lifespan(
@@ -105,9 +125,10 @@ def create_app_lifespan(
                 publisher = PostgresRegistrationPublisher(engine, encoder=encoder)
                 import_executor = ImportWorkers()
                 import_results = PostgresImportQueries(engine)
+                replay_reader = PostgresImportReplayReader(engine)
                 import_service = AttachmentImportCommands(
                     executor=import_executor,
-                    reader=import_results,
+                    reader=replay_reader,
                     upload_store=PostgresUploadStore(engine),
                     upload_receipts=PostgresUploadImportReceipts(engine),
                     registration=OriginalDocumentRegistration(

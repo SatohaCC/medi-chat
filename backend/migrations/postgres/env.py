@@ -1,12 +1,17 @@
 """Explicit PostgreSQL migration environment; runtime never invokes this."""
 
 from alembic import context
-from backend.infrastructure.persistence.postgres_engine import create_postgres_engine
-from backend.infrastructure.persistence.postgres_schema import metadata
+from backend.infrastructure.persistence.runtime.postgres_engine import (
+    create_postgres_engine,
+)
+from backend.infrastructure.persistence.schemas.attachment_tables import uploads
+from backend.infrastructure.persistence.schemas.authentication_tables import users
+from backend.infrastructure.persistence.schemas.metadata import metadata
 from sqlalchemy import inspect
 
 config = context.config
 connection = config.attributes.get("connection")
+assert uploads.metadata is users.metadata is metadata
 
 
 def migrate(connection):

@@ -11,8 +11,10 @@ from backend.application.retrieval.values import DetectionSource, SearchKeyword
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import BrandName, MatchedAlias
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
-from backend.infrastructure.persistence.postgres_runtime import PostgresRuntime
-from backend.infrastructure.persistence.read_workers import ReadWorkers
+from backend.infrastructure.persistence.queries.postgres_search_snapshot_provider import (
+    PostgresRuntime,
+)
+from backend.infrastructure.persistence.runtime.read_workers import ReadWorkers
 from backend.tests.integration.test_postgres_registration import (
     pg_publisher as pg_publisher,
 )

@@ -13,9 +13,11 @@ from backend.application.indexing.queries.services.attachment_projection import 
     project_active_attachment,
 )
 from backend.domain.medicine.identifiers import YjCode
-from backend.infrastructure.index_payloads import encode_registered_units
-from backend.infrastructure.persistence.attachment_document_mapping import (
+from backend.infrastructure.persistence.mappings.attachment_document_mapping import (
     document_from_payload,
+)
+from backend.infrastructure.serialization.search_payload_codec import (
+    encode_registered_units,
 )
 from backend.tests.support.postgres_browser_fixture import snapshot as postgres_snapshot
 

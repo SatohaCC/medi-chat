@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 import pytest
 from backend.application.authentication.errors import LoginLimited
-from backend.infrastructure.authentication.credentials import LocalCredentials
+from backend.infrastructure.authentication.local_credentials import LocalCredentials
 
 
 def test_unknown_id_uses_dummy_hash_and_stopped_user_never_authenticates():
