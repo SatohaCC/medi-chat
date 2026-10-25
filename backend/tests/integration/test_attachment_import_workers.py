@@ -16,6 +16,9 @@ from backend.application.attachment_import.queries.import_history import (
 from backend.infrastructure.document_import.original_document_registration_adapter import (
     OriginalDocumentRegistration,
 )
+from backend.infrastructure.persistence.queries.postgres_import_query_reader import (
+    PostgresImportQueries,
+)
 from backend.infrastructure.persistence.runtime.import_workers import ImportWorkers
 from backend.infrastructure.persistence.schemas import attachment_tables as schema
 from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
@@ -62,7 +65,8 @@ async def test_missing_figure_warning_and_caption_survive_store_restart(
     restarted = service(pg_publisher)
     try:
         detail = await ImportHistoryQueries(
-            reader=pg_publisher.results, executor=restarted._executor
+            reader=PostgresImportQueries(pg_publisher.engine),
+            executor=restarted._executor,
         ).read_result(result.document_id, result.source_sha256)
         assert detail.document_id == result.document_id
         assert detail.source_sha256 == result.source_sha256
@@ -155,7 +159,8 @@ async def test_cancellation_waits_for_owned_worker_and_never_publishes_stage(
             ).scalars().all() == [f"{old.document_id}:{old.source_sha256}"]
         with pytest.raises(ImportNotFound):
             await ImportHistoryQueries(
-                reader=pg_publisher.results, executor=importer._executor
+                reader=PostgresImportQueries(pg_publisher.engine),
+                executor=importer._executor,
             ).read_result(old.document_id, hashlib.sha256(raw).hexdigest())
     finally:
         release.set()
