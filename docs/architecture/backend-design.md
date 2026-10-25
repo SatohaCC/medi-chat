@@ -144,9 +144,9 @@ retrievalの `Evidence` は表示製品名・一般名・種類・出典をOptio
 一意識別子には `EntityUUID`（Python 3.14の標準 `uuid.uuid7()` によるUUIDv7採番）や、
 `EntityStringId` を利用できます。
 backendの実行環境はPython 3.14以上が必要です。
-ルートとbackendの`.python-version`、CIは3.14.9を指定し、pnpmのbackendスクリプトも `uv run --locked` 経由で
-この環境を利用します。初期同期は `uv sync --project backend --python 3.14.9 --locked` です。
-Vercelは3.14系列を選択し、実際のパッチ版はプラットフォームが管理します。
+ルートとbackendの`.python-version`はVercelでも利用するため3.14系列を指定し、CIは3.14.9に固定します。
+ローカルの初期同期は `uv sync --project backend --python 3.14.9 --locked` とし、pnpmのbackendスクリプトも `uv run --locked` 経由でこの環境を利用します。
+Vercelの実際のパッチ版はプラットフォームが管理します。共有の`.python-version`をパッチ版へ固定すると、Vercelの`uv sync --active`がその版を再要求し、提供されているinterpreterと一致せずビルドに失敗するため、系列指定を維持します。
 `pylock.toml` の再生成は
 `uv export --project backend --format pylock.toml --output-file backend/pylock.toml --no-emit-project` です。
 
