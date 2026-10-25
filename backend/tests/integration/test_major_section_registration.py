@@ -8,11 +8,15 @@ from backend.application.medicine.queries.policies.catalog_matching import (
 from backend.application.retrieval.queries.models import SearchCriteria
 from backend.application.retrieval.values import DetectionSource, SearchKeyword
 from backend.domain.medicine.identifiers import YjCode
-from backend.infrastructure.persistence import postgres_schema as schema
-from backend.infrastructure.persistence.postgres_engine import create_postgres_engine
-from backend.infrastructure.persistence.postgres_runtime import PostgresRuntime
-from backend.infrastructure.persistence.read_workers import ReadWorkers
-from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
+from backend.infrastructure.persistence.queries.postgres_search_snapshot_provider import (
+    PostgresRuntime,
+)
+from backend.infrastructure.persistence.runtime.postgres_engine import (
+    create_postgres_engine,
+)
+from backend.infrastructure.persistence.runtime.read_workers import ReadWorkers
+from backend.infrastructure.persistence.schemas import attachment_tables as schema
+from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
 from backend.tests.integration.test_postgres_registration import (
     pg_publisher as pg_publisher,
 )

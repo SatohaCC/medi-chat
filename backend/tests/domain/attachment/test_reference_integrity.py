@@ -6,7 +6,7 @@ from backend.domain.attachment import value_objects as v
 from backend.domain.attachment.entities import AttachmentDocument
 from backend.domain.attachment.exceptions import AttachmentDomainError
 from backend.domain.attachment.identifiers import DocumentId
-from backend.infrastructure.persistence.attachment_document_mapping import (
+from backend.infrastructure.persistence.mappings.attachment_document_mapping import (
     document_from_payload,
     document_to_payload,
 )

@@ -1,4 +1,6 @@
-from backend.infrastructure.morphology.keyword_extraction import extract_search_keywords
+from backend.infrastructure.morphology.janome_keyword_extraction import (
+    extract_search_keywords,
+)
 
 
 def test_extract_adverse_events():

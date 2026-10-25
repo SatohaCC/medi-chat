@@ -40,7 +40,7 @@ from backend.domain.attachment.value_objects import (
     AttachmentTableBlock,
     AttachmentTableCell,
 )
-from backend.infrastructure.persistence.attachment_document_mapping import (
+from backend.infrastructure.persistence.mappings.attachment_document_mapping import (
     document_from_payload,
     document_to_payload,
 )

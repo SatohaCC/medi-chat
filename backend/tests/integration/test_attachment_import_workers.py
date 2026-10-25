@@ -13,12 +13,12 @@ from backend.application.attachment_import.errors import ImportNotFound
 from backend.application.attachment_import.queries.import_history import (
     ImportHistoryQueries,
 )
-from backend.infrastructure.persistence import postgres_schema as schema
-from backend.infrastructure.persistence.import_workers import ImportWorkers
-from backend.infrastructure.persistence.original_document_registration import (
+from backend.infrastructure.document_import.original_document_registration_adapter import (
     OriginalDocumentRegistration,
 )
-from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
+from backend.infrastructure.persistence.runtime.import_workers import ImportWorkers
+from backend.infrastructure.persistence.schemas import attachment_tables as schema
+from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
 from backend.tests.integration.test_postgres_registration import (
     pg_publisher as pg_publisher,
 )

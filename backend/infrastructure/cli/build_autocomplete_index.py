@@ -12,8 +12,8 @@ import logging
 import sys
 from pathlib import Path
 
-from ...project_paths import PROJECT_ROOT, resolve_project_path
-from ..sources.yj_csv import parse_yj_csv
+from backend.infrastructure.sources.yj_csv_reader import parse_yj_csv
+from backend.project_paths import PROJECT_ROOT, resolve_project_path
 
 logger = logging.getLogger(__name__)
 

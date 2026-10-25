@@ -7,7 +7,7 @@ from functools import lru_cache
 from backend.config.authentication_settings import read_authentication_settings
 from backend.config.origin_settings import read_allowed_origins
 from backend.domain.identity.identifiers import UserId
-from backend.infrastructure.authentication.tokens import JwtTokens
+from backend.infrastructure.authentication.access_refresh_tokens import JwtTokens
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 

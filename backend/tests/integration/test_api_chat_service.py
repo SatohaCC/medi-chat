@@ -8,7 +8,7 @@ from backend.application.chat.queries.chat import (
     ChatQueries,
 )
 from backend.application.chat.queries.models import ChatResponse
-from backend.infrastructure.package_insert_definitions.assembly import (
+from backend.infrastructure.package_insert_definitions.definition_assembly import (
     get_package_insert_definitions,
 )
 from backend.presentation.chat_models import ChatMessage

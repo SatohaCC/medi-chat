@@ -20,9 +20,11 @@ from backend.application.retrieval.values import DetectionSource
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import BrandName, MatchedAlias
 from backend.domain.medicine.value_objects import MedicineMatch
-from backend.infrastructure.persistence import postgres_schema as s
-from backend.infrastructure.persistence.postgres_runtime import PostgresRuntime
-from backend.infrastructure.persistence.read_workers import ReadWorkers
+from backend.infrastructure.persistence.queries.postgres_search_snapshot_provider import (
+    PostgresRuntime,
+)
+from backend.infrastructure.persistence.runtime.read_workers import ReadWorkers
+from backend.infrastructure.persistence.schemas import attachment_tables as s
 from backend.tests.integration.test_postgres_registration import (
     pg_publisher as pg_publisher,
 )
@@ -128,7 +130,7 @@ async def test_pg023_scope_reads_old_rows_after_other_process_publication_and_de
 async def test_pg024_snapshot_reads_only_needed_structure_and_never_original_bytes(
     pg_engines, pg_publisher, monkeypatch
 ):
-    from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
+    from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
 
     publish(pg_publisher, source("テスト構造から検索"))
     statements = []
@@ -423,7 +425,7 @@ async def test_pg027_detectors_pin_old_scope_then_llm_has_no_connection(
     pg_engines, pg_publisher
 ):
     from backend.application.retrieval.queries.models import IntentResult
-    from backend.infrastructure.package_insert_definitions.assembly import (
+    from backend.infrastructure.package_insert_definitions.definition_assembly import (
         get_package_insert_definitions,
     )
     from backend.presentation.chat_models import ChatMessage

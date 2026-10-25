@@ -11,8 +11,9 @@ from unittest.mock import AsyncMock, Mock, call
 
 import pytest
 from backend.application.chat.queries.services.answer_generation import stream_answer
-from backend.infrastructure.llm import gemini_provider, mock_response, openai_provider
-from backend.infrastructure.llm.provider_factory import create_llm_provider
+from backend.infrastructure.llm import gemini_provider, openai_provider
+from backend.infrastructure.llm import mock_response_stream as mock_response
+from backend.infrastructure.llm.llm_provider_factory import create_llm_provider
 
 MESSAGES = [
     {"role": "system", "content": "[根拠 1] 記載A\n[根拠 2] 記載B"},

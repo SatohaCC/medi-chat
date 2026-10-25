@@ -9,11 +9,15 @@ from tempfile import TemporaryDirectory
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from sqlalchemy import select, text
-from backend.infrastructure.persistence import postgres_schema as schema
-from backend.infrastructure.persistence.postgres_readiness import verify_postgres_readiness
-from backend.infrastructure.pmda_xml.transform import transform
 from xml.etree import ElementTree as ET
+
+from sqlalchemy import select, text
+
+import backend.infrastructure.persistence.schemas.attachment_tables as schema
+from backend.infrastructure.persistence.runtime.postgres_readiness import (
+    verify_postgres_readiness,
+)
+from backend.infrastructure.pmda_xml.xml_file_transformer import transform
 
 SECTION_TAGS = dict(
     zip(
@@ -100,10 +104,24 @@ def check(source: Path, engine, version_id: str):
         verify_postgres_readiness(engine)
     except RuntimeError as error:
         raise AssertionError("Stored PostgreSQL integrity failed") from error
-    with engine.connect().execution_options(isolation_level="REPEATABLE READ") as connection:
+    with engine.connect().execution_options(
+        isolation_level="REPEATABLE READ"
+    ) as connection:
         connection.execute(text("SET TRANSACTION READ ONLY"))
-        stored = connection.execute(select(schema.versions.c.source).where(schema.versions.c.version_id == version_id)).scalar_one()
-        indexed = connection.execute(select(schema.units.c.payload).where(schema.units.c.version_id == version_id).order_by(schema.units.c.position)).scalars().all()
+        stored = connection.execute(
+            select(schema.versions.c.source).where(
+                schema.versions.c.version_id == version_id
+            )
+        ).scalar_one()
+        indexed = (
+            connection.execute(
+                select(schema.units.c.payload)
+                .where(schema.units.c.version_id == version_id)
+                .order_by(schema.units.c.position)
+            )
+            .scalars()
+            .all()
+        )
     assert bytes(stored) == original
     assert version_id == f"{source.stem}:{digest}"
     # Explicit test-only offline conversion preserves the independent raw-tree
@@ -113,12 +131,19 @@ def check(source: Path, engine, version_id: str):
         transform(source, directory)
         document = json.loads((directory / "document.json").read_bytes())
         assert document["schema_version"] == "medi-chat.pmda-prescription-xml.v2"
-        assert [section["code"] for section in document["sections"]] == list(SECTION_TAGS)
-        parser = ET.XMLParser(target=ET.TreeBuilder(insert_comments=True, insert_pis=True))
+        assert [section["code"] for section in document["sections"]] == list(
+            SECTION_TAGS
+        )
+        parser = ET.XMLParser(
+            target=ET.TreeBuilder(insert_comments=True, insert_pis=True)
+        )
         raw = {name(node.tag): node for node in ET.fromstring(original, parser=parser)}
         for section in document["sections"]:
             assert section["tree"] == tree(raw[SECTION_TAGS[section["code"]]])
-        units = [json.loads(line) for line in (directory / "search_units.jsonl").read_bytes().splitlines()]
+        units = [
+            json.loads(line)
+            for line in (directory / "search_units.jsonl").read_bytes().splitlines()
+        ]
     assert [unit["section"]["code"] for unit in units] == list(SECTION_TAGS)
     for unit in units:
         assert unit["schema_version"] == "medi-chat.pmda-sections.v4"
@@ -130,13 +155,21 @@ def check(source: Path, engine, version_id: str):
         assert unit["unit_id"] == f"{version_id}:{unit['section']['code']}"
         unit["unit_id"] = f"{source.stem}:{unit['section']['code']}"
         unit["version_id"] = None
-    assert sorted(indexed, key=lambda item: item["unit_id"]) == sorted(units, key=lambda item: item["unit_id"])
+    assert sorted(indexed, key=lambda item: item["unit_id"]) == sorted(
+        units, key=lambda item: item["unit_id"]
+    )
     return {"sections": len(units), "source_tree": "passed", "stored_index": "passed"}
 
 
 if __name__ == "__main__":
-    from backend.infrastructure.persistence.postgres_engine import create_postgres_engine
-    from backend.tests.support.postgres_browser_fixture import fixture_schema, selected_url
+    from backend.infrastructure.persistence.runtime.postgres_engine import (
+        create_postgres_engine,
+    )
+    from backend.tests.support.postgres_browser_fixture import (
+        fixture_schema,
+        selected_url,
+    )
+
     source, root, version_id = sys.argv[1:]
     engine = create_postgres_engine(selected_url(), schema=fixture_schema(Path(root)))
     try:

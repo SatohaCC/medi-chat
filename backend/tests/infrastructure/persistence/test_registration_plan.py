@@ -4,7 +4,9 @@ from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.attachment.primitives import AttachmentSha256, RevisionYearMonth
 from backend.domain.attachment.value_objects import RegistrationVersion
 from backend.domain.medicine.identifiers import YjCode
-from backend.infrastructure.persistence.registration_plan import plan_registration
+from backend.infrastructure.persistence.registration.registration_plan import (
+    plan_registration,
+)
 
 
 def version(month, digest, codes=("111111111111",)):

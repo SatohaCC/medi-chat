@@ -8,8 +8,7 @@ from backend.domain.attachment.value_objects import (
     InteractionColumnDefinition,
     SectionTaxonomy,
 )
-
-from .definition_settings import (
+from backend.infrastructure.package_insert_definitions.definition_settings import (
     JanomeMorphologySettings,
     PmdaXmlSettings,
     XmlColumnBinding,

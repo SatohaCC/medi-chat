@@ -3,11 +3,11 @@
 import os
 from contextlib import contextmanager
 
-from backend.infrastructure.persistence.postgres_registration import (
+from backend.infrastructure.persistence.registration.postgres_registration_publisher import (
     PostgresRegistrationPublisher,
 )
-from backend.infrastructure.pmda_xml.artifact_mapping import PmdaArtifactEncoder
-from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
+from backend.infrastructure.pmda_xml.pmda_artifact_encoder import PmdaArtifactEncoder
+from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
 from backend.tests.support.paths import PROJECT_ROOT
 from backend.tests.support.postgres_fixtures import owned_postgres_engines
 

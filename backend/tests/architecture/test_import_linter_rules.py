@@ -26,7 +26,12 @@ ROOT = PROJECT_ROOT
             },
             True,
         ),
-        ({"infrastructure/import_payloads.py": "from .pmda_xml import model"}, True),
+        (
+            {
+                "infrastructure/document_import/attachment_payloads/model.py": "from ...pmda_xml import model"
+            },
+            True,
+        ),
         (
             {
                 "application/retrieval/model.py": "from .. import model",
@@ -116,7 +121,7 @@ ROOT = PROJECT_ROOT
             False,
         ),
         (
-            {"infrastructure/index_payloads.py": "from .pmda_xml import model"},
+            {"infrastructure/serialization/model.py": "from ..pmda_xml import model"},
             True,
         ),
         (
@@ -163,6 +168,13 @@ def test_import_linter_enforces_configured_contracts(tmp_path, sources, broken):
         "infrastructure/morphology",
         "infrastructure/pmda_xml",
         "infrastructure/package_insert_definitions",
+        "infrastructure/authentication",
+        "infrastructure/document_import",
+        "infrastructure/document_import/attachment_payloads",
+        "infrastructure/document_import/attachment_contracts",
+        "infrastructure/serialization",
+        "infrastructure/composition",
+        "infrastructure/cli",
         "config",
         "migrations",
         "presentation",
@@ -176,7 +188,7 @@ def test_import_linter_enforces_configured_contracts(tmp_path, sources, broken):
     for stub in (
         "infrastructure/evidence_mapping.py",
         "infrastructure/index_payloads.py",
-        "infrastructure/import_payloads.py",
+        "infrastructure/serialization/evidence_mapping.py",
         "presentation/chat_models.py",
         "presentation/chat_dto_mapper.py",
         "presentation/chat_service.py",

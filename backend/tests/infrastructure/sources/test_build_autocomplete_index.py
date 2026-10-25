@@ -2,7 +2,7 @@ import tempfile
 from pathlib import Path
 
 from backend.domain.shared.services import katakana_to_hiragana
-from backend.infrastructure.sources.yj_csv import parse_yj_csv
+from backend.infrastructure.sources.yj_csv_reader import parse_yj_csv
 
 
 def test_katakana_to_hiragana() -> None:

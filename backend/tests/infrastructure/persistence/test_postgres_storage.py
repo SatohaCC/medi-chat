@@ -36,7 +36,7 @@ def test_cloud_database_requires_host_allowlist_and_tls(monkeypatch):
         with pytest.raises(ValueError):
             resolve_postgres_database_settings(database_url=base + query, environ=env)
     monkeypatch.setenv("MEDI_CHAT_DATABASE_HOSTS", host)
-    from backend.infrastructure.persistence.postgres_engine import (
+    from backend.infrastructure.persistence.runtime.postgres_engine import (
         create_postgres_engine,
     )
 
@@ -87,7 +87,7 @@ def test_pg004_ci_host_requires_explicit_allowlist() -> None:
 
 
 def test_pg004_engine_keeps_explicit_ci_host_allowlist(monkeypatch) -> None:
-    from backend.infrastructure.persistence.postgres_engine import (
+    from backend.infrastructure.persistence.runtime.postgres_engine import (
         create_postgres_engine,
     )
 

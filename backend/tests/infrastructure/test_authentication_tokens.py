@@ -5,7 +5,7 @@ import time
 import jwt
 import pytest
 from backend.application.authentication.errors import AuthenticationRequired
-from backend.infrastructure.authentication.tokens import JwtTokens
+from backend.infrastructure.authentication.access_refresh_tokens import JwtTokens
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 

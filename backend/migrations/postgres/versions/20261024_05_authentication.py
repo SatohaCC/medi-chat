@@ -1,7 +1,7 @@
 """Application identity and rotating refresh sessions."""
 
 from alembic import op
-from backend.infrastructure.persistence.authentication_schema import AUTH_TABLES
+from backend.infrastructure.persistence.schemas.authentication_tables import AUTH_TABLES
 
 revision = "pg_20261024_05"
 down_revision = "pg_20261019_04"

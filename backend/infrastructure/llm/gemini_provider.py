@@ -9,9 +9,11 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 from backend.application.chat.queries.services.stream_lifetime import closing_stream
-
-from .provider_errors import LLMRequestError, LLMUnavailableError
-from .provider_interface import LLMProvider
+from backend.infrastructure.llm.llm_provider_base import LLMProvider
+from backend.infrastructure.llm.llm_provider_errors import (
+    LLMRequestError,
+    LLMUnavailableError,
+)
 
 try:
     from google import genai

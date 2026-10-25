@@ -13,14 +13,16 @@ from backend.application.indexing.queries.services.attachment_projection import 
 )
 from backend.domain.attachment.value_objects import AttachmentTableBlock
 from backend.domain.medicine.identifiers import YjCode
-from backend.infrastructure.import_payloads import AttachmentSourceInformation
-from backend.infrastructure.index_payloads import (
+from backend.infrastructure.document_import.attachment_payloads import (
+    AttachmentSourceInformation,
+)
+from backend.infrastructure.pmda_xml.pmda_artifact_encoder import PmdaArtifactEncoder
+from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
+from backend.infrastructure.serialization.search_payload_codec import (
     build_index_document,
     encode_registered_units,
     registered_unit_text,
 )
-from backend.infrastructure.pmda_xml.artifact_mapping import PmdaArtifactEncoder
-from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
 from backend.tests.support.attachment_import_fixtures import (
     encoded,
     json_artifact,

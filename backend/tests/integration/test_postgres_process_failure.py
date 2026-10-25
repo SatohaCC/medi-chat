@@ -8,15 +8,15 @@ import sys
 import time
 
 import pytest
-from backend.infrastructure.persistence import postgres_schema as schema
-from backend.infrastructure.persistence.postgres_readiness import (
-    verify_postgres_readiness,
-)
-from backend.infrastructure.persistence.registration_models import (
+from backend.infrastructure.persistence.registration.registration_payloads import (
     FigureInput,
     PostgresRegistrationInput,
 )
-from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
+from backend.infrastructure.persistence.runtime.postgres_readiness import (
+    verify_postgres_readiness,
+)
+from backend.infrastructure.persistence.schemas import attachment_tables as schema
+from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
 from backend.tests.application.indexing.test_active_attachment_projection import (
     mixed_source,
 )

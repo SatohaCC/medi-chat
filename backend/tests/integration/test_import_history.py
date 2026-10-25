@@ -8,15 +8,18 @@ from backend.application.attachment_import.commands.import_documents import (
 from backend.application.attachment_import.queries.import_history import (
     ImportHistoryQueries,
 )
-from backend.infrastructure.persistence.import_workers import ImportWorkers
-from backend.infrastructure.persistence.original_document_registration import (
+from backend.infrastructure.document_import.original_document_registration_adapter import (
     OriginalDocumentRegistration,
 )
-from backend.infrastructure.persistence.postgres_registration import (
+from backend.infrastructure.persistence.queries.postgres_import_query_reader import (
+    PostgresImportQueries,
+)
+from backend.infrastructure.persistence.registration.postgres_registration_publisher import (
     PostgresRegistrationPublisher,
 )
-from backend.infrastructure.pmda_xml.artifact_mapping import PmdaArtifactEncoder
-from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
+from backend.infrastructure.persistence.runtime.import_workers import ImportWorkers
+from backend.infrastructure.pmda_xml.pmda_artifact_encoder import PmdaArtifactEncoder
+from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
 from backend.presentation.attachment_import_routes import router
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
 from backend.tests.support.registration_oracles import source
@@ -40,8 +43,9 @@ async def test_history_retains_deleted_versions_orders_pages_and_avoids_payloads
     app = FastAPI()
     app.include_router(router)
     app.state.attachment_import_service = service
+    import_queries = PostgresImportQueries(engine)
     app.state.attachment_import_queries = ImportHistoryQueries(
-        reader=publisher.results, executor=service._executor
+        reader=import_queries, executor=service._executor
     )
     queries = []
 

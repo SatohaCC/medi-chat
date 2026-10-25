@@ -29,24 +29,24 @@ from backend.application.attachment_import.queries.import_history import (
 )
 from backend.domain.attachment.primitives import AttachmentSha256
 from backend.domain.attachment.value_objects import AttachmentFigure
-from backend.infrastructure.persistence import postgres_schema as s
-from backend.infrastructure.persistence.attachment_document_mapping import (
+from backend.infrastructure.document_import.original_document_registration_adapter import (
+    OriginalDocumentRegistration,
+)
+from backend.infrastructure.persistence.mappings.attachment_document_mapping import (
     document_from_payload,
     document_to_payload,
 )
-from backend.infrastructure.persistence.import_workers import ImportWorkers
-from backend.infrastructure.persistence.original_document_registration import (
-    OriginalDocumentRegistration,
-)
-from backend.infrastructure.persistence.postgres_registration import (
+from backend.infrastructure.persistence.registration.postgres_registration_publisher import (
     PostgresRegistrationPublisher,
 )
-from backend.infrastructure.persistence.registration_models import (
+from backend.infrastructure.persistence.registration.registration_payloads import (
     FigureInput,
     PostgresRegistrationInput,
 )
-from backend.infrastructure.pmda_xml.artifact_mapping import PmdaArtifactEncoder
-from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
+from backend.infrastructure.persistence.runtime.import_workers import ImportWorkers
+from backend.infrastructure.persistence.schemas import attachment_tables as s
+from backend.infrastructure.pmda_xml.pmda_artifact_encoder import PmdaArtifactEncoder
+from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
 from backend.presentation.attachment_import_routes import router
 from backend.tests.infrastructure.persistence.test_attachment_document_mapping import (
     complete_document,
@@ -151,9 +151,9 @@ def test_pg006_007_009_original_and_figures_export_in_new_process(
     script = """
 import hashlib,json,os
 from sqlalchemy import select
-from backend.infrastructure.persistence.postgres_engine import create_postgres_engine
-from backend.infrastructure.persistence import postgres_schema as s
-from backend.infrastructure.persistence.attachment_document_mapping import document_from_payload
+from backend.infrastructure.persistence.runtime.postgres_engine import create_postgres_engine
+from backend.infrastructure.persistence.schemas import attachment_tables as s
+from backend.infrastructure.persistence.mappings.attachment_document_mapping import document_from_payload
 engine=create_postgres_engine(os.environ['TEST_RUNTIME_DATABASE_URL'],schema=os.environ['PG_EXPORT_SCHEMA'])
 with engine.connect() as c:
  row=c.execute(select(s.versions).where(s.versions.c.version_id==os.environ['PG_EXPORT_VERSION'])).mappings().one()
@@ -995,9 +995,9 @@ def test_pg009_handwritten_complete_domain_restored_from_jsonb_in_new_process(
     script = """
 import os,json
 from sqlalchemy import select
-from backend.infrastructure.persistence.postgres_engine import create_postgres_engine
-from backend.infrastructure.persistence import postgres_schema as s
-from backend.infrastructure.persistence.attachment_document_mapping import document_from_payload
+from backend.infrastructure.persistence.runtime.postgres_engine import create_postgres_engine
+from backend.infrastructure.persistence.schemas import attachment_tables as s
+from backend.infrastructure.persistence.mappings.attachment_document_mapping import document_from_payload
 from backend.tests.infrastructure.persistence.test_attachment_document_mapping import observe
 engine=create_postgres_engine(os.environ['TEST_RUNTIME_DATABASE_URL'],schema=os.environ['PG_EXPORT_SCHEMA'])
 with engine.connect() as connection:

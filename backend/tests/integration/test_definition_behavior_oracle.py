@@ -16,8 +16,10 @@ from backend.application.medicine.queries.models import ResolvedMedicine
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import BrandName, GenericName
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
-from backend.infrastructure.morphology.keyword_extraction import extract_search_keywords
-from backend.infrastructure.package_insert_definitions.assembly import (
+from backend.infrastructure.morphology.janome_keyword_extraction import (
+    extract_search_keywords,
+)
+from backend.infrastructure.package_insert_definitions.definition_assembly import (
     get_package_insert_definitions,
 )
 from backend.tests.integration.test_package_insert_catalog import _source

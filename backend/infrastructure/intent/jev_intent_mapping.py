@@ -4,8 +4,7 @@ from copy import deepcopy
 
 from backend.application.retrieval.queries.models import IntentCandidate, IntentResult
 from backend.application.retrieval.values import IntentName, Probability
-
-from ...domain.foundation.json_types import JsonValue
+from backend.domain.foundation.json_types import JsonValue
 
 
 def map_jev_intent_result(

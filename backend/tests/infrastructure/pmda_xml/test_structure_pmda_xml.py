@@ -9,10 +9,10 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from backend.infrastructure.package_insert_definitions.assembly import (
+from backend.infrastructure.package_insert_definitions.definition_assembly import (
     get_package_insert_definitions,
 )
-from backend.infrastructure.pmda_xml.transform import transform
+from backend.infrastructure.pmda_xml.xml_file_transformer import transform
 from backend.tests.support.paths import PROJECT_ROOT
 from backend.tests.support.section_records import flatten_sections
 

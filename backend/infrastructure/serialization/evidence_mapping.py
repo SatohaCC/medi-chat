@@ -1,0 +1,145 @@
+"""構造化JSONから純粋な根拠・文書値へ変換する境界。"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from backend.application.indexing.queries.models import DocumentRevision
+from backend.application.indexing.values import (
+    EvidenceContextLabel,
+    SearchUnitId,
+    SearchUnitKind,
+)
+from backend.application.retrieval.queries.models import (
+    Evidence,
+    EvidenceColumns,
+    EvidenceDocument,
+    EvidenceProduct,
+    EvidenceReference,
+    EvidenceSection,
+    TextSearchPolicy,
+)
+from backend.application.retrieval.queries.policies.selection import (
+    build_evidence as format_evidence,
+)
+from backend.application.retrieval.queries.policies.selection import (
+    is_scope_heading_only as scope_heading_only,
+)
+from backend.application.retrieval.queries.policies.selection import select_products
+from backend.application.retrieval.values import (
+    DetectionSource,
+    EvidenceBrandName,
+    EvidenceExcerpt,
+    EvidenceGenericName,
+    EvidenceSourceUrl,
+)
+from backend.domain.attachment.identifiers import DocumentId
+from backend.domain.foundation.json_types import JsonValue
+from backend.domain.medicine.identifiers import YjCode
+from backend.infrastructure.serialization.json_payload_values import (
+    _object,
+    _objects,
+    _optional_text,
+    _string,
+    _string_object,
+    _strings,
+)
+
+
+def is_scope_heading_only(
+    unit: dict[str, JsonValue], *, text_search_policy: TextSearchPolicy
+) -> bool:
+    kind = unit.get("kind")
+    return scope_heading_only(
+        kind if isinstance(kind, str) else None,
+        _string(unit.get("text") or ""),
+        text_search_policy=text_search_policy,
+    )
+
+
+def build_evidence(
+    unit: dict[str, JsonValue],
+    document_payload: dict[str, JsonValue],
+    retrieved_by: DetectionSource | str,
+) -> Evidence:
+    document_id = _string(unit["document_key"])
+    metadata = _object(document_payload.get("document") or {})
+    products = _objects(metadata.get("products") or [])
+    codes = tuple(YjCode(code) for code in _strings(unit.get("product_yj_codes") or []))
+    selected = select_products(
+        tuple(
+            _ProductPayload(
+                YjCode(_string(code))
+                if (code := product.get("yj_code")) is not None
+                else None,
+                product,
+            )
+            for product in products
+        ),
+        codes,
+    )
+    unit_url = _object(unit.get("source") or {}).get("url")
+    generic_name = _optional_text(metadata.get("generic_name"))
+    pmda_url = (
+        _optional_text(_object(document_payload.get("source") or {}).get("pmda_url"))
+        if not unit_url
+        else ""
+    )
+    document = EvidenceDocument(
+        generic_name=EvidenceGenericName(generic_name) if generic_name else None,
+        products=tuple(
+            EvidenceProduct(
+                yj_code=item.yj_code,
+                brand_name=EvidenceBrandName(name)
+                if (name := _optional_text(item.payload.get("brand_name")))
+                else None,
+            )
+            for item in selected
+        ),
+        pmda_url=EvidenceSourceUrl(pmda_url) if pmda_url else None,
+    )
+    revision = unit.get("document_revision")
+    if revision is None and unit.get("kind") == "section":
+        revisions = _objects(metadata.get("revisions") or [])
+        revision = next(
+            (item for item in revisions if item.get("source_label") == "今回"),
+            revisions[0] if revisions else {},
+        )
+    columns = unit.get("columns")
+    raw_unit = Evidence(
+        unit_id=SearchUnitId(_string(unit["unit_id"])),
+        document_id=DocumentId(document_id),
+        product_name=None,
+        generic_name=None,
+        product_yj_codes=codes,
+        document_revision=DocumentRevision(_object(revision or {})),
+        section=EvidenceSection(_string_object(unit.get("section") or {})),
+        kind=SearchUnitKind(kind)
+        if (kind := _optional_text(unit.get("kind"))) is not None
+        else None,
+        excerpt=EvidenceExcerpt(_string(unit.get("text", ""))),
+        columns=EvidenceColumns(_string_object(columns))
+        if columns is not None
+        else None,
+        references=tuple(
+            EvidenceReference(ref) for ref in _objects(unit.get("references") or [])
+        ),
+        url=EvidenceSourceUrl(url)
+        if (url := _optional_text(unit_url)) is not None
+        else None,
+        retrieved_by=frozenset({DetectionSource(retrieved_by)}),
+    )
+    return format_evidence(
+        raw_unit,
+        document,
+        tuple(
+            EvidenceContextLabel(label)
+            for label in _strings(unit.get("context_labels") or [])
+        ),
+    )
+
+
+@dataclass(frozen=True)
+class _ProductPayload:
+    yj_code: YjCode | None
+    payload: dict[str, JsonValue]

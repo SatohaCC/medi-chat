@@ -6,7 +6,7 @@ import pytest
 from backend.application.chat.queries.chat import (
     ChatQueries,
 )
-from backend.infrastructure.package_insert_definitions.assembly import (
+from backend.infrastructure.package_insert_definitions.definition_assembly import (
     get_package_insert_definitions,
 )
 from backend.presentation import chat_routes, chat_websocket_routes, search_routes

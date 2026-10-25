@@ -34,7 +34,7 @@ from backend.domain.medicine.primitives import (
     GenericName,
 )
 from backend.domain.medicine.value_objects import MedicineNames
-from backend.infrastructure.package_insert_definitions.assembly import (
+from backend.infrastructure.package_insert_definitions.definition_assembly import (
     get_package_insert_definitions,
 )
 from backend.tests.application.retrieval.test_evidence_collection import make_evidence

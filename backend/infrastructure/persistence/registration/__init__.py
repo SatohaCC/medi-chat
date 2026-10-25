@@ -1,0 +1,1 @@
+"""Persistence registration package."""

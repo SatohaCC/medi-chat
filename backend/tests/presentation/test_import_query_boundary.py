@@ -20,10 +20,10 @@ from backend.application.attachment_import.queries.dtos.import_views import (
 from backend.application.attachment_import.queries.import_history import (
     ImportHistoryQueries,
 )
-from backend.infrastructure.persistence.import_workers import ImportWorkers
-from backend.infrastructure.persistence.postgres_import_queries import (
+from backend.infrastructure.persistence.queries.postgres_import_query_reader import (
     PostgresImportQueries,
 )
+from backend.infrastructure.persistence.runtime.import_workers import ImportWorkers
 from backend.presentation.attachment_import_routes import router
 from backend.presentation.dependencies import get_import_queries, get_import_service
 from backend.tests.support.attachment_import_fixtures import encoded, xml_source

@@ -17,8 +17,8 @@ from backend.domain.attachment.value_objects import (
     AttachmentParagraph,
 )
 from backend.domain.medicine.identifiers import YjCode
-from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
-from backend.infrastructure.pmda_xml.registration_artifacts import (
+from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
+from backend.infrastructure.serialization.search_payload_codec import (
     encode_registered_units,
 )
 from backend.tests.domain.attachment.test_attachment_domain import _document

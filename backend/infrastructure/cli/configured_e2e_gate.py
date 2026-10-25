@@ -11,17 +11,21 @@ import time
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
-from ...config.authentication_settings import read_authentication_settings
-from ...config.database_settings import (
+from backend.config.authentication_settings import read_authentication_settings
+from backend.config.database_settings import (
     PostgresDatabaseSettings,
     resolve_postgres_database_settings,
 )
-from ...config.runtime_environment import load_runtime_environment
-from ...domain.identity.identifiers import UserId
-from ...project_paths import PROJECT_ROOT
-from ..authentication.tokens import JwtTokens
-from ..persistence.postgres_engine import create_postgres_engine
-from ..persistence.postgres_readiness import verify_postgres_readiness
+from backend.config.runtime_environment import load_runtime_environment
+from backend.domain.identity.identifiers import UserId
+from backend.infrastructure.authentication.access_refresh_tokens import JwtTokens
+from backend.infrastructure.persistence.runtime.postgres_engine import (
+    create_postgres_engine,
+)
+from backend.infrastructure.persistence.runtime.postgres_readiness import (
+    verify_postgres_readiness,
+)
+from backend.project_paths import PROJECT_ROOT
 
 
 def terminate_owned(process: subprocess.Popen) -> None:
@@ -89,7 +93,7 @@ def run_gate(
                 sys.executable,
                 "-m",
                 "uvicorn",
-                "backend.infrastructure.composition.configured_probe:create_probe",
+                "backend.infrastructure.cli.configured_probe:create_probe",
                 "--factory",
                 "--host",
                 "127.0.0.1",

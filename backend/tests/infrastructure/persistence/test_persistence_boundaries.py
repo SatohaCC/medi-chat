@@ -2,10 +2,36 @@
 
 import ast
 import re
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 from backend.tests.support.paths import BACKEND_ROOT
+
+
+def test_migration_environment_registers_all_metadata_in_fresh_process():
+    """IH-023: env.py supplies complete Core metadata before revisions run."""
+    source = """
+import runpy
+from unittest.mock import MagicMock, patch
+from alembic import context
+config = MagicMock()
+config.attributes = {}
+with patch.object(context, "config", config, create=True), patch.object(context, "is_offline_mode", return_value=True), patch.object(context, "configure") as configure, patch.object(context, "begin_transaction"), patch.object(context, "run_migrations"):
+    runpy.run_path("backend/migrations/postgres/env.py")
+    tables = configure.call_args.kwargs["target_metadata"].tables
+    assert len(tables) == 17, sorted(tables)
+    assert "attachment_uploads" in tables
+    assert "auth_users" in tables
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", source],
+        cwd=BACKEND_ROOT.parent,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
 
 
 def assert_runtime_storage_boundaries():
@@ -72,7 +98,10 @@ def test_postgres_runtime_has_no_sqlite_or_implicit_ddl():
 def test_runtime_storage_guard_rejects_sqlite_and_ddl_injections(
     monkeypatch, injection
 ):
-    target = BACKEND_ROOT / "infrastructure/persistence/postgres_runtime.py"
+    target = (
+        BACKEND_ROOT
+        / "infrastructure/persistence/queries/postgres_search_snapshot_provider.py"
+    )
     original = Path.read_text
 
     def read(path, *args, **kwargs):

@@ -4,7 +4,7 @@ import hashlib
 import json
 
 import pytest
-from backend.infrastructure.pmda_xml.transform import transform
+from backend.infrastructure.pmda_xml.xml_file_transformer import transform
 from backend.tests.support.paths import PROJECT_ROOT
 from backend.tests.support.section_records import assert_original_records_preserved
 

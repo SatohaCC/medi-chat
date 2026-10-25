@@ -9,8 +9,10 @@ from backend.domain.foundation.json_types import JsonValue
 
 
 def test_tc15_mapping_uses_injected_heading_policy(monkeypatch) -> None:
-    from backend.infrastructure import evidence_mapping
-    from backend.infrastructure.package_insert_definitions import assembly as loader
+    from backend.infrastructure.package_insert_definitions import (
+        definition_assembly as loader,
+    )
+    from backend.infrastructure.serialization import evidence_mapping
 
     definitions = loader.get_package_insert_definitions()
     policy = replace(
@@ -33,13 +35,15 @@ def test_tc15_mapping_uses_injected_heading_policy(monkeypatch) -> None:
 
 
 def test_janome_business_and_morphology_settings_are_independent(monkeypatch) -> None:
-    from backend.infrastructure.morphology.definition_settings import (
-        JanomeMorphologySettings,
-    )
     from backend.infrastructure.morphology.janome_keyword_extractor import (
         JanomeKeywordExtractor,
     )
-    from backend.infrastructure.package_insert_definitions import assembly as loader
+    from backend.infrastructure.package_insert_definitions import (
+        definition_assembly as loader,
+    )
+    from backend.infrastructure.package_insert_definitions.definition_settings import (
+        JanomeMorphologySettings,
+    )
 
     definitions = loader.get_package_insert_definitions()
     default = JanomeKeywordExtractor(

@@ -7,11 +7,14 @@ import os
 import typesafe_sdk as ts
 
 from backend.application.retrieval.queries.models import IntentRequest, IntentResult
-
-from ...domain.foundation.json_types import JsonValue
-from ..package_insert_definitions.assembly import get_package_insert_definitions
-from .definition_settings import JevClassificationSettings
-from .jev_intent_mapping import map_jev_intent_result
+from backend.domain.foundation.json_types import JsonValue
+from backend.infrastructure.intent.jev_intent_mapping import map_jev_intent_result
+from backend.infrastructure.package_insert_definitions.definition_assembly import (
+    get_package_insert_definitions,
+)
+from backend.infrastructure.package_insert_definitions.definition_settings import (
+    JevClassificationSettings,
+)
 
 logger = logging.getLogger(__name__)
 

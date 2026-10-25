@@ -7,7 +7,9 @@ from contextlib import ExitStack, contextmanager
 import pytest
 from alembic import command
 from alembic.config import Config
-from backend.infrastructure.persistence.postgres_engine import create_postgres_engine
+from backend.infrastructure.persistence.runtime.postgres_engine import (
+    create_postgres_engine,
+)
 from backend.tests.support.paths import BACKEND_ROOT
 from sqlalchemy import text
 from sqlalchemy.engine import make_url
@@ -80,11 +82,13 @@ def pg_engines():
 @pytest.fixture
 def pg_api(pg_engines, monkeypatch):
     """Same hand-authored REST/WS corpus as the former prepared-index fixture."""
-    from backend.infrastructure.persistence.postgres_registration import (
+    from backend.infrastructure.persistence.registration.postgres_registration_publisher import (
         PostgresRegistrationPublisher,
     )
-    from backend.infrastructure.pmda_xml.artifact_mapping import PmdaArtifactEncoder
-    from backend.infrastructure.pmda_xml.decoder import PmdaXmlDecoder
+    from backend.infrastructure.pmda_xml.pmda_artifact_encoder import (
+        PmdaArtifactEncoder,
+    )
+    from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
     from backend.tests.support.attachment_import_fixtures import xml_source
 
     raw = xml_source(

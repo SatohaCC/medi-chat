@@ -6,13 +6,13 @@ from threading import Barrier
 import pytest
 from backend.application.authentication.errors import AuthenticationUnavailable
 from backend.domain.identity.identifiers import UserId
-from backend.infrastructure.authentication.credentials import LocalCredentials
-from backend.infrastructure.authentication.tokens import RefreshSecrets
-from backend.infrastructure.persistence.authentication_schema import (
+from backend.infrastructure.authentication.access_refresh_tokens import RefreshSecrets
+from backend.infrastructure.authentication.local_credentials import LocalCredentials
+from backend.infrastructure.persistence.schemas.authentication_tables import (
     identities,
     refresh_tokens,
 )
-from backend.infrastructure.persistence.postgres_authentication import (
+from backend.infrastructure.persistence.stores.postgres_authentication_store import (
     PostgresAuthentication,
 )
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines

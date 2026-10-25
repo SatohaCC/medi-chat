@@ -32,7 +32,9 @@ def test_xml_cli_uses_project_relative_paths(
     elsewhere = tmp_path / "elsewhere"
     elsewhere.mkdir()
     monkeypatch.setattr(project_paths, "PROJECT_ROOT", root)
-    monkeypatch.setattr("backend.infrastructure.pmda_xml.xml_nodes.PROJECT_ROOT", root)
+    monkeypatch.setattr(
+        "backend.infrastructure.pmda_xml.xml_node_mapping.PROJECT_ROOT", root
+    )
     monkeypatch.chdir(elsewhere if other_cwd else root)
     inputs = (
         ["--source-dir", "data/pmda/originals"]

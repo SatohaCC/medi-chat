@@ -5,8 +5,11 @@ from __future__ import annotations
 import os
 from collections.abc import AsyncIterator
 
-from .provider_errors import LLMRequestError, LLMUnavailableError
-from .provider_interface import LLMProvider
+from backend.infrastructure.llm.llm_provider_base import LLMProvider
+from backend.infrastructure.llm.llm_provider_errors import (
+    LLMRequestError,
+    LLMUnavailableError,
+)
 
 try:
     from openai import AsyncOpenAI
