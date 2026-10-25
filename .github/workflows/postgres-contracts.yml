@@ -51,7 +51,7 @@ jobs:
           cache: pnpm
       - uses: astral-sh/setup-uv@v7
         with:
-          python-version: "3.14"
+          python-version: "3.14.9"
       - run: pnpm install --frozen-lockfile
       - run: uv sync --project backend --locked
       - name: Backend tests, architecture, lint, formatting and types
