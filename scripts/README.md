@@ -41,3 +41,13 @@ pnpm quality:changed --list   # 実行計画だけ表示
 エディタのMypyも`.vscode/settings.json`で選択中のPython環境の`python -m mypy`、リポジトリルート、`backend/pyproject.toml`へ統一する。既定の拡張同梱Mypyへ暗黙に切り替えない。`scripts/hooks/test_quality_gate.py`で実MypyのOptional引数エラー検出と、hookの失敗通知・Stopブロックを別々に検証する。登録済みhookがCodex上で自動発火したかは、この単体検証とは区別する。
 
 hooks定義の変更後はCodex側で定義を確認・信頼する操作が必要。登録ファイルの存在と実際の自動発火は別々に確認する。[公式仕様](https://learn.chatgpt.com/docs/hooks)
+
+### プライバシー検査
+
+実行用は[`hooks/privacy_gate.py`](hooks/privacy_gate.py)、回帰テストは[`hooks/test_privacy_gate.py`](hooks/test_privacy_gate.py)に集約する。legacyにあった旧グローバルhookのコピーと試験スクリプトはこの構成へ置き換え済み。個人環境を書き換える一回限りの更新スクリプトは廃止した。
+
+`privacy_gate.py`は編集・shell実行後（PostToolUse）と終了時（Stop）に、HEADとの差分およびGit管理対象になり得る未追跡テキストを検査する。削除・Git除外ファイル・バイナリ・symlinkは対象外。UTF-8とBOM付きUTF-16を扱い、検出結果は本文を含めずファイルと行番号のみ返す。
+
+現行Git hookと同じくCドライブのUsers配下の個人パスを検出し、APIの`/users/me`、他ドライブ、Unixパスは対象外。ローカルの`~/.config/git/hooks/privacy-config.json`があれば`allowed_user_segments`と`blocked_literals`を利用する。設定がなければホームパス検査のみ行う。禁止語を共有ファイルへ転記しない。
+
+Stopで検出すると一度修正を促し、継続後も残る場合は未解決として通知する。公開済み・送信予定のコミット履歴、画像、アーカイブ、秘密情報全般の検査は行わない。送信する全コミットの検査は既存Git pre-push hookが担当する。手動確認は`echo '{"hook_event_name":"Stop"}' | python scripts/hooks/privacy_gate.py`。実際の自動発火にはCodex側でHooks定義の確認・信頼が必要。
