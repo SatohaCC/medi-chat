@@ -64,7 +64,7 @@ export function planFor(scopes, phase = "full") {
     if (phase === "full") {
       uv("Tooling format", "ruff", "format", "--check", "scripts/checks", "scripts/hooks");
       pnpm("Tooling types (Pyright and mypy)", "typecheck:scripts");
-      uv("Hook regression tests", "python", "-m", "pytest", "scripts/hooks/test_quality_gate.py", "-q");
+      uv("Hook regression tests", "python", "-m", "pytest", "scripts/hooks/test_quality_gate.py", "scripts/hooks/test_privacy_gate.py", "-q");
       pnpm("Generated requirements", "vercel:requirements:check");
       uv("Generated search guide", "python", "-m", "backend.infrastructure.cli.export_search_guide", "--check");
     }
