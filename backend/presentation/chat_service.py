@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections.abc import AsyncGenerator, Awaitable, Callable, Sequence
 from contextlib import aclosing as closing_stream
 
+from langsmith import trace, traceable
+
 from backend.application.chat.queries.chat import (
     ChatQueries,
 )
@@ -57,6 +59,7 @@ class AppChatService:
         results = await self._app_service.search_keywords(query, product_yj_codes)
         return self.sources_to_api(results)
 
+    @traceable(name="medi_chat.prepare_reply", run_type="chain")
     async def prepare_reply(
         self,
         conversation: Sequence[ApiChatMessage],
@@ -86,17 +89,63 @@ class AppChatService:
     ) -> AsyncGenerator[str]:
         settings = self.defaults()
         pure_conversation = [chat_message_from_api(m) for m in conversation]
-        async with closing_stream(
-            self._app_service.stream_answer(
-                reply,
-                pure_conversation,
-                provider_name=provider_name or settings.provider,
-                model_name=model_name or settings.model,
-            )
-        ) as response:
-            async for chunk in response:
-                yield chunk
+        user_query = next(
+            (m.content for m in reversed(conversation) if m.role == "user"), ""
+        )
+        api_sources = self.sources_to_api(reply.sources)
+        with trace(
+            "medi_chat.stream_answer",
+            "chain",
+            inputs={
+                "question": user_query,
+                "conversation": [
+                    {"role": m.role, "content": m.content} for m in conversation
+                ],
+                "intent": reply.intent,
+                "retrieval_strategy": reply.retrieval_strategy,
+                "evidence_sources": [
+                    {
+                        "section": f"{s.section.get('code', '')} {s.section.get('title', '')}".strip(),
+                        "product_name": s.product_name,
+                        "generic_name": s.generic_name,
+                        "excerpt": s.excerpt,
+                        "url": s.url,
+                    }
+                    for s in api_sources
+                ],
+                "evidence_count": len(api_sources),
+                "resolved_medicines": [
+                    {
+                        "generic_name": getattr(m, "generic_name", ""),
+                        "brand_names": [b.value for b in m.medicine.brand_names]
+                        if getattr(m, "medicine", None)
+                        and getattr(m.medicine, "brand_names", None)
+                        else getattr(m, "brand_names", []),
+                    }
+                    for m in reply.resolved_medicines
+                ],
+                "provider": provider_name or settings.provider,
+                "model": model_name or settings.model,
+            },
+        ) as run:
+            output_chunks: list[str] = []
+            try:
+                async with closing_stream(
+                    self._app_service.stream_answer(
+                        reply,
+                        pure_conversation,
+                        provider_name=provider_name or settings.provider,
+                        model_name=model_name or settings.model,
+                    )
+                ) as response:
+                    async for chunk in response:
+                        output_chunks.append(chunk)
+                        yield chunk
+            finally:
+                if run is not None and not getattr(run, "end_time", None):
+                    run.end(outputs={"answer": "".join(output_chunks)})
 
+    @traceable(name="medi_chat.answer_question", run_type="chain")
     async def answer_question(
         self,
         conversation: Sequence[ApiChatMessage],
