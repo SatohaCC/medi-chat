@@ -19,12 +19,8 @@ export function useEvidencePanelState({
   baseline,
   persistentAdditional,
 }: UseEvidencePanelStateOptions) {
-  const [openEvidenceIndex, setOpenEvidenceIndex] = useState<number | null>(
-    null,
-  );
-  const [evidencePaneTab, setEvidencePaneTab] = useState<"sources" | "jev">(
-    "sources",
-  );
+  const [openEvidenceIndex, setOpenEvidenceIndex] = useState<number | null>(null);
+  const [evidencePaneTab, setEvidencePaneTab] = useState<"sources" | "jev">("sources");
 
   const handleToggleEvidence = useCallback(
     (index: number, tab: "sources" | "jev" = "sources") => {
@@ -74,13 +70,7 @@ export function useEvidencePanelState({
       ]),
     ];
     return extractHighlightWords(activeUserQuery, medicineNames);
-  }, [
-    activeUserQuery,
-    entries,
-    baseline,
-    persistentAdditional,
-    activeEvidenceSources,
-  ]);
+  }, [activeUserQuery, entries, baseline, persistentAdditional, activeEvidenceSources]);
 
   return {
     openEvidenceIndex,

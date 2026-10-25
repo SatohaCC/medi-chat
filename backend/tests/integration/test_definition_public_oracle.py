@@ -110,6 +110,7 @@ def observe_public() -> dict[str, object]:
                     socket.send_json(
                         {
                             "type": "message",
+                            "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                             "messages": [{"role": "user", "content": "相互作用は？"}],
                             "product_yj_codes": codes,
                         }

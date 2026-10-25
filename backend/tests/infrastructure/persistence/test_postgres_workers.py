@@ -123,7 +123,12 @@ async def test_api_and_ws_respond_while_search_is_blocked(
             "type"
         ] == "websocket.accept"
         await incoming.put(
-            {"type": "websocket.receive", "text": json.dumps({"type": "ping"})}
+            {
+                "type": "websocket.receive",
+                "text": json.dumps(
+                    {"type": "ping", "ping_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280"}
+                ),
+            }
         )
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=app), base_url="http://test"
@@ -133,7 +138,10 @@ async def test_api_and_ws_respond_while_search_is_blocked(
         assert response.status_code == 200
         assert response.json() == {"status": "ok"}
         assert pong["type"] == "websocket.send"
-        assert json.loads(pong["text"]) == {"type": "pong"}
+        assert json.loads(pong["text"]) == {
+            "type": "pong",
+            "ping_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
+        }
         # 同一loopの両応答がDB解放より前に完了した順序だけを判定する。
         assert not release.is_set(), "health/pong completed only after DB was released"
         assert not search_task.done()
@@ -278,3 +286,125 @@ async def test_pg027_workers_own_connections_and_return_plain_values(pg_api, ope
         finally:
             for name, callback in listeners:
                 event.remove(engine, name, callback)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("ending", ["abort", "disconnect"])
+async def test_WR024_websocket_owns_mvcc_until_native_read_finishes(pg_api, ending):
+    from backend.tests.presentation.test_chat_websocket_lifecycle import (
+        A,
+        HeldService,
+        P,
+        Service,
+        request,
+        session,
+    )
+
+    app = pg_api()
+    async with app.router.lifespan_context(app):
+        runtime = app.state.generation_runtime
+        engine = app.state.database_engine
+        loop = asyncio.get_running_loop()
+        started = asyncio.Event()
+        native_release = threading.Event()
+        acquired = []
+        returned = []
+        original_fault = runtime.fault
+
+        def hold(phase):
+            if phase == "medicines":
+                loop.call_soon_threadsafe(started.set)
+                if not native_release.wait(10):
+                    raise AssertionError("Native read release guard expired")
+
+        def checkout(dbapi, record, proxy):
+            acquired.append(id(dbapi))
+
+        def checkin(dbapi, record):
+            returned.append(id(dbapi))
+
+        runtime.fault = hold
+        event.listen(engine, "checkout", checkout)
+        event.listen(engine, "checkin", checkin)
+
+        class RequestService(HeldService):
+            async def prepare_reply(self, *args, **kwargs):
+                try:
+                    async with runtime.acquire() as snapshot:
+                        await snapshot.medicine_reader.read_medicines()
+                finally:
+                    self.closed.set()
+                return await Service.prepare_reply(self, *args, **kwargs)
+
+        service = RequestService()
+        baseline = engine.pool.checkedout()
+        try:
+            async with session(service) as ws:
+                try:
+                    await ws.send(request())
+                    await asyncio.wait_for(started.wait(), 5)
+                    if ending == "abort":
+                        await ws.send({"type": "abort", "request_id": A})
+                        await ws.send({"type": "ping", "ping_id": P})
+                        while (frame := await ws.receive())["type"] != "pong":
+                            assert frame["type"] != "aborted"
+                    else:
+                        await ws.disconnect()
+                        for _ in range(10):
+                            await asyncio.sleep(0)
+                    assert len(acquired) == 1
+                    assert returned == []
+                    assert not service.closed.is_set()
+                    assert engine.pool.checkedout() == baseline + 1
+                    native_release.set()
+                    if ending == "abort":
+                        while (await ws.receive())["type"] != "aborted":
+                            pass
+                        assert service.closed.is_set()
+                    else:
+                        await asyncio.wait_for(ws.handler, 5)
+                    assert returned == acquired
+                    assert engine.pool.checkedout() == baseline
+                finally:
+                    native_release.set()
+        finally:
+            runtime.fault = original_fault
+            event.remove(engine, "checkout", checkout)
+            event.remove(engine, "checkin", checkin)
+
+
+@pytest.mark.asyncio
+async def test_WR025_preparation_returns_connection_before_silent_stream(pg_api):
+    from backend.tests.presentation.test_chat_websocket_lifecycle import (
+        HeldService,
+        P,
+        Service,
+        request,
+        session,
+    )
+
+    app = pg_api()
+    async with app.router.lifespan_context(app):
+        runtime = app.state.generation_runtime
+        engine = app.state.database_engine
+
+        class RequestService(HeldService):
+            async def prepare_reply(self, *args, **kwargs):
+                async with runtime.acquire() as snapshot:
+                    assert await snapshot.medicine_reader.read_medicines()
+                return await Service.prepare_reply(self, *args, **kwargs)
+
+        service = RequestService("stream")
+        baseline = engine.pool.checkedout()
+        async with session(service) as ws:
+            await ws.send(request())
+            await asyncio.wait_for(service.started.wait(), 5)
+            assert engine.pool.checkedout() == baseline
+            await ws.send({"type": "ping", "ping_id": P})
+            while (await ws.receive())["type"] != "pong":
+                pass
+            assert not service.release.is_set()
+            async with httpx.AsyncClient(
+                transport=httpx.ASGITransport(app=app), base_url="http://test"
+            ) as api:
+                assert (await api.get("/health")).status_code == 200

@@ -79,8 +79,8 @@ with TestClient(create_app(), headers=signed_test_headers()) as client:
     response = client.post("/api/chat", json={"message": "頭痛", "product_yj_codes": ["999999999999"]})
     assert response.status_code == 200 and response.json()["needs_clarification"]
     with client.websocket_connect("/api/ws") as socket:
-        socket.send_json({"type": "ping"})
-        assert socket.receive_json() == {"type": "pong"}
+        socket.send_json({"type": "ping", "ping_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280"})
+        assert socket.receive_json() == {"type": "pong", "ping_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280"}
 assert not any(any(name == old or name.startswith(old + ".") for old in RejectLegacy.forbidden) for name in sys.modules)
 print("canonical independent API passed")
 """

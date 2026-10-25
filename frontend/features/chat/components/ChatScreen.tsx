@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@react-spectrum/s2/Button";
 import { PromptFieldValue } from "@react-spectrum/ai";
 import * as stylex from "@stylexjs/stylex";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -12,6 +13,7 @@ import {
   type SelectedMedicineItem,
   useMedicineEntries,
 } from "../../medicine-selection";
+import type { UnsentRequest } from "../model/chatRequestLifecycle";
 import { useChatScroll } from "../hooks/useChatScroll";
 import { useChatWebSocket } from "../hooks/useChatWebSocket";
 import { useEvidencePanelState } from "../hooks/useEvidencePanelState";
@@ -41,6 +43,7 @@ export function ChatScreen() {
   >([]);
   const [prompt, setPrompt] = useState<PromptFieldValue>(() => new PromptFieldValue([]));
   const [inputKey, setInputKey] = useState(0);
+  const [restoreChoice, setRestoreChoice] = useState<UnsentRequest | null>(null);
 
   // Sync default baseline name once catalog loads
   useEffect(() => {
@@ -82,7 +85,17 @@ export function ChatScreen() {
     });
   }, [baseline, persistentAdditional, mentions]);
 
-  const { messages, isStreaming, status, sendMessage } = useChatWebSocket({
+  const {
+    messages,
+    isStreaming,
+    isStopping,
+    abortRequest,
+    pending,
+    unsent,
+    cancelPending,
+    status,
+    sendMessage,
+  } = useChatWebSocket({
     selectedModel,
   });
 
@@ -112,6 +125,11 @@ export function ChatScreen() {
       const result = sendMessage({
         content,
         productYjCodes: targetState.target.map((m) => m.yj_code),
+        context: {
+          promptSegments: promptVal.segments,
+          targets: targetState.target,
+          model: selectedModel,
+        },
       });
 
       if (result.ok) {
@@ -123,8 +141,18 @@ export function ChatScreen() {
         scrollToLatestUserMessage();
       }
     },
-    [targetState, isStreaming, sendMessage, scrollToLatestUserMessage],
+    [targetState, isStreaming, selectedModel, sendMessage, scrollToLatestUserMessage],
   );
+
+  const restoreQuestion = (question: UnsentRequest) => {
+    if (!question.context) return;
+    setPrompt(new PromptFieldValue([...question.context.promptSegments]));
+    setBaseline(question.context.targets.map((medicine) => ({ ...medicine })));
+    setSelectedModel(question.context.model);
+    setPersistentAdditional([]);
+    setInputKey((previous) => previous + 1);
+    setRestoreChoice(null);
+  };
 
   const handleAddBaseline = useCallback((medicine: SelectedMedicineItem) => {
     setBaseline((prev) => {
@@ -236,6 +264,57 @@ export function ChatScreen() {
             </p>
           )}
 
+          {pending && (
+            <section aria-label="未送信の保留">
+              <p role="status">未送信・接続待ちの保留: {pending.content}</p>
+              <p>
+                {pending.context?.targets.map((medicine) => medicine.name).join("、")} /{" "}
+                {pending.context?.model}
+              </p>
+              <Button
+                variant="secondary"
+                onPress={() => cancelPending(pending.payload.request_id)}
+              >
+                保留を取消
+              </Button>
+            </section>
+          )}
+          {unsent.map((question) => (
+            <section key={question.payload.request_id} aria-label="未送信の質問">
+              <p>
+                {question.reason === "expired"
+                  ? "期限切れ"
+                  : question.reason === "cancelled"
+                    ? "取消"
+                    : "認証により取消"}
+                : {question.content}
+              </p>
+              <p>
+                {question.context?.targets.map((medicine) => medicine.name).join("、")} /{" "}
+                {question.context?.model}
+              </p>
+              <Button
+                variant="secondary"
+                onPress={() => {
+                  if (buildPayloadContent(prompt).trim()) setRestoreChoice(question);
+                  else restoreQuestion(question);
+                }}
+              >
+                再編集
+              </Button>
+            </section>
+          ))}
+          {restoreChoice && (
+            <section aria-label="再編集の確認">
+              <p>別の質問を編集中です。</p>
+              <Button variant="secondary" onPress={() => setRestoreChoice(null)}>
+                現在の入力を保持
+              </Button>
+              <Button variant="secondary" onPress={() => restoreQuestion(restoreChoice)}>
+                元の質問に置換
+              </Button>
+            </section>
+          )}
           <ChatInputForm
             key={inputKey}
             baseline={baseline}
@@ -251,7 +330,9 @@ export function ChatScreen() {
             medicineEntries={entries}
             status={status}
             isStreaming={isStreaming}
-            canSend={targetState.canSend}
+            isStopping={isStopping}
+            onAbort={abortRequest}
+            canSend={targetState.canSend && !pending}
           />
         </div>
 

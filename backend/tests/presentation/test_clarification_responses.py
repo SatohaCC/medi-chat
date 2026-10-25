@@ -70,6 +70,7 @@ class ClarificationResponseTests(unittest.TestCase):
             websocket.send_json(
                 {
                     "type": "message",
+                    "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
                     "product_yj_codes": ["0000000A0000"],
                     "messages": [{"role": "user", "content": "副作用を教えて"}],
                 }

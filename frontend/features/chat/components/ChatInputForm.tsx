@@ -20,6 +20,8 @@ export interface ChatInputFormProps {
   status: ConnectionStatus;
   isStreaming: boolean;
   canSend: boolean;
+  isStopping?: boolean;
+  onAbort?: () => void;
 }
 
 export function ChatInputForm({
@@ -34,9 +36,10 @@ export function ChatInputForm({
   onChangePrompt,
   onSubmit,
   medicineEntries,
-  status,
   isStreaming,
   canSend,
+  isStopping = false,
+  onAbort,
 }: ChatInputFormProps) {
   return (
     <MedicinePromptDock
@@ -51,8 +54,10 @@ export function ChatInputForm({
       onChangePrompt={onChangePrompt}
       onSubmit={onSubmit}
       medicineEntries={medicineEntries}
-      disabled={status !== "connected"}
+      disabled={false}
       isStreaming={isStreaming}
+      isStopping={isStopping}
+      onAbort={onAbort}
       canSend={canSend}
     />
   );

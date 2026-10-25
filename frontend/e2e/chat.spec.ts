@@ -33,7 +33,9 @@ for (const operation of ["pointer", "Enter", "Space", "input Enter"] as const) {
       { role: "user", content: "確認する質問" },
     ]);
     expect(chat.requests[0].product_yj_codes).toEqual(["3339003F5020"]);
-    await expect(chat.send).toBeDisabled();
+    await expect(
+      page.getByRole("button", { name: "回答を停止", exact: true }),
+    ).toBeEnabled();
     await page.keyboard.press("Enter");
     await page.keyboard.press("Space");
     expect(chat.requests).toHaveLength(1);
@@ -63,13 +65,12 @@ test("SX-R07 / SX-06: 実formとhookで薬剤0の送信禁止と復帰を観測�
   expect(chat.requests[0].product_yj_codes).toEqual(["3339003F5020"]);
 });
 
-test("SX-06: 切断中は送信できず、復帰後に再開する", async ({ page }) => {
+test("SX-06 / WR-035: 切断中の入力を保持し、復帰後に送信する", async ({ page }) => {
   const chat = await openChat(page);
   await chat.input.fill("確認する質問");
   await chat.disconnect();
-  await expect(chat.input).toBeDisabled();
-  await expect(chat.send).toBeDisabled();
-  await page.keyboard.press("Enter");
+  await expect(chat.input).toBeEnabled();
+  await expect(chat.send).toBeEnabled();
   expect(chat.requests).toHaveLength(0);
   await expect(page.getByText("connected", { exact: true })).toBeVisible();
   await expect(chat.input).toBeEnabled();
@@ -90,7 +91,9 @@ test("空白の質問を送れず、回答中は追加入力・二重送信を�
   await expect.poll(() => chat.requests.length).toBe(1);
   await expect(chat.input).toHaveText("");
   await expect(chat.input).toBeDisabled();
-  await expect(chat.send).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "回答を停止", exact: true }),
+  ).toBeEnabled();
   chat.respond({ type: "text_delta", content: "テスト回答です。" });
   await expect(page.locator('[data-message-role="assistant"]')).toContainText(
     "テスト回答です。",
@@ -102,21 +105,22 @@ test("空白の質問を送れず、回答中は追加入力・二重送信を�
   await expect(chat.send).toBeEnabled();
 });
 
-test("薬剤・モデルを指定して質問し、回答と根拠を表示して次の会話へ引き継ぐ", async ({
+test("WR-049-M1: 薬剤・モデルを指定して質問し、回答と根拠を表示して次の会話へ引き継ぐ", async ({
   page,
 }) => {
   const chat = await openChat(page);
   await page.getByRole("button", { name: "処方薬を追加", exact: true }).click();
   await page.getByRole("option", { name: /^テスト医薬品B/ }).click();
   await page.getByRole("button", { name: "回答モデル" }).click();
-  await page.getByRole("option", { name: "Google (Gemini 3.8 Flash)" }).click();
+  await page.getByRole("option", { name: "OpenAI (GPT-5.6 Luna)" }).click();
   await chat.input.fill("  根拠を確認したい  ");
   await chat.input.press("Enter");
   await expect.poll(() => chat.requests.length).toBe(1);
   expect(chat.requests[0]).toEqual({
     type: "message",
-    provider: "gemini",
-    model: "gemini-3.8-flash",
+    request_id: chat.requests[0].request_id,
+    provider: "openai",
+    model: "gpt-5.6-luna",
     product_yj_codes: ["3339003F5020", "1141007F1063"],
     messages: [{ role: "user", content: "根拠を確認したい" }],
   });
@@ -188,7 +192,9 @@ test("切断された回答を中断と表示し、再接続後の履歴から�
   await expect(page.locator('[data-message-role="assistant"]')).toContainText("回答途中");
   await chat.disconnect();
   await expect(
-    page.getByText("通信が切断され、回答が中断されました。未完了の回答です。"),
+    page.getByText(
+      "回答は中断されました。未完了の回答です。送信後の到達状況は不明です。",
+    ),
   ).toBeVisible();
   await expect(page.getByText("connected", { exact: true })).toBeVisible();
   await expect(chat.input).toBeEnabled();

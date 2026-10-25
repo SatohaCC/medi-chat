@@ -117,9 +117,13 @@ test("TC137 real browser three confirmations and normal single/pair without API 
     for (const [question, answer] of cases) {
       const events = await ask(question);
       expect(events).toEqual([
-        { type: "retrieval_status", stage: "unavailable" },
-        { type: "text_delta", content: answer },
-        { type: "text_done" },
+        {
+          type: "retrieval_status",
+          request_id: sent.at(-1)?.request_id,
+          stage: "unavailable",
+        },
+        { type: "text_delta", request_id: sent.at(-1)?.request_id, content: answer },
+        { type: "text_done", request_id: sent.at(-1)?.request_id },
       ]);
       await expect(page.getByText(answer, { exact: true })).toBeVisible();
       expect(sent.at(-1)?.product_yj_codes).toEqual(["3339003F5020"]);

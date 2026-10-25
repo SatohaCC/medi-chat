@@ -12,6 +12,7 @@ from backend.application.authentication.errors import (
 )
 from backend.application.authentication.queries.authenticate import Authenticate
 from backend.domain.identity.identifiers import UserId
+from backend.presentation import access_control
 from backend.presentation.access_control import AccessControlMiddleware
 from backend.presentation.authentication_routes import (
     register_authentication_errors,
@@ -173,12 +174,22 @@ def test_ws_unauthenticated_and_missing_origin_are_rejected(protected, tokens):
     assert not calls
 
 
-def test_ws_expires_while_waiting(protected, tokens):
-    _, client, _ = signed_client(protected, tokens, expiry=1)
+def test_ws_expires_while_waiting(protected, tokens, monkeypatch):
+    # Freeze the verification clock so signing/scheduling cannot consume the
+    # token's one-second lifetime before the handshake has even been accepted.
+    # asyncio.timeout still uses the real monotonic event-loop clock.
+    now = int(time.time())
+    monkeypatch.setattr(access_control, "time", SimpleNamespace(time=lambda: now))
+    _, client, calls = protected
+    client.cookies.set(
+        "medi_chat_access_token",
+        tokens.issue(str(UserId.generate()), now, now + 1),
+    )
     with client.websocket_connect("/api/ws", headers={"Origin": ORIGIN}) as ws:
         with pytest.raises(WebSocketDisconnect) as failure:
             ws.receive_text()
         assert failure.value.code == 4001
+    assert calls == ["ws"]
 
 
 def test_unconfigured_authentication_fails_closed(protected):
