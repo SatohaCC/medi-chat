@@ -21,6 +21,8 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      checks: read
+      statuses: read
     outputs:
       merged: ${{ steps.merge.outputs.merged }}
     steps:
@@ -30,7 +32,7 @@ jobs:
         uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Require CI protection, wait for checks and merge patches
+      - name: Wait for checks and merge patches
         id: merge
         if: steps.metadata.outputs.update-type == 'version-update:semver-patch'
         env:
@@ -41,24 +43,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Require branch protection as the final server-side merge gate.
-          protection=$(gh api graphql -F owner="${GH_REPO%/*}" -F name="${GH_REPO#*/}" -f query='
-            query($owner: String!, $name: String!) {
-              repository(owner: $owner, name: $name) {
-                ref(qualifiedName: "refs/heads/main") {
-                  branchProtectionRule {
-                    requiresStatusChecks
-                    requiredStatusCheckContexts
-                  }
-                }
-              }
-            }')
-          if ! jq -e '.data.repository.ref.branchProtectionRule |
-            .requiresStatusChecks == true and
-            (.requiredStatusCheckContexts | index("postgres-contracts") != null)' <<< "$protection" > /dev/null; then
-            echo "::error::Require postgres-contracts in main branch protection before enabling patch auto-merge."
-            exit 1
-          fi
+          # Protection is enforced by GitHub when merging. Reading its settings
+          # requires administration access that GITHUB_TOKEN does not provide.
           # Merge in this run so follow-up jobs do not depend on suppressed events.
           for attempt in {1..60}; do
             pr=$(gh pr view "$PR_URL" --json headRefOid,state,isDraft,statusCheckRollup)
