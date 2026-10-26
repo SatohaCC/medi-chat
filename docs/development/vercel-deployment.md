@@ -25,6 +25,8 @@ pnpm vercel:requirements        # Python依存を変更したときに再生成
 pnpm vercel:requirements:check  # CIでもuv.lockとの一致を確認
 ```
 
+DependabotによるPRでは、CI（`postgres-contracts.yml`）が`backend/uv.lock`変更時に`requirements.txt`を自動で再生成してPRブランチへコミットします。手動でbackend依存を変更した場合は上記コマンドでコミット前に再生成します。
+
 Python Functionの最大実行時間は300秒。`functions.excludeFiles`と`.vercelignore`でテスト・原本・作業記録・ローカル環境ファイル・frontendの資源をPython bundleから除外する。添付文書定義JSONなどbackendのruntime資源は保持する。
 
 新しいPythonアプリはframework preset、Next.jsとの同居はServicesを使うのが公式案内の構成であるため、旧方式の`api/*.py`へコードを移動しない。Application/Domain/Infrastructureの配置と通常の`backend.main:app`起動を維持する。
