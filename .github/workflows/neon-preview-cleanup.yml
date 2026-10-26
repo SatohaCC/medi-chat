@@ -1,0 +1,43 @@
+name: Cleanup merged Neon preview branch
+
+on:
+  pull_request_target:
+    types: [closed]
+
+permissions: {}
+
+concurrency:
+  group: neon-preview-cleanup-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  delete-branch:
+    if: >-
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Run only trusted base-branch configuration; never checkout PR code.
+      - name: Validate configuration and branch name
+        env:
+          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        shell: bash
+        run: |
+          if [[ -z "$NEON_PROJECT_ID" || -z "$NEON_API_KEY" ]]; then
+            echo "::error::Configure the NEON_PROJECT_ID variable and NEON_API_KEY secret."
+            exit 1
+          fi
+          # The upstream composite action interpolates inputs into shell code.
+          if [[ ! "$PR_HEAD_REF" =~ ^[a-zA-Z0-9._/-]+$ || ! "$NEON_PROJECT_ID" =~ ^[a-zA-Z0-9-]+$ ]]; then
+            echo "::error::Unsupported branch name or Neon project ID."
+            exit 1
+          fi
+      - name: Delete matching Neon preview branch
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch: preview/${{ github.event.pull_request.head.ref }}
+          api_key: ${{ secrets.NEON_API_KEY }}

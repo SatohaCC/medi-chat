@@ -59,6 +59,25 @@ pnpm --filter backend db:migrate
 
 このコマンドには`MEDI_CHAT_MIGRATION_DATABASE_URL`と、その接続先を含む`MEDI_CHAT_DATABASE_HOSTS`が必要。初回デプロイ前に同じCLIのinitializeで原本を登録する。空DBは現行のreadiness条件を満たさないため、起動後のWeb登録を初期化の代わりにしない。公開後の追加・更新はWeb画面から手動で行う。
 
+## マージ後のNeon Previewブランチ削除
+
+`.github/workflows/neon-preview-cleanup.yml`は、同一リポジトリのPRがマージされたときに`preview/<PRのheadブランチ名>`を削除する。例: `codex/example`のPRをマージすると`preview/codex/example`が対象になる。マージせず閉じたPRとforkからのPRは対象外。
+
+有効化前に、VercelのPreview Branchingが有効で、実際のNeonブランチ名がこの形式になっていることを確認する。GitHubのSettings → Secrets and variables → Actionsに次を登録する。
+
+| 種類 | 名前 | 値 |
+| --- | --- | --- |
+| Repository variable | `NEON_PROJECT_ID` | 対象NeonプロジェクトのID |
+| Repository secret | `NEON_API_KEY` | 対象プロジェクトのブランチを削除できるNeon APIキー |
+
+キーはNeon Consoleで作成し、Gitやログへ含めない。設定不足はワークフローを失敗させる。設定をデフォルトブランチへ反映した後のマージが対象で、過去のマージ分は遡って削除しない。
+
+DependabotのPRも扱うため`pull_request_target: closed`を使い、PRのコードはcheckout・実行しない。上流Actionが入力をシェルへ展開するため、ブランチ名は英数字・`.`・`_`・`/`・`-`のみを許可し、それ以外は削除前に失敗させる。
+
+削除するとそのブランチ内のPreview専用データが失われ、そのDBを参照する既存のVercel PreviewはDBへ接続できなくなる。Vercelのデプロイ自体は残る。同じGitブランチを複数のPRや継続的な検証環境で共有しない。実行後はActionsの成功とNeon側の対象ブランチ消失を確認する。
+
+参照: [Neon Delete Branch Action](https://github.com/neondatabase/delete-branch-action)、[GitHub Actionsのpull_request_target](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#pull_request_target)。
+
 ## WebからのXML取り込み
 
 - 最大10MiB。3MiB以下は既存のmultipart送信、超えるXMLは3MiB以下のraw binaryに分割する。各HTTP bodyをVercel Functionsの4.5MB制限未満に保つ。
