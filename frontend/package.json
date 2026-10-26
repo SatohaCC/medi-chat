@@ -31,7 +31,7 @@
     "@stylexjs/stylex": "0.19.1",
     "lucide-react": "^1.59.0",
     "next": "16.4.1",
-    "react": "19.2.8",
+    "react": "19.3.1",
     "react-aria-components": "1.22.1",
     "react-dom": "19.3.1",
     "react-markdown": "^10.1.0",
