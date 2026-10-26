@@ -1,7 +1,7 @@
 # Generated from backend/uv.lock; update with pnpm vercel:requirements.
 agent-detector==2.0.0
     # via fastapi-cloud-cli
-alembic==1.20.0
+alembic==1.20.1
     # via medi-chat-backend
 annotated-doc==0.0.5
     # via
