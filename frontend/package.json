@@ -30,7 +30,7 @@
     "@react-spectrum/s2": "1.8.2",
     "@stylexjs/stylex": "0.19.1",
     "lucide-react": "^1.61.0",
-    "next": "16.4.1",
+    "next": "16.4.3",
     "react": "19.3.1",
     "react-aria-components": "1.22.1",
     "react-dom": "19.3.1",
