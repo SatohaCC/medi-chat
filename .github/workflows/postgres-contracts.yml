@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   postgres-contracts:
@@ -43,8 +43,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.actor == 'dependabot[bot]' && github.event.pull_request.head.ref || '' }}
+          ref: ${{ github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.head.sha || '' }}
           fetch-depth: 0
+          persist-credentials: false
       - uses: pnpm/action-setup@v6
         with:
           version: 12.6.0
@@ -60,7 +61,11 @@ jobs:
       - name: Backend tests, architecture, lint, formatting and types
         run: pnpm quality:backend
       - name: Sync and commit generated requirements for Dependabot PRs
-        if: github.actor == 'dependabot[bot]' && github.event_name == 'pull_request'
+        id: requirements
+        if: >-
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.user.login == 'dependabot[bot]' &&
+          github.event.pull_request.head.repo.full_name == github.repository
         run: |
           node scripts/export-vercel-requirements.mjs
           if [ -n "$(git status --porcelain requirements.txt)" ]; then
@@ -68,8 +73,24 @@ jobs:
             git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add requirements.txt
             git commit -m "fix(deps): regenerate Vercel requirements for backend update"
-            git push origin HEAD:${{ github.event.pull_request.head.ref }}
+            echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
+      - name: Create repository-scoped token for the generated commit
+        if: steps.requirements.outputs.changed == 'true'
+        id: requirements-token
+        uses: actions/create-github-app-token@v3.3.0
+        with:
+          app-id: ${{ vars.DEPENDABOT_SYNC_APP_ID }}
+          private-key: ${{ secrets.DEPENDABOT_SYNC_APP_PRIVATE_KEY }}
+          permission-contents: write
+      - name: Push generated commit and trigger CI on the new head
+        if: steps.requirements.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ steps.requirements-token.outputs.token }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          gh auth setup-git
+          git push origin "HEAD:refs/heads/$PR_BRANCH"
       - name: Development tooling and generated contracts
         run: pnpm quality:scripts
       - run: node --experimental-strip-types --test frontend/shared/api/authentication.test.mjs
