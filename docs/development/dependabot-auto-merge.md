@@ -1,26 +1,25 @@
-# Dependabot�p�b�`�����}�[�W�̐ݒ�
+# Dependabotパッチ自動マージの設定
 
-�X�V�m�F��uv�Enpm�EGitHub Actions�Ƃ�����09:00�iAsia/Tokyo�j�B�p�b�`�X�V�����������}�[�W���A�}�C�i�[�E���W���[�X�V�͎蓮�m�F����B
+uv・npm・GitHub Actionsの更新確認は平日09:00（Asia/Tokyo）。パッチ更新だけを自動マージし、マイナー・メジャー更新は手動確認する。
 
-## �L����
+## 有効化
 
-1. ���̃��|�W�g���p��GitHub App���쐬���A���̃��|�W�g���ɃC���X�g�[������B
-2. App��Repository permissions��Contents: Read and write�APull requests: Read and write�AWorkflows: Read and write�ɐݒ肷��BWorkflows��GitHub Actions�ˑ��X�V�̃}�[�W�ɕK�v�B
-3. Actions��repository variable `DEPENDABOT_MERGE_APP_CLIENT_ID`��App��Client ID��ݒ肷��B
-4. Actions��repository secret `DEPENDABOT_MERGE_APP_PRIVATE_KEY`��App�̔閧����ݒ肷��B
-5. ���|�W�g����Allow auto-merge��L��������B
-6. main��branch protection��Require status checks��L�������A`postgres-contracts`��K�{�ɂ���B���݂�Workflow��ruleset�݂̂̍\���ɂ͑Ή����Ȃ��B
+mainのclassic branch protectionでRequire status checksを有効化し、`postgres-contracts`を必須チェックに設定する。AppやPAT、追加secretは不要。GitHubのAllow auto-mergeも不要で、WorkflowがCI成功を確認して通常のマージを実行する。現在の保護確認はrulesetのみの構成には対応しない。
 
-App�̌�����branch protection�̃o�C�p�X��^���Ȃ��B���ݒ�E�g�[�N�����s���s�E�K�{CI�̕ی�ݒ�s���ł̓}�[�W���~����BGITHUB_TOKEN�ւ̃t�H�[���o�b�N�͍s��Ȃ��B
+既存のNeon削除用variable `NEON_PROJECT_ID`とsecret `NEON_API_KEY`は引き続き使用する。
 
-## �}�[�W��̏���
+## 動作
 
-�}�[�W�ɂ͐�pApp��installation token���g�p����BGITHUB_TOKEN�ɂ��}�[�W�ł�closed/push�C�x���g����Workflow���N�����Ȃ����߁ANeon�v���r���[�폜��main��CI���ێ����邽�߂ɕK�v�B
+Dependabot作成・同一リポジトリ・main向けのPRを対象に、固定SHAのfetch-metadataでパッチ更新か判定する。PRコードはcheckout・実行しない。
 
-PR�R�[�h��checkout�E���s�����AApp token�͌��݂̃��|�W�g��������Ώۂɔ��s����B
+必須CIの保護設定を確認し、最大30分間CIとVercelなどのチェック完了を待つ。`postgres-contracts`の成功と他チェックの成功・中立・skipを確認して、対象head SHAを指定してGITHUB_TOKENでsquash mergeする。失敗したチェックがあれば停止し、headが変わった場合はマージしない。時間切れ・チェック失敗時は原因を解消してActionsから再実行する。
 
-## ����m�F
+GITHUB_TOKENによるマージではclosed/pushイベントからWorkflowが起動しないため、マージ成功後にmainのCIをworkflow_dispatchで明示実行し、Neon削除Workflowを再利用ジョブとして呼び出す。main CIのdispatchに失敗してもNeon削除ジョブは実行する。手動マージ時は従来のclosedイベントによる削除を維持する。
 
-�ݒ��ADependabot�̃p�b�`PR�ŕK�{CI�̊����܂Ń}�[�W���ۗ�����邱�ƁA������Ƀ}�[�W����邱�ƁA`Cleanup merged Neon preview branch`��main��CI���N�����邱�Ƃ��m�F����B�}�C�i�[�E���W���[�X�V�ɂ�auto-merge���ݒ肳��Ȃ����Ƃ��m�F����B
+マージ後に後処理が失敗した場合、当該処理の失敗ジョブを再実行する。
 
-�d�l: https://docs.github.com/en/actions/concepts/security/github_token#when-github_token-triggers-workflow-runs
+## 動作確認
+
+設定後、パッチPRがCI成功後にマージされ、mainのCIとNeon削除が実行されることを確認する。マイナー・メジャー更新はマージ対象外であることも確認する。
+
+仕様: https://docs.github.com/en/actions/concepts/security/github_token#when-github_token-triggers-workflow-runs

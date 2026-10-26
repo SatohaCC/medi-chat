@@ -3,18 +3,27 @@ name: Cleanup merged Neon preview branch
 on:
   pull_request_target:
     types: [closed]
+  workflow_call:
+    inputs:
+      pr-number:
+        required: true
+        type: string
+      head-ref:
+        required: true
+        type: string
 
 permissions: {}
 
 concurrency:
-  group: neon-preview-cleanup-${{ github.event.pull_request.number }}
+  group: neon-preview-cleanup-${{ inputs.pr-number || github.event.pull_request.number }}
   cancel-in-progress: false
 
 jobs:
   delete-branch:
     if: >-
-      github.event.pull_request.merged == true &&
-      github.event.pull_request.head.repo.full_name == github.repository
+      inputs.pr-number != '' ||
+      (github.event.pull_request.merged == true &&
+      github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -23,7 +32,7 @@ jobs:
         env:
           NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
-          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_HEAD_REF: ${{ inputs.head-ref || github.event.pull_request.head.ref }}
         shell: bash
         run: |
           if [[ -z "$NEON_PROJECT_ID" || -z "$NEON_API_KEY" ]]; then
@@ -39,5 +48,5 @@ jobs:
         uses: neondatabase/delete-branch-action@v3
         with:
           project_id: ${{ vars.NEON_PROJECT_ID }}
-          branch: preview/${{ github.event.pull_request.head.ref }}
+          branch: preview/${{ inputs.head-ref || github.event.pull_request.head.ref }}
           api_key: ${{ secrets.NEON_API_KEY }}

@@ -6,6 +6,10 @@ on:
 
 permissions: {}
 
+concurrency:
+  group: dependabot-auto-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
 jobs:
   auto-merge:
     if: >-
@@ -13,10 +17,12 @@ jobs:
       github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.pull_request.base.ref == 'main'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 40
     permissions:
-      contents: read
-      pull-requests: read
+      contents: write
+      pull-requests: write
+    outputs:
+      merged: ${{ steps.merge.outputs.merged }}
     steps:
       # Use trusted base-branch configuration; never check out or execute PR code.
       - name: Read Dependabot update metadata
@@ -24,28 +30,18 @@ jobs:
         uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      # A dedicated App preserves closed/push events for downstream workflows.
-      - name: Create merge App token
-        if: steps.metadata.outputs.update-type == 'version-update:semver-patch'
-        id: merge-token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3
-        with:
-          client-id: ${{ vars.DEPENDABOT_MERGE_APP_CLIENT_ID }}
-          private-key: ${{ secrets.DEPENDABOT_MERGE_APP_PRIVATE_KEY }}
-          permission-contents: write
-          permission-pull-requests: write
-          permission-workflows: write
-      - name: Require CI protection and enable auto-merge for patches
+      - name: Require CI protection, wait for checks and merge patches
+        id: merge
         if: steps.metadata.outputs.update-type == 'version-update:semver-patch'
         env:
-          GH_TOKEN: ${{ steps.merge-token.outputs.token }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
           PR_URL: ${{ github.event.pull_request.html_url }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         shell: bash
         run: |
           set -euo pipefail
-          # Without required checks, --auto can merge immediately before CI runs.
+          # Require branch protection as the final server-side merge gate.
           protection=$(gh api graphql -F owner="${GH_REPO%/*}" -F name="${GH_REPO#*/}" -f query='
             query($owner: String!, $name: String!) {
               repository(owner: $owner, name: $name) {
@@ -63,4 +59,50 @@ jobs:
             echo "::error::Require postgres-contracts in main branch protection before enabling patch auto-merge."
             exit 1
           fi
-          gh pr merge --auto --squash --match-head-commit "$PR_HEAD_SHA" "$PR_URL"
+          # Merge in this run so follow-up jobs do not depend on suppressed events.
+          for attempt in {1..60}; do
+            pr=$(gh pr view "$PR_URL" --json headRefOid,state,isDraft,statusCheckRollup)
+            # Do not wait for this automation's own in-progress/queued jobs.
+            pr=$(jq '.statusCheckRollup |= map(select(.name != "auto-merge" and ((.name // "") | startswith("cleanup-preview") or startswith("validate-main") | not)))' <<< "$pr")
+            if ! jq -e --arg sha "$PR_HEAD_SHA" '.headRefOid == $sha and .state == "OPEN" and .isDraft == false' <<< "$pr" > /dev/null; then
+              echo "::notice::PR is closed, a draft, or its head changed; no merge."
+              exit 0
+            fi
+            if jq -e '.statusCheckRollup | any(.conclusion == "FAILURE" or .conclusion == "CANCELLED" or .conclusion == "TIMED_OUT" or .conclusion == "ACTION_REQUIRED" or .conclusion == "STARTUP_FAILURE" or .state == "FAILURE" or .state == "ERROR")' <<< "$pr" > /dev/null; then
+              echo "::error::A PR check failed; no merge."
+              exit 1
+            fi
+            if jq -e '.statusCheckRollup |
+              any(.name == "postgres-contracts" and .status == "COMPLETED" and .conclusion == "SUCCESS") and
+              all((.status == "COMPLETED" and (.conclusion == "SUCCESS" or .conclusion == "SKIPPED" or .conclusion == "NEUTRAL")) or .state == "SUCCESS")' <<< "$pr" > /dev/null; then
+              gh pr merge --squash --match-head-commit "$PR_HEAD_SHA" "$PR_URL"
+              echo "merged=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep 30
+          done
+          echo "::error::Checks did not pass within 30 minutes; rerun this workflow after resolving CI."
+          exit 1
+
+  validate-main:
+    needs: auto-merge
+    if: always() && needs.auto-merge.outputs.merged == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - name: Run main CI after the token-authenticated merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run postgres-contracts.yml --ref main
+
+  cleanup-preview:
+    needs: auto-merge
+    if: always() && needs.auto-merge.outputs.merged == 'true'
+    uses: ./.github/workflows/neon-preview-cleanup.yml
+    with:
+      pr-number: ${{ format('{0}', github.event.pull_request.number) }}
+      head-ref: ${{ github.event.pull_request.head.ref }}
+    secrets: inherit
