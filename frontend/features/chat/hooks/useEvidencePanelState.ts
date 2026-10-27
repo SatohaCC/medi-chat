@@ -39,7 +39,8 @@ export function useEvidencePanelState({
   persistentAdditional,
 }: UseEvidencePanelStateOptions) {
   const [explicitIndex, setExplicitIndex] = useState<number | null>(null);
-  const [closedForIndex, setClosedForIndex] = useState<number | null>(null);
+  const [dismissedLatestEvidenceIndex, setDismissedLatestEvidenceIndex] =
+    useState<number | null>(null);
   const [evidencePaneTab, setEvidencePaneTab] = useState<"sources" | "jev">("sources");
 
   const latestEvidenceIndex = useMemo(
@@ -53,39 +54,39 @@ export function useEvidencePanelState({
   if (latestEvidenceIndex !== prevLatestEvidenceIndex) {
     setPrevLatestEvidenceIndex(latestEvidenceIndex);
     setExplicitIndex(null);
-    setClosedForIndex(null);
+    setDismissedLatestEvidenceIndex(null);
   }
 
   const effectiveOpenIndex = useMemo(() => {
     if (explicitIndex !== null) {
       return explicitIndex;
     }
-    if (latestEvidenceIndex !== -1 && closedForIndex !== latestEvidenceIndex) {
+    if (
+      latestEvidenceIndex !== -1 &&
+      dismissedLatestEvidenceIndex !== latestEvidenceIndex
+    ) {
       return latestEvidenceIndex;
     }
     return null;
-  }, [explicitIndex, latestEvidenceIndex, closedForIndex]);
+  }, [explicitIndex, latestEvidenceIndex, dismissedLatestEvidenceIndex]);
 
   const handleToggleEvidence = useCallback(
     (index: number, tab: "sources" | "jev" = "sources") => {
       if (effectiveOpenIndex === index && evidencePaneTab === tab) {
         setExplicitIndex(null);
-        setClosedForIndex(index);
+        setDismissedLatestEvidenceIndex(latestEvidenceIndex);
       } else {
         setExplicitIndex(index);
         setEvidencePaneTab(tab);
-        setClosedForIndex(null);
       }
     },
-    [effectiveOpenIndex, evidencePaneTab],
+    [effectiveOpenIndex, evidencePaneTab, latestEvidenceIndex],
   );
 
   const closeEvidence = useCallback(() => {
     setExplicitIndex(null);
-    if (effectiveOpenIndex !== null) {
-      setClosedForIndex(effectiveOpenIndex);
-    }
-  }, [effectiveOpenIndex]);
+    setDismissedLatestEvidenceIndex(latestEvidenceIndex);
+  }, [latestEvidenceIndex]);
 
   const activeEvidenceMessage =
     effectiveOpenIndex !== null ? messages[effectiveOpenIndex] : undefined;
