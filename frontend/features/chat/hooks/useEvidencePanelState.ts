@@ -10,8 +10,27 @@ interface UseEvidencePanelStateOptions {
   persistentAdditional: readonly SelectedMedicineItem[];
 }
 
+function hasMessageEvidence(msg: Message | undefined): boolean {
+  return Boolean(
+    msg?.role === "assistant" &&
+      ((Array.isArray(msg.sources) && msg.sources.length > 0) ||
+        Boolean(msg.jevResponse) ||
+        msg.retrievalStatus === "complete"),
+  );
+}
+
+function findLatestEvidenceIndex(messages: readonly Message[]): number {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (hasMessageEvidence(messages[i])) {
+      return i;
+    }
+  }
+  return -1;
+}
+
 /**
  * Hook to manage the evidence side panel state, selected tab, and keyword highlighting.
+ * Automatically opens the side panel when an assistant response with evidence arrives.
  */
 export function useEvidencePanelState({
   messages,
@@ -19,44 +38,70 @@ export function useEvidencePanelState({
   baseline,
   persistentAdditional,
 }: UseEvidencePanelStateOptions) {
-  const [openEvidenceIndex, setOpenEvidenceIndex] = useState<number | null>(null);
+  const [explicitIndex, setExplicitIndex] = useState<number | null>(null);
+  const [dismissedLatestEvidenceIndex, setDismissedLatestEvidenceIndex] =
+    useState<number | null>(null);
   const [evidencePaneTab, setEvidencePaneTab] = useState<"sources" | "jev">("sources");
+
+  const latestEvidenceIndex = useMemo(
+    () => findLatestEvidenceIndex(messages),
+    [messages],
+  );
+
+  const [prevLatestEvidenceIndex, setPrevLatestEvidenceIndex] =
+    useState(latestEvidenceIndex);
+
+  if (latestEvidenceIndex !== prevLatestEvidenceIndex) {
+    setPrevLatestEvidenceIndex(latestEvidenceIndex);
+    setExplicitIndex(null);
+    setDismissedLatestEvidenceIndex(null);
+  }
+
+  const effectiveOpenIndex = useMemo(() => {
+    if (explicitIndex !== null) {
+      return explicitIndex;
+    }
+    if (
+      latestEvidenceIndex !== -1 &&
+      dismissedLatestEvidenceIndex !== latestEvidenceIndex
+    ) {
+      return latestEvidenceIndex;
+    }
+    return null;
+  }, [explicitIndex, latestEvidenceIndex, dismissedLatestEvidenceIndex]);
 
   const handleToggleEvidence = useCallback(
     (index: number, tab: "sources" | "jev" = "sources") => {
-      if (openEvidenceIndex === index && evidencePaneTab === tab) {
-        setOpenEvidenceIndex(null);
+      if (effectiveOpenIndex === index && evidencePaneTab === tab) {
+        setExplicitIndex(null);
+        setDismissedLatestEvidenceIndex(latestEvidenceIndex);
       } else {
-        setOpenEvidenceIndex(index);
+        setExplicitIndex(index);
         setEvidencePaneTab(tab);
       }
     },
-    [openEvidenceIndex, evidencePaneTab],
+    [effectiveOpenIndex, evidencePaneTab, latestEvidenceIndex],
   );
 
   const closeEvidence = useCallback(() => {
-    setOpenEvidenceIndex(null);
-  }, []);
+    setExplicitIndex(null);
+    setDismissedLatestEvidenceIndex(latestEvidenceIndex);
+  }, [latestEvidenceIndex]);
 
   const activeEvidenceMessage =
-    openEvidenceIndex !== null ? messages[openEvidenceIndex] : undefined;
+    effectiveOpenIndex !== null ? messages[effectiveOpenIndex] : undefined;
 
-  const showEvidencePane =
-    activeEvidenceMessage?.role === "assistant" &&
-    ((Array.isArray(activeEvidenceMessage.sources) &&
-      activeEvidenceMessage.sources.length > 0) ||
-      Boolean(activeEvidenceMessage.jevResponse) ||
-      activeEvidenceMessage.retrievalStatus === "complete");
+  const showEvidencePane = hasMessageEvidence(activeEvidenceMessage);
 
   const activeUserQuery = useMemo(() => {
-    if (openEvidenceIndex === null) return "";
-    for (let i = openEvidenceIndex - 1; i >= 0; i--) {
+    if (effectiveOpenIndex === null) return "";
+    for (let i = effectiveOpenIndex - 1; i >= 0; i--) {
       if (messages[i]?.role === "user") {
         return messages[i].content;
       }
     }
     return "";
-  }, [messages, openEvidenceIndex]);
+  }, [messages, effectiveOpenIndex]);
 
   const activeEvidenceSources = activeEvidenceMessage?.sources;
   const evidenceHighlightWords = useMemo(() => {
@@ -73,7 +118,7 @@ export function useEvidencePanelState({
   }, [activeUserQuery, entries, baseline, persistentAdditional, activeEvidenceSources]);
 
   return {
-    openEvidenceIndex,
+    openEvidenceIndex: effectiveOpenIndex,
     evidencePaneTab,
     setEvidencePaneTab,
     handleToggleEvidence,

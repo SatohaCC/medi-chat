@@ -65,7 +65,8 @@ export function SourceEvidencePanel({
 
   return (
     <aside {...stylex.props(styles.panel)} aria-label="添付文書の根拠引用">
-      <div {...stylex.props(styles.headerBar)}>
+      <div {...stylex.props(styles.panelInner)}>
+        <div {...stylex.props(styles.headerBar)}>
         {hasJev ? (
           <div {...stylex.props(styles.tabGroup)} role="tablist">
             <button
@@ -194,6 +195,7 @@ export function SourceEvidencePanel({
           </>
         )}
       </div>
-    </aside>
-  );
+    </div>
+  </aside>
+);
 }

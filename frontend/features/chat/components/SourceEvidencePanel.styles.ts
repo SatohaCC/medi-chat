@@ -1,5 +1,34 @@
 import * as stylex from "@stylexjs/stylex";
 import type { CSSProperties } from "react";
+
+const slideIn = stylex.keyframes({
+  "0%": {
+    width: "0%",
+    minWidth: "0px",
+    opacity: 0,
+    transform: "translateX(100%)",
+  },
+  "100%": {
+    width: "48%",
+    minWidth: "380px",
+    opacity: 1,
+    transform: "translateX(0)",
+  },
+});
+
+const slideUp = stylex.keyframes({
+  "0%": {
+    height: "0vh",
+    opacity: 0,
+    transform: "translateY(100%)",
+  },
+  "100%": {
+    height: "45vh",
+    opacity: 1,
+    transform: "translateY(0)",
+  },
+});
+
 export const styles = stylex.create({
   searchingBadge: {
     display: "inline-flex",
@@ -181,6 +210,7 @@ export const styles = stylex.create({
     flexShrink: 0,
     display: "flex",
     flexDirection: "column",
+    overflow: "hidden",
     borderLeftWidth: { default: "1px", "@media (max-width: 900px)": "0px" },
     borderLeftStyle: "solid",
     borderLeftColor: "var(--border)",
@@ -188,5 +218,27 @@ export const styles = stylex.create({
     borderTopStyle: "solid",
     borderTopColor: "var(--border)",
     backgroundColor: "var(--bg)",
+    boxShadow: {
+      default: "-4px 0 24px rgba(0, 0, 0, 0.07)",
+      "@media (max-width: 900px)": "0 -4px 24px rgba(0, 0, 0, 0.07)",
+    },
+    animationName: {
+      default: slideIn,
+      "@media (max-width: 900px)": slideUp,
+    },
+    animationDuration: {
+      default: "0.35s",
+      "@media (prefers-reduced-motion: reduce)": "0s",
+    },
+    animationTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+    animationFillMode: "both",
+  },
+  panelInner: {
+    width: "100%",
+    minWidth: { default: "380px", "@media (max-width: 900px)": "0" },
+    height: "100%",
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
   },
 });
