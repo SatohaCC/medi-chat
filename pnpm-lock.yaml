@@ -178,8 +178,8 @@ importers:
         specifier: ^0.21.1
         version: 0.21.1(zod@4.6.7)
       '@json-render/react':
-        specifier: ^0.21.1
-        version: 0.21.1(react@19.3.1)(zod@4.6.7)
+        specifier: ^0.21.2
+        version: 0.21.2(react@19.3.1)(zod@4.6.7)
       '@react-spectrum/ai':
         specifier: 0.5.2
         version: 0.5.2(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -889,8 +889,13 @@ packages:
     peerDependencies:
       zod: ^4.0.0
 
-  '@json-render/react@0.21.1':
-    resolution: {integrity: sha512-xuK67UzMhKCwGlB48Y22BfPsPxwKy+xLq+fK8dG0jCJyE8SKT/WCLReOEG0+rRzGZo5gcIbjC+3r6fcbtNt16w==}
+  '@json-render/core@0.21.2':
+    resolution: {integrity: sha512-xd1XGLMtlxOfkxn9tTRnX3HnfpF71qIRkmWzCXswnfboaM1Q1Xd2r/rvbKaUlSvFMFVXLRIfkC5guIZ/AhR1Yw==}
+    peerDependencies:
+      zod: ^4.0.0
+
+  '@json-render/react@0.21.2':
+    resolution: {integrity: sha512-3Aio+UO1wMyA9dnKx/mb6ThKTmpwXQi1e7CMlHAEGMKRVIN6BVL/xlNxmfmmUaBeT0gjEXyhZdZvf4htyj9ulA==}
     peerDependencies:
       react: ^19.2.3
 
@@ -3605,9 +3610,13 @@ snapshots:
     dependencies:
       zod: 4.6.7
 
-  '@json-render/react@0.21.1(react@19.3.1)(zod@4.6.7)':
+  '@json-render/core@0.21.2(zod@4.6.7)':
     dependencies:
-      '@json-render/core': 0.21.1(zod@4.6.7)
+      zod: 4.6.7
+
+  '@json-render/react@0.21.2(react@19.3.1)(zod@4.6.7)':
+    dependencies:
+      '@json-render/core': 0.21.2(zod@4.6.7)
       react: 19.3.1
     transitivePeerDependencies:
       - zod
