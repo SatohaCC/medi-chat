@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@json-render/core": "^0.21.3",
-    "@json-render/react": "^0.21.2",
+    "@json-render/react": "^0.21.3",
     "@react-spectrum/ai": "0.5.2",
     "@react-spectrum/s2": "1.8.2",
     "@stylexjs/stylex": "0.19.1",
