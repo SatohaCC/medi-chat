@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+from collections.abc import Callable
 from copy import deepcopy
 from typing import Any
 from unittest.mock import patch
@@ -239,15 +240,13 @@ def test_ws_public_events_match_baseline(
         assert cm.value.code == 1008
 
 
-def test_http_and_ws_dependencies_can_be_overridden(
-    pg_api,
-) -> None:
-
-    app = pg_api()
-
+@pytest.fixture
+def overridden_chat_service():
     class FakeChatService:
         def __init__(self) -> None:
             self.calls = 0
+            self.user_ids: list[str] = []
+            self.completions = 0
 
         @property
         def is_jev_available(self) -> bool:
@@ -259,8 +258,11 @@ def test_http_and_ws_dependencies_can_be_overridden(
             product_yj_codes: Any,
             provider_name: Any = None,
             model_name: Any = None,
+            *,
+            user_id: str = "",
         ) -> ChatResponse:
             self.calls += 1
+            self.user_ids.append(user_id)
             return ChatResponse(
                 answer="FAKE_HTTP_ANSWER",
                 intent="general",
@@ -297,11 +299,25 @@ def test_http_and_ws_dependencies_can_be_overridden(
             conversation: Any,
             provider_name: Any = None,
             model_name: Any = None,
+            *,
+            user_id: str = "",
+            on_completed: Callable[[str | None], None] | None = None,
         ) -> Any:
+            self.user_ids.append(user_id)
             yield "FAKE_CHUNK_1"
             yield "FAKE_CHUNK_2"
+            if on_completed is not None:
+                on_completed(None)
+                self.completions += 1
 
-    fake_service = FakeChatService()
+    return FakeChatService()
+
+
+def test_http_and_ws_dependencies_can_be_overridden(
+    pg_api, overridden_chat_service
+) -> None:
+    app = pg_api()
+    fake_service = overridden_chat_service
     app.dependency_overrides[get_chat_service] = lambda: fake_service
 
     client = TestClient(app)
@@ -337,6 +353,50 @@ def test_http_and_ws_dependencies_can_be_overridden(
             assert "".join(chunks) == "FAKE_CHUNK_1FAKE_CHUNK_2"
 
         assert fake_service.calls == 2
+
+
+def test_chat_dependency_override_accepts_feedback_context_without_db(
+    overridden_chat_service,
+):
+    from backend.presentation.chat_routes import router as chat_router
+    from backend.presentation.chat_websocket_routes import router as ws_router
+    from backend.presentation.dependencies import get_feedback_user_id
+    from fastapi import FastAPI
+
+    app = FastAPI()
+    app.include_router(chat_router)
+    app.include_router(ws_router)
+    app.dependency_overrides[get_chat_service] = lambda: overridden_chat_service
+    app.dependency_overrides[get_feedback_user_id] = lambda: "test-user"
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/chat",
+            json={"message": "テスト", "product_yj_codes": ["1234567A0000"]},
+        )
+        assert response.status_code == 200
+        assert response.json()["answer"] == "FAKE_HTTP_ANSWER"
+        with client.websocket_connect("/ws/chat") as ws:
+            ws.send_json(
+                {
+                    "type": "message",
+                    "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
+                    "product_yj_codes": ["1234567A0000"],
+                    "messages": [{"role": "user", "content": "テスト"}],
+                }
+            )
+            chunks = []
+            while True:
+                event = ws.receive_json()
+                assert event["type"] != "error", event
+                if event["type"] == "text_delta":
+                    chunks.append(event["content"])
+                if event["type"] == "text_done":
+                    assert event["feedback_token"] is None
+                    break
+            assert "".join(chunks) == "FAKE_CHUNK_1FAKE_CHUNK_2"
+    assert overridden_chat_service.calls == 2
+    assert overridden_chat_service.user_ids == ["test-user", "test-user"]
+    assert overridden_chat_service.completions == 1
 
 
 def test_create_app_refuses_file_arguments_and_keeps_provider_injection(
