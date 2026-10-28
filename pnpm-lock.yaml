@@ -175,8 +175,8 @@ importers:
   frontend:
     dependencies:
       '@json-render/core':
-        specifier: ^0.21.2
-        version: 0.21.2(zod@4.6.7)
+        specifier: ^0.21.3
+        version: 0.21.3(zod@4.6.7)
       '@json-render/react':
         specifier: ^0.21.2
         version: 0.21.2(react@19.3.1)(zod@4.6.7)
@@ -886,6 +886,11 @@ packages:
 
   '@json-render/core@0.21.2':
     resolution: {integrity: sha512-xd1XGLMtlxOfkxn9tTRnX3HnfpF71qIRkmWzCXswnfboaM1Q1Xd2r/rvbKaUlSvFMFVXLRIfkC5guIZ/AhR1Yw==}
+    peerDependencies:
+      zod: ^4.0.0
+
+  '@json-render/core@0.21.3':
+    resolution: {integrity: sha512-sgzPtRhRB5wkhrbLtPm9bAhna5Q0x/U0vUpb3S/VEutouWEvvZRebHhpM5XiEjRM5Shv4W70VMZ8pGcGcz7j+A==}
     peerDependencies:
       zod: ^4.0.0
 
@@ -3602,6 +3607,10 @@ snapshots:
       '@jridgewell/sourcemap-codec': 1.6.0
 
   '@json-render/core@0.21.2(zod@4.6.7)':
+    dependencies:
+      zod: 4.6.7
+
+  '@json-render/core@0.21.3(zod@4.6.7)':
     dependencies:
       zod: 4.6.7
 
