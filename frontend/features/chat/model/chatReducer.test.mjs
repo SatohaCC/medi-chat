@@ -1,7 +1,26 @@
 const A = "a871f25a-1eb7-4c5e-8c6e-4511dce60280";
+
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { chatReducer, initialChatState } from "./chatReducer.ts";
+
+test("F08/F09: 完了tokenは対象回答だけに保存し、遅れた完了を無視する", () => {
+  let state = chatReducer(initialChatState, {
+    type: "start_message",
+    userContent: "テスト",
+    requestId: A,
+  });
+  state = chatReducer(state, {
+    type: "server_message",
+    message: { type: "text_done", request_id: A, feedback_token: "test-token" },
+  });
+  assert.equal(state.messages[1].feedbackToken, "test-token");
+  const next = chatReducer(state, {
+    type: "server_message",
+    message: { type: "text_done", request_id: A, feedback_token: "wrong" },
+  });
+  assert.equal(next, state);
+});
 
 test("chatReducer: start_message はユーザーとアシスタントのメッセージを追加しフラグを立てる", () => {
   const next = chatReducer(initialChatState, {

@@ -85,6 +85,14 @@ allowed_dependencies = []
 [adapters.sources.public]
 "yj_csv_reader" = { symbols = ["project_yj_row", "parse_yj_csv"], consumers = ["cli"] }
 
+[adapters.observability]
+roles = ["feedback_tokens", "langsmith_feedback_adapter"]
+allowed_dependencies = []
+
+[adapters.observability.public]
+"feedback_tokens" = { symbols = ["SignedFeedbackTokens"], consumers = ["composition"] }
+"langsmith_feedback_adapter" = { symbols = ["LangSmithFeedback"], consumers = ["composition"] }
+
 [adapters.authentication]
 roles = ["local_credentials", "access_refresh_tokens"]
 allowed_dependencies = []
@@ -103,7 +111,7 @@ allowed_dependencies = []
 
 [adapters.composition]
 roles = ["app_lifespan", "authentication_composition"]
-allowed_dependencies = ["authentication", "cli", "document_import", "intent", "llm", "morphology", "package_insert_definitions", "persistence", "pmda_xml", "serialization", "sources"]
+allowed_dependencies = ["authentication", "observability", "cli", "document_import", "intent", "llm", "morphology", "package_insert_definitions", "persistence", "pmda_xml", "serialization", "sources"]
 
 [adapters.composition.public]
 "app_lifespan" = { symbols = ["create_app_lifespan"], consumers = ["backend.main"] }

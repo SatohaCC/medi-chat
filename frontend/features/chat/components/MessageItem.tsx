@@ -2,6 +2,7 @@ import { aiLogo, PixelLoader } from "@react-spectrum/ai/loader";
 import * as stylex from "@stylexjs/stylex";
 import { AlertTriangle, Bot, FileText, Zap } from "lucide-react";
 import type { Message } from "../model/chat";
+import { AnswerFeedback } from "./AnswerFeedback";
 import { AssistantMarkdown } from "./AssistantMarkdown";
 import { JEV_INTENT_META } from "./JevResponseInspector";
 import { styles } from "./MessageItem.styles";
@@ -107,6 +108,15 @@ export function MessageItem({
             回答は中断されました。未完了の回答です。送信後の到達状況は不明です。
           </div>
         )}
+
+        {message.role === "assistant" &&
+          message.feedbackToken &&
+          message.content.trim() &&
+          !message.isError &&
+          !message.isInterrupted &&
+          !(isStreaming && isLast) && (
+            <AnswerFeedback key={message.feedbackToken} token={message.feedbackToken} />
+          )}
 
         {hasEvidence && onToggleEvidence && (
           <div {...stylex.props(styles.evidenceActionRow)}>

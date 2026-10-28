@@ -43,6 +43,7 @@ export function isWsServerMessage(data: unknown): data is WsServerMessage {
     ping_id?: unknown;
     code?: unknown;
     content?: unknown;
+    feedback_token?: unknown;
   };
   if (typeof candidate.type !== "string") {
     return false;
@@ -64,8 +65,11 @@ export function isWsServerMessage(data: unknown): data is WsServerMessage {
     case "text_delta":
       return typeof (candidate as { content?: unknown }).content === "string";
     case "aborted":
-    case "text_done":
       return true;
+    case "text_done":
+      return (
+        candidate.feedback_token == null || typeof candidate.feedback_token === "string"
+      );
     case "sources":
       return Array.isArray((candidate as { sources?: unknown }).sources);
     case "retrieval_status":

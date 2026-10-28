@@ -154,7 +154,7 @@ async def _assert_ws_closes_stream(
     app.state.chat_service = SimpleNamespace(
         is_jev_available=False,
         prepare_reply=AsyncMock(return_value=reply),
-        stream_answer=lambda *args: stream_answer(
+        stream_answer=lambda *args, **kwargs: stream_answer(
             create_llm_provider(provider), [{"role": "user", "content": "質問"}]
         ),
     )

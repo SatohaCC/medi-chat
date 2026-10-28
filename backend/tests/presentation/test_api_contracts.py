@@ -29,6 +29,24 @@ def test_openapi_contracts_match_baseline() -> None:
     expected_openapi = reference_data["schema"]
     app = create_app(database_url="postgresql+psycopg://unused@127.0.0.1:1/unused")
     actual_openapi = deepcopy(app.openapi())
+    feedback = actual_openapi["paths"].pop("/api/chat/feedback")["put"]
+    assert feedback["requestBody"]["content"]["application/json"]["schema"] == {
+        "$ref": "#/components/schemas/FeedbackRequest"
+    }
+    assert feedback["responses"]["200"]["content"]["application/json"]["schema"] == {
+        "$ref": "#/components/schemas/FeedbackResponse"
+    }
+    schemas = actual_openapi["components"]["schemas"]
+    assert schemas["FeedbackRequest"]["properties"]["rating"]["anyOf"] == [
+        {"type": "string", "enum": ["up", "down"]},
+        {"type": "null"},
+    ]
+    assert schemas["FeedbackRequest"]["additionalProperties"] is False
+    for name in ("FeedbackRequest", "FeedbackResponse"):
+        del schemas[name]
+    token = schemas["ChatResponse"]["properties"].pop("feedback_token")
+    assert token["anyOf"] == [{"type": "string"}, {"type": "null"}]
+    assert "feedback_token" not in schemas["ChatResponse"].get("required", [])
     # Authentication is an explicit additive contract; keep existing API shapes frozen.
     for path, method in (
         ("login", "post"),

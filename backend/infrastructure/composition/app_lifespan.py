@@ -15,6 +15,7 @@ from backend.application.attachment_import.commands.import_documents import (
 from backend.application.attachment_import.queries.import_history import (
     ImportHistoryQueries,
 )
+from backend.application.chat.commands.submit_feedback import SubmitFeedback
 from backend.application.chat.queries.chat import (
     ChatQueries,
 )
@@ -23,6 +24,7 @@ from backend.config.generation_settings import read_generation_defaults
 from backend.infrastructure.composition.authentication_composition import (
     compose_authentication,
 )
+from backend.infrastructure.composition.feedback_composition import compose_feedback
 from backend.infrastructure.document_import.original_document_registration_adapter import (
     OriginalDocumentRegistration,
 )
@@ -83,9 +85,16 @@ def create_app_lifespan(
         workers = ReadWorkers(max_workers=4)
         classifier = None
         import_service = None
+        feedback = None
         application.state.database_engine = engine
         application.state.read_workers = workers
         try:
+            feedback = compose_feedback()
+            application.state.feedback_command = (
+                SubmitFeedback(tokens=feedback[0], writer=feedback[1])
+                if feedback is not None
+                else None
+            )
             application.state.authentication = await asyncio.to_thread(
                 compose_authentication, engine
             )
@@ -118,6 +127,9 @@ def create_app_lifespan(
             application.state.chat_service = chat_service_factory(
                 application_service=application_service,
                 defaults=read_generation_defaults,
+                feedback_token_issuer=feedback[0].issue
+                if feedback is not None
+                else None,
             )
             if not readonly_probe:
                 encoder = PmdaArtifactEncoder()
@@ -153,6 +165,10 @@ def create_app_lifespan(
                     try:
                         await workers.aclose()
                     finally:
-                        await asyncio.to_thread(engine.dispose)
+                        try:
+                            await asyncio.to_thread(engine.dispose)
+                        finally:
+                            if feedback is not None:
+                                await feedback[1].aclose()
 
     return lifespan

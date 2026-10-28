@@ -34,6 +34,7 @@ export type RetrievalStatus = "jev_searching" | "complete" | "unavailable";
 export type ConnectionStatus = "connecting" | "connected" | "disconnected";
 
 export interface Message {
+  feedbackToken?: string | null;
   requestId?: string;
   role: "user" | "assistant";
   content: string;
@@ -108,7 +109,7 @@ export type WsRequestEvent = { request_id: string } & (
   | { type: "jev_response"; data: JevResponseData }
   | { type: "notices"; notices: string[] }
   | { type: "text_delta"; content: string }
-  | { type: "text_done" }
+  | { type: "text_done"; feedback_token?: string | null }
   | { type: "error"; content: string }
   | { type: "aborted" }
 );

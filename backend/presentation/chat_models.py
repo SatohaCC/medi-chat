@@ -28,6 +28,7 @@ class ChatResponse(BaseModel):
     """チャット応答および根拠ソースを含むレスポンスモデル"""
 
     answer: str
+    feedback_token: str | None = None
     intent: str
     retrieval_strategy: str
     resolved_medicines: list[MedicineMatch] = Field(default_factory=list)

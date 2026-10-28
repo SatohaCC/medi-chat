@@ -129,6 +129,10 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
         case "text_done":
           return {
             ...state,
+            messages: patchLastAssistant(state.messages, (last) => ({
+              ...last,
+              feedbackToken: message.feedback_token ?? null,
+            })),
             activeRequest: false,
             activeRequestId: null,
             isStreaming: false,
