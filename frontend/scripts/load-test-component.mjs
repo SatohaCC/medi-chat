@@ -4,6 +4,9 @@ import { fileURLToPath } from "node:url";
 
 const frontendRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(resolve(frontendRoot, "package.json"));
+// Node markup tests cannot execute S2's CSS imports. Styles and layout are
+// exercised by the browser suite; keep the real component code in these tests.
+require.extensions[".css"] ??= () => {};
 export async function loadTestComponent(file) {
   const bundled = require("next/dist/compiled/webpack/webpack");
   const output = resolve(frontendRoot, "../tmp/stylex-node-components");

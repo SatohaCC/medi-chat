@@ -12,12 +12,22 @@ from backend.application.attachment_import.commands.import_documents import (
 from backend.application.attachment_import.queries.import_history import (
     ImportHistoryQueries,
 )
+from backend.application.chat.commands.submit_feedback import SubmitFeedback
 from backend.application.medicine.queries.catalog import (
     MedicineQueries,
 )
 from backend.application.medicine.queries.suggest_medicines import MedicineSuggester
 
 from .chat_service import AppChatService as ChatService
+
+
+def get_feedback_command(connection: HTTPConnection) -> SubmitFeedback | None:
+    return getattr(connection.app.state, "feedback_command", None)
+
+
+def get_feedback_user_id(connection: HTTPConnection) -> str:
+    principal = connection.scope.get("auth_principal")
+    return principal.user_id if principal is not None else ""
 
 
 def get_chat_service(connection: HTTPConnection) -> ChatService:

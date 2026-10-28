@@ -15,7 +15,7 @@ public_modules = ["commands.models", "errors", "commands.services.start_upload",
 
 [features.chat]
 depends_on = ["retrieval", "medicine", "indexing"]
-public_modules = ["queries.models", "queries.chat", "interfaces.llm_provider", "queries.policies.standard", "queries.services.stream_lifetime"]
+public_modules = ["queries.models", "queries.chat", "interfaces.llm_provider", "queries.policies.standard", "queries.services.stream_lifetime", "commands.submit_feedback", "interfaces.feedback", "values", "errors"]
 
 [features.retrieval]
 depends_on = ["medicine", "indexing"]

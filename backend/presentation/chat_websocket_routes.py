@@ -19,7 +19,7 @@ from backend.application.medicine.queries.catalog import (
 
 from .chat_models import ChatMessage
 from .chat_service import AppChatService as ChatService
-from .dependencies import get_chat_service
+from .dependencies import get_chat_service, get_feedback_user_id
 from .evidence_models import ChatSource
 from .medicine_models import MAX_PRODUCT_YJ_CODES
 
@@ -91,6 +91,7 @@ router = APIRouter(tags=["chat"])
 async def stream_chat_response(
     websocket: WebSocket,
     service: Annotated[ChatService | None, Depends(get_chat_service)] = None,
+    user_id: Annotated[str, Depends(get_feedback_user_id)] = "",
 ) -> None:
     """WebSocket 経由での対話型リアルタイムストリーミングチャットセッションを処理する"""
     allowed_origins = getattr(websocket.app.state, "allowed_origins", [])
@@ -187,15 +188,26 @@ async def stream_chat_response(
                         }
                     )
 
+            feedback_token: str | None = None
+
+            def completed(token: str | None) -> None:
+                nonlocal feedback_token
+                feedback_token = token
+
             async with closing_stream(
                 service.stream_answer(
-                    reply, payload.messages, payload.provider, payload.model
+                    reply,
+                    payload.messages,
+                    payload.provider,
+                    payload.model,
+                    user_id=user_id,
+                    on_completed=completed,
                 )
             ) as response:
                 async for chunk in response:
                     await send({"type": "text_delta", "content": chunk})
 
-            await send({"type": "text_done"})
+            await send({"type": "text_done", "feedback_token": feedback_token})
         except asyncio.CancelledError:
             if abort_requested:
                 await send({"type": "aborted"})

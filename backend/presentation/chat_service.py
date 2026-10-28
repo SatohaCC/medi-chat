@@ -4,8 +4,11 @@ from __future__ import annotations
 
 from collections.abc import AsyncGenerator, Awaitable, Callable, Sequence
 from contextlib import aclosing as closing_stream
+from uuid import UUID
 
 from langsmith import trace, traceable
+from langsmith.run_trees import RunTree
+from langsmith.utils import tracing_is_enabled
 
 from backend.application.chat.queries.chat import (
     ChatQueries,
@@ -38,9 +41,24 @@ class AppChatService:
         *,
         application_service: ChatQueries,
         defaults: Callable[[], GenerationDefaults] = read_generation_defaults,
+        feedback_token_issuer: Callable[[UUID, str, str], str] | None = None,
     ) -> None:
         self._app_service = application_service
         self.defaults = defaults
+        self._feedback_token_issuer = feedback_token_issuer
+
+    def _completed_feedback_token(
+        self, run: RunTree | None, user_id: str
+    ) -> str | None:
+        if (
+            self._feedback_token_issuer is None
+            or not user_id
+            or run is None
+            or not run.session_name
+            or tracing_is_enabled() is not True
+        ):
+            return None
+        return self._feedback_token_issuer(run.id, run.session_name, user_id)
 
     @property
     def is_jev_available(self) -> bool:
@@ -86,6 +104,9 @@ class AppChatService:
         conversation: Sequence[ApiChatMessage],
         provider_name: str | None = None,
         model_name: str | None = None,
+        *,
+        user_id: str = "",
+        on_completed: Callable[[str | None], None] | None = None,
     ) -> AsyncGenerator[str]:
         settings = self.defaults()
         pure_conversation = [chat_message_from_api(m) for m in conversation]
@@ -144,21 +165,38 @@ class AppChatService:
             finally:
                 if run is not None and not getattr(run, "end_time", None):
                     run.end(outputs={"answer": "".join(output_chunks)})
+        if on_completed is not None:
+            on_completed(self._completed_feedback_token(run, user_id))
 
-    @traceable(name="medi_chat.answer_question", run_type="chain")
     async def answer_question(
         self,
         conversation: Sequence[ApiChatMessage],
         product_yj_codes: list[str],
         provider_name: str | None = None,
         model_name: str | None = None,
+        *,
+        user_id: str = "",
     ) -> ApiChatResponse:
         pure_conversation = [chat_message_from_api(m) for m in conversation]
         settings = self.defaults()
-        pure_reply = await self._app_service.answer_question(
-            pure_conversation,
-            product_yj_codes,
-            provider_name=provider_name or settings.provider,
-            model_name=model_name or settings.model,
-        )
-        return chat_response_to_api(pure_reply)
+        with trace(
+            "medi_chat.answer_question",
+            "chain",
+            inputs={
+                "conversation": [
+                    {"role": m.role, "content": m.content} for m in conversation
+                ],
+                "product_yj_codes": product_yj_codes,
+            },
+        ) as run:
+            pure_reply = await self._app_service.answer_question(
+                pure_conversation,
+                product_yj_codes,
+                provider_name=provider_name or settings.provider,
+                model_name=model_name or settings.model,
+            )
+            response = chat_response_to_api(pure_reply)
+            if run is not None:
+                run.end(outputs=response.model_dump())
+        response.feedback_token = self._completed_feedback_token(run, user_id)
+        return response

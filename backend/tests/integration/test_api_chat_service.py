@@ -186,10 +186,12 @@ async def test_lifespan_composes_application_service_before_api_adapter(monkeypa
 
     received = []
 
-    def adapter_factory(*, application_service, defaults):
+    def adapter_factory(*, application_service, defaults, feedback_token_issuer=None):
         received.append(application_service)
         return AppChatService(
-            application_service=application_service, defaults=defaults
+            application_service=application_service,
+            defaults=defaults,
+            feedback_token_issuer=feedback_token_issuer,
         )
 
     lifespan = app_lifespan.create_app_lifespan(

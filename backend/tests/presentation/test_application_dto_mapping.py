@@ -281,7 +281,10 @@ def test_directional_dto_mapping_preserves_public_information(
     restored_response = chat_response_to_api(response)
 
     assert type(restored_response) is ApiChatResponse
-    assert restored_response.model_dump(mode="json") == response_payload
+    assert restored_response.model_dump(mode="json") == {
+        **response_payload,
+        "feedback_token": None,
+    }
 
 
 @pytest.mark.parametrize("columns", [None, {}])
@@ -290,5 +293,5 @@ def test_empty_values_and_none_columns_remain_distinct(columns, response_payload
     source.update(columns=columns, section={}, document_revision={}, references=[])
     response = _application_response(response_payload)
     public = chat_response_to_api(response).model_dump(mode="json")
-    assert public == response_payload
+    assert public == {**response_payload, "feedback_token": None}
     assert "qualifying_intents" not in public

@@ -413,7 +413,10 @@ def answer_preparation_case() -> AnswerPreparationCase:
     assert [asdict(message) for message in conversation] == raw["conversation"]
     assert raw["product_yj_codes"] == ["1234567A0000"]
     assert raw["intent_response"] == intent_response
-    assert chat_response_to_api(expected_reply).model_dump(mode="json") == raw["reply"]
+    assert chat_response_to_api(expected_reply).model_dump(mode="json") == {
+        **raw["reply"],
+        "feedback_token": None,
+    }
     raw_messages = raw["llm_messages"]
     assert isinstance(raw_messages, list)
     expected_messages: list[dict[str, str]] = []
