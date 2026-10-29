@@ -1,6 +1,6 @@
-import { expect, test } from "./helpers/test";
 import { openChat } from "./helpers/chat";
 import { visualJev, visualSource } from "./helpers/presentation";
+import { expect, test } from "./helpers/test";
 
 async function answer(
   page: Parameters<typeof openChat>[0],
@@ -56,7 +56,9 @@ test("SX-21: switches the shared evidence pane between answers and preserves acc
   const raw = pane.getByRole("tab", { name: "生レスポンス", exact: false });
   await raw.focus();
   await raw.press("Space");
-  await expect(pane.getByRole("tabpanel")).toContainText('"visual-request"');
+  await expect(pane.getByRole("tabpanel", { name: /生レスポンス/ })).toContainText(
+    '"visual-request"',
+  );
   const controls = await raw.getAttribute("aria-controls");
   expect(controls).toBeTruthy();
   await expect(page.locator(`[id="${controls}"]`)).toHaveAttribute(

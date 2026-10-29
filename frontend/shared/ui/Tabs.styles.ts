@@ -3,6 +3,8 @@ export const styles = stylex.create({
   tab: { textAlign: "center", lineHeight: "normal", fontFamily: "Arial, sans-serif" },
   root: { display: "flex", flexDirection: "column", gap: 10 },
   nav: {
+    overflowX: "auto",
+    minWidth: 0,
     display: "flex",
     alignItems: "center",
     gap: "6px",
@@ -14,6 +16,8 @@ export const styles = stylex.create({
     marginBottom: "2px",
   },
   item: {
+    flexShrink: 0,
+    minHeight: { default: "auto", "@media (max-width: 600px)": "44px" },
     display: "inline-flex",
     alignItems: "center",
     gap: "6px",

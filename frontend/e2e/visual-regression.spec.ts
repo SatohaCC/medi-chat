@@ -23,6 +23,15 @@ test.beforeEach(async ({ page }) => {
 });
 const geometryPath = resolve("e2e/fixtures/visual-geometry.json");
 async function visualSnapshot(page: Page, testInfo: TestInfo, name: string) {
+  await page
+    .getByRole("complementary")
+    .evaluateAll((elements) =>
+      Promise.all(
+        elements
+          .flatMap((element) => element.getAnimations())
+          .map((animation) => animation.finished),
+      ),
+    );
   if (name.startsWith("imports-")) {
     await expect(
       page.getByText("取り込み済みのXMLはありません。", { exact: false }),
@@ -118,8 +127,14 @@ for (const width of widths) {
         "### 回答\n\n原文に基づく回答。\n\n- 項目\n\n`code`\n\n[安全な参照](https://example.invalid/safe)",
     });
     chat.respond({ type: "text_done" });
-    await page.getByRole("button", { name: /添付文書の根拠を表示/ }).click();
     await expect(page.getByText("原文に基づく回答")).toBeVisible();
+    if (width <= 900)
+      await page.getByRole("button", { name: /添付文書の根拠を表示/ }).click();
+    await page
+      .getByRole("complementary")
+      .evaluate((element) =>
+        Promise.all(element.getAnimations().map((animation) => animation.finished)),
+      );
     const bubble = await page
       .locator('[data-message-role="assistant"] [data-message-bubble]')
       .boundingBox();
@@ -127,8 +142,12 @@ for (const width of widths) {
     expect(bubble).not.toBeNull();
     expect(evidence).not.toBeNull();
     if (!bubble || !evidence) throw new Error("Missing evidence geometry");
-    if (width <= 900) expect(evidence.y).toBeGreaterThan(bubble.y);
-    else expect(evidence.x).toBeGreaterThan(bubble.x);
+    if (width <= 900) {
+      await expect(
+        page.getByRole("dialog", { name: "添付文書の根拠", exact: true }),
+      ).toBeVisible();
+      expect(evidence.y).toBe(0);
+    } else expect(evidence.x).toBeGreaterThan(bubble.x);
     await visualSnapshot(page, testInfo, `chat-complete-${width}.png`);
     await page.goto("/imports");
     await page.evaluate(() => document.fonts.ready);

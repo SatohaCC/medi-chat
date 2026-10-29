@@ -1,6 +1,7 @@
 import * as stylex from "@stylexjs/stylex";
 export const styles = stylex.create({
   base: {
+    minHeight: { default: "auto", "@media (max-width: 600px)": "44px" },
     paddingBlock: "4px",
     paddingInline: "10px",
     borderRadius: 14,
