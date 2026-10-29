@@ -3,7 +3,7 @@ export const styles = stylex.create({
   root: {
     display: "flex",
     flexDirection: "column",
-    height: "100vh",
+    height: "100dvh",
     width: "100%",
     maxWidth: { default: "1920px", "@media (max-width: 900px)": "100%" },
     marginBlock: "0",
@@ -16,6 +16,7 @@ export const styles = stylex.create({
     display: "flex",
     flexDirection: { default: "row", "@media (max-width: 900px)": "column" },
     overflow: "hidden",
+    position: "relative",
   },
   chatColumn: {
     flex: "1",

@@ -2,11 +2,17 @@ import * as stylex from "@stylexjs/stylex";
 
 export const styles = stylex.create({
   container: {
+    minHeight: 0,
+    maxHeight: { default: "none", "@media (max-height: 600px)": "100%" },
+    overflowY: { default: "visible", "@media (max-height: 600px)": "auto" },
+    position: "relative",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     paddingBlock: "10px",
-    paddingInline: "20px",
+    paddingInline: { default: "20px", "@media (max-width: 600px)": "12px" },
+    paddingBottom: "max(10px, env(safe-area-inset-bottom))",
+    flexShrink: 0,
     borderTopWidth: "1px",
     borderTopStyle: "solid",
     borderTopColor: "var(--border)",
@@ -46,6 +52,8 @@ export const styles = stylex.create({
     overflowY: "auto",
   },
   chip: {
+    maxWidth: "100%",
+    overflowWrap: "anywhere",
     display: "inline-flex",
     alignItems: "center",
     gap: "4px",
@@ -61,6 +69,8 @@ export const styles = stylex.create({
     borderColor: "rgba(2, 101, 220, 0.2)",
   },
   additionalChip: {
+    maxWidth: "100%",
+    overflowWrap: "anywhere",
     display: "inline-flex",
     alignItems: "center",
     gap: "4px",
@@ -76,6 +86,8 @@ export const styles = stylex.create({
     borderColor: "rgba(13, 130, 83, 0.2)",
   },
   chipRemoveBtn: {
+    minWidth: { default: "auto", "@media (max-width: 600px)": "32px" },
+    minHeight: { default: "auto", "@media (max-width: 600px)": "36px" },
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
@@ -99,6 +111,7 @@ export const styles = stylex.create({
     color: "inherit",
   },
   actionBtn: {
+    minHeight: { default: "auto", "@media (max-width: 600px)": "44px" },
     display: "inline-flex",
     alignItems: "center",
     gap: "4px",
@@ -126,10 +139,11 @@ export const styles = stylex.create({
     position: "relative",
   },
   addBaselineWrapper: {
-    position: "relative",
+    position: { default: "relative", "@media (max-width: 600px)": "static" },
     display: "inline-block",
   },
   addBaselineBtn: {
+    minHeight: { default: "auto", "@media (max-width: 600px)": "44px" },
     display: "inline-flex",
     alignItems: "center",
     gap: "4px",
@@ -149,10 +163,11 @@ export const styles = stylex.create({
     cursor: "pointer",
   },
   popoverMenu: {
-    position: "absolute",
-    bottom: "calc(100% + 6px)",
-    left: "0",
-    width: "300px",
+    position: { default: "absolute", "@media (max-height: 600px)": "fixed" },
+    bottom: { default: "calc(100% + 6px)", "@media (max-height: 600px)": "12px" },
+    left: { default: "0", "@media (max-width: 600px)": "12px" },
+    right: { default: "auto", "@media (max-width: 600px)": "12px" },
+    width: { default: "300px", "@media (max-width: 600px)": "auto" },
     maxHeight: "260px",
     backgroundColor: "var(--assistant-bg)",
     borderWidth: "1px",
@@ -177,10 +192,11 @@ export const styles = stylex.create({
     backgroundColor: "var(--bg)",
   },
   popoverSearchInput: {
+    minWidth: 0,
     flex: "1",
     paddingBlock: "4px",
     paddingInline: "8px",
-    fontSize: "12px",
+    fontSize: { default: "12px", "@media (max-width: 600px)": "16px" },
     borderWidth: "1px",
     borderStyle: "solid",
     borderColor: "var(--border)",
@@ -190,6 +206,7 @@ export const styles = stylex.create({
     outline: "none",
   },
   popoverCloseBtn: {
+    minHeight: { default: "auto", "@media (max-width: 600px)": "44px" },
     background: "none",
     borderWidth: 0,
     fontSize: "12px",
@@ -213,6 +230,7 @@ export const styles = stylex.create({
     textAlign: "center",
   },
   popoverItem: {
+    minHeight: { default: "auto", "@media (max-width: 600px)": "44px" },
     display: "flex",
     flexDirection: "column",
     alignItems: "flex-start",

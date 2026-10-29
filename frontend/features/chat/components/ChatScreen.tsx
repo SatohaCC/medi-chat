@@ -1,9 +1,10 @@
 "use client";
 
-import { Button } from "@react-spectrum/s2/Button";
 import { PromptFieldValue } from "@react-spectrum/ai";
+import { Button } from "@react-spectrum/s2/Button";
 import * as stylex from "@stylexjs/stylex";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMobileLayout } from "../../../shared/hooks/useMobileLayout";
 import { styles as layout } from "../../../shared/ui/PageLayout.styles";
 import {
   buildPayloadContent,
@@ -13,16 +14,17 @@ import {
   type SelectedMedicineItem,
   useMedicineEntries,
 } from "../../medicine-selection";
-import type { UnsentRequest } from "../model/chatRequestLifecycle";
 import { useChatScroll } from "../hooks/useChatScroll";
 import { useChatWebSocket } from "../hooks/useChatWebSocket";
 import { useEvidencePanelState } from "../hooks/useEvidencePanelState";
+import type { UnsentRequest } from "../model/chatRequestLifecycle";
 import { ChatHeader } from "./ChatHeader";
 import { ChatInputForm } from "./ChatInputForm";
 import { MessageList } from "./MessageList";
 import { SourceEvidencePanel } from "./SourceEvidencePanel";
 
 export function ChatScreen() {
+  const isMobile = useMobileLayout();
   const [selectedModel, setSelectedModel] = useState("openai:gpt-6-luna");
   const { messageListRef, scrollToLatestUserMessage } = useChatScroll();
 
@@ -109,6 +111,7 @@ export function ChatScreen() {
     showEvidencePane,
     evidenceHighlightWords,
   } = useEvidencePanelState({
+    autoOpen: !isMobile,
     messages,
     entries,
     baseline,
@@ -338,6 +341,7 @@ export function ChatScreen() {
 
         {showEvidencePane && activeEvidenceMessage && (
           <SourceEvidencePanel
+            isMobile={isMobile}
             key={`evidence-${openEvidenceIndex}`}
             sources={activeEvidenceMessage.sources || []}
             retrievalStatus={activeEvidenceMessage.retrievalStatus}

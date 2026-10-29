@@ -4,6 +4,7 @@ import type { Message } from "../model/chat";
 import { extractHighlightWords } from "../model/highlightWords";
 
 interface UseEvidencePanelStateOptions {
+  autoOpen?: boolean;
   messages: readonly Message[];
   entries: readonly { n: string; g: string }[];
   baseline: readonly SelectedMedicineItem[];
@@ -33,14 +34,16 @@ function findLatestEvidenceIndex(messages: readonly Message[]): number {
  * Automatically opens the side panel when an assistant response with evidence arrives.
  */
 export function useEvidencePanelState({
+  autoOpen = true,
   messages,
   entries,
   baseline,
   persistentAdditional,
 }: UseEvidencePanelStateOptions) {
   const [explicitIndex, setExplicitIndex] = useState<number | null>(null);
-  const [dismissedLatestEvidenceIndex, setDismissedLatestEvidenceIndex] =
-    useState<number | null>(null);
+  const [dismissedLatestEvidenceIndex, setDismissedLatestEvidenceIndex] = useState<
+    number | null
+  >(null);
   const [evidencePaneTab, setEvidencePaneTab] = useState<"sources" | "jev">("sources");
 
   const latestEvidenceIndex = useMemo(
@@ -62,13 +65,14 @@ export function useEvidencePanelState({
       return explicitIndex;
     }
     if (
+      autoOpen &&
       latestEvidenceIndex !== -1 &&
       dismissedLatestEvidenceIndex !== latestEvidenceIndex
     ) {
       return latestEvidenceIndex;
     }
     return null;
-  }, [explicitIndex, latestEvidenceIndex, dismissedLatestEvidenceIndex]);
+  }, [autoOpen, explicitIndex, latestEvidenceIndex, dismissedLatestEvidenceIndex]);
 
   const handleToggleEvidence = useCallback(
     (index: number, tab: "sources" | "jev" = "sources") => {

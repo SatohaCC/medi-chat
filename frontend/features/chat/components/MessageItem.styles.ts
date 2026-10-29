@@ -85,6 +85,7 @@ export const styles = stylex.create({
     gap: "8px",
   },
   evidenceToggleButton: {
+    minHeight: { default: "auto", "@media (max-width: 600px)": "44px" },
     display: "inline-flex",
     alignItems: "center",
     gap: "6px",
@@ -122,6 +123,7 @@ export const styles = stylex.create({
     fontWeight: 600,
   },
   jevToggleButton: {
+    minHeight: { default: "auto", "@media (max-width: 600px)": "44px" },
     display: "inline-flex",
     alignItems: "center",
     gap: "6px",

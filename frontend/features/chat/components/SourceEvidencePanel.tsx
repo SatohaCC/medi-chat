@@ -2,7 +2,8 @@
 
 import * as stylex from "@stylexjs/stylex";
 import { Check, FileText, X, Zap } from "lucide-react";
-import { useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
+import { Tabs } from "../../../shared/ui/Tabs";
 
 import type { RetrievalStatus, SourceItem } from "../model/chat";
 import type { JevResponseData } from "../model/jev";
@@ -16,6 +17,7 @@ import {
 } from "./SourceEvidenceSectionFilters";
 
 interface SourceEvidencePanelProps {
+  isMobile?: boolean;
   sources: SourceItem[];
   retrievalStatus?: RetrievalStatus;
   jevResponse?: JevResponseData | null;
@@ -26,6 +28,7 @@ interface SourceEvidencePanelProps {
 }
 
 export function SourceEvidencePanel({
+  isMobile = false,
   sources,
   retrievalStatus,
   jevResponse,
@@ -62,41 +65,62 @@ export function SourceEvidencePanel({
 
   const hasJev = Boolean(jevResponse);
   const currentTab = hasJev ? activeTab : "sources";
+  const sourceContent = (
+    <div {...stylex.props(styles.sourceList)}>
+      {alwaysCount > 0 && (
+        <div {...stylex.props(styles.multipleNotice)}>
+          警告・禁忌・重要な基本的注意は、質問内容にかかわらず、記載がある場合に取得します。
+          {countSummary}
+          。取得理由別の件数には重複が含まれ、合計は重複を除いた件数です。
+        </div>
+      )}
+      {jevResponse?.qualifying_intents && jevResponse.qualifying_intents.length > 1 && (
+        <div {...stylex.props(styles.multipleNotice)}>
+          <div {...stylex.props(styles.multipleTitle)}>
+            <span {...stylex.props(styles.multipleTitleGroup)}>
+              <Zap size={13} color="#0265dc" strokeWidth={2} />
+              マルチセクション取得（閾値20%以上）
+            </span>
+          </div>
+          <div>
+            確率20%以上の全候補項目（
+            {jevResponse.qualifying_intents
+              .map((k) => JEV_INTENT_META[k]?.label || k)
+              .join("・")}
+            ）のセクションを網羅して取得し、LLMに提供しています。
+          </div>
+        </div>
+      )}
+      <SourceEvidenceSectionFilters
+        sectionGroups={sectionGroups}
+        totalCount={totalCount}
+        selectedSection={selectedSection}
+        onSelectSection={setSelectedSection}
+        medicineGroups={medicineGroups}
+        selectedMedicine={selectedMedicine}
+        onSelectMedicine={setSelectedMedicine}
+        variant="dashedBorder"
+      />
+      {displayedSources.length === 0 && (
+        <div {...stylex.props(styles.empty)}>
+          該当する添付文書の根拠記載は見つかりませんでした（0件）
+        </div>
+      )}
+      {displayedSources.map((s) => (
+        <SourceEvidenceCard
+          key={s.unit_id}
+          source={s}
+          variant="compact"
+          highlightWords={highlightWords}
+        />
+      ))}
+    </div>
+  );
 
-  return (
+  const panel = (
     <aside {...stylex.props(styles.panel)} aria-label="添付文書の根拠引用">
       <div {...stylex.props(styles.panelInner)}>
         <div {...stylex.props(styles.headerBar)}>
-        {hasJev ? (
-          <div {...stylex.props(styles.tabGroup)} role="tablist">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={currentTab === "sources"}
-              onClick={() => onTabChange?.("sources")}
-              {...stylex.props(
-                styles.tabButton,
-                currentTab === "sources" && styles.tabButtonActiveSources,
-              )}
-            >
-              <FileText size={13} strokeWidth={2} />
-              <span>添付文書の根拠 ({totalCount}件)</span>
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={currentTab === "jev"}
-              onClick={() => onTabChange?.("jev")}
-              {...stylex.props(
-                styles.tabButton,
-                currentTab === "jev" && styles.tabButtonActiveJev,
-              )}
-            >
-              <Zap size={13} strokeWidth={2} />
-              <span>Jev判定インスペクター</span>
-            </button>
-          </div>
-        ) : (
           <div {...stylex.props(styles.headerTitleGroup)}>
             <span {...stylex.props(styles.headerTitle)}>
               <FileText size={14} color="#0265dc" strokeWidth={2} />
@@ -119,83 +143,85 @@ export function SourceEvidencePanel({
               </span>
             )}
           </div>
-        )}
 
-        {onClose && (
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="根拠パネルを閉じる"
-            {...stylex.props(styles.closeButton)}
-          >
-            <X size={13} strokeWidth={2} />
-            <span>閉じる</span>
-          </button>
-        )}
-      </div>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="根拠パネルを閉じる"
+              {...stylex.props(styles.closeButton)}
+            >
+              <X size={13} strokeWidth={2} />
+              <span>閉じる</span>
+            </button>
+          )}
+        </div>
 
-      <div {...stylex.props(styles.content)}>
-        {currentTab === "jev" && jevResponse && (
-          <JevResponseInspector response={jevResponse} standalone />
-        )}
-
-        {currentTab === "sources" && (
-          <>
-            {alwaysCount > 0 && (
-              <div {...stylex.props(styles.multipleNotice)}>
-                警告・禁忌・重要な基本的注意は、質問内容にかかわらず、記載がある場合に取得します。
-                {countSummary}
-                。取得理由別の件数には重複が含まれ、合計は重複を除いた件数です。
-              </div>
-            )}
-            {jevResponse?.qualifying_intents &&
-              jevResponse.qualifying_intents.length > 1 && (
-                <div {...stylex.props(styles.multipleNotice)}>
-                  <div {...stylex.props(styles.multipleTitle)}>
-                    <span {...stylex.props(styles.multipleTitleGroup)}>
-                      <Zap size={13} color="#0265dc" strokeWidth={2} />
-                      マルチセクション取得（閾値20%以上）
-                    </span>
-                  </div>
-                  <div>
-                    確率20%以上の全候補項目（
-                    {jevResponse.qualifying_intents
-                      .map((k) => JEV_INTENT_META[k]?.label || k)
-                      .join("・")}
-                    ）のセクションを網羅して取得し、LLMに提供しています。
-                  </div>
-                </div>
-              )}
-
-            <SourceEvidenceSectionFilters
-              sectionGroups={sectionGroups}
-              totalCount={totalCount}
-              selectedSection={selectedSection}
-              onSelectSection={setSelectedSection}
-              medicineGroups={medicineGroups}
-              selectedMedicine={selectedMedicine}
-              onSelectMedicine={setSelectedMedicine}
-              variant="dashedBorder"
+        <div {...stylex.props(styles.content)}>
+          {hasJev ? (
+            <Tabs
+              value={currentTab}
+              onValueChange={(tab) => onTabChange?.(tab as "sources" | "jev")}
+              label="根拠パネル表示切替"
+              items={[
+                { id: "sources", title: "添付文書の根拠", content: sourceContent },
+                {
+                  id: "jev",
+                  title: "Jev判定インスペクター",
+                  content: jevResponse ? (
+                    <JevResponseInspector response={jevResponse} standalone />
+                  ) : null,
+                },
+              ]}
             />
-
-            {displayedSources.length === 0 && (
-              <div {...stylex.props(styles.empty)}>
-                該当する添付文書の根拠記載は見つかりませんでした（0件）
-              </div>
-            )}
-
-            {displayedSources.map((s) => (
-              <SourceEvidenceCard
-                key={s.unit_id}
-                source={s}
-                variant="compact"
-                highlightWords={highlightWords}
-              />
-            ))}
-          </>
-        )}
+          ) : (
+            sourceContent
+          )}
+        </div>
       </div>
-    </div>
-  </aside>
-);
+    </aside>
+  );
+  return isMobile ? (
+    <MobileEvidenceDialog onClose={onClose}>{panel}</MobileEvidenceDialog>
+  ) : (
+    panel
+  );
+}
+
+function MobileEvidenceDialog({
+  children,
+  onClose,
+}: {
+  children: ReactNode;
+  onClose?: () => void;
+}) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const returnFocusTo = document.activeElement;
+    dialog.showModal();
+    return () => {
+      dialog.close();
+      queueMicrotask(() => {
+        if (returnFocusTo instanceof HTMLElement && returnFocusTo.isConnected) {
+          returnFocusTo.focus();
+        }
+      });
+    };
+  }, []);
+
+  return (
+    <dialog
+      ref={dialogRef}
+      aria-label="添付文書の根拠"
+      {...stylex.props(styles.mobileDialog)}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose?.();
+      }}
+    >
+      {children}
+    </dialog>
+  );
 }
