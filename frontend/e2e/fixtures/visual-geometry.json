@@ -155,21 +155,16 @@
       "x": 0,
       "y": 0,
       "width": 390,
-      "height": 189
+      "height": 69
     },
     "messages": {
       "x": 0,
-      "y": 189,
+      "y": 69,
       "width": 390,
-      "height": 360
+      "height": 480
     },
     "form": null,
-    "model": {
-      "x": 12,
-      "y": 100,
-      "width": 163.734375,
-      "height": 32
-    },
+    "model": null,
     "input": {
       "x": 72,
       "y": 700,
@@ -195,21 +190,16 @@
       "x": 0,
       "y": 0,
       "width": 390,
-      "height": 189
+      "height": 69
     },
     "messages": {
       "x": 0,
-      "y": 189,
+      "y": 69,
       "width": 390,
-      "height": 360
+      "height": 480
     },
     "form": null,
-    "model": {
-      "x": 12,
-      "y": 100,
-      "width": 163.734375,
-      "height": 32
-    },
+    "model": null,
     "input": {
       "x": 72,
       "y": 700,
@@ -219,7 +209,7 @@
     "send": null,
     "assistant": {
       "x": 20,
-      "y": 269.390625,
+      "y": 149.390625,
       "width": 350,
       "height": 325.90625
     },
@@ -255,30 +245,30 @@
       "x": 0,
       "y": 0,
       "width": 390,
-      "height": 145
+      "height": 69
     },
     "messages": {
       "x": 0,
-      "y": 145,
+      "y": 69,
       "width": 390,
-      "height": 699
+      "height": 775
     },
     "form": {
       "x": 12,
-      "y": 231,
+      "y": 155,
       "width": 366,
       "height": 109
     },
     "model": null,
     "input": {
       "x": 25,
-      "y": 244,
+      "y": 168,
       "width": 340,
       "height": 39
     },
     "send": {
       "x": 25,
-      "y": 291,
+      "y": 215,
       "width": 340,
       "height": 36
     },
@@ -300,21 +290,16 @@
       "x": 0,
       "y": 0,
       "width": 899,
-      "height": 103
+      "height": 69
     },
     "messages": {
       "x": 0,
-      "y": 103,
+      "y": 69,
       "width": 899,
-      "height": 596
+      "height": 630
     },
     "form": null,
-    "model": {
-      "x": 502.15625,
-      "y": 58,
-      "width": 163.734375,
-      "height": 32
-    },
+    "model": null,
     "input": {
       "x": 89.5,
       "y": 780,
@@ -340,21 +325,16 @@
       "x": 0,
       "y": 0,
       "width": 899,
-      "height": 103
+      "height": 69
     },
     "messages": {
       "x": 0,
-      "y": 103,
+      "y": 69,
       "width": 899,
-      "height": 596
+      "height": 630
     },
     "form": null,
-    "model": {
-      "x": 502.15625,
-      "y": 58,
-      "width": 163.734375,
-      "height": 32
-    },
+    "model": null,
     "input": {
       "x": 89.5,
       "y": 780,
@@ -364,7 +344,7 @@
     "send": null,
     "assistant": {
       "x": 29.5,
-      "y": 183.390625,
+      "y": 149.390625,
       "width": 840,
       "height": 258.90625
     },
@@ -400,30 +380,30 @@
       "x": 0,
       "y": 0,
       "width": 899,
-      "height": 57
+      "height": 69
     },
     "messages": {
       "x": 0,
-      "y": 57,
+      "y": 69,
       "width": 899,
-      "height": 843
+      "height": 831
     },
     "form": {
       "x": 20,
-      "y": 151,
+      "y": 163,
       "width": 859,
       "height": 65
     },
     "model": null,
     "input": {
       "x": 33,
-      "y": 164,
+      "y": 176,
       "width": 741,
       "height": 39
     },
     "send": {
       "x": 782,
-      "y": 165.5,
+      "y": 177.5,
       "width": 84,
       "height": 36
     },
@@ -445,21 +425,16 @@
       "x": 0,
       "y": 0,
       "width": 900,
-      "height": 103
+      "height": 69
     },
     "messages": {
       "x": 0,
-      "y": 103,
+      "y": 69,
       "width": 900,
-      "height": 596
+      "height": 630
     },
     "form": null,
-    "model": {
-      "x": 503.15625,
-      "y": 58,
-      "width": 163.734375,
-      "height": 32
-    },
+    "model": null,
     "input": {
       "x": 90,
       "y": 780,
@@ -485,21 +460,16 @@
       "x": 0,
       "y": 0,
       "width": 900,
-      "height": 103
+      "height": 69
     },
     "messages": {
       "x": 0,
-      "y": 103,
+      "y": 69,
       "width": 900,
-      "height": 596
+      "height": 630
     },
     "form": null,
-    "model": {
-      "x": 503.15625,
-      "y": 58,
-      "width": 163.734375,
-      "height": 32
-    },
+    "model": null,
     "input": {
       "x": 90,
       "y": 780,
@@ -509,7 +479,7 @@
     "send": null,
     "assistant": {
       "x": 30,
-      "y": 183.390625,
+      "y": 149.390625,
       "width": 840,
       "height": 258.90625
     },
@@ -545,30 +515,30 @@
       "x": 0,
       "y": 0,
       "width": 900,
-      "height": 57
+      "height": 69
     },
     "messages": {
       "x": 0,
-      "y": 57,
+      "y": 69,
       "width": 900,
-      "height": 843
+      "height": 831
     },
     "form": {
       "x": 20,
-      "y": 151,
+      "y": 163,
       "width": 860,
       "height": 65
     },
     "model": null,
     "input": {
       "x": 33,
-      "y": 164,
+      "y": 176,
       "width": 742,
       "height": 39
     },
     "send": {
       "x": 783,
-      "y": 165.5,
+      "y": 177.5,
       "width": 84,
       "height": 36
     },
@@ -1100,21 +1070,16 @@
       "x": 0,
       "y": 0,
       "width": 390,
-      "height": 189
+      "height": 69
     },
     "messages": {
       "x": 0,
-      "y": 189,
+      "y": 69,
       "width": 390,
-      "height": 360
+      "height": 480
     },
     "form": null,
-    "model": {
-      "x": 12,
-      "y": 100,
-      "width": 163.734375,
-      "height": 32
-    },
+    "model": null,
     "input": {
       "x": 72,
       "y": 700,
@@ -1140,21 +1105,16 @@
       "x": 0,
       "y": 0,
       "width": 390,
-      "height": 189
+      "height": 69
     },
     "messages": {
       "x": 0,
-      "y": 189,
+      "y": 69,
       "width": 390,
-      "height": 384
+      "height": 504
     },
     "form": null,
-    "model": {
-      "x": 12,
-      "y": 100,
-      "width": 163.734375,
-      "height": 32
-    },
+    "model": null,
     "input": {
       "x": 72,
       "y": 724,
@@ -1180,21 +1140,16 @@
       "x": 0,
       "y": 0,
       "width": 390,
-      "height": 189
+      "height": 69
     },
     "messages": {
       "x": 0,
-      "y": 189,
+      "y": 69,
       "width": 390,
-      "height": 360
+      "height": 480
     },
     "form": null,
-    "model": {
-      "x": 12,
-      "y": 100,
-      "width": 163.734375,
-      "height": 32
-    },
+    "model": null,
     "input": {
       "x": 72,
       "y": 700,
@@ -1204,7 +1159,7 @@
     "send": null,
     "assistant": {
       "x": 20,
-      "y": 269.390625,
+      "y": 149.390625,
       "width": 234,
       "height": 107.984375
     },
@@ -1225,21 +1180,16 @@
       "x": 0,
       "y": 0,
       "width": 390,
-      "height": 189
+      "height": 69
     },
     "messages": {
       "x": 0,
-      "y": 189,
+      "y": 69,
       "width": 390,
-      "height": 360
+      "height": 480
     },
     "form": null,
-    "model": {
-      "x": 12,
-      "y": 100,
-      "width": 163.734375,
-      "height": 32
-    },
+    "model": null,
     "input": {
       "x": 72,
       "y": 700,
@@ -1249,7 +1199,7 @@
     "send": null,
     "assistant": {
       "x": 20,
-      "y": 269.390625,
+      "y": 149.390625,
       "width": 150,
       "height": 81.09375
     },
@@ -1270,30 +1220,30 @@
       "x": 0,
       "y": 0,
       "width": 390,
-      "height": 145
+      "height": 69
     },
     "messages": {
       "x": 0,
-      "y": 145,
+      "y": 69,
       "width": 390,
-      "height": 699
+      "height": 775
     },
     "form": {
       "x": 12,
-      "y": 231,
+      "y": 155,
       "width": 366,
       "height": 110
     },
     "model": null,
     "input": {
       "x": 25,
-      "y": 244,
+      "y": 168,
       "width": 340,
       "height": 40
     },
     "send": {
       "x": 25,
-      "y": 292,
+      "y": 216,
       "width": 340,
       "height": 36
     },
@@ -1315,30 +1265,30 @@
       "x": 0,
       "y": 0,
       "width": 390,
-      "height": 145
+      "height": 69
     },
     "messages": {
       "x": 0,
-      "y": 145,
+      "y": 69,
       "width": 390,
-      "height": 699
+      "height": 775
     },
     "form": {
       "x": 12,
-      "y": 231,
+      "y": 155,
       "width": 366,
       "height": 110
     },
     "model": null,
     "input": {
       "x": 25,
-      "y": 244,
+      "y": 168,
       "width": 340,
       "height": 40
     },
     "send": {
       "x": 25,
-      "y": 292,
+      "y": 216,
       "width": 340,
       "height": 36
     },
@@ -1349,7 +1299,7 @@
     "table": null,
     "importResult": {
       "x": 12,
-      "y": 393,
+      "y": 317,
       "width": 366,
       "height": 491.5
     }
@@ -1365,30 +1315,30 @@
       "x": 0,
       "y": 0,
       "width": 390,
-      "height": 145
+      "height": 69
     },
     "messages": {
       "x": 0,
-      "y": 145,
+      "y": 69,
       "width": 390,
-      "height": 699
+      "height": 775
     },
     "form": {
       "x": 12,
-      "y": 231,
+      "y": 155,
       "width": 366,
       "height": 110
     },
     "model": null,
     "input": {
       "x": 25,
-      "y": 244,
+      "y": 168,
       "width": 340,
       "height": 40
     },
     "send": {
       "x": 25,
-      "y": 292,
+      "y": 216,
       "width": 340,
       "height": 36
     },
@@ -1399,7 +1349,7 @@
     "table": null,
     "importResult": {
       "x": 12,
-      "y": 393,
+      "y": 317,
       "width": 366,
       "height": 488.5
     }
@@ -1640,21 +1590,16 @@
       "x": 0,
       "y": 0,
       "width": 390,
-      "height": 189
+      "height": 69
     },
     "messages": {
       "x": 0,
-      "y": 189,
+      "y": 69,
       "width": 390,
-      "height": 360
+      "height": 480
     },
     "form": null,
-    "model": {
-      "x": 12,
-      "y": 100,
-      "width": 163.734375,
-      "height": 32
-    },
+    "model": null,
     "input": {
       "x": 72,
       "y": 700,
@@ -1664,7 +1609,7 @@
     "send": null,
     "assistant": {
       "x": 20,
-      "y": 269.390625,
+      "y": 149.390625,
       "width": 350,
       "height": 187.09375
     },
@@ -1695,21 +1640,16 @@
       "x": 0,
       "y": 0,
       "width": 390,
-      "height": 189
+      "height": 69
     },
     "messages": {
       "x": 0,
-      "y": 189,
+      "y": 69,
       "width": 390,
-      "height": 360
+      "height": 480
     },
     "form": null,
-    "model": {
-      "x": 12,
-      "y": 100,
-      "width": 163.734375,
-      "height": 32
-    },
+    "model": null,
     "input": {
       "x": 72,
       "y": 700,
@@ -1719,7 +1659,7 @@
     "send": null,
     "assistant": {
       "x": 20,
-      "y": 269.390625,
+      "y": 149.390625,
       "width": 350,
       "height": 187.09375
     },
@@ -1750,21 +1690,16 @@
       "x": 0,
       "y": 0,
       "width": 390,
-      "height": 189
+      "height": 69
     },
     "messages": {
       "x": 0,
-      "y": 189,
+      "y": 69,
       "width": 390,
-      "height": 360
+      "height": 480
     },
     "form": null,
-    "model": {
-      "x": 12,
-      "y": 100,
-      "width": 163.734375,
-      "height": 32
-    },
+    "model": null,
     "input": {
       "x": 72,
       "y": 700,
@@ -1774,7 +1709,7 @@
     "send": null,
     "assistant": {
       "x": 20,
-      "y": 269.390625,
+      "y": 149.390625,
       "width": 350,
       "height": 187.09375
     },
@@ -1805,21 +1740,16 @@
       "x": 0,
       "y": 0,
       "width": 390,
-      "height": 189
+      "height": 69
     },
     "messages": {
       "x": 0,
-      "y": 189,
+      "y": 69,
       "width": 390,
-      "height": 360
+      "height": 480
     },
     "form": null,
-    "model": {
-      "x": 12,
-      "y": 100,
-      "width": 163.734375,
-      "height": 32
-    },
+    "model": null,
     "input": {
       "x": 72,
       "y": 700,
@@ -1829,7 +1759,7 @@
     "send": null,
     "assistant": {
       "x": 20,
-      "y": 269.390625,
+      "y": 149.390625,
       "width": 350,
       "height": 187.09375
     },
@@ -1865,30 +1795,30 @@
       "x": 0,
       "y": 0,
       "width": 390,
-      "height": 145
+      "height": 69
     },
     "messages": {
       "x": 0,
-      "y": 145,
+      "y": 69,
       "width": 390,
-      "height": 699
+      "height": 775
     },
     "form": {
       "x": 12,
-      "y": 231,
+      "y": 155,
       "width": 366,
       "height": 110
     },
     "model": null,
     "input": {
       "x": 25,
-      "y": 244,
+      "y": 168,
       "width": 340,
       "height": 40
     },
     "send": {
       "x": 25,
-      "y": 292,
+      "y": 216,
       "width": 340,
       "height": 36
     },
@@ -1899,7 +1829,7 @@
     "table": null,
     "importResult": {
       "x": 12,
-      "y": 393,
+      "y": 317,
       "width": 366,
       "height": 439.5
     }
