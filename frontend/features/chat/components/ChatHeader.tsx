@@ -11,8 +11,24 @@ interface ChatHeaderProps {
 }
 
 export function ChatHeader({ selectedModel, onModelChange, status }: ChatHeaderProps) {
+  const connectionStatus = (
+    <span {...stylex.props(styles.status)}>
+      <span
+        {...stylex.props(
+          styles.dot,
+          status === "connected" && styles.connectedDot,
+          status === "connecting" && styles.connectingDot,
+          status === "disconnected" && styles.disconnectedDot,
+        )}
+      />
+      {status}
+    </span>
+  );
   return (
-    <AppHeader>
+    <AppHeader
+      connectionStatus={connectionStatus}
+      connectionNotice={status !== "connected" ? connectionStatus : undefined}
+    >
       <div {...stylex.props(styles.controls)}>
         <Select
           value={selectedModel}
@@ -20,17 +36,6 @@ export function ChatHeader({ selectedModel, onModelChange, status }: ChatHeaderP
           onValueChange={onModelChange}
           label="回答モデル"
         />
-        <span {...stylex.props(styles.status)}>
-          <span
-            {...stylex.props(
-              styles.dot,
-              status === "connected" && styles.connectedDot,
-              status === "connecting" && styles.connectingDot,
-              status === "disconnected" && styles.disconnectedDot,
-            )}
-          />
-          {status}
-        </span>
       </div>
     </AppHeader>
   );

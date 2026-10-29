@@ -80,7 +80,23 @@ export async function openChat(
     });
   });
   await page.goto("/");
-  await expect(page.getByText("connected", { exact: true })).toBeVisible();
+  const menu = page.getByRole("button", { name: "メニューを開く" });
+  if ((page.viewportSize()?.width ?? 1280) <= 900) {
+    await expect(menu).toBeVisible();
+    await menu.click();
+    await expect(page.getByText("connected", { exact: true })).toBeVisible();
+    await expect
+      .poll(() =>
+        page
+          .getByRole("dialog", { name: "メニュー", exact: true })
+          .evaluate((element) => element.contains(document.activeElement)),
+      )
+      .toBe(true);
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog", { name: "メニュー", exact: true })).toHaveCount(
+      0,
+    );
+  } else await expect(page.getByText("connected", { exact: true })).toBeVisible();
   await expect(
     page.getByRole("button", { name: "テスト医薬品A", exact: true }),
   ).toBeVisible();
