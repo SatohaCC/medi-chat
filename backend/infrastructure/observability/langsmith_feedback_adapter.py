@@ -55,6 +55,9 @@ class LangSmithFeedback:
                 key="user_feedback",
                 score=score,
                 feedback_id=feedback_id,
+                comment=f"User: {target.user_id}",
+                source_info={"user_id": target.user_id},
+                extra={"user_id": target.user_id},
                 stop_after_attempt=1,
             )
         except LangSmithConflictError:

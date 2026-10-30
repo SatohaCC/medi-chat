@@ -103,6 +103,9 @@ async def test_B05_B07_B14_acknowledged_retry_and_change(rating, score):
         assert row["score"] == score
         assert "trace_id" not in row  # Avoid background enqueue acknowledgement.
         assert row["stop_after_attempt"] == 1
+        assert row["comment"] == "User: user"
+        assert row["source_info"] == {"user_id": "user"}
+        assert row["extra"] == {"user_id": "user"}
         await command.execute(token, "user", "down" if rating == "up" else "up")
         assert len(client.rows) == 1
         assert row["score"] == 1 - score
