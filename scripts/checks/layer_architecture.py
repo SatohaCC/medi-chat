@@ -181,7 +181,7 @@ def check(root: Path) -> list[Finding]:
         layer_path = backend_root / layer
         if not layer_path.is_dir():
             continue
-        for directory in layer_path.rglob("*"):
+        for directory in (layer_path, *layer_path.rglob("*")):
             if directory.is_dir() and not directory.name.startswith((".", "__")):
                 py_files = [p for p in directory.glob("*.py") if p.is_file()]
                 if py_files and not (directory / "__init__.py").exists():
@@ -235,7 +235,7 @@ def check(root: Path) -> list[Finding]:
                 for p in layer_dir.rglob("*.py")
                 if not any(
                     part.startswith((".", "__"))
-                    for part in p.relative_to(layer_dir).parts
+                    for part in p.relative_to(layer_dir).parts[:-1]
                 )
             )
 
