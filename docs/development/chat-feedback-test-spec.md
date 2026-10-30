@@ -40,7 +40,7 @@
 | B02 | WSで2回答を完了し、最初を評価 | 各text_doneのtokenが独立し、最初の回答のrunだけへ保存される。request_idをrun_idの代用にしない | Presentation結合 |
 | B03 | 生成中断・例外・接続断 | 評価可能な完了tokenを公開しない。次のリクエストへtokenが流用されない | Presentation |
 | B04 | LangSmith無効、または評価機能の設定不足 | 正常回答は維持し、tokenはnull。評価APIは503 | Presentation/Infrastructure |
-| B05 | 有効tokenでup/down | 対応run、固定キー、1/0が保存先に渡る。ユーザー入力で接続先やキーを変更できない | Application |
+| B05 | 有効tokenでup/down | 対応run、固定キー、1/0、ユーザーID（source_info/extra）が保存先に渡る。ユーザー入力で接続先やキーを変更できない | Application |
 | B06 | 同じtoken・ratingを繰り返し送信 | feedbackの観測上の件数は1件。応答喪失後の再送も同じ結果になる | Infrastructure/結合 |
 | B07 | up保存後にdown、その後up | 同じfeedbackのscoreが順に変わり、複数の評価として集計されない | Infrastructure/結合 |
 | B08 | 同じ評価の同時送信、変更要求の競合 | 重複作成しない。異なるratingの同時要求では処理完了順のいずれか1値が残り、永続値と応答を観測する。順序保証を捏造しない | Infrastructure/結合 |

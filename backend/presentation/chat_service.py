@@ -117,6 +117,7 @@ class AppChatService:
         with trace(
             "medi_chat.stream_answer",
             "chain",
+            metadata={"user_id": user_id} if user_id else None,
             inputs={
                 "question": user_query,
                 "conversation": [
@@ -182,6 +183,7 @@ class AppChatService:
         with trace(
             "medi_chat.answer_question",
             "chain",
+            metadata={"user_id": user_id} if user_id else None,
             inputs={
                 "conversation": [
                     {"role": m.role, "content": m.content} for m in conversation
