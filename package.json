@@ -25,6 +25,7 @@
     "test:backend": "pnpm --filter backend test",
     "test:postgres": "pnpm --filter backend test:postgres",
     "test:data": "pnpm --filter backend test",
+    "test:harness": "pnpm --filter backend test:harness",
     "lint": "pnpm --filter frontend lint && pnpm --filter backend lint",
     "format": "pnpm --filter frontend format && pnpm --filter backend format",
     "check": "pnpm --filter frontend check && pnpm --filter backend check",

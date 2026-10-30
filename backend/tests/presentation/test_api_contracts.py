@@ -313,48 +313,6 @@ def overridden_chat_service():
     return FakeChatService()
 
 
-def test_http_and_ws_dependencies_can_be_overridden(
-    pg_api, overridden_chat_service
-) -> None:
-    app = pg_api()
-    fake_service = overridden_chat_service
-    app.dependency_overrides[get_chat_service] = lambda: fake_service
-
-    client = TestClient(app)
-    with client:
-        # 1. HTTP override
-        res = client.post(
-            "/api/chat",
-            json={
-                "message": "テスト",
-                "product_yj_codes": ["1234567A0000"],
-            },
-        )
-        assert res.status_code == 200
-        assert res.json()["answer"] == "FAKE_HTTP_ANSWER"
-
-        # 2. WS override
-        with client.websocket_connect("/ws/chat") as ws:
-            ws.send_json(
-                {
-                    "type": "message",
-                    "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
-                    "product_yj_codes": ["1234567A0000"],
-                    "messages": [{"role": "user", "content": "テスト"}],
-                }
-            )
-            chunks: list[str] = []
-            while True:
-                msg = ws.receive_json()
-                if msg["type"] == "text_delta":
-                    chunks.append(msg["content"])
-                elif msg["type"] == "text_done":
-                    break
-            assert "".join(chunks) == "FAKE_CHUNK_1FAKE_CHUNK_2"
-
-        assert fake_service.calls == 2
-
-
 def test_chat_dependency_override_accepts_feedback_context_without_db(
     overridden_chat_service,
 ):
