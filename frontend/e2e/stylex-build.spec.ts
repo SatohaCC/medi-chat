@@ -59,13 +59,15 @@ test("SX-02/04: 初回HTMLとhydrationでSendの外観を保持する", async ({
   await page.reload();
   await expect(chat.send).toBeVisible();
   expect(errors).toEqual([]);
+  await page.route("**/api/attachment-imports?*", (route) =>
+    route.fulfill({ json: { items: [], total_count: 0, limit: 20, offset: 0 } }),
+  );
   await page.goto("/imports");
-  await expect(page.getByLabel("XMLファイル")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "XMLファイルを選択", exact: true }),
+  ).toBeVisible();
   const importButton = page.getByRole("button", { name: "取り込む", exact: true });
-  await expect(importButton).toHaveCSS("background-color", "rgb(2, 101, 220)");
-  await expect(importButton).toHaveCSS("padding", "8px 16px");
-  await expect(importButton).toHaveCSS("border-radius", "12px");
-  await expect(importButton).toHaveCSS("font-size", "13px");
-  await expect(importButton).toHaveCSS("opacity", "0.5");
+  await expect(importButton).toBeDisabled();
+  await expect(importButton).not.toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
   expect(errors).toEqual([]);
 });

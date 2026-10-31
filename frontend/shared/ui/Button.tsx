@@ -36,9 +36,11 @@ export function Button({
       type={type}
       isDisabled={disabled}
       aria-label={accessibleLabel}
+      aria-pressed={variant.startsWith("filter") ? selected : undefined}
       onPress={onActivate ? () => onActivate() : undefined}
       className={({ isHovered, isDisabled }) =>
         stylex.props(
+          styles.base,
           styles[variant],
           selected && variant === "filterAll" && styles.filterAllSelected,
           selected && variant === "filterSection" && styles.filterSectionSelected,

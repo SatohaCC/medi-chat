@@ -40,7 +40,7 @@ test("original File multipart, metadata, warnings and separate selection", async
     await route.fulfill({ status: 201, json: result });
   });
   await page.goto("/imports");
-  const input = page.getByLabel("XMLファイル");
+  const input = page.locator('input[type="file"]');
   const button = page.getByRole("button", { name: "取り込む", exact: true });
   await expect(button).toBeDisabled();
   await input.setInputFiles({
@@ -76,7 +76,7 @@ test("sending disables selection and repeat requests; error allows retry", async
     } else await route.fulfill({ status: 200, json: { ...result, reused: true } });
   });
   await page.goto("/imports");
-  const input = page.getByLabel("XMLファイル");
+  const input = page.locator('input[type="file"]');
   await input.setInputFiles({
     name: "input.xml",
     mimeType: "text/xml",
@@ -84,13 +84,15 @@ test("sending disables selection and repeat requests; error allows retry", async
   });
   await page.getByRole("button", { name: "取り込む", exact: true }).click();
   await expect(page.getByRole("button", { name: "送信中…" })).toBeDisabled();
-  await expect(input).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "XMLファイルを選択", exact: true }),
+  ).toBeDisabled();
   await page.keyboard.press("Enter");
   expect(count).toBe(1);
   release?.();
-  await expect(page.getByRole("alert", { name: "取り込みエラー" })).toContainText(
-    "XMLを確認してください。",
-  );
+  await expect(
+    page.getByRole("region", { name: "取り込みエラー" }).getByRole("alert"),
+  ).toContainText("XMLを確認してください。");
   await page.getByRole("button", { name: "取り込む", exact: true }).click();
   await expect(
     page.getByText("同じ原本の登録情報です。新しい登録順は作成していません。", {
@@ -115,14 +117,16 @@ for (const failure of ["server", "network"] as const) {
       });
     });
     await page.goto("/imports");
-    await page.getByLabel("XMLファイル").setInputFiles({
+    await page.locator('input[type="file"]').setInputFiles({
       name: "input.xml",
       mimeType: "text/xml",
       buffer: Buffer.from("<source/>"),
     });
     const button = page.getByRole("button", { name: "取り込む", exact: true });
     await button.click();
-    await expect(page.getByRole("alert", { name: "取り込みエラー" })).toBeVisible();
+    await expect(
+      page.getByRole("region", { name: "取り込みエラー" }).getByRole("alert"),
+    ).toBeVisible();
     await expect(
       page.getByText("登録済み／検索に反映済み", { exact: true }),
     ).not.toBeVisible();
@@ -176,7 +180,7 @@ for (const fixture of [
       route.fulfill({ status: 200, json: fixture.value }),
     );
     await page.goto("/imports");
-    await page.getByLabel("XMLファイル").setInputFiles({
+    await page.locator('input[type="file"]').setInputFiles({
       name: "source.xml",
       mimeType: "text/xml",
       buffer: Buffer.from("<source/>"),

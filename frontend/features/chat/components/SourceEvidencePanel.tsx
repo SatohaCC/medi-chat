@@ -70,15 +70,14 @@ export function SourceEvidencePanel({
       {alwaysCount > 0 && (
         <div {...stylex.props(styles.multipleNotice)}>
           警告・禁忌・重要な基本的注意は、質問内容にかかわらず、記載がある場合に取得します。
-          {countSummary}
-          。取得理由別の件数には重複が含まれ、合計は重複を除いた件数です。
+          取得理由別の件数には重複が含まれ、合計は重複を除いた件数です。
         </div>
       )}
       {jevResponse?.qualifying_intents && jevResponse.qualifying_intents.length > 1 && (
         <div {...stylex.props(styles.multipleNotice)}>
           <div {...stylex.props(styles.multipleTitle)}>
             <span {...stylex.props(styles.multipleTitleGroup)}>
-              <Zap size={13} color="#0265dc" strokeWidth={2} />
+              <Zap size={13} color="var(--user-bg)" strokeWidth={2} />
               マルチセクション取得（閾値20%以上）
             </span>
           </div>
@@ -122,23 +121,30 @@ export function SourceEvidencePanel({
       <div {...stylex.props(styles.panelInner)}>
         <div {...stylex.props(styles.headerBar)}>
           <div {...stylex.props(styles.headerTitleGroup)}>
-            <span {...stylex.props(styles.headerTitle)}>
-              <FileText size={14} color="#0265dc" strokeWidth={2} />
-              {retrievalStatus === "complete"
-                ? `統合根拠（${countSummary}）`
-                : retrievalStatus === "jev_searching"
-                  ? `取得済み根拠（${alwaysSummary}ロジック：${logicCount}件、キーワード：${keywordCount}件、合計：${totalCount}件、Jev：取得中...）`
-                  : `取得済み根拠（${countSummary}）`}
-            </span>
+            <div {...stylex.props(styles.titleRow)}>
+              <h2 {...stylex.props(styles.headerTitle)}>
+                <FileText size={18} aria-hidden="true" strokeWidth={2} />
+                添付文書の根拠
+              </h2>
+              <span {...stylex.props(styles.totalBadge)}>{totalCount}件</span>
+            </div>
+            <div {...stylex.props(styles.countSummary)}>
+              <span>{retrievalStatus === "complete" ? "統合根拠" : "取得済み根拠"}</span>
+              {countSummary.split("、").map((count) => (
+                <span key={count} {...stylex.props(styles.countItem)}>
+                  {count}
+                </span>
+              ))}
+            </div>
             {retrievalStatus === "jev_searching" && (
               <span {...stylex.props(styles.searchingBadge)}>
-                <Zap size={12} strokeWidth={2} />
+                <Zap size={12} strokeWidth={2} aria-hidden="true" />
                 Jev判定と統合中...
               </span>
             )}
             {retrievalStatus === "complete" && (
               <span {...stylex.props(styles.completeBadge)}>
-                <Check size={12} strokeWidth={2.5} />
+                <Check size={12} strokeWidth={2.5} aria-hidden="true" />
                 Jev統合完了
               </span>
             )}
@@ -151,7 +157,7 @@ export function SourceEvidencePanel({
               aria-label="根拠パネルを閉じる"
               {...stylex.props(styles.closeButton)}
             >
-              <X size={13} strokeWidth={2} />
+              <X size={14} strokeWidth={2} aria-hidden="true" />
               <span>閉じる</span>
             </button>
           )}

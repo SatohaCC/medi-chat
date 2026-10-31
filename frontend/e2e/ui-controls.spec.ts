@@ -20,9 +20,10 @@ test("SX-20/22: keyboard medicine selection and model agree with WS payload", as
 }) => {
   const chat = await openChat(page);
   await page.getByRole("button", { name: "処方薬を追加", exact: true }).click();
-  const b = page.getByRole("option", { name: /^テスト医薬品B/ });
-  await b.focus();
-  await b.press("Space");
+  const search = page.getByRole("searchbox", { name: "処方薬検索", exact: true });
+  await expect(search).toBeFocused();
+  await search.press("ArrowDown");
+  await search.press("Enter");
   await expect(page.getByTestId("tier-1-prescription")).toContainText("テスト医薬品B");
   const model = page.getByRole("button", { name: "回答モデル" });
   await model.focus();

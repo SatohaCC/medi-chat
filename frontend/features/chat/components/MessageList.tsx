@@ -35,7 +35,7 @@ export function MessageList({
           <div {...stylex.props(styles.welcomeContainer)}>
             <div {...stylex.props(styles.welcomeHeader)}>
               <div {...stylex.props(styles.welcomeIconWrapper)}>
-                <FileText size={24} color="#0265dc" strokeWidth={2.2} />
+                <FileText size={24} color="var(--user-bg)" strokeWidth={2.2} />
               </div>
               <h2 {...stylex.props(styles.welcomeTitle)}>添付文書 AI アシスタント</h2>
               <p {...stylex.props(styles.welcomeSubtitle)}>
@@ -55,7 +55,7 @@ export function MessageList({
               >
                 <div {...stylex.props(styles.suggestionCardHeader)}>
                   <span {...stylex.props(styles.suggestionCardIcon)}>
-                    <Zap size={15} color="#0265dc" strokeWidth={2.2} />
+                    <Zap size={15} color="var(--user-bg)" strokeWidth={2.2} />
                   </span>
                   <span {...stylex.props(styles.suggestionCardTitle)}>
                     相互作用の確認
@@ -134,7 +134,7 @@ export function MessageList({
             <p {...stylex.props(styles.welcomeSubtitle)}>
               <Lightbulb
                 size={13}
-                color="#0265dc"
+                color="var(--user-bg)"
                 style={{ display: "inline", verticalAlign: "middle", marginRight: 6 }}
               />
               下の入力欄で <strong>@</strong> を入力すると、薬品名を選択して質問できます
