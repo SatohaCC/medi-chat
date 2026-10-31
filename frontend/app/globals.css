@@ -1,5 +1,2 @@
-@import "../styles/tokens.css";
-@import "../styles/base.css";
-@import "../features/chat/components/markdown-content.css";
 @layer resets, markdown;
 @stylex;

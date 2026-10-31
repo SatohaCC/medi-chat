@@ -172,7 +172,7 @@ test.describe("Unit 3 & Unit 4: Medicine Mention E2E Tests", () => {
     await expect(chat.tier2).toContainText("ロキソニン錠60mg");
 
     // Click remove button in tier 2
-    const removeBtn = chat.tier2.getByRole("button", { name: /追加薬から.*削除/ });
+    const removeBtn = chat.tier2.getByRole("button", { name: /削除|Remove/ });
     await removeBtn.click();
 
     // Tier 2 becomes empty
@@ -242,7 +242,7 @@ test.describe("Unit 3 & Unit 4: Medicine Mention E2E Tests", () => {
     await page.keyboard.type("質問テキスト");
 
     // Click twice rapidly
-    await Promise.all([chat.send.click(), chat.send.click().catch(() => {})]);
+    await chat.send.dblclick();
 
     await expect.poll(() => chat.requests.length).toBe(1);
     expect(chat.requests).toHaveLength(1);

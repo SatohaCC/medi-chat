@@ -45,7 +45,7 @@ test("10MiB XML is sent in bounded bodies without changing original bytes", asyn
     }
   });
   await page.goto("/imports");
-  await page.getByLabel("XMLファイル").setInputFiles({
+  await page.locator('input[type="file"]').setInputFiles({
     name: "テスト10MiB.xml",
     mimeType: "application/xml",
     buffer: original,
@@ -77,7 +77,7 @@ test("failed part stops upload and displays server error", async ({ page }) => {
     }
   });
   await page.goto("/imports");
-  await page.getByLabel("XMLファイル").setInputFiles({
+  await page.locator('input[type="file"]').setInputFiles({
     name: "テスト中断.xml",
     mimeType: "application/xml",
     buffer: Buffer.alloc(4 * 1024 * 1024),

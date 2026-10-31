@@ -2,6 +2,7 @@ import * as stylex from "@stylexjs/stylex";
 
 export const styles = stylex.create({
   wrapper: {
+    display: "flow-root",
     minWidth: 0,
     position: "relative",
   },
@@ -27,24 +28,24 @@ export const styles = stylex.create({
     display: "flex",
     alignItems: "center",
     justifyContent: "flex-end",
-    marginTop: "6px",
+    marginTop: "var(--space-2)",
   },
   toggleButton: {
     display: "inline-flex",
     alignItems: "center",
-    gap: "6px",
-    paddingBlock: "5px",
-    paddingInline: "12px",
+    gap: "var(--space-2)",
+    paddingBlock: "var(--space-1)",
+    paddingInline: "var(--space-3)",
     fontSize: "12px",
     fontWeight: 600,
-    color: "#0265dc",
+    color: "var(--user-bg)",
     backgroundColor: {
       default: "#ffffff",
       ":hover": "rgba(2, 101, 220, 0.08)",
     },
     borderWidth: "1px",
     borderStyle: "solid",
-    borderColor: "rgba(2, 101, 220, 0.35)",
+    borderColor: "var(--accent-border)",
     borderRadius: "16px",
     boxShadow: "0 1px 2px rgba(2, 101, 220, 0.08)",
     cursor: "pointer",
@@ -52,7 +53,7 @@ export const styles = stylex.create({
       "background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease",
   },
   collapseButton: {
-    color: "#475569",
+    color: "var(--muted)",
     backgroundColor: {
       default: "#f8fafc",
       ":hover": "#f1f5f9",
@@ -65,9 +66,9 @@ export const styles = stylex.create({
     fontWeight: 600,
     color: "#854d0e",
     backgroundColor: "rgba(234, 179, 8, 0.25)",
-    paddingBlock: "1px",
-    paddingInline: "6px",
+    paddingBlock: "var(--space-1)",
+    paddingInline: "var(--space-2)",
     borderRadius: "8px",
-    marginLeft: "2px",
+    marginLeft: "var(--space-1)",
   },
 });

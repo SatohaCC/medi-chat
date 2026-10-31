@@ -56,7 +56,12 @@ export function MessageItem({
             </div>
             {!message.content.trim() && isStreaming && isLast ? (
               <div {...stylex.props(styles.generatingContainer)}>
-                <PixelLoader size={28} isPlaying={true} icon={aiLogo} color="#0265dc" />
+                <PixelLoader
+                  size={28}
+                  isPlaying={true}
+                  icon={aiLogo}
+                  color="var(--user-bg)"
+                />
                 <span {...stylex.props(styles.generatingText)}>
                   添付文書を照会して回答を生成中...
                 </span>

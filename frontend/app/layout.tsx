@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "../styles/tokens.css";
+import "../styles/base.css";
+import "../features/chat/components/markdown-content.css";
 import { S2ClientProvider } from "@/shared/providers/S2ClientProvider";
 import { AuthBoundary } from "../features/authentication/AuthBoundary";
 

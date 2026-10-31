@@ -1,12 +1,14 @@
 "use client";
 
+import { Button } from "@react-spectrum/s2/Button";
+import { FileTrigger } from "@react-spectrum/s2/FileTrigger";
+import { Content, Heading, InlineAlert } from "@react-spectrum/s2/InlineAlert";
 import * as stylex from "@stylexjs/stylex";
 import { AppHeader } from "../../../shared/ui/AppHeader";
-import { Button } from "../../../shared/ui/Button";
 import { styles as layout } from "../../../shared/ui/PageLayout.styles";
 import { useAttachmentImport } from "../hooks/useAttachmentImport";
-import { styles } from "./ImportScreen.styles";
 import { ImportHistory } from "./ImportHistory";
+import { styles } from "./ImportScreen.styles";
 
 export function ImportScreen() {
   const { file, setFile, sending, result, setResult, error, setError, submit } =
@@ -26,22 +28,26 @@ export function ImportScreen() {
         </div>
 
         <form {...stylex.props(styles.form)} onSubmit={submit}>
-          <label htmlFor="attachment-xml" {...stylex.props(styles.srOnly)}>
-            XMLファイル
-          </label>
-          <input
-            {...stylex.props(styles.fileInput)}
-            id="attachment-xml"
-            type="file"
-            accept=".xml,application/xml,text/xml"
-            disabled={sending}
-            onChange={(event) => {
-              setFile(event.target.files?.[0] || null);
-              setResult(null);
-              setError(null);
+          <FileTrigger
+            acceptedFileTypes={[".xml", "application/xml", "text/xml"]}
+            onSelect={(files) => {
+              const selected = files?.item(0);
+              if (selected) {
+                setFile(selected);
+                setResult(null);
+                setError(null);
+              }
             }}
-          />
-          <Button type="submit" disabled={!file || sending}>
+          >
+            <Button
+              variant="secondary"
+              isDisabled={sending}
+              aria-label="XMLファイルを選択"
+            >
+              XMLファイルを選択
+            </Button>
+          </FileTrigger>
+          <Button type="submit" isDisabled={!file} isPending={sending}>
             {sending ? "送信中…" : "取り込む"}
           </Button>
         </form>
@@ -49,9 +55,12 @@ export function ImportScreen() {
         {file && <p {...stylex.props(styles.fileInfo)}>選択したファイル: {file.name}</p>}
 
         {error && (
-          <p role="alert" aria-label="取り込みエラー" {...stylex.props(styles.errorText)}>
-            {error}
-          </p>
+          <section aria-label="取り込みエラー">
+            <InlineAlert variant="negative">
+              <Heading>取り込めませんでした</Heading>
+              <Content>{error}</Content>
+            </InlineAlert>
+          </section>
         )}
 
         {result && (

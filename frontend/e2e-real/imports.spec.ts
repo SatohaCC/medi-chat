@@ -126,7 +126,7 @@ test("real browser upload, resend, process restart GET and active registration",
     );
 
     await page.goto("/imports");
-    await page.getByLabel("XMLファイル").setInputFiles({
+    await page.locator('input[type="file"]').setInputFiles({
       name: "630004_3339003F5020_1_08.xml",
       mimeType: "application/xml",
       buffer: source,
@@ -226,7 +226,7 @@ test("real browser upload, resend, process restart GET and active registration",
       );
     const uploadVersion = async (buffer: Buffer) => {
       await page
-        .getByLabel("XMLファイル")
+        .locator('input[type="file"]')
         .setInputFiles({ name: "テスト改訂.xml", mimeType: "application/xml", buffer });
       const pending = page.waitForResponse(
         (response) =>
@@ -316,7 +316,7 @@ test("real browser upload, resend, process restart GET and active registration",
       if (incoming.url().includes("/parts/") && incoming.status() === 204)
         deliveredParts.push(Number(new URL(incoming.url()).pathname.split("/").at(-1)));
     });
-    await page.getByLabel("XMLファイル").setInputFiles({
+    await page.locator('input[type="file"]').setInputFiles({
       name: "テスト10MiB.xml",
       mimeType: "application/xml",
       buffer: large,

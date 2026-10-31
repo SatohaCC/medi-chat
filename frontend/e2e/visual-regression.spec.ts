@@ -199,7 +199,7 @@ for (const width of [1280, 390]) {
         });
       });
       await page.goto("/imports");
-      await page.getByLabel("XMLファイル").setInputFiles({
+      await page.locator('input[type="file"]').setInputFiles({
         name: "原本.xml",
         mimeType: "text/xml",
         buffer: Buffer.from("<source/>"),

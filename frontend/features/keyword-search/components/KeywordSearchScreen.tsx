@@ -1,7 +1,10 @@
 "use client";
 
+import { Button as S2Button } from "@react-spectrum/s2/Button";
+import { Content, Heading, InlineAlert } from "@react-spectrum/s2/InlineAlert";
+import { SearchField } from "@react-spectrum/s2/SearchField";
 import * as stylex from "@stylexjs/stylex";
-import { type FormEvent, useState } from "react";
+import { useRef, useState } from "react";
 import { AppHeader } from "../../../shared/ui/AppHeader";
 import { Button } from "../../../shared/ui/Button";
 import { styles as layout } from "../../../shared/ui/PageLayout.styles";
@@ -27,6 +30,7 @@ export function KeywordSearchScreen() {
   const [error, setError] = useState<string | null>(null);
   const [showMedicineFilter, setShowMedicineFilter] = useState(false);
 
+  const searchBusy = useRef(false);
   const activeMedicines = useActiveMedicines();
 
   const toggleYjCode = (yjCode: string) => {
@@ -35,11 +39,12 @@ export function KeywordSearchScreen() {
     );
   };
 
-  const handleSearch = async (e?: FormEvent) => {
-    if (e) e.preventDefault();
+  const handleSearch = async () => {
+    if (searchBusy.current) return;
     const trimmed = query.trim();
     if (!trimmed) return;
 
+    searchBusy.current = true;
     setIsSearching(true);
     setError(null);
     try {
@@ -51,6 +56,7 @@ export function KeywordSearchScreen() {
       setError(err instanceof Error ? err.message : "検索に失敗しました");
       setResults(null);
     } finally {
+      searchBusy.current = false;
       setIsSearching(false);
     }
   };
@@ -78,19 +84,27 @@ export function KeywordSearchScreen() {
           </div>
         </div>
 
-        <form {...stylex.props(styles.searchForm)} onSubmit={handleSearch}>
-          <input
-            {...stylex.props(styles.searchInput)}
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="検索キーワードを入力（例: 悪心、併用禁忌、腎機能など）"
-            disabled={isSearching}
-            aria-label="検索キーワード"
-          />
-          <Button type="submit" disabled={!query.trim() || isSearching}>
+        <form
+          {...stylex.props(styles.searchForm)}
+          onSubmit={(event) => event.preventDefault()}
+        >
+          <div {...stylex.props(styles.searchFieldSlot)}>
+            <SearchField
+              label="検索キーワード"
+              value={query}
+              onChange={setQuery}
+              onSubmit={() => void handleSearch()}
+              isDisabled={isSearching}
+              placeholder="例: 悪心、併用禁忌、腎機能"
+            />
+          </div>
+          <S2Button
+            onPress={() => void handleSearch()}
+            isDisabled={!query.trim()}
+            isPending={isSearching}
+          >
             {isSearching ? "検索中…" : "検索"}
-          </Button>
+          </S2Button>
         </form>
 
         <div {...stylex.props(styles.filterSection)}>
@@ -142,9 +156,12 @@ export function KeywordSearchScreen() {
         </div>
 
         {error && (
-          <div role="alert" {...stylex.props(styles.errorText)}>
-            {error}
-          </div>
+          <section aria-label="検索エラー">
+            <InlineAlert variant="negative">
+              <Heading>検索できませんでした</Heading>
+              <Content>{error}</Content>
+            </InlineAlert>
+          </section>
         )}
 
         {results !== null && (

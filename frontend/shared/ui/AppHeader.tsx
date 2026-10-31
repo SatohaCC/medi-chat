@@ -43,51 +43,51 @@ export function AppHeader({
       aria-label="メインナビゲーション"
     >
       <Link
-        onClick={close}
+        onNavigate={close}
         href="/"
         aria-label="チャットへ戻る"
         {...stylex.props(
           styles.navLink,
           isMobile && styles.sheetLink,
-          isChat && styles.activeNavLink,
+          isChat && (isMobile ? styles.activeSheetLink : styles.activeNavLink),
         )}
         aria-current={isChat ? "page" : undefined}
       >
         チャット
       </Link>
       <Link
-        onClick={close}
+        onNavigate={close}
         href="/search"
         aria-label="キーワード検索"
         {...stylex.props(
           styles.navLink,
           isMobile && styles.sheetLink,
-          isSearch && styles.activeNavLink,
+          isSearch && (isMobile ? styles.activeSheetLink : styles.activeNavLink),
         )}
         aria-current={isSearch ? "page" : undefined}
       >
         キーワード検索
       </Link>
       <Link
-        onClick={close}
+        onNavigate={close}
         href="/imports"
         aria-label="添付文書XMLを取り込む"
         {...stylex.props(
           styles.navLink,
           isMobile && styles.sheetLink,
-          isImports && styles.activeNavLink,
+          isImports && (isMobile ? styles.activeSheetLink : styles.activeNavLink),
         )}
         aria-current={isImports ? "page" : undefined}
       >
         XML取り込み
       </Link>
       <Link
-        onClick={close}
+        onNavigate={close}
         href="/guide"
         {...stylex.props(
           styles.navLink,
           isMobile && styles.sheetLink,
-          isGuide && styles.activeNavLink,
+          isGuide && (isMobile ? styles.activeSheetLink : styles.activeNavLink),
         )}
         aria-current={isGuide ? "page" : undefined}
       >
@@ -98,15 +98,13 @@ export function AppHeader({
 
   return (
     <header {...stylex.props(styles.header)}>
-      <div {...stylex.props(styles.leftSection)}>
-        <Link href="/" {...stylex.props(styles.titleLink)}>
-          <span {...stylex.props(styles.logoBadge)}>
-            <Pill size={16} color="#0265dc" strokeWidth={2.2} />
-          </span>
-          <h1 {...stylex.props(styles.title)}>薬剤師向け 添付文書検索</h1>
-        </Link>
-        {!isMobile && navigation()}
-      </div>
+      <Link href="/" {...stylex.props(styles.titleLink)}>
+        <span {...stylex.props(styles.logoBadge)}>
+          <Pill size={16} color="var(--user-bg)" strokeWidth={2.2} />
+        </span>
+        <h1 {...stylex.props(styles.title)}>薬剤師向け 添付文書検索</h1>
+      </Link>
+      {!isMobile && navigation()}
       {isMobile ? (
         <>
           <SheetTrigger>

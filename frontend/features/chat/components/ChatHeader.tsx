@@ -1,6 +1,7 @@
+import { Picker, PickerItem } from "@react-spectrum/s2/Picker";
+import { StatusLight } from "@react-spectrum/s2/StatusLight";
 import * as stylex from "@stylexjs/stylex";
 import { AppHeader } from "../../../shared/ui/AppHeader";
-import { Select } from "../../../shared/ui/Select";
 import { AVAILABLE_MODELS, type ConnectionStatus } from "../model/chat";
 import { styles } from "./ChatHeader.styles";
 
@@ -12,17 +13,17 @@ interface ChatHeaderProps {
 
 export function ChatHeader({ selectedModel, onModelChange, status }: ChatHeaderProps) {
   const connectionStatus = (
-    <span {...stylex.props(styles.status)}>
-      <span
-        {...stylex.props(
-          styles.dot,
-          status === "connected" && styles.connectedDot,
-          status === "connecting" && styles.connectingDot,
-          status === "disconnected" && styles.disconnectedDot,
-        )}
-      />
+    <StatusLight
+      variant={
+        status === "connected"
+          ? "positive"
+          : status === "connecting"
+            ? "notice"
+            : "negative"
+      }
+    >
       {status}
-    </span>
+    </StatusLight>
   );
   return (
     <AppHeader
@@ -30,12 +31,19 @@ export function ChatHeader({ selectedModel, onModelChange, status }: ChatHeaderP
       connectionNotice={status !== "connected" ? connectionStatus : undefined}
     >
       <div {...stylex.props(styles.controls)}>
-        <Select
+        <Picker
+          aria-label="回答モデル"
           value={selectedModel}
-          options={AVAILABLE_MODELS}
-          onValueChange={onModelChange}
-          label="回答モデル"
-        />
+          onChange={(key) => {
+            if (typeof key === "string") onModelChange(key);
+          }}
+        >
+          {AVAILABLE_MODELS.map((model) => (
+            <PickerItem key={model.value} id={model.value}>
+              {model.label}
+            </PickerItem>
+          ))}
+        </Picker>
       </div>
     </AppHeader>
   );

@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { expect, test } from "./helpers/test";
 import { openChat } from "./helpers/chat";
+import { expect, test } from "./helpers/test";
 
 test("SX-03: StyleXの色編集と復元が入力・選択を保持してHMRされる", async ({ page }) => {
   const chat = await openChat(page);
@@ -14,13 +14,14 @@ test("SX-03: StyleXの色編集と復元が入力・選択を保持してHMRさ�
   );
   const original = readFileSync(styles, "utf8");
   const changed = original.replace(
-    'backgroundColor: "rgba(2, 101, 220, 0.08)"',
+    'backgroundColor: "var(--assistant-bg)"',
     'backgroundColor: "#9333ea"',
   );
   expect(changed).not.toBe(original);
-  const chip = page
-    .getByRole("button", { name: "テスト医薬品A", exact: true })
-    .locator("..");
+  const chip = page.getByTestId("medicine-prompt-dock");
+  const initialBackground = await chip.evaluate(
+    (element) => getComputedStyle(element).backgroundColor,
+  );
   const initialDocument = await page.evaluate(() => {
     document.documentElement.dataset.hmrDocument = "stylex-test";
     return performance.timeOrigin;
@@ -42,7 +43,7 @@ test("SX-03: StyleXの色編集と復元が入力・選択を保持してHMRさ�
       "stylex-test",
     );
     writeFileSync(styles, original);
-    await expect(chip).toHaveCSS("background-color", "rgba(2, 101, 220, 0.08)", {
+    await expect(chip).toHaveCSS("background-color", initialBackground, {
       timeout: 30_000,
     });
     await expect(chat.input).toHaveText("HMRで保持する質問");

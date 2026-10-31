@@ -1,17 +1,22 @@
 import * as stylex from "@stylexjs/stylex";
 
 export const styles = stylex.create({
-  section: { display: "flex", flexDirection: "column", gap: 16, marginTop: 12 },
+  section: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "var(--space-4)",
+    marginTop: "var(--space-3)",
+  },
   header: {
     display: "flex",
     flexWrap: "wrap",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: 12,
+    gap: "var(--space-3)",
   },
   title: { margin: 0, fontSize: 18, fontWeight: 700, color: "var(--fg)" },
   description: {
-    marginBlock: 6,
+    marginBlock: "var(--space-2)",
     fontSize: 13,
     lineHeight: 1.6,
     color: "var(--muted)",
@@ -23,7 +28,7 @@ export const styles = stylex.create({
     margin: 0,
     display: "flex",
     flexDirection: "column",
-    gap: 10,
+    gap: "var(--space-3)",
   },
   item: {
     backgroundColor: "var(--assistant-bg)",
@@ -31,7 +36,7 @@ export const styles = stylex.create({
     borderStyle: "solid",
     borderColor: "var(--border)",
     borderRadius: 8,
-    padding: 16,
+    padding: "var(--space-4)",
     minWidth: 0,
   },
   row: {
@@ -39,7 +44,7 @@ export const styles = stylex.create({
     flexWrap: "wrap",
     justifyContent: "space-between",
     alignItems: "start",
-    gap: 8,
+    gap: "var(--space-2)",
   },
   filename: {
     margin: 0,
@@ -51,7 +56,7 @@ export const styles = stylex.create({
     minWidth: 0,
   },
   products: {
-    marginBlock: 8,
+    marginBlock: "var(--space-2)",
     fontSize: 14,
     lineHeight: 1.6,
     color: "var(--fg)",
@@ -60,8 +65,8 @@ export const styles = stylex.create({
   badge: {
     fontSize: 12,
     borderRadius: 4,
-    paddingBlock: 3,
-    paddingInline: 8,
+    paddingBlock: "var(--space-1)",
+    paddingInline: "var(--space-2)",
     color: "var(--muted)",
     backgroundColor: "var(--bg)",
     whiteSpace: "nowrap",
@@ -82,7 +87,7 @@ export const styles = stylex.create({
   pagination: {
     display: "flex",
     justifyContent: "space-between",
-    gap: 12,
-    marginTop: 12,
+    gap: "var(--space-3)",
+    marginTop: "var(--space-3)",
   },
 });

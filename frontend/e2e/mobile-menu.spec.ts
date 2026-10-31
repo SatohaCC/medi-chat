@@ -25,6 +25,8 @@ for (const width of [320, 390, 900]) {
     await page
       .getByRole("option", { name: "OpenAI (GPT-5.6 Luna)", exact: true })
       .click();
+    await expect(page.getByRole("listbox")).toHaveCount(0);
+    await expect(sheet.getByRole("button", { name: "回答モデル" })).toBeFocused();
     await expect(sheet).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(sheet).toHaveCount(0);
@@ -54,14 +56,34 @@ for (const width of [320, 390, 900]) {
   });
 }
 
-test("desktop navigation remains visible at 901px", async ({ page }) => {
-  await page.setViewportSize({ width: 901, height: 844 });
-  await openChat(page);
-  await expect(
-    page.getByRole("navigation", { name: "メインナビゲーション" }),
-  ).toBeVisible();
-  await expect(page.getByRole("button", { name: "メニューを開く" })).toHaveCount(0);
-});
+for (const width of [901, 1100, 1440]) {
+  test(`desktop navigation remains visible at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await openChat(page);
+    const navigation = page.getByRole("navigation", { name: "メインナビゲーション" });
+    await expect(navigation).toBeVisible();
+    await expect(page.getByRole("button", { name: "メニューを開く" })).toHaveCount(0);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(width);
+    const navBox = await navigation.boundingBox();
+    const modelBox = await page.getByRole("button", { name: "回答モデル" }).boundingBox();
+    if (!navBox || !modelBox) throw new Error("Header controls must be visible");
+    expect(
+      navBox.y + navBox.height <= modelBox.y ||
+        modelBox.y + modelBox.height <= navBox.y ||
+        navBox.x + navBox.width <= modelBox.x,
+    ).toBe(true);
+    await page.screenshot({ path: `../tmp/header-desktop-${width}.png` });
+    await navigation.getByRole("link", { name: "キーワード検索", exact: true }).click();
+    await expect(page).toHaveURL(/\/search$/);
+    await expect(
+      page
+        .getByRole("navigation")
+        .getByRole("link", { name: "キーワード検索", exact: true }),
+    ).toHaveAttribute("aria-current", "page");
+  });
+}
 
 test("Sheet closes from its backdrop and supports logout", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
