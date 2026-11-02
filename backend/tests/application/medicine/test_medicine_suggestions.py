@@ -7,8 +7,8 @@ from backend.application.medicine.queries.suggest_medicines import (
     MedicineSuggester,
     SuggestionProduct,
 )
-from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.medicine.identifiers import YjCode
+from backend.domain.package_insert.identifiers import DocumentId
 
 
 def product(brand, code, group="テスト成分"):

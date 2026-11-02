@@ -17,10 +17,10 @@ export function useActiveMedicines() {
     };
     refresh();
     window.addEventListener("focus", refresh);
-    window.addEventListener("attachment-imported", refresh);
+    window.addEventListener("package-insert-imported", refresh);
     return () => {
       window.removeEventListener("focus", refresh);
-      window.removeEventListener("attachment-imported", refresh);
+      window.removeEventListener("package-insert-imported", refresh);
     };
   }, []);
   return snapshot;

@@ -4,23 +4,23 @@ import hashlib
 import json
 from pathlib import PurePosixPath
 
-from backend.application.attachment_import.errors import (
+from backend.application.indexing.queries.services.package_insert_projection import (
+    project_package_insert,
+)
+from backend.application.package_insert_import.errors import (
     ImportLimitExceeded,
-    InvalidAttachment,
+    InvalidPackageInsert,
 )
-from backend.application.attachment_import.policies import registration_version
-from backend.application.indexing.queries.services.attachment_projection import (
-    project_attachment,
-)
-from backend.domain.attachment.exceptions import (
+from backend.application.package_insert_import.policies import registration_version
+from backend.domain.package_insert.exceptions import (
     MissingOrInvalidYjError,
     MissingRevisionError,
 )
-from backend.domain.attachment.value_objects import RegistrationVersion
-from backend.infrastructure.document_import.attachment_contracts import (
-    AttachmentArtifactEncoder,
+from backend.domain.package_insert.value_objects import RegistrationVersion
+from backend.infrastructure.document_import.package_insert_contracts import (
+    PackageInsertArtifactEncoder,
 )
-from backend.infrastructure.persistence.mappings.attachment_document_mapping import (
+from backend.infrastructure.persistence.mappings.package_insert_document_mapping import (
     document_to_payload,
 )
 from backend.infrastructure.persistence.mappings.search_projection_mapping import (
@@ -36,7 +36,7 @@ from backend.infrastructure.serialization.search_payload_codec import (
 
 
 class RegistrationPreparer:
-    def __init__(self, encoder: AttachmentArtifactEncoder):
+    def __init__(self, encoder: PackageInsertArtifactEncoder):
         self.encoder = encoder
 
     @staticmethod
@@ -44,19 +44,19 @@ class RegistrationPreparer:
         try:
             version = registration_version(item.decoded.document)
         except MissingOrInvalidYjError:
-            raise InvalidAttachment(
+            raise InvalidPackageInsert(
                 "missing_or_invalid_yj",
                 "Every listed product must have a valid YJ code",
                 phase="validation",
             ) from None
         except MissingRevisionError:
-            raise InvalidAttachment(
+            raise InvalidPackageInsert(
                 "missing_revision",
                 "A revision month is required to select the latest document",
                 phase="validation",
             ) from None
         if hashlib.sha256(item.source).hexdigest() != version.source_sha256.value:
-            raise InvalidAttachment(
+            raise InvalidPackageInsert(
                 "source_hash_conflict",
                 "Source bytes do not match the decoded document",
                 phase="validation",
@@ -75,10 +75,10 @@ class RegistrationPreparer:
                 or not figure.logical_name
                 or not figure.media_type
             ):
-                raise InvalidAttachment(
+                raise InvalidPackageInsert(
                     "unsafe_figure", "Figure name is unsafe", phase="validation"
                 )
-        projected = project_attachment(item.decoded.document)
+        projected = project_package_insert(item.decoded.document)
         bundle = self.encoder.encode(
             item.decoded.document, projected, item.decoded.source_info
         )

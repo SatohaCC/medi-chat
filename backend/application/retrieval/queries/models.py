@@ -23,11 +23,11 @@ from backend.application.retrieval.values import (
     SearchKeyword,
     SearchPolicyTerm,
 )
-from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.foundation.exceptions import DomainValidationError
 from backend.domain.foundation.json_types import JsonValue
 from backend.domain.foundation.value_objects import ImmutableMapping
 from backend.domain.medicine.identifiers import YjCode
+from backend.domain.package_insert.identifiers import DocumentId
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

@@ -38,7 +38,7 @@ from backend.infrastructure.persistence.queries.postgres_search_snapshot_provide
     PostgresRuntime,
 )
 from backend.infrastructure.persistence.runtime.read_workers import ReadWorkers
-from backend.infrastructure.persistence.schemas import attachment_tables as schema
+from backend.infrastructure.persistence.schemas import package_insert_tables as schema
 from backend.tests.integration.test_postgres_registration import (
     pg_publisher as pg_publisher,
 )

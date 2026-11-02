@@ -60,15 +60,15 @@ def test_openapi_contracts_match_baseline() -> None:
     for name in ("LoginInput", "LoginResponse", "PrincipalResponse"):
         del actual_openapi["components"]["schemas"][name]
     for path in (
-        "/api/attachment-imports/uploads",
-        "/api/attachment-imports/uploads/{upload_id}/parts/{index}",
-        "/api/attachment-imports/uploads/{upload_id}/complete",
+        "/api/package-insert-imports/uploads",
+        "/api/package-insert-imports/uploads/{upload_id}/parts/{index}",
+        "/api/package-insert-imports/uploads/{upload_id}/complete",
     ):
         assert "post" in actual_openapi["paths"].pop(path)
     del actual_openapi["components"]["schemas"]["UploadResponse"]
     # The history list is an explicit additive API, covered with real PG in
     # test_import_history.py. Keep the frozen pre-existing contracts exact.
-    history_get = actual_openapi["paths"]["/api/attachment-imports"].pop("get")
+    history_get = actual_openapi["paths"]["/api/package-insert-imports"].pop("get")
     assert history_get["responses"]["200"]["content"]["application/json"]["schema"] == {
         "$ref": "#/components/schemas/ImportListResponse"
     }

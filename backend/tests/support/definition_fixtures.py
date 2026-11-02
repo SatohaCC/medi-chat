@@ -22,12 +22,12 @@ from backend.application.retrieval.values import (
     IntentName,
     KeywordPriority,
 )
-from backend.domain.attachment.primitives import (
+from backend.domain.package_insert.primitives import (
     DefinitionTitle,
     NumberedSectionCode,
     SectionScope,
 )
-from backend.domain.attachment.value_objects import (
+from backend.domain.package_insert.value_objects import (
     STANDARD_INTERACTION_COLUMNS,
     STANDARD_SECTION_TAXONOMY,
     SectionDefinition,

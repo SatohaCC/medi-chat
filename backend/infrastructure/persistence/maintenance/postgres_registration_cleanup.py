@@ -6,7 +6,7 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SQLAlchemyError
 
-from backend.infrastructure.persistence.schemas import attachment_tables as s
+from backend.infrastructure.persistence.schemas import package_insert_tables as s
 
 
 class PostgresRegistrationCleanup:

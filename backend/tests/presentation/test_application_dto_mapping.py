@@ -164,8 +164,8 @@ def _application_response(payload):
         EvidenceReference,
         EvidenceSection,
     )
-    from backend.domain.attachment.identifiers import DocumentId
     from backend.domain.medicine.identifiers import YjCode
+    from backend.domain.package_insert.identifiers import DocumentId
 
     return ChatResponse(
         answer=payload["answer"],

@@ -5,28 +5,28 @@ from unittest.mock import Mock
 
 import httpx
 import pytest
-from backend.application.attachment_import.commands.models import (
+from backend.application.package_insert_import.commands.models import (
     ImportedRevision,
     ImportResult,
     ImportWarning,
 )
-from backend.application.attachment_import.queries.dtos.import_views import (
+from backend.application.package_insert_import.queries.dtos.import_views import (
     ImportDetail,
     ImportPage,
     ImportProductView,
     ImportRevisionView,
     ImportWarningView,
 )
-from backend.application.attachment_import.queries.import_history import (
+from backend.application.package_insert_import.queries.import_history import (
     ImportHistoryQueries,
 )
 from backend.infrastructure.persistence.queries.postgres_import_query_reader import (
     PostgresImportQueries,
 )
 from backend.infrastructure.persistence.runtime.import_workers import ImportWorkers
-from backend.presentation.attachment_import_routes import router
 from backend.presentation.dependencies import get_import_queries, get_import_service
-from backend.tests.support.attachment_import_fixtures import encoded, xml_source
+from backend.presentation.package_insert_import_routes import router
+from backend.tests.support.package_insert_import_fixtures import encoded, xml_source
 from fastapi import FastAPI
 
 
@@ -92,11 +92,11 @@ async def test_import_read_routes_only_inject_query_handler():
             transport=httpx.ASGITransport(app=app), base_url="http://test"
         ) as client:
             response = await client.get(
-                f"/api/attachment-imports/{stored.document_id}/{stored.source_sha256}"
+                f"/api/package-insert-imports/{stored.document_id}/{stored.source_sha256}"
             )
             assert response.status_code == 200
             assert response.json()["document_id"] == stored.document_id
-            response = await client.get("/api/attachment-imports?limit=3&offset=2")
+            response = await client.get("/api/package-insert-imports?limit=3&offset=2")
             assert response.status_code == 200
             assert response.json() == {
                 "items": [],
@@ -105,7 +105,7 @@ async def test_import_read_routes_only_inject_query_handler():
                 "offset": 2,
             }
             assert (
-                await client.get("/api/attachment-imports?limit=0")
+                await client.get("/api/package-insert-imports?limit=0")
             ).status_code == 422
         reader.read_result.assert_called_once_with(
             stored.document_id, stored.source_sha256

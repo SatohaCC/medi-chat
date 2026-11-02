@@ -24,7 +24,9 @@ async def stream_reply(
     provider_name: str | None,
     model_name: str | None,
 ) -> AsyncIterator[str]:
-    if reply.needs_clarification:
+    # LangGraph エージェントの回答または確認応答はすでに生成済みであるため、
+    # LLMの再プロンプトを行わずに即時ストリーム送出する
+    if reply.needs_clarification or reply.retrieval_strategy == "langgraph_agent":
         yield reply.answer
         return
     provider = provider_factory(provider_name)

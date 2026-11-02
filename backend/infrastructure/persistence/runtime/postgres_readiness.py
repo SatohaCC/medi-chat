@@ -32,10 +32,10 @@ def verify_postgres_readiness(engine: Engine, *, projections: bool = True) -> No
             invalid = connection.execute(
                 text("""
                 SELECT EXISTS (
-                    SELECT 1 FROM attachment_versions
+                    SELECT 1 FROM package_insert_versions
                     WHERE payload_fingerprint <> md5(structure::text || catalogue::text)
                        OR structure->>'schema_version' IS DISTINCT FROM '1'
-                       OR structure->>'transformer_version' IS DISTINCT FROM 'attachment-domain.v1'
+                       OR structure->>'transformer_version' IS DISTINCT FROM 'package-insert-domain.v1'
                 )
             """)
             ).scalar_one()
@@ -44,14 +44,14 @@ def verify_postgres_readiness(engine: Engine, *, projections: bool = True) -> No
             invalid = connection.execute(
                 text(f"""
                 SELECT EXISTS (
-                    SELECT 1 FROM attachment_versions v JOIN registration_receipts r USING(version_id)
+                    SELECT 1 FROM package_insert_versions v JOIN registration_receipts r USING(version_id)
                     WHERE octet_length(v.source) <> v.byte_size
                        OR encode(sha256(v.source), 'hex') <> r.source_sha256
                 ) OR EXISTS (
-                    SELECT 1 FROM attachment_assets
+                    SELECT 1 FROM package_insert_assets
                     WHERE octet_length(content) <> byte_size OR encode(sha256(content), 'hex') <> source_sha256
                 ) OR EXISTS (
-                    SELECT 1 FROM attachment_versions
+                    SELECT 1 FROM package_insert_versions
                     WHERE :projections AND projection_fingerprint <> {PROJECTION_FINGERPRINT}
                 )
             """),
@@ -72,7 +72,7 @@ def verify_postgres_readiness(engine: Engine, *, projections: bool = True) -> No
                     OR EXISTS (
                         SELECT 1 FROM generation_memberships m
                         JOIN registration_receipts r ON r.version_id=m.version_id
-                        LEFT JOIN attachment_versions v ON v.version_id=m.version_id
+                        LEFT JOIN package_insert_versions v ON v.version_id=m.version_id
                         WHERE m.generation_id=:pointer AND (r.artifacts_deleted OR v.version_id IS NULL)
                     )
             """),

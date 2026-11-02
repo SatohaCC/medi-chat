@@ -1,9 +1,12 @@
 import pytest
-from backend.application.attachment_import.errors import ImportConflict
-from backend.domain.attachment.identifiers import DocumentId
-from backend.domain.attachment.primitives import AttachmentSha256, RevisionYearMonth
-from backend.domain.attachment.value_objects import RegistrationVersion
+from backend.application.package_insert_import.errors import ImportConflict
 from backend.domain.medicine.identifiers import YjCode
+from backend.domain.package_insert.identifiers import DocumentId
+from backend.domain.package_insert.primitives import (
+    PackageInsertSha256,
+    RevisionYearMonth,
+)
+from backend.domain.package_insert.value_objects import RegistrationVersion
 from backend.infrastructure.persistence.registration.registration_plan import (
     plan_registration,
 )
@@ -12,7 +15,7 @@ from backend.infrastructure.persistence.registration.registration_plan import (
 def version(month, digest, codes=("111111111111",)):
     return RegistrationVersion(
         document_id=DocumentId("test"),
-        source_sha256=AttachmentSha256(digest * 64),
+        source_sha256=PackageInsertSha256(digest * 64),
         yj_codes=frozenset(YjCode(c) for c in codes),
         revised_at=RevisionYearMonth(month),
     )

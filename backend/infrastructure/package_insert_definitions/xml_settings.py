@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
 
-from backend.domain.attachment.value_objects import (
+from backend.domain.package_insert.value_objects import (
     InteractionColumnDefinition,
     SectionTaxonomy,
 )

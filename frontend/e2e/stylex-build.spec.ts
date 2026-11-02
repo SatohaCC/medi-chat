@@ -59,7 +59,7 @@ test("SX-02/04: 初回HTMLとhydrationでSendの外観を保持する", async ({
   await page.reload();
   await expect(chat.send).toBeVisible();
   expect(errors).toEqual([]);
-  await page.route("**/api/attachment-imports?*", (route) =>
+  await page.route("**/api/package-insert-imports?*", (route) =>
     route.fulfill({ json: { items: [], total_count: 0, limit: 20, offset: 0 } }),
   );
   await page.goto("/imports");

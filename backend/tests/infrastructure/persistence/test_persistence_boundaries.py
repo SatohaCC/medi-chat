@@ -22,7 +22,7 @@ with patch.object(context, "config", config, create=True), patch.object(context,
     runpy.run_path("backend/migrations/postgres/env.py")
     tables = configure.call_args.kwargs["target_metadata"].tables
     assert len(tables) == 17, sorted(tables)
-    assert "attachment_uploads" in tables
+    assert "package_insert_uploads" in tables
     assert "auth_users" in tables
 """
     result = subprocess.run(

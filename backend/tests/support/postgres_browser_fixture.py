@@ -22,7 +22,7 @@ from backend.infrastructure.persistence.runtime.postgres_readiness import (
 from backend.infrastructure.pmda_xml.pmda_artifact_encoder import PmdaArtifactEncoder
 from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
 from backend.project_paths import BACKEND_DIR, PROJECT_ROOT
-from backend.tests.support.attachment_import_fixtures import xml_source
+from backend.tests.support.package_insert_import_fixtures import xml_source
 from backend.tests.support.postgres_fixtures import validate_test_database_url
 from sqlalchemy import inspect, text
 

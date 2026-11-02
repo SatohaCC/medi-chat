@@ -158,6 +158,8 @@ async def stream_chat_response(
                     payload.messages,
                     payload.product_yj_codes,
                     on_logic_sources=publish_logic,
+                    provider_name=payload.provider,
+                    model_name=payload.model,
                 )
 
             except InvalidMedicineInput as exc:

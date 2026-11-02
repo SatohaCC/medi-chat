@@ -4,7 +4,7 @@ import hashlib
 
 
 def source(body, codes=("111111111111",), *, doc="test", revised_at="2026-10"):
-    from backend.tests.support.attachment_import_fixtures import xml_source
+    from backend.tests.support.package_insert_import_fixtures import xml_source
 
     value = xml_source(
         f"<Warnings><Detail><Lang>{body}</Lang></Detail></Warnings>"

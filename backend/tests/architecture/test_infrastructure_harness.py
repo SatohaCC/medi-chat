@@ -32,20 +32,20 @@ allowed_dependencies = ["serialization", "document_import"]
 "runtime/postgres_readiness" = { symbols = ["verify_postgres_readiness"], consumers = ["composition", "cli"] }
 "maintenance/postgres_registration_cleanup" = { symbols = ["PostgresRegistrationCleanup"], consumers = ["composition", "cli", "persistence.registration"] }
 "schemas/metadata" = { symbols = ["metadata"], consumers = ["backend/migrations", "cli/manage_postgres", "persistence"] }
-"schemas/attachment_tables" = { symbols = ["uploads", "upload_parts", "receipts", "versions", "assets", "units", "unit_products", "active", "generations", "memberships", "state"], consumers = ["backend/migrations", "cli/manage_postgres", "persistence"] }
+"schemas/package_insert_tables" = { symbols = ["uploads", "upload_parts", "receipts", "versions", "assets", "units", "unit_products", "active", "generations", "memberships", "state"], consumers = ["backend/migrations", "cli/manage_postgres", "persistence"] }
 "schemas/authentication_tables" = { symbols = ["users", "identities", "credentials", "families", "refresh_tokens", "attempts", "AUTH_TABLES"], consumers = ["backend/migrations", "cli/manage_postgres", "persistence"] }
 "runtime/postgres_integrity" = { symbols = ["PROJECTION_FINGERPRINT"], consumers = ["backend/migrations", "cli/manage_postgres", "persistence.runtime.postgres_readiness"] }
 "registration/registration_payloads" = { symbols = ["FigureInput", "PostgresRegistrationInput"], consumers = ["cli/manage_postgres"] }
-"mappings/attachment_document_mapping" = { symbols = ["document_from_payload"], consumers = ["cli/manage_postgres"] }
+"mappings/package_insert_document_mapping" = { symbols = ["document_from_payload"], consumers = ["cli/manage_postgres"] }
 "mappings/search_projection_mapping" = { symbols = ["projection_records"], consumers = ["cli/manage_postgres"] }
 
 [adapters.document_import]
-roles = ["attachment_payloads", "attachment_contracts", "original_document_registration_adapter"]
+roles = ["package_insert_payloads", "package_insert_contracts", "original_document_registration_adapter"]
 allowed_dependencies = []
 
 [adapters.document_import.public]
-"attachment_payloads" = { symbols = ["AttachmentSourceInformation", "DecodedAttachment", "ArtifactFile", "ArtifactBundle"], consumers = ["pmda_xml", "persistence", "composition", "cli"] }
-"attachment_contracts" = { symbols = ["AttachmentDecoder", "AttachmentArtifactEncoder", "AttachmentRegistrationPublisher"], consumers = ["pmda_xml", "persistence", "composition", "cli"] }
+"package_insert_payloads" = { symbols = ["PackageInsertSourceInformation", "DecodedPackageInsert", "ArtifactFile", "ArtifactBundle"], consumers = ["pmda_xml", "persistence", "composition", "cli"] }
+"package_insert_contracts" = { symbols = ["PackageInsertDecoder", "PackageInsertArtifactEncoder", "PackageInsertRegistrationPublisher"], consumers = ["pmda_xml", "persistence", "composition", "cli"] }
 "original_document_registration_adapter" = { symbols = ["OriginalDocumentRegistration"], consumers = ["composition", "cli"] }
 
 [adapters.serialization]
@@ -267,7 +267,7 @@ def test_wildcard_imports(tmp_path: Path) -> None:
         "backend/infrastructure/persistence/__init__.py": '"""Persistence."""\n',
         "backend/infrastructure/persistence/stores/__init__.py": '"""Stores."""\n',
         "backend/infrastructure/persistence/stores/postgres_test_store.py": (
-            "from backend.infrastructure.persistence.schemas.attachment_tables import *\n\n"
+            "from backend.infrastructure.persistence.schemas.package_insert_tables import *\n\n"
             "class Store:\n    pass\n"
         ),
     }
@@ -572,7 +572,7 @@ def test_cli_contract_no_source_execution(tmp_path: Path) -> None:
         ),
         (
             "persistence/records/postgres_new_records.py",
-            "from backend.application.attachment_import.queries.models import ImportDetail\nvalue = 1",
+            "from backend.application.package_insert_import.queries.models import ImportDetail\nvalue = 1",
             "INF006",
         ),
         (

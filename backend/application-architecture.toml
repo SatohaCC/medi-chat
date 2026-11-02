@@ -1,11 +1,11 @@
-enforced_features = ["attachment_import", "file_upload", "medicine", "indexing", "retrieval", "chat", "authentication"]
+enforced_features = ["package_insert_import", "file_upload", "medicine", "indexing", "retrieval", "chat", "authentication"]
 
 [features.authentication]
 depends_on = []
 public_modules = ["commands.login", "commands.logout", "commands.refresh", "commands.manage_users", "commands.models", "queries.authenticate", "errors"]
 
 # Explicit feature dependencies and public module contracts. No per-violation ignores.
-[features.attachment_import]
+[features.package_insert_import]
 depends_on = ["file_upload"]
 public_modules = ["commands.models", "queries.dtos.import_views", "queries.import_history", "interfaces.import_replay", "errors", "policies", "commands.import_documents", "interfaces.original_document_registration", "interfaces.import_query_reader", "interfaces.upload_import_receipts", "interfaces.import_execution"]
 
@@ -15,15 +15,15 @@ public_modules = ["commands.models", "errors", "commands.services.start_upload",
 
 [features.chat]
 depends_on = ["retrieval", "medicine", "indexing"]
-public_modules = ["queries.models", "queries.chat", "interfaces.llm_provider", "queries.policies.standard", "queries.services.stream_lifetime", "commands.submit_feedback", "interfaces.feedback", "values", "errors"]
+public_modules = ["queries.models", "queries.chat", "interfaces.llm_provider", "interfaces.agent_orchestrator", "interfaces.medical_tool", "queries.policies.standard", "queries.policies.answer_prompt", "queries.services.stream_lifetime", "queries.services.package_insert_tools", "commands.submit_feedback", "interfaces.feedback", "values", "errors"]
 
 [features.retrieval]
 depends_on = ["medicine", "indexing"]
-public_modules = ["queries.models", "values", "queries.policies.selection", "queries.policies.standard", "queries.policies.section_titles", "queries.dtos.evidence", "queries.services.evidence_retrieval", "queries.services.keyword_search", "interfaces.evidence_query_reader", "interfaces.intent_classifier", "interfaces.keyword_extractor", "interfaces.snapshot_provider"]
+public_modules = ["queries.models", "values", "queries.policies.selection", "queries.policies.standard", "queries.policies.section_titles", "queries.dtos.evidence", "queries.services.evidence_retrieval", "queries.services.retrieval_session", "queries.services.intent_detection", "queries.services.keyword_detection", "queries.services.keyword_search", "interfaces.evidence_query_reader", "interfaces.intent_classifier", "interfaces.keyword_extractor", "interfaces.snapshot_provider"]
 
 [features.indexing]
 depends_on = ["medicine"]
-public_modules = ["queries.models", "values", "queries.policies.text_projection", "queries.services.attachment_projection"]
+public_modules = ["queries.models", "values", "queries.policies.text_projection", "queries.services.package_insert_projection"]
 
 [features.medicine]
 depends_on = []

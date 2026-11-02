@@ -13,20 +13,22 @@ depends_on = None
 def upgrade():
     if (
         op.get_bind()
-        .execute(sa.text("SELECT count(*) FROM attachment_versions"))
+        .execute(sa.text("SELECT count(*) FROM package_insert_versions"))
         .scalar_one()
     ):
         raise ValueError(
             "Create a fresh PostgreSQL database and register original sources; old derived projections are not migrated"
         )
-    op.add_column("attachment_versions", sa.Column("catalogue", JSONB, nullable=False))
+    op.add_column(
+        "package_insert_versions", sa.Column("catalogue", JSONB, nullable=False)
+    )
     op.add_column("search_units", sa.Column("position", sa.Integer, nullable=False))
     op.create_table(
         "unit_products",
         sa.Column(
             "version_id",
             sa.Text,
-            sa.ForeignKey("attachment_versions.version_id", ondelete="CASCADE"),
+            sa.ForeignKey("package_insert_versions.version_id", ondelete="CASCADE"),
             primary_key=True,
         ),
         sa.Column("yj_code", sa.Text, primary_key=True),
@@ -37,4 +39,4 @@ def upgrade():
 def downgrade():
     op.drop_table("unit_products")
     op.drop_column("search_units", "position")
-    op.drop_column("attachment_versions", "catalogue")
+    op.drop_column("package_insert_versions", "catalogue")

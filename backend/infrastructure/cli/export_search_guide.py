@@ -7,7 +7,7 @@ from backend.application.retrieval.queries.policies.standard import (
     DEFAULT_INTENT_POLICY,
     DEFAULT_RETRIEVAL_POLICY,
 )
-from backend.domain.attachment.value_objects import STANDARD_SECTION_TAXONOMY
+from backend.domain.package_insert.value_objects import STANDARD_SECTION_TAXONOMY
 from backend.project_paths import PROJECT_ROOT
 
 

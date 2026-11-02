@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import suppress
 from typing import TypeVar
 
-from backend.application.attachment_import.errors import ImportCancelled
+from backend.application.package_insert_import.errors import ImportCancelled
 
 T = TypeVar("T")
 
@@ -15,7 +15,7 @@ T = TypeVar("T")
 class ImportWorkers:
     def __init__(self, *, max_workers: int = 2) -> None:
         self._executor = ThreadPoolExecutor(
-            max_workers=max_workers, thread_name_prefix="attachment-import"
+            max_workers=max_workers, thread_name_prefix="package-insert-import"
         )
         self._closed = False
         self._active = 0

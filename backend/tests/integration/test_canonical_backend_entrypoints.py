@@ -62,7 +62,7 @@ def test_canonical_modules_and_existing_api_work_with_legacy_imports_forbidden(
     code = """
 import importlib, importlib.abc, sys
 class RejectLegacy(importlib.abc.MetaPathFinder):
-    forbidden = ("package_inserts", "data_tools", "backend.chat", "backend.retrieval", "backend.medicines", "backend.storage", "backend.jev", "backend.infrastructure.persistence.sqlite_engine", "backend.infrastructure.persistence.registration_publisher", "backend.infrastructure.persistence.attachment_import_store", "backend.infrastructure.persistence.evidence_reader", "backend.infrastructure.persistence.medicine_reader", "backend.infrastructure.persistence.generation_runtime", "backend.infrastructure.sources.file_index_source")
+    forbidden = ("package_inserts", "data_tools", "backend.chat", "backend.retrieval", "backend.medicines", "backend.storage", "backend.jev", "backend.infrastructure.persistence.sqlite_engine", "backend.infrastructure.persistence.registration_publisher", "backend.infrastructure.persistence.package_insert_import_store", "backend.infrastructure.persistence.evidence_reader", "backend.infrastructure.persistence.medicine_reader", "backend.infrastructure.persistence.generation_runtime", "backend.infrastructure.sources.file_index_source")
     def find_spec(self, fullname, path=None, target=None):
         if any(fullname == name or fullname.startswith(name + ".") for name in self.forbidden):
             raise RuntimeError("Legacy dependency attempted: " + fullname)

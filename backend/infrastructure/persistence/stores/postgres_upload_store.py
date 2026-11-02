@@ -11,7 +11,6 @@ from sqlalchemy import delete, func, select, text, update
 from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.exc import SQLAlchemyError
 
-from backend.application.attachment_import.commands.models import UploadImportReceipt
 from backend.application.file_upload.commands.models import UploadedSource, UploadSpec
 from backend.application.file_upload.errors import (
     InvalidUpload,
@@ -20,8 +19,11 @@ from backend.application.file_upload.errors import (
     UploadLimitExceeded,
     UploadStorageError,
 )
+from backend.application.package_insert_import.commands.models import (
+    UploadImportReceipt,
+)
 from backend.config.upload_settings import CHUNK_BYTES
-from backend.infrastructure.persistence.schemas.attachment_tables import (
+from backend.infrastructure.persistence.schemas.package_insert_tables import (
     upload_parts,
     uploads,
 )

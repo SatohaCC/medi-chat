@@ -2,8 +2,8 @@
 
 from dataclasses import dataclass
 
-from backend.domain.attachment.primitives import AttachmentSha256
 from backend.domain.foundation.exceptions import DomainValidationError
+from backend.domain.package_insert.primitives import PackageInsertSha256
 
 MAX_SOURCE_BYTES = 10 * 1024 * 1024
 
@@ -18,7 +18,7 @@ class UploadSpec:
         if not 1 <= self.byte_size <= MAX_SOURCE_BYTES:
             raise ValueError("XML must contain between 1 byte and 10 MiB")
         try:
-            digest = AttachmentSha256(self.source_sha256)
+            digest = PackageInsertSha256(self.source_sha256)
         except DomainValidationError:
             raise ValueError("Invalid source SHA-256") from None
         object.__setattr__(self, "source_sha256", digest.value)

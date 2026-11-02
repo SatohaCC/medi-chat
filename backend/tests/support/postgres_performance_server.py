@@ -40,7 +40,7 @@ def create_server():
             locks = {}
             original_connect = engine.connect
             original_acquire = runtime.acquire
-            service = application.state.attachment_import_service
+            service = application.state.package_insert_import_service
             decoder = service.registration.decoder
             original_decode = decoder.decode
 

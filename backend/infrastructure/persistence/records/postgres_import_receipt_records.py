@@ -7,7 +7,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.engine import Connection
 
-from backend.infrastructure.persistence.schemas import attachment_tables as s
+from backend.infrastructure.persistence.schemas import package_insert_tables as s
 
 
 def fetch_receipt_by_version(

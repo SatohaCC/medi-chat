@@ -81,7 +81,7 @@ backend/infrastructure/persistence/
 - **通常 consumer**: アプリケーション本体の起動・配線を担う `composition`、および各種管理 CLI（`cli`）。
 - **限定公開（U1 / U2）**:
   - **U1**: `backend/migrations/postgres/env.py` に対する `runtime/postgres_engine.create_postgres_engine` の公開。
-  - **U2**: `backend/infrastructure/cli/manage_postgres.py` に対する `pmda_xml/xml_safe_parser.parse_source`、`registration_payloads.{FigureInput, PostgresRegistrationInput}`、`attachment_document_mapping.document_from_payload`、`search_projection_mapping.projection_records` の管理目的の限定公開。
+  - **U2**: `backend/infrastructure/cli/manage_postgres.py` に対する `pmda_xml/xml_safe_parser.parse_source`、`registration_payloads.{FigureInput, PostgresRegistrationInput}`、`package_insert_document_mapping.document_from_payload`、`search_projection_mapping.projection_records` の管理目的の限定公開。
 - 公開モジュールであっても、定義された公開シンボル以外の非公開シンボルや private ヘルパーの利用は禁止する。
 - テストコード（`backend/tests/`）からの import は許容するが、テストでの利用を理由に本番公開へ昇格させてはならない。
 
@@ -104,7 +104,7 @@ backend/infrastructure/persistence/
 ## AST 静的解析の特性と検証
 
 - **静的検査の範囲**: AST 解析により、静的な import、エイリアス、クラス・関数定義、デコレータ、型注釈を安全に検証する。検査対象コードを実行しないため、副作用や環境依存を招かない。
-- packageからのmodule importとmodule aliasの属性参照も解決する。RepositoryはDomainの`repositories.py`に定義されたProtocolの継承を確認し、名前が`Repository`で終わるだけでは許可しない。ORMはSQLAlchemyのDeclarativeBaseまたはregistryのmapped decoratorを識別し、同じfileの通常クラスも個別に拒否する。Alembic入口はattachment/authentication両方のTable正本を読み込み、共有MetaDataを登録する。
+- packageからのmodule importとmodule aliasの属性参照も解決する。RepositoryはDomainの`repositories.py`に定義されたProtocolの継承を確認し、名前が`Repository`で終わるだけでは許可しない。ORMはSQLAlchemyのDeclarativeBaseまたはregistryのmapped decoratorを識別し、同じfileの通常クラスも個別に拒否する。Alembic入口はpackage_insert/authentication両方のTable正本を読み込み、共有MetaDataを登録する。
 - **解析の限界**: 静的構文解析では、集約のビジネス意味論、実行時 SQL の業務的妥当性、動的リフレクションの完全追跡はカバーできない。
 - **補完手段**:
   - 静的型検査（Pyright / Mypy）

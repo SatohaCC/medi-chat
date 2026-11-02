@@ -1,13 +1,13 @@
 """Primitiveが共通検証を使うことを検証する。"""
 
 import pytest
-from backend.domain.attachment.identifiers import DocumentId
-from backend.domain.attachment.primitives import SectionCode
 from backend.domain.foundation.exceptions import DomainValidationError
 from backend.domain.foundation.primitives.primitives import BaseString
+from backend.domain.package_insert.identifiers import DocumentId
+from backend.domain.package_insert.primitives import SectionCode
 
 
-def test_attachment_primitives_use_foundation_normalization_and_validation():
+def test_package_insert_primitives_use_foundation_normalization_and_validation():
     assert issubclass(DocumentId, BaseString)
     assert DocumentId("  doc-001  ").value == "doc-001"
     assert SectionCode(" １.１ ").value == "1.1"

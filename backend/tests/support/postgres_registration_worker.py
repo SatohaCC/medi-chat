@@ -5,7 +5,7 @@ import json
 import os
 import sys
 
-from backend.application.attachment_import.errors import ImportConflict
+from backend.application.package_insert_import.errors import ImportConflict
 from backend.infrastructure.persistence.registration.postgres_registration_publisher import (
     PostgresRegistrationPublisher,
 )

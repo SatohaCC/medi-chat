@@ -5,15 +5,15 @@ from __future__ import annotations
 import asyncio
 import json
 import threading
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 
 from sqlalchemy import func, select, text
 from sqlalchemy.engine import Connection, Engine
 
-from backend.application.indexing.queries.services.attachment_projection import (
-    project_active_attachment,
+from backend.application.indexing.queries.services.package_insert_projection import (
+    project_active_package_insert,
 )
 from backend.application.medicine.queries.models import RegisteredMedicine
 from backend.application.medicine.queries.suggest_medicines import MedicineSuggester
@@ -35,12 +35,12 @@ from backend.domain.shared.services import normalize_match_text, normalize_searc
 from backend.infrastructure.package_insert_definitions.definition_assembly import (
     get_package_insert_definitions,
 )
-from backend.infrastructure.persistence.mappings.attachment_document_mapping import (
+from backend.infrastructure.persistence.mappings.package_insert_document_mapping import (
     document_from_payload,
 )
 from backend.infrastructure.persistence.queries.trigram_search import phrase_scores
 from backend.infrastructure.persistence.runtime.read_workers import ReadWorkers
-from backend.infrastructure.persistence.schemas import attachment_tables as s
+from backend.infrastructure.persistence.schemas import package_insert_tables as s
 from backend.infrastructure.serialization.evidence_mapping import (
     build_evidence,
     is_scope_heading_only,
@@ -266,7 +266,7 @@ class _Scope:
                 continue
             document = document_from_payload(row.structure)
             content = encode_registered_units(
-                document, project_active_attachment(document, codes)
+                document, project_active_package_insert(document, codes)
             )
             for line in content.splitlines():
                 unit = json.loads(line)
@@ -311,7 +311,7 @@ class PostgresRuntime:
             }
 
     @asynccontextmanager
-    async def acquire(self) -> AsyncIterator[RetrievalSnapshot]:
+    async def acquire(self) -> AsyncGenerator[RetrievalSnapshot]:
         scope = _Scope(self)
         try:
             await _owned(self.workers, scope.open)

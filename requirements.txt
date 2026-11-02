@@ -27,6 +27,7 @@ certifi==2026.10.23
     # via
     #   httpcore
     #   httpx
+    #   langchain-openai
     #   medi-chat-backend
     #   requests
     #   sentry-sdk
@@ -68,10 +69,14 @@ fastar==0.12.0
     # via
     #   fastapi
     #   fastapi-cloud-cli
+filetype==1.2.0
+    # via langchain-google-genai
 google-auth==2.58.1
     # via google-genai
 google-genai==2.33.0
-    # via medi-chat-backend
+    # via
+    #   langchain-google-genai
+    #   medi-chat-backend
 h11==0.16.0
     # via
     #   httpcore
@@ -116,10 +121,16 @@ jsonpointer==3.5
     # via jsonpatch
 langchain-core==1.7.0
     # via
+    #   langchain-google-genai
+    #   langchain-openai
     #   langgraph
     #   langgraph-checkpoint
     #   langgraph-prebuilt
     #   langgraph-sdk
+langchain-google-genai==4.4.2
+    # via medi-chat-backend
+langchain-openai==1.7.3
+    # via medi-chat-backend
 langchain-protocol==0.0.20
     # via
     #   langchain-core
@@ -149,7 +160,9 @@ markupsafe==3.0.3
 mdurl==0.1.2
     # via markdown-it-py
 openai==3.39.0
-    # via medi-chat-backend
+    # via
+    #   langchain-openai
+    #   medi-chat-backend
 orjson==3.13.0
     # via
     #   langgraph-sdk
@@ -177,6 +190,7 @@ pydantic==2.14.2
     #   fastapi-cloud-cli
     #   google-genai
     #   langchain-core
+    #   langchain-google-genai
     #   langgraph
     #   langsmith
     #   medi-chat-backend
@@ -207,12 +221,15 @@ pyyaml==6.0.3
     # via
     #   langchain-core
     #   uvicorn
+regex==2026.9.29
+    # via tiktoken
 requests==2.34.2
     # via
     #   google-auth
     #   google-genai
     #   langsmith
     #   requests-toolbelt
+    #   tiktoken
 requests-toolbelt==1.0.0
     # via langsmith
 rich==15.0.0
@@ -245,6 +262,8 @@ tenacity==9.1.4
     #   google-genai
     #   langchain-core
     #   typesafe-sdk
+tiktoken==0.14.0
+    # via langchain-openai
 truststore==0.10.4 ; sys_platform != 'emscripten'
     # via
     #   httpcore2

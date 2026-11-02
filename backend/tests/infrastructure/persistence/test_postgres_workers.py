@@ -50,7 +50,7 @@ async def test_api_and_ws_respond_while_search_is_blocked(
         context: object,
         executemany: bool,
     ) -> None:
-        if "FROM attachment_versions" in statement and not sql_started.is_set():
+        if "FROM package_insert_versions" in statement and not sql_started.is_set():
             sql_started.set()
             loop.call_soon_threadsafe(loop_started.set)
             if not release.wait(20):

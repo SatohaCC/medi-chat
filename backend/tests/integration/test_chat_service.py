@@ -77,7 +77,6 @@ def test_RESTとWebSocketで回答と根拠とLLM入力が一致する(pg_api) -
         "retrieval_status",
         *["sources"] * len(source_events),
         "text_delta",
-        "text_delta",
         "text_done",
     ]
 

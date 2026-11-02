@@ -45,7 +45,7 @@ def test_parts_survive_instance_change_and_cannot_be_replaced(pg_engines):
     with pg_engines[0].connect() as connection:
         assert (
             connection.execute(
-                text("SELECT count(*) FROM attachment_upload_parts")
+                text("SELECT count(*) FROM package_insert_upload_parts")
             ).scalar_one()
             == 0
         )
@@ -61,7 +61,9 @@ def test_size_digest_and_expiration(pg_engines):
         store.read(upload_id)
     with pg_engines[0].begin() as connection:
         connection.execute(
-            text("UPDATE attachment_uploads SET expires_at=now()-interval '1 second'")
+            text(
+                "UPDATE package_insert_uploads SET expires_at=now()-interval '1 second'"
+            )
         )
     with pytest.raises(UploadGone):
         store.read(upload_id)
@@ -69,7 +71,7 @@ def test_size_digest_and_expiration(pg_engines):
     with pg_engines[0].connect() as connection:
         assert (
             connection.execute(
-                text("SELECT count(*) FROM attachment_upload_parts")
+                text("SELECT count(*) FROM package_insert_upload_parts")
             ).scalar_one()
             == 0
         )

@@ -21,12 +21,6 @@ from backend.application.retrieval.values import (
     IntentName,
     SearchKeyword,
 )
-from backend.domain.attachment.identifiers import DocumentId
-from backend.domain.attachment.primitives import PmdaUrl
-from backend.domain.attachment.value_objects import (
-    AttachmentProductRevision,
-    MedicineDocumentReference,
-)
 from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import (
@@ -34,6 +28,12 @@ from backend.domain.medicine.primitives import (
     GenericName,
 )
 from backend.domain.medicine.value_objects import MedicineNames
+from backend.domain.package_insert.identifiers import DocumentId
+from backend.domain.package_insert.primitives import PmdaUrl
+from backend.domain.package_insert.value_objects import (
+    MedicineDocumentReference,
+    PackageInsertProductRevision,
+)
 from backend.infrastructure.package_insert_definitions.definition_assembly import (
     get_package_insert_definitions,
 )
@@ -57,7 +57,7 @@ class MedicineReader:
                 reference=MedicineDocumentReference(
                     document_id=DocumentId("document"),
                     pmda_url=PmdaUrl("https://example.test"),
-                    revision=AttachmentProductRevision({}),
+                    revision=PackageInsertProductRevision({}),
                 ),
             ),
         )

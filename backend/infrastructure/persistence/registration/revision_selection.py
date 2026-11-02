@@ -1,10 +1,10 @@
 """登録する原本の改訂年月に基づく公開先選択。"""
 
-from backend.application.attachment_import.errors import ImportConflict
-from backend.domain.attachment.exceptions import ConflictingRevisionError
-from backend.domain.attachment.services import latest_attachment
-from backend.domain.attachment.value_objects import RegistrationVersion
+from backend.application.package_insert_import.errors import ImportConflict
 from backend.domain.medicine.identifiers import YjCode
+from backend.domain.package_insert.exceptions import ConflictingRevisionError
+from backend.domain.package_insert.services import latest_package_insert
+from backend.domain.package_insert.value_objects import RegistrationVersion
 
 
 def assign_latest(
@@ -13,7 +13,7 @@ def assign_latest(
     updated = dict(active)
     for code in sorted(version.yj_codes, key=lambda code: code.value):
         try:
-            updated[code] = latest_attachment(active.get(code), version)
+            updated[code] = latest_package_insert(active.get(code), version)
         except ConflictingRevisionError as exc:
             error = ImportConflict(
                 "same_revision_conflict",

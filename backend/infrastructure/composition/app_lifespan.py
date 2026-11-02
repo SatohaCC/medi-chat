@@ -3,24 +3,31 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncGenerator, Callable
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI
 
-from backend.application.attachment_import.commands.import_documents import (
-    AttachmentImportCommands,
-)
-from backend.application.attachment_import.queries.import_history import (
-    ImportHistoryQueries,
-)
 from backend.application.chat.commands.submit_feedback import SubmitFeedback
 from backend.application.chat.queries.chat import (
     ChatQueries,
 )
+from backend.application.chat.queries.services.package_insert_tools import (
+    PackageInsertTools,
+)
+from backend.application.package_insert_import.commands.import_documents import (
+    PackageInsertImportCommands,
+)
+from backend.application.package_insert_import.queries.import_history import (
+    ImportHistoryQueries,
+)
 from backend.config.database_settings import PostgresDatabaseSettings
 from backend.config.generation_settings import read_generation_defaults
+from backend.infrastructure.agent.langgraph_chat_agent_adapter import (
+    LangGraphChatAgentAdapter,
+    LLMProviderChatModelAdapter,
+)
 from backend.infrastructure.composition.authentication_composition import (
     compose_authentication,
 )
@@ -29,6 +36,7 @@ from backend.infrastructure.document_import.original_document_registration_adapt
     OriginalDocumentRegistration,
 )
 from backend.infrastructure.intent.jev_classifier import JevIntentClassifier
+from backend.infrastructure.llm.agent_model_factory import create_agent_model
 from backend.infrastructure.llm.llm_provider_factory import create_llm_provider
 from backend.infrastructure.morphology.janome_keyword_extraction import (
     get_janome_tokenizer,
@@ -80,7 +88,7 @@ def create_app_lifespan(
     janome_initializer: Callable[[], Any] = get_janome_tokenizer,
 ) -> Callable[[FastAPI], AbstractAsyncContextManager[None]]:
     @asynccontextmanager
-    async def lifespan(application: FastAPI) -> AsyncIterator[None]:
+    async def lifespan(application: FastAPI) -> AsyncGenerator[None]:
         engine = create_postgres_engine(settings.database_url, schema=database_schema)
         workers = ReadWorkers(max_workers=4)
         classifier = None
@@ -115,6 +123,29 @@ def create_app_lifespan(
                 search_policy=definitions.text_search_policy,
                 morphology_settings=definitions.morphology_settings,
             )
+            package_insert_tools = PackageInsertTools(
+                intent_classifier=classifier,
+                keyword_extractor=keywords,
+                intent_policy=definitions.intent_policy,
+                snapshot_provider=runtime,
+                retrieval_policy=definitions.retrieval_policy,
+            )
+
+            @asynccontextmanager
+            async def injected_model(
+                provider: str | None, model: str | None
+            ) -> AsyncGenerator[Any]:
+                if llm_provider_factory is None:
+                    raise RuntimeError("Injected provider factory is not configured")
+                yield LLMProviderChatModelAdapter(llm_provider_factory(provider), model)
+
+            agent_orchestrator = LangGraphChatAgentAdapter(
+                mandatory_tool_provider=package_insert_tools,
+                model_factory=injected_model
+                if llm_provider_factory is not None
+                else create_agent_model,
+                answer_prompt_policy=definitions.answer_prompt_policy,
+            )
             application_service = ChatQueries(
                 intent_classifier=classifier,
                 keyword_extractor=keywords,
@@ -123,6 +154,7 @@ def create_app_lifespan(
                 answer_prompt_policy=definitions.answer_prompt_policy,
                 provider_factory=llm_provider_factory or create_llm_provider,
                 snapshot_provider=runtime,
+                agent_orchestrator=agent_orchestrator,
             )
             application.state.chat_service = chat_service_factory(
                 application_service=application_service,
@@ -138,7 +170,7 @@ def create_app_lifespan(
                 import_executor = ImportWorkers()
                 import_results = PostgresImportQueries(engine)
                 replay_reader = PostgresImportReplayReader(engine)
-                import_service = AttachmentImportCommands(
+                import_service = PackageInsertImportCommands(
                     executor=import_executor,
                     reader=replay_reader,
                     upload_store=PostgresUploadStore(engine),
@@ -147,8 +179,8 @@ def create_app_lifespan(
                         decoder=decoder, publisher=publisher
                     ),
                 )
-                application.state.attachment_import_service = import_service
-                application.state.attachment_import_queries = ImportHistoryQueries(
+                application.state.package_insert_import_service = import_service
+                application.state.package_insert_import_queries = ImportHistoryQueries(
                     reader=import_results,
                     executor=import_executor,
                 )

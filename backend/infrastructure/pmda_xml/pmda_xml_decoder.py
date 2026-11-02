@@ -3,47 +3,47 @@ from dataclasses import replace
 from pathlib import PurePosixPath
 from typing import Any
 
-from backend.application.attachment_import.errors import InvalidAttachment
-from backend.domain.attachment.entities import AttachmentDocument
-from backend.domain.attachment.exceptions import AttachmentDomainError
-from backend.domain.attachment.identifiers import DocumentId
-from backend.domain.attachment.primitives import (
-    AttachmentBrandName,
-    AttachmentCellSpan,
-    AttachmentColumnIndex,
-    AttachmentEnglishName,
-    AttachmentProductCode,
-    AttachmentSectionTitle,
-    AttachmentSha256,
-    AttachmentSourceOrder,
-    AttachmentText,
-    AttachmentUrl,
+from backend.application.package_insert_import.errors import InvalidPackageInsert
+from backend.domain.foundation.exceptions import DomainValidationError
+from backend.domain.package_insert.entities import PackageInsertDocument
+from backend.domain.package_insert.exceptions import PackageInsertDomainError
+from backend.domain.package_insert.identifiers import DocumentId
+from backend.domain.package_insert.primitives import (
     NumberedSectionCode,
+    PackageInsertBrandName,
+    PackageInsertCellSpan,
+    PackageInsertColumnIndex,
+    PackageInsertEnglishName,
+    PackageInsertProductCode,
+    PackageInsertSectionTitle,
+    PackageInsertSha256,
+    PackageInsertSourceOrder,
+    PackageInsertText,
+    PackageInsertUrl,
     RevisionSourceLabel,
     RevisionVersion,
     RevisionYearMonth,
 )
-from backend.domain.attachment.value_objects import (
-    AttachmentBlock,
-    AttachmentBody,
-    AttachmentContext,
-    AttachmentFigure,
-    AttachmentMetadata,
-    AttachmentParagraph,
-    AttachmentProduct,
-    AttachmentReference,
-    AttachmentReferenceTarget,
-    AttachmentRevision,
-    AttachmentSection,
-    AttachmentSource,
-    AttachmentTable,
-    AttachmentTableBlock,
-    AttachmentTableCell,
+from backend.domain.package_insert.value_objects import (
+    PackageInsertBlock,
+    PackageInsertBody,
+    PackageInsertContext,
+    PackageInsertFigure,
+    PackageInsertMetadata,
+    PackageInsertParagraph,
+    PackageInsertProduct,
+    PackageInsertReference,
+    PackageInsertReferenceTarget,
+    PackageInsertRevision,
+    PackageInsertSection,
+    PackageInsertSource,
+    PackageInsertTable,
+    PackageInsertTableBlock,
+    PackageInsertTableCell,
 )
-from backend.domain.foundation.exceptions import DomainValidationError
-from backend.infrastructure.document_import.attachment_payloads import (
-    AttachmentSourceInformation,
-    DecodedAttachment,
+from backend.infrastructure.document_import.package_insert_payloads import (
+    DecodedPackageInsert,
+    PackageInsertSourceInformation,
 )
 from backend.infrastructure.package_insert_definitions.definition_assembly import (
     get_package_insert_definitions,
@@ -70,26 +70,26 @@ from backend.infrastructure.pmda_xml.xml_node_mapping import (
 from backend.infrastructure.pmda_xml.xml_safe_parser import parse_source
 
 
-def _context(fragment: dict[str, Any]) -> AttachmentContext:
-    return AttachmentContext(
+def _context(fragment: dict[str, Any]) -> PackageInsertContext:
+    return PackageInsertContext(
         product_codes=tuple(
-            AttachmentProductCode(code) for code in fragment["product_yj_codes"]
+            PackageInsertProductCode(code) for code in fragment["product_yj_codes"]
         ),
-        labels=tuple(AttachmentText(label) for label in fragment["context_labels"]),
-        source_order=AttachmentSourceOrder(order)
+        labels=tuple(PackageInsertText(label) for label in fragment["context_labels"]),
+        source_order=PackageInsertSourceOrder(order)
         if (order := fragment.get("source_order")) is not None
         else None,
     )
 
 
-def _references(fragment: dict[str, Any]) -> tuple[AttachmentReference, ...]:
+def _references(fragment: dict[str, Any]) -> tuple[PackageInsertReference, ...]:
     return tuple(
-        AttachmentReference(
-            label=AttachmentText(reference["kind"]),
-            target_id=AttachmentText(reference["target_xml_id"])
+        PackageInsertReference(
+            label=PackageInsertText(reference["kind"]),
+            target_id=PackageInsertText(reference["target_xml_id"])
             if reference["target_xml_id"] is not None
             else None,
-            metadata=AttachmentMetadata(
+            metadata=PackageInsertMetadata(
                 {
                     key: reference[key]
                     for key in ("kind", "target_section_code", "target_url")
@@ -103,16 +103,16 @@ def _references(fragment: dict[str, Any]) -> tuple[AttachmentReference, ...]:
 def _blocks(
     fragments: list[dict[str, Any]],
     cell_details: dict[
-        str, tuple[tuple[AttachmentContext, tuple[AttachmentReference, ...]], ...]
+        str, tuple[tuple[PackageInsertContext, tuple[PackageInsertReference, ...]], ...]
     ]
     | None = None,
     *,
     xml_settings: PmdaXmlSettings | None = None,
-) -> tuple[AttachmentBlock, ...]:
+) -> tuple[PackageInsertBlock, ...]:
     if xml_settings is None:
         xml_settings = get_package_insert_definitions().xml_settings
 
-    blocks: list[AttachmentBlock] = []
+    blocks: list[PackageInsertBlock] = []
     table_key = None
     previous_order = None
     for fragment in fragments:
@@ -125,28 +125,28 @@ def _blocks(
         )
         references = _references(fragment)
         key = None
-        columns: tuple[AttachmentText, ...] = ()
-        cells: tuple[AttachmentTableCell, ...] = ()
+        columns: tuple[PackageInsertText, ...] = ()
+        cells: tuple[PackageInsertTableCell, ...] = ()
         if kind == "interaction_row":
             columns = tuple(
-                AttachmentText(column.title)
+                PackageInsertText(column.title)
                 for column in xml_settings.interaction_columns
             )
             cells = tuple(
-                AttachmentTableCell(
-                    text=AttachmentText(fragment["columns"][column.id]),
-                    column=AttachmentColumnIndex(index),
+                PackageInsertTableCell(
+                    text=PackageInsertText(fragment["columns"][column.id]),
+                    column=PackageInsertColumnIndex(index),
                 )
                 for index, column in enumerate(xml_settings.interaction_columns)
             )
             key = kind
         elif kind == "adverse_reaction_cell":
             columns = tuple(
-                AttachmentText(label) for label in ("分類", "頻度", "副作用")
+                PackageInsertText(label) for label in ("分類", "頻度", "副作用")
             )
             cells = tuple(
-                AttachmentTableCell(
-                    text=AttachmentText(text), column=AttachmentColumnIndex(index)
+                PackageInsertTableCell(
+                    text=PackageInsertText(text), column=PackageInsertColumnIndex(index)
                 )
                 for index, text in enumerate(
                     (
@@ -163,7 +163,7 @@ def _blocks(
             previous = blocks[-1] if blocks else None
             if (
                 table_key == fragment["table_xml_path"]
-                and isinstance(previous, AttachmentTableBlock)
+                and isinstance(previous, PackageInsertTableBlock)
                 and previous.context == context
                 and adjacent
             ):
@@ -189,13 +189,13 @@ def _blocks(
                     column += 1
                 colspan = int(cell["attributes"].get("cspan", "1"))
                 cells_list.append(
-                    AttachmentTableCell(
-                        text=AttachmentText(cell["text"]),
-                        column=AttachmentColumnIndex(column),
-                        rowspan=AttachmentCellSpan(
+                    PackageInsertTableCell(
+                        text=PackageInsertText(cell["text"]),
+                        column=PackageInsertColumnIndex(column),
+                        rowspan=PackageInsertCellSpan(
                             int(cell["attributes"].get("rspan", "1"))
                         ),
-                        colspan=AttachmentCellSpan(colspan),
+                        colspan=PackageInsertCellSpan(colspan),
                         context=details[cell_index][0] if details else context,
                         references=details[cell_index][1] if details else (),
                     )
@@ -207,7 +207,7 @@ def _blocks(
             previous = blocks[-1] if blocks else None
             if (
                 table_key == key
-                and isinstance(previous, AttachmentTableBlock)
+                and isinstance(previous, PackageInsertTableBlock)
                 and previous.context == context
                 and adjacent
             ):
@@ -218,8 +218,8 @@ def _blocks(
                 )
             else:
                 blocks.append(
-                    AttachmentTableBlock(
-                        table=AttachmentTable(
+                    PackageInsertTableBlock(
+                        table=PackageInsertTable(
                             columns=columns,
                             rows=(cells,),
                             column_contexts=tuple(cell.context for cell in cells)
@@ -233,17 +233,19 @@ def _blocks(
         elif kind == "graphic":
             name = fragment["text"].split("\n", 1)[0].removeprefix("図ファイル: ")
             blocks.append(
-                AttachmentFigure(
-                    reference=AttachmentText(name),
-                    description=AttachmentText("\n".join(fragment["figure_captions"])),
+                PackageInsertFigure(
+                    reference=PackageInsertText(name),
+                    description=PackageInsertText(
+                        "\n".join(fragment["figure_captions"])
+                    ),
                     context=context,
                     references=references,
                 )
             )
         else:
             blocks.append(
-                AttachmentParagraph(
-                    text=AttachmentText(fragment["text"]),
+                PackageInsertParagraph(
+                    text=PackageInsertText(fragment["text"]),
                     is_heading=kind == "header",
                     context=context,
                     references=references,
@@ -276,14 +278,14 @@ class PmdaXmlDecoder:
 
     def decode(
         self, source: bytes, *, original_filename: str = "source.xml"
-    ) -> DecodedAttachment:
+    ) -> DecodedPackageInsert:
         xml_settings = self._xml_settings
         root, events = parse_source(source)
         ids = [
             element.attrib["id"] for element in root.iter() if "id" in element.attrib
         ]
         if len(ids) != len(set(ids)):
-            raise InvalidAttachment(
+            raise InvalidPackageInsert(
                 "duplicate_reference_id", "Original reference IDs are ambiguous"
             )
         filename = self.source_filename or original_filename
@@ -320,7 +322,9 @@ class PmdaXmlDecoder:
         )
         codes = [section["code"] for section in document["section_index"]]
         if len(codes) != len(set(codes)):
-            raise InvalidAttachment("duplicate_section", "Duplicate numbered section")
+            raise InvalidPackageInsert(
+                "duplicate_section", "Duplicate numbered section"
+            )
         fragments, _ = _make_fragments(
             root,
             parents,
@@ -381,12 +385,12 @@ class PmdaXmlDecoder:
                         target_id = child.attrib.get("ref")
                         target = ids_by_id.get(target_id) if target_id else None
                         references.append(
-                            AttachmentReference(
-                                label=AttachmentText(tag_name(child)),
-                                target_id=AttachmentText(target_id)
+                            PackageInsertReference(
+                                label=PackageInsertText(tag_name(child)),
+                                target_id=PackageInsertText(target_id)
                                 if target_id
                                 else None,
-                                metadata=AttachmentMetadata(
+                                metadata=PackageInsertMetadata(
                                     {
                                         "kind": tag_name(child),
                                         "target_section_code": reference_section_code(
@@ -406,20 +410,22 @@ class PmdaXmlDecoder:
                         )
                     details.append(
                         (
-                            AttachmentContext(
+                            PackageInsertContext(
                                 product_codes=tuple(
-                                    AttachmentProductCode(product["yj_code"])
+                                    PackageInsertProductCode(product["yj_code"])
                                     for product in products
                                     if product.get("yj_code")
                                 ),
-                                labels=tuple(AttachmentText(label) for label in labels),
+                                labels=tuple(
+                                    PackageInsertText(label) for label in labels
+                                ),
                             ),
                             tuple(references),
                         )
                     )
                 cell_details[paths[table] + ":" + str(row_index)] = tuple(details)
 
-        def section_model(section: dict[str, Any]) -> AttachmentSection:
+        def section_model(section: dict[str, Any]) -> PackageInsertSection:
             code = section["code"]
             element = next(
                 element
@@ -427,18 +433,18 @@ class PmdaXmlDecoder:
                 if value["code"] == code
             )
             header = direct_child(element, "Header")
-            return AttachmentSection(
+            return PackageInsertSection(
                 NumberedSectionCode(code),
-                AttachmentSectionTitle(section["title"]),
-                AttachmentBody(
+                PackageInsertSectionTitle(section["title"]),
+                PackageInsertBody(
                     blocks=_blocks(
                         grouped.get(code, []), cell_details, xml_settings=xml_settings
                     ),
-                    text=AttachmentText(rows_by_code[code]["text"])
+                    text=PackageInsertText(rows_by_code[code]["text"])
                     if code in rows_by_code
                     else None,
                 ),
-                header=AttachmentText(text_of(header, xml_settings=xml_settings))
+                header=PackageInsertText(text_of(header, xml_settings=xml_settings))
                 if header is not None
                 else None,
                 children=tuple(
@@ -449,14 +455,14 @@ class PmdaXmlDecoder:
             )
 
         try:
-            model = AttachmentDocument(
+            model = PackageInsertDocument(
                 document_id=DocumentId(validation["document_key"]),
-                source=AttachmentSource(
-                    AttachmentUrl(document["source"]["pmda_url"]),
-                    AttachmentSha256(digest),
+                source=PackageInsertSource(
+                    PackageInsertUrl(document["source"]["pmda_url"]),
+                    PackageInsertSha256(digest),
                 ),
                 revisions=tuple(
-                    AttachmentRevision(
+                    PackageInsertRevision(
                         RevisionSourceLabel(revision["source_label"] or "revision"),
                         RevisionYearMonth(revision["year_month"]),
                         RevisionVersion(revision["version"] or "unknown"),
@@ -464,18 +470,18 @@ class PmdaXmlDecoder:
                     for revision in meta["revisions"]
                 ),
                 products=tuple(
-                    AttachmentProduct(
-                        AttachmentProductCode(
+                    PackageInsertProduct(
+                        PackageInsertProductCode(
                             product["yj_code"]
                             or product["xml_id"]
                             or f"product-{index}"
                         ),
-                        AttachmentBrandName(
+                        PackageInsertBrandName(
                             product["brand_name"]
                             or product["yj_code"]
                             or product["xml_id"]
                         ),
-                        AttachmentEnglishName(product["english_name"])
+                        PackageInsertEnglishName(product["english_name"])
                         if product["english_name"]
                         else None,
                     )
@@ -487,14 +493,14 @@ class PmdaXmlDecoder:
                     if section["parent_code"] is None
                 ),
                 reference_targets=tuple(
-                    AttachmentReferenceTarget(
-                        reference_id=AttachmentText(element.attrib["id"]),
-                        text=AttachmentText(
+                    PackageInsertReferenceTarget(
+                        reference_id=PackageInsertText(element.attrib["id"]),
+                        text=PackageInsertText(
                             text_of(element, xml_settings=xml_settings)
                         ),
-                        context=AttachmentContext(
+                        context=PackageInsertContext(
                             product_codes=tuple(
-                                AttachmentProductCode(product["yj_code"])
+                                PackageInsertProductCode(product["yj_code"])
                                 for product in _scoped_products(
                                     element,
                                     [element],
@@ -508,7 +514,7 @@ class PmdaXmlDecoder:
                                 if product.get("yj_code")
                             ),
                             labels=tuple(
-                                AttachmentText(label)
+                                PackageInsertText(label)
                                 for label in context_labels(
                                     element, parents, xml_settings=xml_settings
                                 )
@@ -520,14 +526,14 @@ class PmdaXmlDecoder:
                 ),
             )
         except (
-            AttachmentDomainError,
+            PackageInsertDomainError,
             DomainValidationError,
             ValueError,
             TypeError,
         ):
-            raise InvalidAttachment(
+            raise InvalidPackageInsert(
                 "invalid_document_structure", "Original document structure is invalid"
             ) from None
-        return DecodedAttachment(
-            model, AttachmentSourceInformation(document, rows, validation, events)
+        return DecodedPackageInsert(
+            model, PackageInsertSourceInformation(document, rows, validation, events)
         )

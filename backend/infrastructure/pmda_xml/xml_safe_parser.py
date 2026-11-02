@@ -5,10 +5,10 @@ import xml.etree.ElementTree as ET
 from typing import Never
 from xml.parsers import expat
 
-from backend.application.attachment_import.errors import (
+from backend.application.package_insert_import.errors import (
     ImportLimitExceeded,
-    InvalidAttachment,
-    UnsupportedAttachment,
+    InvalidPackageInsert,
+    UnsupportedPackageInsert,
 )
 
 MAX_SOURCE_BYTES = 10 * 1024 * 1024
@@ -35,7 +35,7 @@ def _decode_text(source: bytes) -> str:
 
 def parse_source(source: bytes) -> tuple[ET.Element, list[dict[str, object]]]:
     if not source:
-        raise InvalidAttachment("empty_source", "XML input is empty")
+        raise InvalidPackageInsert("empty_source", "XML input is empty")
     if len(source) > MAX_SOURCE_BYTES:
         raise ImportLimitExceeded(
             "source_size_limit", "XML input exceeds the size limit"
@@ -44,13 +44,19 @@ def parse_source(source: bytes) -> tuple[ET.Element, list[dict[str, object]]]:
         b"\x00" in source[:128]
         and not source.startswith((b"\xff\xfe", b"\xfe\xff", b"<\x00", b"\x00<"))
     ):
-        raise UnsupportedAttachment("unsupported_input", "Input is not supported XML")
+        raise UnsupportedPackageInsert(
+            "unsupported_input", "Input is not supported XML"
+        )
     try:
         text = _decode_text(source)
     except UnicodeError, LookupError:
-        raise InvalidAttachment("xml_parse_error", "XML encoding is invalid") from None
+        raise InvalidPackageInsert(
+            "xml_parse_error", "XML encoding is invalid"
+        ) from None
     if not text.lstrip("\ufeff \r\n\t").startswith("<"):
-        raise UnsupportedAttachment("unsupported_input", "Input is not supported XML")
+        raise UnsupportedPackageInsert(
+            "unsupported_input", "Input is not supported XML"
+        )
     # Unicode parsing must not hide a declaration claiming a different byte encoding.
     declared = re.match(
         r'\ufeff?<\?xml\s[^?]*encoding\s*=\s*[\'"]([^\'"]+)[\'"]', text[:1024]
@@ -61,7 +67,9 @@ def parse_source(source: bytes) -> tuple[ET.Element, list[dict[str, object]]]:
         and declared.group(1).lower().replace("_", "-").startswith("utf-16")
         != utf16_bytes
     ):
-        raise InvalidAttachment("xml_parse_error", "XML declaration and bytes disagree")
+        raise InvalidPackageInsert(
+            "xml_parse_error", "XML declaration and bytes disagree"
+        )
     events: list[dict[str, object]] = []
     parser = expat.ParserCreate()
     depth = 0
@@ -72,9 +80,11 @@ def parse_source(source: bytes) -> tuple[ET.Element, list[dict[str, object]]]:
         depth += 1
         count += 1
         if depth > MAX_DEPTH:
-            raise InvalidAttachment("xml_depth_limit", "XML nesting exceeds the limit")
+            raise InvalidPackageInsert(
+                "xml_depth_limit", "XML nesting exceeds the limit"
+            )
         if count > MAX_ELEMENTS:
-            raise InvalidAttachment(
+            raise InvalidPackageInsert(
                 "xml_element_limit", "XML element count exceeds the limit"
             )
         events.append(
@@ -94,7 +104,7 @@ def parse_source(source: bytes) -> tuple[ET.Element, list[dict[str, object]]]:
         depth -= 1
 
     def forbidden(*args: object) -> Never:
-        raise InvalidAttachment(
+        raise InvalidPackageInsert(
             "xml_forbidden_declaration", "DTD and entity declarations are not supported"
         )
 
@@ -132,13 +142,13 @@ def parse_source(source: bytes) -> tuple[ET.Element, list[dict[str, object]]]:
             ),
         )
     except expat.ExpatError, ET.ParseError, ValueError:
-        raise InvalidAttachment("xml_parse_error", "XML cannot be parsed") from None
+        raise InvalidPackageInsert("xml_parse_error", "XML cannot be parsed") from None
     if any(
         isinstance(element.tag, str)
         and element.tag.startswith("{http://www.w3.org/2001/XInclude}")
         for element in root.iter()
     ):
-        raise InvalidAttachment(
+        raise InvalidPackageInsert(
             "xml_unsupported_structure", "XInclude is not supported"
         )
     return root, events

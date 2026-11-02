@@ -15,9 +15,9 @@ from backend.infrastructure.persistence.registration.registration_payloads impor
 from backend.infrastructure.persistence.runtime.postgres_readiness import (
     verify_postgres_readiness,
 )
-from backend.infrastructure.persistence.schemas import attachment_tables as schema
+from backend.infrastructure.persistence.schemas import package_insert_tables as schema
 from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
-from backend.tests.application.indexing.test_active_attachment_projection import (
+from backend.tests.application.indexing.test_active_package_insert_projection import (
     mixed_source,
 )
 from backend.tests.integration.test_postgres_registration import (
@@ -108,7 +108,7 @@ def test_tc099_two_actual_main_processes_refresh_candidates_and_restart_get(
             "製品A".encode(), "新版製品".encode()
         )
         response = one.post(
-            "/api/attachment-imports",
+            "/api/package-insert-imports",
             files={"file": ("replacement.xml", replacement, "application/xml")},
         )
         assert response.status_code == 201, response.text
@@ -126,13 +126,13 @@ def test_tc099_two_actual_main_processes_refresh_candidates_and_restart_get(
             )
     with main_server(pg_engines[2], tmp_path) as (client, _, _):
         current = client.get(
-            f"/api/attachment-imports/{final['document_id']}/{final['source_sha256']}"
+            f"/api/package-insert-imports/{final['document_id']}/{final['source_sha256']}"
         )
         assert current.status_code == 200
         assert current.json()["generation_id"] == final["generation_id"]
         assert (
             client.get(
-                f"/api/attachment-imports/{first.document_id}/{first.source_sha256}"
+                f"/api/package-insert-imports/{first.document_id}/{first.source_sha256}"
             ).status_code
             == 410
         )

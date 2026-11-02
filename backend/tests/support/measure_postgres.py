@@ -24,7 +24,7 @@ from backend.infrastructure.cli.manage_postgres import load_inputs
 from backend.infrastructure.persistence.registration.postgres_registration_publisher import (
     PostgresRegistrationPublisher,
 )
-from backend.infrastructure.persistence.schemas import attachment_tables as tables
+from backend.infrastructure.persistence.schemas import package_insert_tables as tables
 from backend.infrastructure.pmda_xml.pmda_artifact_encoder import PmdaArtifactEncoder
 from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
 from backend.tests.support.generation_os_server import main_server
@@ -182,7 +182,7 @@ async def registration(client, raw, label, batch=None):
         headers["x-perf-batch"] = batch
     started = time.perf_counter()
     response = await client.post(
-        "/api/attachment-imports",
+        "/api/package-insert-imports",
         headers=headers,
         files={"file": ("テスト性能.xml", raw, "application/xml")},
     )

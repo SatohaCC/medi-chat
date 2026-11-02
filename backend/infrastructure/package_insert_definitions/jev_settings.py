@@ -8,7 +8,7 @@ from backend.application.retrieval.queries.policies.standard import (
     DEFAULT_CLASSIFICATION_TITLES,
     ClassificationRule,
 )
-from backend.domain.attachment.value_objects import SectionTaxonomy
+from backend.domain.package_insert.value_objects import SectionTaxonomy
 from backend.infrastructure.package_insert_definitions.definition_settings import (
     JevClassificationSettings,
 )

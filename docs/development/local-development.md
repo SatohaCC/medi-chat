@@ -60,7 +60,7 @@ E2Eの通常設定・モック・実接続の違いは[検証ガイド](validati
 
 ## データと運用
 
-- [添付文書の取り込み・登録](attachment-import.md)
+- [添付文書の取り込み・登録](package-insert-import.md)
 - [PMDA原本とオフライン変換](../../data/pmda/README.md)
 - [DB運用・マイグレーション・再構築](../architecture/backend-design.md#データベース運用とマイグレーション)
 - [Vercel・Neonへのデプロイ](vercel-deployment.md)

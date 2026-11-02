@@ -2,16 +2,16 @@
 
 from dataclasses import dataclass
 
-from backend.domain.attachment.identifiers import DocumentId
-from backend.domain.attachment.primitives import PmdaUrl
-from backend.domain.attachment.value_objects import (
-    AttachmentProductRevision,
-    MedicineDocumentReference,
-)
 from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import ProductGroupId
 from backend.domain.medicine.value_objects import MedicineMatch
+from backend.domain.package_insert.identifiers import DocumentId
+from backend.domain.package_insert.primitives import PmdaUrl
+from backend.domain.package_insert.value_objects import (
+    MedicineDocumentReference,
+    PackageInsertProductRevision,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -64,7 +64,7 @@ class RegisteredMedicine:
         return self.reference.pmda_url
 
     @property
-    def revision(self) -> AttachmentProductRevision:
+    def revision(self) -> PackageInsertProductRevision:
         return self.reference.revision
 
     @property

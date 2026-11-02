@@ -5,8 +5,8 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
 
-from backend.application.attachment_import.commands.models import ImportResult
-from backend.application.attachment_import.errors import ImportNotFound
+from backend.application.package_insert_import.commands.models import ImportResult
+from backend.application.package_insert_import.errors import ImportNotFound
 from backend.infrastructure.persistence.mappings.import_result_mapping import (
     map_receipt_to_import_result,
 )

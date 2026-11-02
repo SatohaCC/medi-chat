@@ -10,7 +10,7 @@ from backend.infrastructure.persistence.registration.registration_payloads impor
 from backend.infrastructure.persistence.runtime.postgres_readiness import (
     verify_postgres_readiness,
 )
-from backend.infrastructure.persistence.schemas import attachment_tables as s
+from backend.infrastructure.persistence.schemas import package_insert_tables as s
 from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
 from backend.tests.integration.test_postgres_registration import (
     pg_publisher as pg_publisher,
@@ -48,12 +48,12 @@ def test_pg034_035_prepared_readiness_has_no_ddl_original_or_structure_transfer(
             for value in statements
         )
         assert not any(
-            "attachment_versions.source" in value
-            or "attachment_assets.content" in value
+            "package_insert_versions.source" in value
+            or "package_insert_assets.content" in value
             for value in statements
         )
         assert not any(
-            "select attachment_versions.structure" in value for value in statements
+            "select package_insert_versions.structure" in value for value in statements
         )
     finally:
         event.remove(pg_engines[1], "before_cursor_execute", observe)

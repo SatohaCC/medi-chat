@@ -15,12 +15,12 @@ from backend.infrastructure.persistence.runtime.postgres_engine import (
     create_postgres_engine,
 )
 from backend.infrastructure.persistence.runtime.read_workers import ReadWorkers
-from backend.infrastructure.persistence.schemas import attachment_tables as schema
+from backend.infrastructure.persistence.schemas import package_insert_tables as schema
 from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
 from backend.tests.integration.test_postgres_registration import (
     pg_publisher as pg_publisher,
 )
-from backend.tests.support.attachment_import_fixtures import xml_source
+from backend.tests.support.package_insert_import_fixtures import xml_source
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
 from sqlalchemy import select
 

@@ -23,17 +23,17 @@ from backend.application.retrieval.values import (
     Probability,
     SearchKeyword,
 )
-from backend.domain.attachment.identifiers import DocumentId
-from backend.domain.attachment.primitives import (
-    AttachmentProductCode,
-    AttachmentUrl,
-    PmdaUrl,
-    SectionCode,
-)
 from backend.domain.foundation.exceptions import DomainValidationError
 from backend.domain.foundation.primitives.base import DomainPrimitive
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import ProductGroupId
+from backend.domain.package_insert.identifiers import DocumentId
+from backend.domain.package_insert.primitives import (
+    PackageInsertProductCode,
+    PackageInsertUrl,
+    PmdaUrl,
+    SectionCode,
+)
 from backend.presentation.chat_dto_mapper import chat_response_to_api
 from backend.tests.application.retrieval.test_evidence_collection import make_evidence
 
@@ -51,9 +51,9 @@ from backend.tests.application.retrieval.test_evidence_collection import make_ev
         Probability(0.2),
         SearchUnitId("unit"),
         SectionCode("1.1"),
-        AttachmentProductCode("code"),
+        PackageInsertProductCode("code"),
         SearchUnitKind("item"),
-        AttachmentUrl("https://example.test/doc"),
+        PackageInsertUrl("https://example.test/doc"),
     ],
 )
 def test_primitives_have_typed_value_equality_and_immutable_restoration(primitive):

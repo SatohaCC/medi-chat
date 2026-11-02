@@ -32,6 +32,6 @@ pnpm test:backend
 
 - [設計・依存方向・型とモデルの方針](../docs/architecture/backend-design.md)
 - [DB運用・マイグレーション](../docs/architecture/backend-design.md#データベース運用とマイグレーション)
-- [添付文書の取り込み・登録](../docs/development/attachment-import.md)
+- [添付文書の取り込み・登録](../docs/development/package-insert-import.md)
 - [共通定義の編集方法](infrastructure/package_insert_definitions/README.md)
 - [テストと検証](../docs/development/local-development.md#検証)

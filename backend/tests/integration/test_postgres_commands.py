@@ -9,7 +9,7 @@ from backend.infrastructure.persistence.runtime.postgres_readiness import (
     verify_postgres_readiness,
 )
 from backend.infrastructure.persistence.schemas import (
-    attachment_tables as postgres_schema,
+    package_insert_tables as postgres_schema,
 )
 from backend.tests.integration.test_postgres_registration import (
     pg_publisher as pg_publisher,

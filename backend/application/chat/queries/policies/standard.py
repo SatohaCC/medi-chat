@@ -17,7 +17,7 @@ from backend.application.retrieval.queries.policies.section_titles import (
 from backend.application.retrieval.queries.policies.standard import (
     DEFAULT_DISPLAY_TITLES,
 )
-from backend.domain.attachment.value_objects import (
+from backend.domain.package_insert.value_objects import (
     InteractionColumnDefinition,
     SectionTaxonomy,
 )

@@ -4,8 +4,8 @@ import hashlib
 
 import httpx
 import pytest
-from backend.application.attachment_import.errors import ImportStorageError
-from backend.tests.support.attachment_import_fixtures import xml_source
+from backend.application.package_insert_import.errors import ImportStorageError
+from backend.tests.support.package_insert_import_fixtures import xml_source
 from backend.tests.support.postgres_fixtures import pg_api as pg_api
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
 from sqlalchemy import text
@@ -13,7 +13,7 @@ from sqlalchemy import text
 
 async def send_parts(client, raw, *, digest=None):
     started = await client.post(
-        "/api/attachment-imports/uploads",
+        "/api/package-insert-imports/uploads",
         json={
             "filename": "テスト.xml",
             "byte_size": len(raw),
@@ -22,7 +22,7 @@ async def send_parts(client, raw, *, digest=None):
     )
     assert started.status_code == 201
     session = started.json()
-    path = f"/api/attachment-imports/uploads/{session['upload_id']}"
+    path = f"/api/package-insert-imports/uploads/{session['upload_id']}"
     for index, offset in enumerate(range(0, len(raw), session["chunk_bytes"])):
         assert (
             await client.post(
@@ -46,14 +46,15 @@ async def test_complete_retry_preserves_cleaned_receipt(pg_api, cleanup_first):
         ) as client,
     ):
         registered = await client.post(
-            "/api/attachment-imports", files={"file": ("テスト.xml", old)}
+            "/api/package-insert-imports", files={"file": ("テスト.xml", old)}
         )
         assert registered.status_code == 201
         path = await send_parts(client, old)
         if cleanup_first:
             assert (
                 await client.post(
-                    "/api/attachment-imports", files={"file": ("テスト新版.xml", newer)}
+                    "/api/package-insert-imports",
+                    files={"file": ("テスト新版.xml", newer)},
                 )
             ).status_code == 201
         first = await client.post(path + "/complete")
@@ -61,7 +62,8 @@ async def test_complete_retry_preserves_cleaned_receipt(pg_api, cleanup_first):
         if not cleanup_first:
             assert (
                 await client.post(
-                    "/api/attachment-imports", files={"file": ("テスト新版.xml", newer)}
+                    "/api/package-insert-imports",
+                    files={"file": ("テスト新版.xml", newer)},
                 )
             ).status_code == 201
         assert (await client.get(registered.headers["location"])).status_code == 410
@@ -88,7 +90,7 @@ async def test_terminal_failure_releases_capacity(pg_api, pg_engines, failure):
             )
             assert (await client.post(path + "/complete")).status_code == 422
         with pg_engines[0].connect() as connection:
-            for table in ("attachment_uploads", "attachment_upload_parts"):
+            for table in ("package_insert_uploads", "package_insert_upload_parts"):
                 assert (
                     connection.execute(
                         text(f"SELECT count(*) FROM {table}")
@@ -111,7 +113,7 @@ async def test_transient_failure_keeps_parts_for_retry(pg_api, monkeypatch):
     ):
         raw = xml_source().replace(b"111111111111", b"222222222222")
         path = await send_parts(client, raw)
-        publisher = app.state.attachment_import_service.registration.publisher
+        publisher = app.state.package_insert_import_service.registration.publisher
         publish = publisher.publish
 
         def fail(*args, **kwargs):
@@ -149,7 +151,7 @@ async def test_segmented_http_publishes_exact_original_and_retry(pg_api, pg_engi
         ) as b,
     ):
         started = await a.post(
-            "/api/attachment-imports/uploads",
+            "/api/package-insert-imports/uploads",
             json={
                 "filename": "テスト10MiB.xml",
                 "byte_size": len(raw),
@@ -158,7 +160,7 @@ async def test_segmented_http_publishes_exact_original_and_retry(pg_api, pg_engi
         )
         assert started.status_code == 201
         upload = started.json()
-        path = f"/api/attachment-imports/uploads/{upload['upload_id']}"
+        path = f"/api/package-insert-imports/uploads/{upload['upload_id']}"
         assert (await b.post(path + "/complete")).status_code == 409
         for index, offset in enumerate(range(0, len(raw), upload["chunk_bytes"])):
             part = raw[offset : offset + upload["chunk_bytes"]]
@@ -175,14 +177,14 @@ async def test_segmented_http_publishes_exact_original_and_retry(pg_api, pg_engi
     with pg_engines[0].connect() as connection:
         source = connection.execute(
             text(
-                "SELECT source FROM attachment_versions WHERE version_id LIKE :suffix"
+                "SELECT source FROM package_insert_versions WHERE version_id LIKE :suffix"
             ),
             {"suffix": "%:" + digest},
         ).scalar_one()
         assert source == raw
         assert (
             connection.execute(
-                text("SELECT count(*) FROM attachment_upload_parts")
+                text("SELECT count(*) FROM package_insert_upload_parts")
             ).scalar_one()
             == 0
         )
@@ -197,7 +199,7 @@ async def test_upload_http_limits_and_missing_session(pg_api):
             transport=httpx.ASGITransport(app=app), base_url="http://test"
         ) as client,
     ):
-        prefix = "/api/attachment-imports/uploads"
+        prefix = "/api/package-insert-imports/uploads"
         assert (await client.post(prefix, content=b"x" * 4097)).status_code == 413
         assert (
             await client.post(

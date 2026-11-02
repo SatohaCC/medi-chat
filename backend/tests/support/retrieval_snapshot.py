@@ -1,6 +1,6 @@
 """Fixed reader ownership for tests of snapshot-based retrieval use cases."""
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from backend.application.medicine.interfaces.medicine_query_reader import (
@@ -28,7 +28,7 @@ class FixedSnapshotProvider:
         self.exited = 0
 
     @asynccontextmanager
-    async def acquire(self) -> AsyncIterator[RetrievalSnapshot]:
+    async def acquire(self) -> AsyncGenerator[RetrievalSnapshot]:
         self.entered += 1
         try:
             yield self.snapshot

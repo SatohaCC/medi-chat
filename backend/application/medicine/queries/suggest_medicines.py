@@ -7,8 +7,8 @@ from dataclasses import dataclass
 
 from backend.application.medicine.queries.models import RegisteredMedicine
 from backend.application.medicine.values import SearchGenerationId
-from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.medicine.identifiers import YjCode
+from backend.domain.package_insert.identifiers import DocumentId
 from backend.domain.shared.services import normalize_match_text
 
 

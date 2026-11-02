@@ -41,16 +41,19 @@ from backend.application.retrieval.values import (
     EvidenceProductName,
     EvidenceSourceUrl,
 )
-from backend.domain.attachment.exceptions import AttachmentDomainError
-from backend.domain.attachment.identifiers import DocumentId
-from backend.domain.attachment.primitives import (
+from backend.domain.foundation.exceptions import DomainValidationError
+from backend.domain.medicine.identifiers import YjCode
+from backend.domain.package_insert.exceptions import PackageInsertDomainError
+from backend.domain.package_insert.identifiers import DocumentId
+from backend.domain.package_insert.primitives import (
     DefinitionTitle,
     NumberedSectionCode,
     SectionScope,
 )
-from backend.domain.attachment.value_objects import SectionDefinition, SectionTaxonomy
-from backend.domain.foundation.exceptions import DomainValidationError
-from backend.domain.medicine.identifiers import YjCode
+from backend.domain.package_insert.value_objects import (
+    SectionDefinition,
+    SectionTaxonomy,
+)
 from backend.infrastructure.intent.jev_classifier import JevIntentClassifier
 from backend.infrastructure.morphology.janome_keyword_extractor import (
     JanomeKeywordExtractor,
@@ -144,7 +147,7 @@ async def test_typed_definition_injection_reaches_consumers_without_reload(
             == "27. 追加項目の正式名称：追加項目の内容に関する質問"
         )
     else:
-        from backend.tests.support.attachment_import_fixtures import xml_source
+        from backend.tests.support.package_insert_import_fixtures import xml_source
 
         document = PmdaXmlDecoder(xml_settings=definitions.xml_settings).decode(
             xml_source(
@@ -198,9 +201,9 @@ def test_domain_taxonomy_rejects_duplicate_or_missing_parent():
         title=DefinitionTitle("警告"),
         scope=SectionScope("テスト警告の範囲"),
     )
-    with pytest.raises(AttachmentDomainError, match="duplicate section"):
+    with pytest.raises(PackageInsertDomainError, match="duplicate section"):
         SectionTaxonomy(sections=(section, section))
-    with pytest.raises(AttachmentDomainError, match="unknown parent"):
+    with pytest.raises(PackageInsertDomainError, match="unknown parent"):
         SectionTaxonomy(sections=(replace(section, code=NumberedSectionCode("1.1")),))
     with pytest.raises(DomainValidationError):
         SectionScope(" ")

@@ -1,4 +1,4 @@
-"""PostgreSQL-only attachment storage and publication state."""
+"""PostgreSQL-only package_insert storage and publication state."""
 
 from alembic import op
 from backend.migrations.postgres.initial_schema import metadata, state

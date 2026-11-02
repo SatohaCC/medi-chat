@@ -4,10 +4,10 @@ import re
 import httpx
 import pytest
 import pytest_asyncio
-from backend.application.attachment_import.commands.import_documents import (
-    AttachmentImportCommands,
+from backend.application.package_insert_import.commands.import_documents import (
+    PackageInsertImportCommands,
 )
-from backend.application.attachment_import.queries.import_history import (
+from backend.application.package_insert_import.queries.import_history import (
     ImportHistoryQueries,
 )
 from backend.infrastructure.document_import.original_document_registration_adapter import (
@@ -18,7 +18,7 @@ from backend.infrastructure.persistence.queries.postgres_import_query_reader imp
 )
 from backend.infrastructure.persistence.runtime.import_workers import ImportWorkers
 from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
-from backend.presentation.attachment_import_routes import router
+from backend.presentation.package_insert_import_routes import router
 from backend.tests.integration.test_postgres_registration import pg_publisher
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
 from backend.tests.support.postgres_observations import digest
@@ -30,7 +30,7 @@ publisher = pg_publisher
 
 @pytest_asyncio.fixture
 async def client(publisher):
-    service = AttachmentImportCommands(
+    service = PackageInsertImportCommands(
         executor=ImportWorkers(),
         reader=publisher.results,
         registration=OriginalDocumentRegistration(
@@ -39,8 +39,8 @@ async def client(publisher):
     )
     app = FastAPI()
     app.include_router(router)
-    app.state.attachment_import_service = service
-    app.state.attachment_import_queries = ImportHistoryQueries(
+    app.state.package_insert_import_service = service
+    app.state.package_insert_import_queries = ImportHistoryQueries(
         reader=PostgresImportQueries(publisher.engine), executor=service._executor
     )
     async with httpx.AsyncClient(
@@ -52,7 +52,7 @@ async def client(publisher):
 
 async def post(client, value):
     return await client.post(
-        "/api/attachment-imports",
+        "/api/package-insert-imports",
         files={"file": ("source.xml", value, "application/xml")},
     )
 
@@ -62,7 +62,7 @@ async def test_tc106_113_unknown_version_is_private_then_first_receipt_published
     client, publisher
 ):
     value = source("stored以前")
-    url = f"/api/attachment-imports/000001_test/{hashlib.sha256(value).hexdigest()}"
+    url = f"/api/package-insert-imports/000001_test/{hashlib.sha256(value).hexdigest()}"
     assert (await client.get(url)).status_code == 404
     response = await post(client, value)
     assert response.status_code == 201
@@ -122,7 +122,7 @@ async def test_tc106_old_deleted_receipt_post_never_recreates_files_get_is_gone(
     assert payload["search_index_updated"] is False and payload["active_yj_codes"] == []
     assert payload["registration_sequence"] == 1
     gone = await client.get(
-        f"/api/attachment-imports/000001_test/{hashlib.sha256(old).hexdigest()}"
+        f"/api/package-insert-imports/000001_test/{hashlib.sha256(old).hexdigest()}"
     )
     assert (
         gone.status_code == 410 and gone.json()["detail"]["code"] == "version_deleted"
@@ -152,11 +152,11 @@ def test_tc106_107_openapi_declares_reuse_and_conflict_metadata():
     app = FastAPI()
     app.include_router(router)
     schema = app.openapi()
-    responses = schema["paths"]["/api/attachment-imports"]["post"]["responses"]
+    responses = schema["paths"]["/api/package-insert-imports"]["post"]["responses"]
     assert set(responses) == {"200", "201", "400", "409", "413", "415", "422", "500"}
     components = schema["components"]["schemas"]
     assert responses["200"]["content"]["application/json"]["schema"] == {
-        "$ref": "#/components/schemas/AttachmentImportResponse"
+        "$ref": "#/components/schemas/PackageInsertImportResponse"
     }
     assert responses["409"]["content"]["application/json"]["schema"] == {
         "$ref": "#/components/schemas/ImportConflictResponse"
@@ -177,7 +177,7 @@ def test_tc106_107_openapi_declares_reuse_and_conflict_metadata():
 async def test_tc107_artifact_conflict_has_declared_list_and_preserves_old_publication(
     client, publisher
 ):
-    from backend.application.attachment_import.errors import ImportConflict
+    from backend.application.package_insert_import.errors import ImportConflict
 
     assert (await post(client, source("旧公開"))).status_code == 201
     before = digest(publisher.engine)
@@ -237,7 +237,9 @@ async def test_tc106_partial_b_and_cleanup_pending_public_metadata(client, publi
     assert first.status_code == 201
     new_a = await post(client, source("新A", revised_at="2026-11"))
     assert new_a.status_code == 201
-    old_url = f"/api/attachment-imports/000001_test/{hashlib.sha256(old).hexdigest()}"
+    old_url = (
+        f"/api/package-insert-imports/000001_test/{hashlib.sha256(old).hexdigest()}"
+    )
     partial = (await client.get(old_url)).json()
     assert partial["status"] == "registered"
     assert partial["active_yj_codes"] == ["222222222222"]

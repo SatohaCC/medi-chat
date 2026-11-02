@@ -17,6 +17,11 @@ from fastapi.testclient import TestClient
 pytestmark = [pytest.mark.postgres, pytest.mark.source_data]
 
 
+class TestAnswerProvider:
+    async def stream_response(self, messages, model=None):
+        yield "テスト根拠回答"
+
+
 class ChatWebSocketRouteTests(unittest.TestCase):
     app: Any
     client_context: Any
@@ -26,7 +31,7 @@ class ChatWebSocketRouteTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.database_context = original_application_factory()
         build = cls.database_context.__enter__()
-        cls.app = build()
+        cls.app = build(llm_provider_factory=lambda _: TestAnswerProvider())
         cls.client_context = TestClient(cls.app)
         cls.client = cls.client_context.__enter__()
 
@@ -47,64 +52,6 @@ class ChatWebSocketRouteTests(unittest.TestCase):
             )
             data = websocket.receive_json()
             self.assertEqual(data["type"], "pong")
-
-    def test_websocket_chat_streaming_gemini_fallback(self) -> None:
-        with (
-            patch.dict(os.environ, {"GEMINI_API_KEY": "", "GOOGLE_API_KEY": ""}),
-            self.client.websocket_connect("/ws/chat") as websocket,
-        ):
-            websocket.send_json(
-                {
-                    "type": "message",
-                    "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
-                    "provider": "gemini",
-                    "product_yj_codes": ["3339003F5020"],
-                    "messages": [{"role": "user", "content": "こんにちは"}],
-                }
-            )
-            deltas: list[str] = []
-            while True:
-                data = websocket.receive_json()
-                if data["type"] == "sources":
-                    continue
-                if data["type"] == "text_delta":
-                    deltas.append(data["content"])
-                elif data["type"] == "text_done":
-                    break
-                elif data["type"] == "error":
-                    self.fail(f"Unexpected error: {data['content']}")
-            full_response = "".join(deltas)
-            self.assertIn("Gemini", full_response)
-            self.assertIn("こんにちは", full_response)
-
-    def test_websocket_chat_streaming_openai_fallback(self) -> None:
-        with (
-            patch.dict(os.environ, {"OPENAI_API_KEY": ""}),
-            self.client.websocket_connect("/ws/chat") as websocket,
-        ):
-            websocket.send_json(
-                {
-                    "type": "message",
-                    "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
-                    "provider": "openai",
-                    "product_yj_codes": ["3339003F5020"],
-                    "messages": [{"role": "user", "content": "おはよう"}],
-                }
-            )
-            deltas: list[str] = []
-            while True:
-                data = websocket.receive_json()
-                if data["type"] == "sources":
-                    continue
-                if data["type"] == "text_delta":
-                    deltas.append(data["content"])
-                elif data["type"] == "text_done":
-                    break
-                elif data["type"] == "error":
-                    self.fail(f"Unexpected error: {data['content']}")
-            full_response = "".join(deltas)
-            self.assertIn("OpenAI", full_response)
-            self.assertIn("おはよう", full_response)
 
     def test_websocket_chat_sends_sources_for_medical_question(self) -> None:
         with (

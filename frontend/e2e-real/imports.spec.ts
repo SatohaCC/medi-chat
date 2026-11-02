@@ -37,7 +37,7 @@ test("real browser upload, resend, process restart GET and active registration",
       pythonBinary(root),
       [
         "-m",
-        "backend.tests.support.attachment_import_e2e_server",
+        "backend.tests.support.package_insert_import_e2e_server",
         "--root",
         isolated,
         "--port",
@@ -88,7 +88,7 @@ test("real browser upload, resend, process restart GET and active registration",
     const streamed = await new Promise<{ status: number; body: string }>(
       (resolve, reject) => {
         const request = httpRequest(
-          "http://127.0.0.1:3211/api/attachment-imports",
+          "http://127.0.0.1:3211/api/package-insert-imports",
           { method: "POST", headers: { "content-type": "application/octet-stream" } },
           (response) => {
             let body = "";
@@ -133,7 +133,7 @@ test("real browser upload, resend, process restart GET and active registration",
     });
     const uploaded = page.waitForResponse(
       (response) =>
-        response.url().endsWith("/api/attachment-imports") &&
+        response.url().endsWith("/api/package-insert-imports") &&
         response.request().method() === "POST",
     );
     await page.getByRole("button", { name: "取り込む", exact: true }).click();
@@ -188,7 +188,7 @@ test("real browser upload, resend, process restart GET and active registration",
     });
     const repeated = page.waitForResponse(
       (response) =>
-        response.url().endsWith("/api/attachment-imports") &&
+        response.url().endsWith("/api/package-insert-imports") &&
         response.request().method() === "POST",
     );
     await page.getByRole("button", { name: "取り込む", exact: true }).click();
@@ -230,7 +230,7 @@ test("real browser upload, resend, process restart GET and active registration",
         .setInputFiles({ name: "テスト改訂.xml", mimeType: "application/xml", buffer });
       const pending = page.waitForResponse(
         (response) =>
-          response.url().endsWith("/api/attachment-imports") &&
+          response.url().endsWith("/api/package-insert-imports") &&
           response.request().method() === "POST",
       );
       await page.getByRole("button", { name: "取り込む", exact: true }).click();

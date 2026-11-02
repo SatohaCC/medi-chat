@@ -84,6 +84,8 @@ class AppChatService:
         product_yj_codes: list[str],
         *,
         on_logic_sources: Callable[[list[ChatSource]], Awaitable[None]] | None = None,
+        provider_name: str | None = None,
+        model_name: str | None = None,
     ) -> ApplicationChatResponse:
         pure_conversation = [chat_message_from_api(m) for m in conversation]
 
@@ -91,10 +93,13 @@ class AppChatService:
             if on_logic_sources is not None:
                 await on_logic_sources(self.sources_to_api(sources))
 
+        settings = self.defaults().resolve(provider_name, model_name)
         pure_reply = await self._app_service.prepare_reply(
             pure_conversation,
             product_yj_codes,
             on_logic_sources=publish_logic if on_logic_sources is not None else None,
+            provider_name=settings.provider,
+            model_name=settings.model,
         )
         return pure_reply
 
@@ -108,7 +113,7 @@ class AppChatService:
         user_id: str = "",
         on_completed: Callable[[str | None], None] | None = None,
     ) -> AsyncGenerator[str]:
-        settings = self.defaults()
+        settings = self.defaults().resolve(provider_name, model_name)
         pure_conversation = [chat_message_from_api(m) for m in conversation]
         user_query = next(
             (m.content for m in reversed(conversation) if m.role == "user"), ""
@@ -179,7 +184,7 @@ class AppChatService:
         user_id: str = "",
     ) -> ApiChatResponse:
         pure_conversation = [chat_message_from_api(m) for m in conversation]
-        settings = self.defaults()
+        settings = self.defaults().resolve(provider_name, model_name)
         with trace(
             "medi_chat.answer_question",
             "chain",

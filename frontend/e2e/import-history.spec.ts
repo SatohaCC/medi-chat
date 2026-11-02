@@ -16,7 +16,7 @@ test("history loads, paginates, refreshes after import, and fits mobile", async 
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   let imported = false;
-  await page.route("**/api/attachment-imports**", async (route) => {
+  await page.route("**/api/package-insert-imports**", async (route) => {
     const url = new URL(route.request().url());
     if (route.request().method() === "POST") {
       imported = true;
@@ -92,7 +92,7 @@ test("history loads, paginates, refreshes after import, and fits mobile", async 
 
 test("history provides empty, error and retry states", async ({ page }) => {
   let failed = true;
-  await page.route("**/api/attachment-imports**", (route) =>
+  await page.route("**/api/package-insert-imports**", (route) =>
     route.fulfill(
       failed
         ? { status: 500, json: {} }

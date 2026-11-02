@@ -10,8 +10,6 @@ from backend.application.retrieval.values import (
     Probability,
     SearchKeyword,
 )
-from backend.domain.attachment.exceptions import AttachmentDomainError
-from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.foundation.exceptions import (
     DomainError,
     DomainValidationError,
@@ -21,6 +19,8 @@ from backend.domain.foundation.primitives.identifiers import (
     EntityUUID,
 )
 from backend.domain.foundation.primitives.primitives import BaseString
+from backend.domain.package_insert.exceptions import PackageInsertDomainError
+from backend.domain.package_insert.identifiers import DocumentId
 
 
 class RecordId(EntityStringId):
@@ -59,4 +59,4 @@ def test_existing_scalar_and_search_contracts_use_foundation():
     with pytest.raises(DomainValidationError):
         DocumentId(123)  # pyright: ignore[reportArgumentType]
     assert issubclass(DomainValidationError, DomainError)
-    assert issubclass(AttachmentDomainError, DomainError)
+    assert issubclass(PackageInsertDomainError, DomainError)

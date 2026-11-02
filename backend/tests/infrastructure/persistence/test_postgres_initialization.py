@@ -1,9 +1,9 @@
 """PG-007/008: strict initial figure inventory and CLI byte preservation."""
 
 import pytest
-from backend.application.attachment_import.errors import InvalidAttachment
+from backend.application.package_insert_import.errors import InvalidPackageInsert
 from backend.infrastructure.cli.manage_postgres import load_inputs
-from backend.tests.support.attachment_import_fixtures import xml_source
+from backend.tests.support.package_insert_import_fixtures import xml_source
 
 
 def graphic(name):
@@ -27,7 +27,7 @@ def test_pg007_strict_inventory_keeps_nontext_figure_bytes(tmp_path):
 )
 def test_pg008_strict_inventory_refuses_missing_and_unsafe_assets(tmp_path, name):
     (tmp_path / "テスト.xml").write_bytes(graphic(name))
-    with pytest.raises((InvalidAttachment, ValueError)):
+    with pytest.raises((InvalidPackageInsert, ValueError)):
         load_inputs(tmp_path)
 
 

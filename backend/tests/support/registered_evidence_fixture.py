@@ -2,12 +2,12 @@
 
 import json
 
-from backend.application.indexing.queries.services.attachment_projection import (
-    project_active_attachment,
+from backend.application.indexing.queries.services.package_insert_projection import (
+    project_active_package_insert,
 )
 from backend.domain.medicine.identifiers import YjCode
-from backend.infrastructure.document_import.attachment_payloads import (
-    AttachmentSourceInformation,
+from backend.infrastructure.document_import.package_insert_payloads import (
+    PackageInsertSourceInformation,
 )
 from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
 from backend.infrastructure.serialization.evidence_mapping import build_evidence
@@ -21,8 +21,10 @@ from backend.tests.support.paths import PROJECT_ROOT
 def current_evidence(stem: str, yj_code: str) -> dict:
     source = next((PROJECT_ROOT / "data/pmda/originals").rglob(f"{stem}.xml"))
     decoded = PmdaXmlDecoder().decode(source.read_bytes())
-    assert isinstance(decoded.source_info, AttachmentSourceInformation)
-    units = project_active_attachment(decoded.document, frozenset({YjCode(yj_code)}))
+    assert isinstance(decoded.source_info, PackageInsertSourceInformation)
+    units = project_active_package_insert(
+        decoded.document, frozenset({YjCode(yj_code)})
+    )
     unit = next(unit for unit in units if unit.section_code.value == "10")
     payload = json.loads(encode_registered_units(decoded.document, (unit,)))
     evidence = build_evidence(payload, decoded.source_info.document, "logic")

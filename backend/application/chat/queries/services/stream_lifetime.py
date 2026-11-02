@@ -1,6 +1,6 @@
 """任意のclose能力を持つ非同期streamを利用側の期間に閉じる。"""
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator, AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Protocol, runtime_checkable
 
@@ -13,7 +13,7 @@ class AsyncClosable(Protocol):
 @asynccontextmanager
 async def closing_stream[T](
     stream: AsyncIterator[T],
-) -> AsyncIterator[AsyncIterator[T]]:
+) -> AsyncGenerator[AsyncIterator[T]]:
     try:
         yield stream
     finally:

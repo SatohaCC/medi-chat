@@ -234,13 +234,13 @@
           }
         }
       },
-      "/api/attachment-imports": {
+      "/api/package-insert-imports": {
         "post": {
           "tags": [
-            "attachment-imports"
+            "package-insert-imports"
           ],
-          "summary": "Import Attachment",
-          "operationId": "import_attachment_api_attachment_imports_post",
+          "summary": "Import Package Insert",
+          "operationId": "import_package_insert_api_package_insert_imports_post",
           "requestBody": {
             "content": {
               "multipart/form-data": {
@@ -266,7 +266,7 @@
               "content": {
                 "application/json": {
                   "schema": {
-                    "$ref": "#/components/schemas/AttachmentImportResponse"
+                    "$ref": "#/components/schemas/PackageInsertImportResponse"
                   }
                 }
               }
@@ -276,7 +276,7 @@
               "content": {
                 "application/json": {
                   "schema": {
-                    "$ref": "#/components/schemas/AttachmentImportResponse"
+                    "$ref": "#/components/schemas/PackageInsertImportResponse"
                   }
                 }
               }
@@ -344,13 +344,13 @@
           }
         }
       },
-      "/api/attachment-imports/{document_id}/{source_sha256}": {
+      "/api/package-insert-imports/{document_id}/{source_sha256}": {
         "get": {
           "tags": [
-            "attachment-imports"
+            "package-insert-imports"
           ],
-          "summary": "Read Attachment",
-          "operationId": "read_attachment_api_attachment_imports__document_id___source_sha256__get",
+          "summary": "Read Package Insert",
+          "operationId": "read_package_insert_api_package_insert_imports__document_id___source_sha256__get",
           "parameters": [
             {
               "name": "document_id",
@@ -377,7 +377,7 @@
               "content": {
                 "application/json": {
                   "schema": {
-                    "$ref": "#/components/schemas/AttachmentImportResponse"
+                    "$ref": "#/components/schemas/PackageInsertImportResponse"
                   }
                 }
               }
@@ -438,7 +438,7 @@
     },
     "components": {
       "schemas": {
-        "AttachmentImportResponse": {
+        "PackageInsertImportResponse": {
           "properties": {
             "document_id": {
               "type": "string",
@@ -569,7 +569,7 @@
             "cleanup_pending",
             "artifacts_deleted"
           ],
-          "title": "AttachmentImportResponse"
+          "title": "PackageInsertImportResponse"
         },
         "AutocompleteResponse": {
           "properties": {

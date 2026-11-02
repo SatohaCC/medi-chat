@@ -14,7 +14,7 @@ from backend.infrastructure.persistence.queries.postgres_search_snapshot_provide
     PostgresRuntime,
 )
 from backend.infrastructure.persistence.runtime.read_workers import ReadWorkers
-from backend.tests.application.indexing.test_active_attachment_projection import (
+from backend.tests.application.indexing.test_active_package_insert_projection import (
     mixed_source,
 )
 from backend.tests.integration.test_postgres_registration import (
@@ -22,7 +22,7 @@ from backend.tests.integration.test_postgres_registration import (
 )
 from backend.tests.integration.test_postgres_registration import publish
 from backend.tests.integration.test_postgres_snapshot import target, warning_criteria
-from backend.tests.support.attachment_import_fixtures import xml_source
+from backend.tests.support.package_insert_import_fixtures import xml_source
 from backend.tests.support.paths import FIXTURES_ROOT
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
 from backend.tests.support.registration_oracles import source

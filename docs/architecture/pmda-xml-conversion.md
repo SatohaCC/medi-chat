@@ -2,9 +2,9 @@
 
 ## 入力形式と共通モデル
 
-`AttachmentDecoder` は入力を共通の `AttachmentDocument` に変換する境界で、PMDA XML は `PmdaXmlDecoder` が担当する。別の入力形式を追加する場合も、XMLタグやXMLパーサーをDomain/Applicationへ持ち込まず、この境界にアダプターを追加する。検索索引への投影は `application/indexing/queries/services/attachment_projection.py` が担当する。
+`PackageInsertDecoder` は入力を共通の `PackageInsertDocument` に変換する境界で、PMDA XML は `PmdaXmlDecoder` が担当する。別の入力形式を追加する場合も、XMLタグやXMLパーサーをDomain/Applicationへ持ち込まず、この境界にアダプターを追加する。検索索引への投影は `application/indexing/queries/services/package_insert_projection.py` が担当する。
 
-`AttachmentSection` は項目番号、標準項目名 (`title`)、原文見出し (`header`)、自身の本文 (`body`)、子項目 (`children`) を区別する。`header` は原文にあるときだけ設定し、欠損時は `None` とする。短い本文から推定しない。本文内の原文見出しは `AttachmentParagraph.is_heading` で区別する。
+`PackageInsertSection` は項目番号、標準項目名 (`title`)、原文見出し (`header`)、自身の本文 (`body`)、子項目 (`children`) を区別する。`header` は原文にあるときだけ設定し、欠損時は `None` とする。短い本文から推定しない。本文内の原文見出しは `PackageInsertParagraph.is_heading` で区別する。
 
 大項目10は10.1・10.2を子として所有する。子自身の本文・表・参照を親本文へ書き込まず、検索用の投影を作る段階で1件にまとめる。共通モデルの生成・投影にXMLは必要ない。
 
@@ -33,7 +33,7 @@
 
 受入テストは原文Headerの有無、本文順序、汎用表の非推定、セル結合、子項目と参照先の保持、XMLに依存しないモデル生成、実SQLiteへの登録と再読込、SQL/世代検索の両経路を対象にする。実データ7件の回帰では原本ツリー全項目とメタデータを従来の保存原物と照合する。
 
-XSD適合性は内容保持とは別の検証である。2026-10-18の調査では、提供された `package_insert-XML.xsd` と `PMDA-xml-lang.xsd` を.NETのXmlSchemaSetでコンパイルし、ローカル原本7件を警告・エラー0件で検証した。実行時インポートにXSD検証は追加していない。PMDAの画面表示、実ブラウザー、外部LLMとの照合はこの検証に含まれない。
+XSD適合性は内容保持とは別の検証である。2026-10-18の調査では、提供された `attachment-XML.xsd` と `PMDA-xml-lang.xsd` を.NETのXmlSchemaSetでコンパイルし、ローカル原本7件を警告・エラー0件で検証した。実行時インポートにXSD検証は追加していない。PMDAの画面表示、実ブラウザー、外部LLMとの照合はこの検証に含まれない。
 
 ### 2026-10-18の実行結果
 

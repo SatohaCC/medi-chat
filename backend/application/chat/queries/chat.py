@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from collections.abc import AsyncGenerator, Awaitable, Callable, Sequence
 
+from backend.application.chat.interfaces.agent_orchestrator import (
+    AgentOrchestrator,
+)
 from backend.application.chat.interfaces.llm_provider import LLMProvider
 from backend.application.chat.queries.models import (
     AnswerPromptPolicy,
@@ -52,6 +55,7 @@ class ChatQueries:
         answer_prompt_policy: AnswerPromptPolicy,
         provider_factory: Callable[[str | None], LLMProvider],
         snapshot_provider: RetrievalSnapshotProvider,
+        agent_orchestrator: AgentOrchestrator | None = None,
     ) -> None:
         self.intent_classifier = intent_classifier
         self.keyword_extractor = keyword_extractor
@@ -60,6 +64,7 @@ class ChatQueries:
         self.answer_prompt_policy = answer_prompt_policy
         self.provider_factory = provider_factory
         self.snapshot_provider = snapshot_provider
+        self.agent_orchestrator = agent_orchestrator
 
     @property
     def is_jev_available(self) -> bool:
@@ -83,7 +88,20 @@ class ChatQueries:
         product_yj_codes: list[str],
         *,
         on_logic_sources: Callable[[list[Evidence]], Awaitable[None]] | None = None,
+        provider_name: str | None = None,
+        model_name: str | None = None,
     ) -> ChatResponse:
+        # エージェントオーケストレーター（LangGraph等）が注入されている場合は、
+        # 登録された MedicalTool の自律実行・根拠統合へ委譲
+        if self.agent_orchestrator is not None:
+            return await self.agent_orchestrator.run(
+                conversation,
+                product_yj_codes,
+                on_sources=on_logic_sources,
+                provider_name=provider_name,
+                model_name=model_name,
+            )
+        # 未注入時は従来の確定的な意図分類・キーワード検索パイプラインを実行
         return await app_prepare_reply(
             conversation,
             product_yj_codes,
@@ -124,6 +142,15 @@ class ChatQueries:
         provider_name: str,
         model_name: str,
     ) -> ChatResponse:
+        # エージェントオーケストレーターが注入されている場合は自律実行へ委譲
+        if self.agent_orchestrator is not None:
+            return await self.agent_orchestrator.run(
+                conversation,
+                product_yj_codes,
+                provider_name=provider_name,
+                model_name=model_name,
+            )
+        # 未注入時は従来の回答生成パイプラインを実行
         return await app_answer_question(
             conversation,
             product_yj_codes,

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import Any
 
-from backend.application.attachment_import.commands.models import ImportResult
+from backend.application.package_insert_import.commands.models import ImportResult
 from backend.infrastructure.serialization.import_result_codec import result_from_dict
 
 

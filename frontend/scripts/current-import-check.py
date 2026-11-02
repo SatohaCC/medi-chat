@@ -13,7 +13,7 @@ from xml.etree import ElementTree as ET
 
 from sqlalchemy import select, text
 
-import backend.infrastructure.persistence.schemas.attachment_tables as schema
+import backend.infrastructure.persistence.schemas.package_insert_tables as schema
 from backend.infrastructure.persistence.runtime.postgres_readiness import (
     verify_postgres_readiness,
 )
