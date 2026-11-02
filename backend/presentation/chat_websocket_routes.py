@@ -19,6 +19,7 @@ from backend.application.medicine.queries.catalog import (
 
 from .chat_models import ChatMessage
 from .chat_service import AppChatService as ChatService
+from .chat_service import FeedbackTraceTarget
 from .dependencies import get_chat_service, get_feedback_user_id
 from .evidence_models import ChatSource
 from .medicine_models import MAX_PRODUCT_YJ_CODES
@@ -153,11 +154,18 @@ async def stream_chat_response(
                     {"type": "sources", "sources": [s.model_dump() for s in sources]}
                 )
 
+            agent_feedback_target: FeedbackTraceTarget | None = None
+
+            def capture_agent_trace(target: FeedbackTraceTarget) -> None:
+                nonlocal agent_feedback_target
+                agent_feedback_target = target
+
             try:
                 reply = await service.prepare_reply(
                     payload.messages,
                     payload.product_yj_codes,
                     on_logic_sources=publish_logic,
+                    on_agent_trace=capture_agent_trace,
                     provider_name=payload.provider,
                     model_name=payload.model,
                 )
@@ -204,6 +212,7 @@ async def stream_chat_response(
                     payload.model,
                     user_id=user_id,
                     on_completed=completed,
+                    feedback_target=agent_feedback_target,
                 )
             ) as response:
                 async for chunk in response:

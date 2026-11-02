@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from collections.abc import AsyncGenerator, Awaitable, Callable, Sequence
 from contextlib import aclosing as closing_stream
+from dataclasses import dataclass
 from uuid import UUID
 
 from langsmith import trace, traceable
+from langsmith.run_helpers import get_current_run_tree
 from langsmith.run_trees import RunTree
 from langsmith.utils import tracing_is_enabled
 
@@ -33,6 +35,18 @@ from .chat_models import (
 from .evidence_models import ChatSource
 
 
+@dataclass(frozen=True, slots=True)
+class FeedbackTraceTarget:
+    run_id: UUID
+    project_name: str
+
+
+def _feedback_trace_target(run: RunTree | None) -> FeedbackTraceTarget | None:
+    if run is None or not run.session_name:
+        return None
+    return FeedbackTraceTarget(run_id=run.id, project_name=run.session_name)
+
+
 class AppChatService:
     """RESTおよびWebSocket向けのDTO変換を行い、ChatApplicationServiceへ委譲するアダプター。"""
 
@@ -48,17 +62,16 @@ class AppChatService:
         self._feedback_token_issuer = feedback_token_issuer
 
     def _completed_feedback_token(
-        self, run: RunTree | None, user_id: str
+        self, target: FeedbackTraceTarget | None, user_id: str
     ) -> str | None:
         if (
             self._feedback_token_issuer is None
             or not user_id
-            or run is None
-            or not run.session_name
+            or target is None
             or tracing_is_enabled() is not True
         ):
             return None
-        return self._feedback_token_issuer(run.id, run.session_name, user_id)
+        return self._feedback_token_issuer(target.run_id, target.project_name, user_id)
 
     @property
     def is_jev_available(self) -> bool:
@@ -84,6 +97,7 @@ class AppChatService:
         product_yj_codes: list[str],
         *,
         on_logic_sources: Callable[[list[ChatSource]], Awaitable[None]] | None = None,
+        on_agent_trace: Callable[[FeedbackTraceTarget], None] | None = None,
         provider_name: str | None = None,
         model_name: str | None = None,
     ) -> ApplicationChatResponse:
@@ -101,6 +115,13 @@ class AppChatService:
             provider_name=settings.provider,
             model_name=settings.model,
         )
+        if (
+            on_agent_trace is not None
+            and pure_reply.retrieval_strategy == "langgraph_agent"
+        ):
+            target = _feedback_trace_target(get_current_run_tree())
+            if target is not None:
+                on_agent_trace(target)
         return pure_reply
 
     async def stream_answer(
@@ -112,6 +133,7 @@ class AppChatService:
         *,
         user_id: str = "",
         on_completed: Callable[[str | None], None] | None = None,
+        feedback_target: FeedbackTraceTarget | None = None,
     ) -> AsyncGenerator[str]:
         settings = self.defaults().resolve(provider_name, model_name)
         pure_conversation = [chat_message_from_api(m) for m in conversation]
@@ -172,7 +194,11 @@ class AppChatService:
                 if run is not None and not getattr(run, "end_time", None):
                     run.end(outputs={"answer": "".join(output_chunks)})
         if on_completed is not None:
-            on_completed(self._completed_feedback_token(run, user_id))
+            on_completed(
+                self._completed_feedback_token(
+                    feedback_target or _feedback_trace_target(run), user_id
+                )
+            )
 
     async def answer_question(
         self,
@@ -205,5 +231,7 @@ class AppChatService:
             response = chat_response_to_api(pure_reply)
             if run is not None:
                 run.end(outputs=response.model_dump())
-        response.feedback_token = self._completed_feedback_token(run, user_id)
+        response.feedback_token = self._completed_feedback_token(
+            _feedback_trace_target(run), user_id
+        )
         return response

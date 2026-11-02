@@ -24,6 +24,11 @@ REPO_ROOT = PROJECT_ROOT
 LEGACY_OPENAPI_PATH = FIXTURES_ROOT / "current-openapi-reference.json"
 
 
+class FixedChatProvider:
+    async def stream_response(self, messages, model=None):
+        yield "固定テスト回答"
+
+
 def test_openapi_contracts_match_baseline() -> None:
     # Schema generation does not need database engines or a running lifespan.
     reference_data = json.loads(LEGACY_OPENAPI_PATH.read_text(encoding="utf-8"))
@@ -128,10 +133,7 @@ async def test_rest_contracts_match_baseline(pg_api) -> None:
         assert res_chat.status_code == 200
         chat_json = res_chat.json()
         assert chat_json["needs_clarification"] is True
-        assert (
-            "指定されたYJコード" in chat_json["answer"]
-            or "検索データ" in chat_json["answer"]
-        )
+        assert "登録されているYJコード" in chat_json["answer"]
         # DB内部例外が漏洩していないこと
         assert "sqlite" not in chat_json["answer"].lower()
         assert "traceback" not in chat_json["answer"].lower()
@@ -141,7 +143,7 @@ def test_ws_public_events_match_baseline(
     pg_api,
 ) -> None:
 
-    app = pg_api()
+    app = pg_api(llm_provider_factory=lambda _: FixedChatProvider())
     client = TestClient(app)
     with client:
         # 1. Ping-pong
@@ -202,9 +204,8 @@ def test_ws_public_events_match_baseline(
             assert "text_delta" in types
             assert "text_done" in types
 
-        # 5. Normal chat with fallback provider
+        # 5. Normal chat with an injected deterministic provider
         with (
-            patch.dict(os.environ, {"OPENAI_API_KEY": ""}),
             client.websocket_connect("/ws/chat") as ws,
         ):
             ws.send_json(
@@ -302,6 +303,7 @@ def overridden_chat_service():
             *,
             user_id: str = "",
             on_completed: Callable[[str | None], None] | None = None,
+            feedback_target: Any = None,
         ) -> Any:
             self.user_ids.append(user_id)
             yield "FAKE_CHUNK_1"
@@ -427,7 +429,7 @@ def test_existing_provider_and_invalid_ws_behaviors_are_preserved(
                 "ping_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
             }
 
-        # 4. Fallback mock responses when API key is unset
+        # 4. Missing provider credentials fail closed without fabricated output
         with (
             patch.dict(os.environ, {"OPENAI_API_KEY": ""}),
             client.websocket_connect("/ws/chat") as ws,
@@ -441,13 +443,12 @@ def test_existing_provider_and_invalid_ws_behaviors_are_preserved(
                     "messages": [{"role": "user", "content": "副作用について"}],
                 }
             )
-            deltas: list[str] = []
+            events: list[dict[str, Any]] = []
             while True:
                 msg = ws.receive_json()
-                if msg["type"] == "text_delta":
-                    deltas.append(msg["content"])
-                elif msg["type"] in ("text_done", "error"):
+                events.append(msg)
+                if msg["type"] in ("text_done", "error"):
                     break
-            full_text = "".join(deltas)
-            assert "副作用について" in full_text
-            assert "OpenAI" in full_text
+            assert events[-1]["type"] == "error"
+            assert events[-1]["content"] == "Answer generation failed"
+            assert not any(event["type"] == "text_delta" for event in events)
