@@ -39,14 +39,56 @@ test("missing requirements, unknown commands, unsafe paths and nonexistent tests
 }));
 
 test("integration layers require an explicit specification and use only registered commands", () => fixture((root, spec) => {
-  spec.requirements[0].checks = [{ kind: "suite", name: "postgres" }, { kind: "suite", name: "browser" }];
+  spec.requirements[0].checks = [
+    { kind: "suite", name: "postgres" },
+    { kind: "suite", name: "browser" },
+    { kind: "suite", name: "backend-startup" },
+  ];
   const plan = specificationPlan(spec, root);
-  assert.deepEqual(plan.tasks.map((task) => task.args), [["test:postgres"], ["test:e2e"]]);
-  assert.deepEqual(plan.tasks.map((task) => task.testRunner), ["pytest", "playwright"]);
+  assert.deepEqual(plan.tasks.map((task) => task.args), [
+    ["test:postgres"],
+    ["test:e2e"],
+    ["run", "--project", "backend", "--locked", "python", "-m", "backend.infrastructure.cli.configured_e2e_gate"],
+  ]);
+  assert.deepEqual(plan.tasks.map((task) => task.testRunner), ["pytest", "playwright", "configured-backend"]);
   assert.deepEqual(plan.scopes, ["backend", "frontend"]);
   assert.deepEqual(specificationPlan(spec, root, "quick").tasks, []);
   spec.requirements[0].checks = [{ kind: "suite", name: "shell" }];
   assert.throws(() => specificationPlan(spec, root));
+}));
+
+test("configured backend evidence requires both PostgreSQL readiness and OS health", () => {
+  const successful = [
+    JSON.stringify({ backend: "postgresql" }),
+    JSON.stringify({ backend: "postgresql", readiness: "passed", os_health: { status: "ok" } }),
+  ].join("\n");
+  assert.deepEqual(acceptanceEvidence(successful, "configured-backend"), { passed: 1, incomplete: false });
+  for (const output of [
+    JSON.stringify({ backend: "postgresql", readiness: "passed" }),
+    JSON.stringify({ backend: "postgresql", readiness: "failed", os_health: { status: "ok" } }),
+    "Configured gate failed: schema_not_ready",
+  ]) {
+    assert.deepEqual(acceptanceEvidence(output, "configured-backend"), { passed: 0, incomplete: true });
+  }
+});
+
+test("selected backend startup suite records a configured gate failure in the report", () => fixture((root, spec) => {
+  spec.requirements[0].checks = [{ kind: "suite", name: "backend-startup" }];
+  const task = specificationPlan(spec, root).tasks[0];
+  const reportPath = join(tmpdir(), "quality-startup-" + process.pid + "-" + Date.now() + ".json");
+  try {
+    assert.equal(runPlan([task], () => ({
+      status: 1,
+      stdout: "Configured gate failed: schema_not_ready",
+      stderr: "",
+    }), reportPath), 1);
+    const report = JSON.parse(readFileSync(reportPath, "utf8"));
+    assert.equal(report.status, "failed");
+    assert.equal(report.tasks[0].status, "failed");
+    assert.deepEqual(report.tasks[0].requirements, ["R1"]);
+  } finally {
+    rmSync(reportPath, { force: true });
+  }
 }));
 
 test("feedback retains stable failure identity across line shifts and distinguishes different failing tests", () => {

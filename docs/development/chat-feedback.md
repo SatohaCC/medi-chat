@@ -14,7 +14,8 @@
 - `PUT /api/chat/feedback`で`feedback_token`と`rating`を送る。`up`は1、`down`は0、`null`は取消。既存の認証・Origin・CSRF検証も適用する。
 - LangSmithのキーは`user_feedback`。回答・ユーザーごとの安定したfeedback IDを使用し、再送・変更で重複させない。取消は削除し、削除済みへの取消も成功とする。評価作成時にはログイン中の`user_id`を`source_info`および`extra`へ記録し、評価者を識別可能とする。
 - SDKは専用ワーカーで実行し、外部APIが応答するまで成功を返さない。APIキーをブラウザへ渡さず、評価トークンや評価値をLLMの会話履歴へ含めない。
-- LangSmithの対象プロジェクトで`medi_chat.stream_answer`または`medi_chat.answer_question`のrunを開くと評価を確認できる。検索準備用のrunは評価対象にしない。
+- WebSocketは要求ごとに`medi_chat.chat_turn`（`chain`）をrootとして記録し、`medi_chat.prepare_reply`と`medi_chat.stream_answer`を同じtraceに含める。rootの出力は最終回答の`text_done`送信後に確定する。
+- LangSmithの対象プロジェクトでrootを開くとチャット全体を確認できる。評価は回答を記録したrun（WebSocketでは`medi_chat.stream_answer`またはAgentの`medi_chat.prepare_reply`、RESTでは`medi_chat.answer_question`）に保存し、検索準備だけのrunは評価対象にしない。
 
 コメント入力・再読み込み後の評価復元・評価からの自動学習は対象外。
 

@@ -3,6 +3,34 @@ import { resolve, sep } from "node:path";
 
 export const DEFAULT_SPEC = "tmp/quality/task.json";
 
+const SUITES = {
+  postgres: {
+    scope: "backend",
+    command: "pnpm",
+    args: ["test:postgres"],
+    testRunner: "pytest",
+  },
+  browser: {
+    scope: "frontend",
+    command: "pnpm",
+    args: ["test:e2e"],
+    testRunner: "playwright",
+  },
+  "backend-startup": {
+    scope: "backend",
+    command: "uv",
+    args: [
+      "run", "--project", "backend", "--locked", "python", "-m",
+      "backend.infrastructure.cli.configured_e2e_gate",
+    ],
+    testRunner: "configured-backend",
+  },
+};
+
+export function registeredSuite(name) {
+  return Object.hasOwn(SUITES, name) ? SUITES[name] : undefined;
+}
+
 function fields(value, names) {
   if (!value || typeof value !== "object" || Array.isArray(value)
     || Object.keys(value).some((key) => !names.includes(key))) throw new Error("Invalid quality specification fields");
@@ -27,14 +55,14 @@ export function specificationPlan(spec, root, phase = "full") {
     ids.add(requirement.id);
     for (const check of requirement.checks) {
       fields(check, ["kind", "path", "test", "name"]);
-      let command, args, layer;
+      let command, args, layer, testRunner;
       if (check.kind === "suite") {
-        if (check.path !== undefined || check.test !== undefined || !["postgres", "browser"].includes(check.name)) throw new Error("Unknown integration suite");
+        const suite = registeredSuite(check.name);
+        if (check.path !== undefined || check.test !== undefined || !suite) throw new Error("Unknown integration suite");
         layer = check.name;
-        scopes.add(layer === "postgres" ? "backend" : "frontend");
+        scopes.add(suite.scope);
         if (phase === "quick") continue;
-        command = "pnpm";
-        args = [layer === "postgres" ? "test:postgres" : "test:e2e"];
+        ({ command, args, testRunner } = suite);
       } else {
         if (check.name !== undefined || typeof check.path !== "string"
           || !/^[a-zA-Z0-9_./-]+$/.test(check.path) || check.path.split("/").some((part) => !part || part === ".." || part === ".")) throw new Error("Unsafe test path");
@@ -47,12 +75,12 @@ export function specificationPlan(spec, root, phase = "full") {
         scopes.add(check.path.startsWith("backend/") ? "backend" : check.path.startsWith("frontend/") ? "frontend" : "scripts");
         layer = "unit";
         command = python ? "uv" : process.execPath;
+        testRunner = python ? "pytest" : "node";
         args = python
           ? ["run", "--project", "backend", "--locked", "python", "-m", "pytest", check.path + (check.test ? `::${check.test}` : ""), "-m", "not postgres and not source_data", "-q"]
           : ["--experimental-strip-types", "--test", "--test-timeout=60000", check.path];
       }
       const key = JSON.stringify([command, args]);
-      const testRunner = layer === "browser" ? "playwright" : command === "uv" || layer === "postgres" ? "pytest" : "node";
       if (!tasks.has(key)) tasks.set(key, { label: `Acceptance: ${check.path ?? check.name}${check.test ? `::${check.test}` : ""}`, command, args, layer, testRunner, requireEvidence: true, specification: spec.task, requirements: [], reasons: [] });
       tasks.get(key).requirements.push(requirement.id);
       tasks.get(key).reasons.push(requirement.acceptance);

@@ -12,6 +12,7 @@ from backend.application.chat.commands.submit_feedback import SubmitFeedback
 from backend.application.chat.errors import FeedbackTimeout, FeedbackUnavailable
 from backend.application.chat.queries.chat import ChatQueries
 from backend.application.chat.queries.models import ChatResponse
+from backend.application.medicine.errors import InvalidMedicineInput
 from backend.infrastructure.observability.feedback_tokens import SignedFeedbackTokens
 from backend.presentation.access_control import AccessControlMiddleware
 from backend.presentation.chat_routes import router
@@ -199,12 +200,27 @@ def test_B01_B02_B17_rest_and_ws_target_actual_answer_run():
         }
         assert recorded[rest_target.run_id]["name"] == "medi_chat.answer_question"
         assert recorded[ws_target.run_id]["name"] == "medi_chat.stream_answer"
+        ws_root = next(
+            run for run in recorded.values() if run["name"] == "medi_chat.chat_turn"
+        )
+        assert ws_root["run_type"] == "chain"
+        assert recorded[ws_target.run_id]["parent_run_id"] == ws_root["id"]
+        prepare_run = next(
+            run for run in recorded.values() if run["name"] == "medi_chat.prepare_reply"
+        )
+        assert prepare_run["parent_run_id"] == ws_root["id"]
         for target in (rest_target, ws_target):
             assert any(
                 call.kwargs.get("run_id") == target.run_id
                 and call.kwargs.get("outputs", {}).get("answer") == "テスト回答"
                 for call in trace_client.update_run.call_args_list
             )
+        assert any(
+            call.kwargs.get("run_id") == ws_root["id"]
+            and call.kwargs.get("outputs")
+            == {"status": "completed", "answer": "テスト回答"}
+            for call in trace_client.update_run.call_args_list
+        )
 
 
 async def test_B19_agent_feedback_targets_trace_containing_generation():
@@ -234,10 +250,10 @@ async def test_B19_agent_feedback_targets_trace_containing_generation():
     with (
         tracing_context(enabled=True, client=trace_client, project_name="test-project"),
         TestClient(app) as client,
+        client.websocket_connect("/api/ws", headers=headers()) as ws,
     ):
-        with client.websocket_connect("/api/ws", headers=headers()) as ws:
-            ws.send_json(request())
-            events = completed(ws)
+        ws.send_json(request())
+        events = completed(ws)
         target = codec.verify(events[-1]["feedback_token"], "user")
 
     runs = {
@@ -253,10 +269,58 @@ async def test_B19_agent_feedback_targets_trace_containing_generation():
     stream_run = next(
         run for run in runs.values() if run["name"] == "medi_chat.stream_answer"
     )
+    chat_turn = next(
+        run for run in runs.values() if run["name"] == "medi_chat.chat_turn"
+    )
 
     assert generation_run["parent_run_id"] == prepare_run["id"]
+    assert chat_turn["run_type"] == "chain"
+    assert prepare_run["parent_run_id"] == chat_turn["id"]
+    assert stream_run["parent_run_id"] == chat_turn["id"]
     assert target.run_id == prepare_run["id"]
     assert target.run_id != stream_run["id"]
+    assert any(
+        call.kwargs.get("run_id") == chat_turn["id"]
+        and call.kwargs.get("outputs") == {"status": "completed", "answer": "Agent回答"}
+        for call in trace_client.update_run.call_args_list
+    )
+
+
+async def test_B20_websocket_root_trace_marks_invalid_input_as_error():
+    class RejectingAnswers:
+        is_jev_available = False
+
+        async def prepare_reply(self, *args: Any, **kwargs: Any) -> ChatResponse:
+            raise InvalidMedicineInput("invalid input")
+
+    codec = SignedFeedbackTokens(secret=b"s" * 32, audience="test")
+    app = app_for(Writer(), codec)
+    app.state.chat_service = AppChatService(
+        application_service=cast(ChatQueries, RejectingAnswers())
+    )
+    app.include_router(ws_router)
+    trace_client = Mock(spec=Client)
+
+    with (
+        tracing_context(enabled=True, client=trace_client, project_name="test-project"),
+        TestClient(app) as client,
+        client.websocket_connect("/api/ws", headers=headers()) as ws,
+    ):
+        ws.send_json(request())
+        events = completed(ws)
+
+    assert events[-1]["type"] == "error"
+    chat_turn = next(
+        call.kwargs
+        for call in trace_client.create_run.call_args_list
+        if call.kwargs["name"] == "medi_chat.chat_turn"
+    )
+    assert any(
+        call.kwargs.get("run_id") == chat_turn["id"]
+        and call.kwargs.get("outputs") == {"status": "invalid_input"}
+        and call.kwargs.get("error") == "invalid_input"
+        for call in trace_client.update_run.call_args_list
+    )
 
 
 async def test_B03_B04_no_token_when_disabled_or_incomplete():

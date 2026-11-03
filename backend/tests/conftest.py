@@ -13,6 +13,11 @@ _AUTH_ENVIRONMENT = pytest.StashKey[pytest.MonkeyPatch]()
 def pytest_configure(config):
     authentication = pytest.MonkeyPatch()
     config.stash[_AUTH_ENVIRONMENT] = authentication
+    # Both local and real-PostgreSQL tests use explicit test settings, never developer dotenv.
+    authentication.setenv("PYTHON_DOTENV_DISABLED", "1")
+    authentication.setenv(
+        "MEDI_CHAT_DATABASE_URL", "postgresql+psycopg://unused@127.0.0.1:1/unused"
+    )
     # Collection-selection tests copy this hook into an isolated mini-project.
     # Only the real backend suite needs application signing keys.
     if (Path(__file__).parent / "support" / "authentication.py").is_file():
@@ -26,10 +31,6 @@ def pytest_configure(config):
     # main.app is constructed at import time; construction needs a URL, not a DB.
     # Isolate local tests from developer credentials and external API keys.
     environment = pytest.MonkeyPatch()
-    environment.setenv("PYTHON_DOTENV_DISABLED", "1")
-    environment.setenv(
-        "MEDI_CHAT_DATABASE_URL", "postgresql+psycopg://unused@127.0.0.1:1/unused"
-    )
     for name in (
         "TEST_DATABASE_URL",
         "TEST_RUNTIME_DATABASE_URL",
