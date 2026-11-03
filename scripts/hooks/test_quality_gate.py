@@ -7,7 +7,147 @@ from types import SimpleNamespace
 import pytest
 
 from scripts.hooks.format_edited_python import edited_files
+from scripts.hooks.quality_feedback import repair_state, report_feedback
 from scripts.hooks.quality_gate import changed_paths, fingerprint, stop_decision
+
+
+def test_repair_state_distinguishes_progress_unknown_failures_and_success():
+    state = repair_state(None, 1, "A+B")
+    state = repair_state(state, 1, "A")
+    assert state["repeated_failures"] == 1
+    state = repair_state(state, 1, "B")
+    assert state["repeated_failures"] == 1
+    state = repair_state(state, 0, None)
+    assert state["attempts"] == 0
+    assert repair_state(state, 1, "B")["repeated_failures"] == 1
+    for _ in range(6):
+        state = repair_state(state, 1, None)
+    assert state["terminal"] == "attempt_limit"
+    assert state["repeated_failures"] == 0
+    assert report_feedback({"tasks": [{"status": "failed"}]})[0] is None
+
+
+def test_same_diagnostic_stops_repair_even_when_source_changes(
+    tmp_path, monkeypatch, stop_context
+):
+    from scripts.hooks import quality_gate as gate
+
+    source = tmp_path / "changed.py"
+    monkeypatch.setattr(gate, "ROOT", tmp_path)
+    monkeypatch.setattr(gate, "changed_paths", lambda root: ["changed.py"])
+    calls = []
+
+    def execute(command, **kwargs):
+        calls.append(command)
+        Path(command[-1]).write_text(
+            json.dumps(
+                {
+                    "tasks": [
+                        {
+                            "label": "Acceptance R1",
+                            "status": "failed",
+                            "feedback": {
+                                "identity": "same-failing-test-and-error",
+                                "diagnostics": ["test_access"],
+                                "suggestion": "Fix the authorization branch",
+                                "docs": "docs/development/validation.md",
+                            },
+                        }
+                    ]
+                }
+            ),
+            encoding="utf-8",
+        )
+        return SimpleNamespace(returncode=1)
+
+    monkeypatch.setattr(gate.subprocess, "run", execute)
+    event = {
+        "hook_event_name": "Stop",
+        "turn_id": "repair-task",
+        "stop_hook_active": True,
+    }
+    for attempt in range(3):
+        source.write_text(f"# distinct implementation {attempt}", encoding="utf-8")
+        decision = gate.main(event)
+        if attempt < 2:
+            assert decision["decision"] == "block"
+            assert "Fix the authorization branch" in decision["reason"]
+        else:
+            assert "decision" not in decision
+            assert "stagnated" in decision["systemMessage"]
+            assert "do not claim success" in decision["systemMessage"]
+    assert gate.main(event)["systemMessage"]
+    assert len(calls) == 3
+    receipt = next(
+        path
+        for path in (tmp_path / ".agents/work/.hooks").glob("*.json")
+        if ".report." not in path.name
+    )
+    state = json.loads(receipt.read_text(encoding="utf-8"))
+    assert state["result"] != 0
+    assert state["repeated_failures"] == 3
+
+
+def test_default_task_spec_changes_invalidate_stop_success(
+    tmp_path, monkeypatch, stop_context
+):
+    from scripts.hooks import quality_gate as gate
+
+    monkeypatch.setattr(gate, "ROOT", tmp_path)
+    monkeypatch.setattr(gate, "changed_paths", lambda root: [])
+    calls = []
+
+    def execute(*args, **kwargs):
+        calls.append(args)
+        return SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr(gate.subprocess, "run", execute)
+    event = {"hook_event_name": "Stop"}
+    assert gate.main(event) == {}
+    spec = tmp_path / "tmp/quality/task.json"
+    spec.parent.mkdir(parents=True)
+    spec.write_text('{"version":1}', encoding="utf-8")
+    assert gate.main(event) == {}
+    assert len(calls) == 2
+
+
+@pytest.fixture
+def stop_context(monkeypatch):
+    from scripts.hooks import quality_gate as gate
+
+    context = ["head-and-settings-v1"]
+    monkeypatch.setattr(gate, "validation_context", lambda root: context[0])
+    return context
+
+
+@pytest.mark.parametrize("status", ["timeout", "start_error"])
+def test_runner_infrastructure_failure_is_recorded(
+    tmp_path, monkeypatch, stop_context, status
+):
+    from scripts.hooks import quality_gate as gate
+
+    monkeypatch.setattr(gate, "ROOT", tmp_path)
+    monkeypatch.setattr(gate, "changed_paths", lambda root: [])
+
+    directory = tmp_path / ".agents/work/.hooks"
+    directory.mkdir(parents=True)
+    key = gate.hashlib.sha256(b"current").hexdigest()[:24]
+    (directory / f"{key}.report.json").write_text('{"status": "passed"}')
+
+    def execute(*args, **kwargs):
+        if status == "timeout":
+            raise subprocess.TimeoutExpired("node", 540)
+        raise FileNotFoundError("node unavailable")
+
+    monkeypatch.setattr(gate.subprocess, "run", execute)
+    assert gate.main({"hook_event_name": "Stop"})["decision"] == "block"
+    receipt = json.loads(
+        next((tmp_path / ".agents/work/.hooks").glob("*.json")).read_text()
+    )
+    assert receipt["status"] == status
+    assert receipt["result"] != 0
+    assert receipt["report"] is None
+    assert (tmp_path / ".agents/work/.hooks" / receipt["log"]).is_file()
 
 
 def test_failed_check_continues_once_but_never_claims_success():
@@ -28,6 +168,56 @@ def test_fingerprint_invalidates_changed_and_deleted_contents(tmp_path):
     second = fingerprint(tmp_path, ["a.py"])
     file.unlink()
     assert len({first, second, fingerprint(tmp_path, ["a.py"])}) == 3
+
+
+def test_validation_context_tracks_head_and_clean_configuration(tmp_path):
+    from scripts.hooks.quality_gate import validation_context
+
+    def git(*args):
+        subprocess.run(["git", *args], cwd=tmp_path, check=True, capture_output=True)
+
+    def commit():
+        git("add", ".")
+        git(
+            "-c",
+            "user.name=Test",
+            "-c",
+            "user.email=test@example.invalid",
+            "commit",
+            "--no-verify",
+            "--allow-empty",
+            "-m",
+            "fixture",
+        )
+
+    git("init")
+    configuration = tmp_path / "pytest.ini"
+    configuration.write_text("[pytest]\n", encoding="utf-8")
+    commit()
+    original = validation_context(tmp_path)
+    assert validation_context(tmp_path) == original
+    configuration.write_text("[pytest]\naddopts = -q\n", encoding="utf-8")
+    assert validation_context(tmp_path) != original
+    configuration.write_text("[pytest]\n", encoding="utf-8")
+    assert validation_context(tmp_path) == original
+    commit()
+    assert validation_context(tmp_path) != original
+
+
+def test_configuration_changes_during_validation_block_success(
+    tmp_path, monkeypatch, stop_context
+):
+    from scripts.hooks import quality_gate as gate
+
+    monkeypatch.setattr(gate, "ROOT", tmp_path)
+    monkeypatch.setattr(gate, "changed_paths", lambda root: [])
+
+    def execute(*args, **kwargs):
+        stop_context[0] = "changed-configuration"
+        return SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr(gate.subprocess, "run", execute)
+    assert gate.main({"hook_event_name": "Stop"})["decision"] == "block"
 
 
 def test_changed_paths_include_staged_unstaged_deleted_and_untracked(tmp_path):
@@ -78,7 +268,9 @@ def test_patch_string_and_structured_payloads_are_understood():
     )
 
 
-def test_stop_runs_checks_and_reuses_only_current_success(tmp_path, monkeypatch):
+def test_stop_runs_checks_and_reuses_only_current_success(
+    tmp_path, monkeypatch, stop_context
+):
     from scripts.hooks import quality_gate as gate
 
     source = tmp_path / "changed.py"
@@ -99,9 +291,18 @@ def test_stop_runs_checks_and_reuses_only_current_success(tmp_path, monkeypatch)
     source.write_text("after", encoding="utf-8")
     assert gate.main(event) == {}
     assert len(calls) == 2
+    stop_context[0] = "head-and-settings-v2"
+    assert gate.main(event) == {}
+    assert len(calls) == 3
+    receipt = next((tmp_path / ".agents/work/.hooks").glob("*.json"))
+    receipt.write_text("broken json", encoding="utf-8")
+    assert gate.main(event) == {}
+    assert len(calls) == 4
 
 
-def test_checks_cannot_certify_files_changed_during_validation(tmp_path, monkeypatch):
+def test_checks_cannot_certify_files_changed_during_validation(
+    tmp_path, monkeypatch, stop_context
+):
     from scripts.hooks import quality_gate as gate
 
     source = tmp_path / "changed.py"
@@ -143,7 +344,9 @@ def test_post_edit_formats_before_quick_checks(monkeypatch):
     assert order == ["format", "check"]
 
 
-def test_post_edit_returns_type_failure_and_stop_blocks(tmp_path, monkeypatch):
+def test_post_edit_returns_type_failure_and_stop_blocks(
+    tmp_path, monkeypatch, stop_context
+):
     from scripts.hooks import quality_gate as gate
 
     source = tmp_path / "backend/main.py"

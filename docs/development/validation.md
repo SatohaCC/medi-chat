@@ -6,6 +6,8 @@
 
 この入口はソースを自動修正しない。通常のbackendテストから実DB・非公開原本を必要とするテストを除き、frontendはNodeの単体テストを実行する。実PostgreSQL・ブラウザ・外部APIの検証は別に選択し、共通コマンドの成功で代替しない。
 
+受入条件がある作業では、[仕様JSONの例](quality-task.example.json)に従って要件ID・受入条件・対応テストを定義し、`--spec <JSON>`で選択する。作業用`tmp/quality/task.json`は手動・hooks共通で自動読込する。通常の回帰検査も維持する。登録可能なテスト、integrationの明示選択、受入検査の未実施判定、修正フィードバック・停滞停止は[scripts/README](../../scripts/README.md#仕様に基づくテスト選択)を正本とする。自然言語の仕様からテスト内容の妥当性まで自動判定するものではない。
+
 pytestの設定はルート`pytest.ini`で共有する。`pytest`と`python -m pytest`のどちらからもbackendとscriptsをimportできる。`testpaths`は`backend/tests`と`scripts/hooks`で、backend用のDB隔離・マーカー選別は既存の`backend/tests/conftest.py`が担当する。
 
 frontendのソースは`.gitattributes`とBiomeでLFに統一する。`e2e/fixtures`・`e2e-real/fixtures`は原本のバイト列を保持するため、改行変換と整形を行わない。TypeScript 7のCLIは`@typescript/native`、StyleX ESLintが使うコンパイラーAPIは`typescript`名の`@typescript/typescript6`で供給する。`pnpm typecheck:frontend`の`tsc`は引き続き7系を実行する。

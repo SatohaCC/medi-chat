@@ -13,6 +13,7 @@ sys.path.insert(0, str(ROOT))
 
 from scripts.hooks.format_edited_python import edited_paths
 from scripts.hooks.format_edited_python import main as format_python
+from scripts.hooks.quality_feedback import repair_state, report_feedback
 
 
 def changed_paths(root: Path) -> list[str]:
@@ -26,6 +27,29 @@ def changed_paths(root: Path) -> list[str]:
         )
         paths.update(result.stdout.decode("utf-8").split("\0"))
     return sorted(path for path in paths if path)
+
+
+def validation_context(root: Path) -> str:
+    """Bind receipts to HEAD and the tracked validation configuration."""
+    head = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, check=True
+    ).stdout
+    tracked = subprocess.run(
+        ["git", "ls-files", "-z"], cwd=root, capture_output=True, check=True
+    ).stdout.decode("utf-8")
+    inputs = [
+        name
+        for name in tracked.split("\0")
+        if name
+        and (
+            name.endswith((".json", ".toml", ".yaml", ".yml", ".ini", ".lock"))
+            or name.startswith(("scripts/checks/", "scripts/hooks/"))
+            or Path(name).name.startswith(
+                (".python-version", ".nvmrc", ".importlinter")
+            )
+        )
+    ]
+    return head.decode("utf-8").strip() + ":" + fingerprint(root, inputs)
 
 
 def fingerprint(root: Path, paths: list[str]) -> str:
@@ -44,6 +68,14 @@ def fingerprint(root: Path, paths: list[str]) -> str:
 def stop_decision(
     event: dict, signature: str, previous: dict | None, result: int | None
 ) -> dict:
+    if (
+        previous
+        and previous.get("signature") == signature
+        and previous.get("status") in {"stagnated", "attempt_limit"}
+    ):
+        return {
+            "systemMessage": f"Quality repair stopped: {previous['status']}. Unresolved failures remain. Report the log and request a revised diagnosis; do not claim success or weaken checks."
+        }
     if previous and previous.get("signature") == signature:
         if previous.get("result") == 0:
             return {}
@@ -107,47 +139,117 @@ def main(event: dict) -> dict:
         return {}
     if event.get("hook_event_name") != "Stop":
         return {}
-    paths = changed_paths(ROOT)
-    signature = fingerprint(ROOT, paths)
+
+    def signature_for_current_inputs() -> str:
+        return hashlib.sha256(
+            (
+                validation_context(ROOT)
+                + fingerprint(ROOT, changed_paths(ROOT))
+                + fingerprint(ROOT, ["tmp/quality/task.json"])
+            ).encode("utf-8")
+        ).hexdigest()
+
+    signature = signature_for_current_inputs()
+    spec_signature = fingerprint(ROOT, ["tmp/quality/task.json"])
     turn = str(event.get("turn_id") or event.get("session_id") or "current")
     key = hashlib.sha256(turn.encode("utf-8")).hexdigest()[:24]
     directory = ROOT / ".agents/work/.hooks"
     directory.mkdir(parents=True, exist_ok=True)
     receipt = directory / f"{key}.json"
-    previous = (
-        json.loads(receipt.read_text(encoding="utf-8")) if receipt.exists() else None
-    )
+    try:
+        previous = (
+            json.loads(receipt.read_text(encoding="utf-8"))
+            if receipt.exists()
+            else None
+        )
+        if not isinstance(previous, dict):
+            previous = None
+    except (ValueError, OSError):
+        print("Invalid quality receipt; running checks again.", file=sys.stderr)
+        previous = None
     if (
         previous
         and previous.get("signature") == signature
-        and (previous.get("result") == 0 or event.get("stop_hook_active"))
+        and (
+            previous.get("result") == 0
+            or event.get("stop_hook_active")
+            or previous.get("status") in {"stagnated", "attempt_limit"}
+        )
     ):
         return stop_decision(event, signature, previous, None)
     log = directory / f"{key}.log"
+    report = directory / f"{key}.report.json"
+    report.unlink(missing_ok=True)
     with log.open("w", encoding="utf-8") as output:
         try:
             exit_code = subprocess.run(
-                ["node", str(ROOT / "scripts/checks/quality.mjs"), "--changed"],
+                [
+                    "node",
+                    str(ROOT / "scripts/checks/quality.mjs"),
+                    "--changed",
+                    "--report",
+                    str(report),
+                ],
                 cwd=ROOT,
                 stdout=output,
                 stderr=subprocess.STDOUT,
                 timeout=540,
                 check=False,
             ).returncode
+            status = "passed" if exit_code == 0 else "failed"
         except (OSError, subprocess.TimeoutExpired) as error:
             output.write(f"Quality runner failed: {error}\n")
             exit_code = 1
+            status = (
+                "timeout"
+                if isinstance(error, subprocess.TimeoutExpired)
+                else "start_error"
+            )
     # A check must not certify files changed during execution (including generated output).
-    if fingerprint(ROOT, changed_paths(ROOT)) != signature:
+    if signature_for_current_inputs() != signature:
         exit_code = 1
+        status = "inputs_changed"
         with log.open("a", encoding="utf-8") as output:
             output.write(
                 "Files changed during validation; rerun against the current contents.\n"
             )
-    receipt.write_text(
-        json.dumps({"signature": signature, "result": exit_code}), encoding="utf-8"
+    try:
+        structured = (
+            json.loads(report.read_text(encoding="utf-8")) if report.exists() else None
+        )
+        if not isinstance(structured, dict):
+            structured = None
+    except (ValueError, OSError):
+        structured = None
+    failure_key, feedback = report_feedback(structured)
+    state = repair_state(
+        previous
+        if previous and previous.get("spec_signature") == spec_signature
+        else None,
+        exit_code,
+        failure_key if status == "failed" else None,
     )
-    return stop_decision(event, signature, previous, exit_code)
+    if state.get("terminal"):
+        status = state["terminal"]
+    current = {
+        "signature": signature,
+        "spec_signature": spec_signature,
+        "result": exit_code,
+        "status": status,
+        "log": log.name,
+        "report": report.name if report.exists() else None,
+        **state,
+    }
+    receipt.write_text(
+        json.dumps(current),
+        encoding="utf-8",
+    )
+    if state.get("terminal"):
+        return stop_decision(event, signature, current, exit_code)
+    decision = stop_decision(event, signature, previous, exit_code)
+    if decision.get("decision") == "block":
+        decision["reason"] += f"\nLog: {log.relative_to(ROOT).as_posix()}\n{feedback}"
+    return decision
 
 
 if __name__ == "__main__":

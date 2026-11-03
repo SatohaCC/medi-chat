@@ -1,8 +1,10 @@
 // Shared, read-only quality entry point for manual runs, CI and Codex hooks.
 import { spawnSync } from "node:child_process";
-import { mkdirSync, readdirSync } from "node:fs";
+import { mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { resolve, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import { loadSpecification } from "./quality-spec.mjs";
+import { acceptanceEvidence, failureFeedback } from "./quality-feedback.mjs";
 
 export const ROOT = fileURLToPath(new URL("../../", import.meta.url));
 
@@ -72,9 +74,9 @@ export function planFor(scopes, phase = "full") {
   return plan;
 }
 
-export function changedPaths() {
+export function changedPaths(root = ROOT) {
   const collect = (args) => {
-    const result = spawnSync("git", args, { cwd: ROOT, encoding: "utf8" });
+    const result = spawnSync("git", args, { cwd: root, encoding: "utf8" });
     if (result.status !== 0) throw new Error(result.stderr || "Cannot inspect Git changes");
     return result.stdout.split("\0").filter(Boolean);
   };
@@ -84,21 +86,54 @@ export function changedPaths() {
   ])].sort();
 }
 
-export function runPlan(plan, execute = spawnSync) {
+export function runPlan(plan, execute = spawnSync, reportPath = null) {
   let failed = false;
+  const report = {
+    version: 1,
+    status: "not_run",
+    excludedLayers: ["postgres", "browser", "external_api"].filter((layer) => !plan.some((task) => task.layer === layer)),
+    tasks: plan.map((task) => ({ ...task, status: "not_run", exitCode: null, durationMs: 0 })),
+  };
+  const save = () => {
+    if (reportPath) writeFileSync(reportPath, JSON.stringify(report, null, 2));
+  };
+  save();
   const temporary = resolve(ROOT, "tmp/quality");
   mkdirSync(temporary, { recursive: true });
-  for (const task of plan) {
+  for (const [index, task] of plan.entries()) {
     console.log(`\n[quality] ${task.label}`);
     const invocation = invocationFor(task);
+    const started = Date.now();
     const result = execute(invocation.command, invocation.args, {
       cwd: ROOT,
-      stdio: "inherit",
+      stdio: "pipe",
+      encoding: "utf8",
+      maxBuffer: 16 * 1024 * 1024,
       shell: invocation.shell,
       timeout: 300_000,
       env: { ...process.env, UV_CACHE_DIR: resolve(ROOT, ".uv-cache"), TMP: temporary, TEMP: temporary, TMPDIR: temporary },
     });
-    if (result.error || result.status !== 0) {
+    if (result.stdout) process.stdout.write(result.stdout);
+    if (result.stderr) process.stderr.write(result.stderr);
+    Object.assign(report.tasks[index], {
+      status: result.error?.code === "ETIMEDOUT" ? "timeout"
+        : result.error ? "start_error" : result.status === 0 ? "passed" : "failed",
+      exitCode: result.status ?? null,
+      durationMs: Date.now() - started,
+    });
+    const output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
+    if (task.requireEvidence && report.tasks[index].status === "passed") {
+      const evidence = acceptanceEvidence(output);
+      report.tasks[index].evidence = evidence;
+      if (!evidence.passed || evidence.incomplete) report.tasks[index].status = "incomplete";
+    }
+    const feedback = failureFeedback(task, report.tasks[index].status, output);
+    report.tasks[index].feedback = feedback;
+    if (feedback) console.error(`[quality] Next: ${feedback.suggestion} See ${feedback.docs}`);
+    report.status = report.tasks.some((entry) => entry.status === "not_run") ? "not_run"
+      : report.tasks.every((entry) => entry.status === "passed") ? "passed" : "failed";
+    save();
+    if (report.tasks[index].status !== "passed") {
       console.error(`[quality] FAILED: ${task.label}${result.error ? `: ${result.error.message}` : ""}`);
       failed = true;
     }
@@ -131,13 +166,18 @@ export function main(args) {
   }
   const scopes = args.includes("--changed") ? scopesFor(changedPaths())
     : scope === "all" ? ["backend", "frontend", "scripts"] : [scope];
-  const plan = planFor(scopes, phase);
+  const specIndex = args.indexOf("--spec");
+  if (specIndex >= 0 && (!args[specIndex + 1] || args[specIndex + 1].startsWith("--"))) throw new Error("--spec requires a JSON path");
+  const specification = loadSpecification(ROOT, specIndex < 0 ? undefined : args[specIndex + 1], phase);
+  const plan = [...specification.tasks, ...planFor([...new Set([...scopes, ...specification.scopes])], phase)];
   if (args.includes("--list")) {
     console.log(JSON.stringify(plan, null, 2));
     return 0;
   }
   if (!plan.length) console.log("[quality] No code or tooling changes to check.");
-  return runPlan(plan);
+  const reportIndex = args.indexOf("--report");
+  if (reportIndex >= 0 && !args[reportIndex + 1]) throw new Error("--report requires a path");
+  return runPlan(plan, spawnSync, reportIndex >= 0 ? resolve(args[reportIndex + 1]) : null);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
