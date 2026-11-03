@@ -3,6 +3,8 @@
 - 既存の差分・未追跡ファイルを保持し、依頼された範囲だけを変更する。
 - 対象ディレクトリに適用されるAGENTS.mdも確認する。frontend作業では`frontend/AGENTS.md`とインストール済みNext.jsの対象ガイドを読み、生成される案内ブロックを削除・複製しない。
 - 未実施・環境不足・skip/xfailを検証成功として報告しない。検証した層と今回の差分を特定する。
+- コードを変更するすべてのエージェントは[共通品質ハーネス](scripts/README.md)を使う。受入条件のある作業では`tmp/quality/task.json`で条件と登録済みテストを対応付け、編集後は`pnpm agent:check --phase quick`、完了前は`pnpm agent:check --report tmp/quality/result.json`を実行する。失敗時はレポートの診断・修正候補を読み、成功または未解決の具体的な理由まで確認する。受入条件や検査を弱めて成功にしない。
+- `AGENTS.md`と共通CLIは複数エージェント間の共有契約であり、各実行環境での自動起動を保証しない。編集・終了イベントへ自動接続する場合は、そのエージェントのHookを共通CLIのadapterとして設定する。
 - feature-pipelineの役割・承認手順は共通Skillと実行環境のエージェント設定を使う。他のエージェント向けのリポジトリ内出力は[Feature Pipeline](.agents/skills/feature-pipeline/SKILL.md)と[Markdown役割定義](.agents/agents/)を参照する。明示的な開始・再開依頼がある場合だけ実行する。現在のケース・承認・ログをこのファイルへ書かない。
 
 ## 開発段階の変更方針
