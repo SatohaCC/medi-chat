@@ -15,6 +15,8 @@ from scripts.hooks.format_edited_python import edited_paths
 from scripts.hooks.format_edited_python import main as format_python
 from scripts.hooks.quality_feedback import repair_state, report_feedback
 
+EDIT_WARNING_THRESHOLD = 5
+
 
 def changed_paths(root: Path) -> list[str]:
     paths = set()
@@ -65,6 +67,80 @@ def fingerprint(root: Path, paths: list[str]) -> str:
     return digest.hexdigest()
 
 
+def edit_state_path(directory: Path, turn: str) -> Path:
+    key = hashlib.sha256(turn.encode("utf-8")).hexdigest()[:24]
+    return directory / f"{key}.edits.json"
+
+
+def edit_loop_warnings(root: Path, event: dict, files: list[Path]) -> list[str]:
+    if not files:
+        return []
+
+    turn = str(event.get("turn_id") or event.get("session_id") or "current")
+    directory = root / ".agents/work/.hooks"
+    state_path = edit_state_path(directory, turn)
+    try:
+        stored = json.loads(state_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        stored = {}
+    if (
+        not isinstance(stored, dict)
+        or stored.get("version") != 1
+        or not isinstance(stored.get("counts"), dict)
+    ):
+        stored = {}
+
+    counts = {
+        name: count
+        for name, count in stored.get("counts", {}).items()
+        if isinstance(name, str) and type(count) is int and count > 0
+    }
+    stored_warned = stored.get("warned", [])
+    if not isinstance(stored_warned, list):
+        stored_warned = []
+    warned = {name for name in stored_warned if isinstance(name, str)}
+    crossed_threshold = []
+    for path in sorted(set(files)):
+        try:
+            name = path.resolve().relative_to(root.resolve()).as_posix()
+        except ValueError:
+            continue
+        counts[name] = counts.get(name, 0) + 1
+        if counts[name] >= EDIT_WARNING_THRESHOLD and name not in warned:
+            warned.add(name)
+            crossed_threshold.append(name)
+
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+        state_path.write_text(
+            json.dumps(
+                {"version": 1, "counts": counts, "warned": sorted(warned)},
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
+    except OSError as error:
+        print(f"Could not record edit-loop state: {error}", file=sys.stderr)
+        return []
+    return crossed_threshold
+
+
+def clear_edit_state(directory: Path, turn: str) -> None:
+    try:
+        edit_state_path(directory, turn).unlink(missing_ok=True)
+    except OSError as error:
+        print(f"Could not clear edit-loop state: {error}", file=sys.stderr)
+
+
+def edit_warning_context(paths: list[str]) -> str:
+    return "\n".join(
+        f"Repeated editing reminder: `{path}` has reached {EDIT_WARNING_THRESHOLD} edits this turn. "
+        "Pause to compare the approach with the acceptance criteria and reconsider the plan before editing again. "
+        "This is advisory and does not block the work."
+        for path in paths
+    )
+
+
 def stop_decision(
     event: dict, signature: str, previous: dict | None, result: int | None
 ) -> dict:
@@ -96,6 +172,7 @@ def main(event: dict) -> dict:
         files = edited_paths(event)
         if not files:
             return {}
+        edit_warnings = edit_loop_warnings(ROOT, event, files)
         formatting = format_python(event)
         scopes = set()
         for path in files:
@@ -128,12 +205,16 @@ def main(event: dict) -> dict:
                         "utf-8", errors="replace"
                     )
                 )
+        contexts = []
+        if edit_warnings:
+            contexts.append(edit_warning_context(edit_warnings))
         if failures:
+            contexts.append("Quick checks failed:\n" + "\n".join(failures)[-12000:])
+        if contexts:
             return {
                 "hookSpecificOutput": {
                     "hookEventName": "PostToolUse",
-                    "additionalContext": "Quick checks failed:\n"
-                    + "\n".join(failures)[-12000:],
+                    "additionalContext": "\n\n".join(contexts),
                 }
             }
         return {}
@@ -155,6 +236,12 @@ def main(event: dict) -> dict:
     key = hashlib.sha256(turn.encode("utf-8")).hexdigest()[:24]
     directory = ROOT / ".agents/work/.hooks"
     directory.mkdir(parents=True, exist_ok=True)
+
+    def finish_stop(decision: dict) -> dict:
+        if decision.get("decision") != "block":
+            clear_edit_state(directory, turn)
+        return decision
+
     receipt = directory / f"{key}.json"
     try:
         previous = (
@@ -176,7 +263,7 @@ def main(event: dict) -> dict:
             or previous.get("status") in {"stagnated", "attempt_limit"}
         )
     ):
-        return stop_decision(event, signature, previous, None)
+        return finish_stop(stop_decision(event, signature, previous, None))
     log = directory / f"{key}.log"
     report = directory / f"{key}.report.json"
     report.unlink(missing_ok=True)
@@ -245,11 +332,11 @@ def main(event: dict) -> dict:
         encoding="utf-8",
     )
     if state.get("terminal"):
-        return stop_decision(event, signature, current, exit_code)
+        return finish_stop(stop_decision(event, signature, current, exit_code))
     decision = stop_decision(event, signature, previous, exit_code)
     if decision.get("decision") == "block":
         decision["reason"] += f"\nLog: {log.relative_to(ROOT).as_posix()}\n{feedback}"
-    return decision
+    return finish_stop(decision)
 
 
 if __name__ == "__main__":

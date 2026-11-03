@@ -370,6 +370,122 @@ def test_post_edit_returns_type_failure_and_stop_blocks(
     assert gate.main({"hook_event_name": "Stop"})["decision"] == "block"
 
 
+def test_post_edit_warns_once_after_five_edits(tmp_path, monkeypatch):
+    from scripts.hooks import quality_gate as gate
+
+    source = tmp_path / "backend/main.py"
+    source.parent.mkdir()
+    source.write_text("# fixture", encoding="utf-8")
+    monkeypatch.setattr(gate, "ROOT", tmp_path)
+    monkeypatch.setattr(gate, "edited_paths", lambda event: [source])
+    monkeypatch.setattr(gate, "format_python", lambda event: 0)
+    monkeypatch.setattr(
+        gate.subprocess,
+        "run",
+        lambda *args, **kwargs: SimpleNamespace(returncode=0, stdout=b"", stderr=b""),
+    )
+    event = {"hook_event_name": "PostToolUse", "turn_id": "edit-loop-turn"}
+
+    results = [gate.main(event) for _ in range(6)]
+
+    assert all("decision" not in result for result in results)
+    warning = results[4]["hookSpecificOutput"]["additionalContext"]
+    assert "backend/main.py" in warning
+    assert "5 edits" in warning
+    assert "reconsider" in warning.lower()
+    assert results[5] == {}
+
+
+def test_post_edit_counts_unique_paths_per_turn_and_keeps_state_private(
+    tmp_path, monkeypatch
+):
+    from scripts.hooks import quality_gate as gate
+
+    first = tmp_path / "backend/main.py"
+    second = tmp_path / "scripts/quality.py"
+    first.parent.mkdir()
+    second.parent.mkdir()
+    first.write_text("private source contents", encoding="utf-8")
+    second.write_text("private source contents", encoding="utf-8")
+    monkeypatch.setattr(gate, "ROOT", tmp_path)
+    monkeypatch.setattr(gate, "edited_paths", lambda event: [first, first, second])
+    monkeypatch.setattr(gate, "format_python", lambda event: 0)
+    monkeypatch.setattr(
+        gate.subprocess,
+        "run",
+        lambda *args, **kwargs: SimpleNamespace(returncode=0, stdout=b"", stderr=b""),
+    )
+
+    first_turn = {"hook_event_name": "PostToolUse", "turn_id": "first-turn"}
+    second_turn = {"hook_event_name": "PostToolUse", "turn_id": "second-turn"}
+    first_turn_results = [gate.main(first_turn) for _ in range(4)]
+    second_turn_results = [gate.main(second_turn) for _ in range(5)]
+
+    assert first_turn_results == [{}] * 4
+    assert second_turn_results[:4] == [{}] * 4
+    warning = second_turn_results[4]["hookSpecificOutput"]["additionalContext"]
+    assert "backend/main.py" in warning
+    assert "scripts/quality.py" in warning
+
+    states = [
+        json.loads(path.read_text(encoding="utf-8"))
+        for path in (tmp_path / ".agents/work/.hooks").glob("*.edits.json")
+    ]
+    assert len(states) == 2
+    assert all(
+        set(state["counts"]) == {"backend/main.py", "scripts/quality.py"}
+        for state in states
+    )
+    assert sorted(state["counts"]["backend/main.py"] for state in states) == [4, 5]
+    assert sorted(state["counts"]["scripts/quality.py"] for state in states) == [4, 5]
+    serialized = " ".join(
+        path.read_text(encoding="utf-8")
+        for path in (tmp_path / ".agents/work/.hooks").glob("*.edits.json")
+    )
+    assert str(tmp_path) not in serialized
+    assert "private source contents" not in serialized
+
+
+def test_edit_counts_survive_blocked_stop_and_clear_after_allowed_stop(
+    tmp_path, monkeypatch, stop_context
+):
+    from scripts.hooks import quality_gate as gate
+
+    source = tmp_path / "backend/main.py"
+    source.parent.mkdir()
+    source.write_text("# fixture", encoding="utf-8")
+    monkeypatch.setattr(gate, "ROOT", tmp_path)
+    monkeypatch.setattr(gate, "edited_paths", lambda event: [source])
+    monkeypatch.setattr(gate, "format_python", lambda event: 0)
+    monkeypatch.setattr(gate, "changed_paths", lambda root: [])
+    stop_state = {"running": False, "exit_code": 1}
+
+    def execute(*args, **kwargs):
+        if stop_state["running"]:
+            return SimpleNamespace(returncode=stop_state["exit_code"])
+        return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
+
+    monkeypatch.setattr(gate.subprocess, "run", execute)
+    edit_event = {"hook_event_name": "PostToolUse", "turn_id": "stop-lifetime"}
+    stop_event = {"hook_event_name": "Stop", "turn_id": "stop-lifetime"}
+
+    for _ in range(4):
+        assert gate.main(edit_event) == {}
+    state_path = next((tmp_path / ".agents/work/.hooks").glob("*.edits.json"))
+
+    stop_state["running"] = True
+    assert gate.main(stop_event)["decision"] == "block"
+    assert state_path.is_file()
+    stop_state["running"] = False
+    warning = gate.main(edit_event)["hookSpecificOutput"]["additionalContext"]
+    assert "5 edits" in warning
+
+    stop_state["running"] = True
+    stop_state["exit_code"] = 0
+    assert gate.main(stop_event) == {}
+    assert not state_path.exists()
+
+
 def test_project_mypy_detects_optional_schema_argument(tmp_path):
     root = Path(__file__).resolve().parents[2]
     source = tmp_path / "schema_probe.py"
