@@ -33,6 +33,7 @@ from backend.application.retrieval.values import (
     IntentName,
     Probability,
 )
+from backend.domain.foundation.json_types import JsonValue
 from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import BrandName, GenericName
@@ -278,7 +279,7 @@ async def test_chat_queries_publishes_retrieval_completion_before_agent_model():
     events: list[tuple[str, Any]] = []
     model_started = asyncio.Event()
     model_release = asyncio.Event()
-    jev_response = {"query": "completed"}
+    jev_response: dict[str, JsonValue] = {"query": "completed"}
 
     class MandatoryRetrievalTool:
         name = "mandatory_retrieval"

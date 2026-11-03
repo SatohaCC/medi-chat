@@ -2,6 +2,7 @@
 
 from alembic import op
 from sqlalchemy import inspect, text
+from sqlalchemy.engine import Connection
 
 revision = "pg_20261103_06"
 down_revision = "pg_20261024_05"
@@ -20,11 +21,14 @@ _EXPIRY_INDEX = (
 )
 
 
-def _schema_name(connection):
-    return connection.execute(text("SELECT current_schema()")).scalar_one()
+def _schema_name(connection: Connection) -> str:
+    schema = connection.execute(text("SELECT current_schema()")).scalar_one_or_none()
+    if not isinstance(schema, str):
+        raise RuntimeError("Could not resolve the current PostgreSQL schema")
+    return schema
 
 
-def _rename_tables(renames):
+def _rename_tables(renames: tuple[tuple[str, str], ...]) -> None:
     connection = op.get_bind()
     schema = _schema_name(connection)
     tables = set(inspect(connection).get_table_names(schema=schema))
@@ -45,7 +49,7 @@ def _rename_tables(renames):
             tables.add(new_name)
 
 
-def _rename_expiry_index(old_name, new_name):
+def _rename_expiry_index(old_name: str, new_name: str) -> None:
     connection = op.get_bind()
     schema = _schema_name(connection)
     indexes = {
@@ -69,11 +73,11 @@ def _rename_expiry_index(old_name, new_name):
         )
 
 
-def upgrade():
+def upgrade() -> None:
     _rename_tables(_TABLE_RENAMES)
     _rename_expiry_index(*_EXPIRY_INDEX)
 
 
-def downgrade():
+def downgrade() -> None:
     _rename_tables(tuple((new, old) for old, new in reversed(_TABLE_RENAMES)))
     _rename_expiry_index(*reversed(_EXPIRY_INDEX))
