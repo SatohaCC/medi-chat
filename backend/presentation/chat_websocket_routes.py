@@ -143,15 +143,27 @@ async def stream_chat_response(
                 await send({"type": "error", "content": "Medicine corpus is not ready"})
                 return
 
-            jev_was_searched = service.is_jev_available
-            if not service.is_jev_available:
-                await send({"type": "retrieval_status", "stage": "unavailable"})
-            else:
-                await send({"type": "retrieval_status", "stage": "jev_searching"})
+            retrieval_complete_sent = False
+            await send({"type": "retrieval_status", "stage": "retrieving"})
 
             async def publish_logic(sources: list[ChatSource]) -> None:
                 await send(
                     {"type": "sources", "sources": [s.model_dump() for s in sources]}
+                )
+
+            async def publish_retrieval_complete(
+                jev_response: dict[str, Any] | None,
+            ) -> None:
+                nonlocal retrieval_complete_sent
+                if retrieval_complete_sent:
+                    return
+                retrieval_complete_sent = True
+                await send(
+                    {
+                        "type": "retrieval_status",
+                        "stage": "complete",
+                        "jev_response": jev_response,
+                    }
                 )
 
             agent_feedback_target: FeedbackTraceTarget | None = None
@@ -165,6 +177,7 @@ async def stream_chat_response(
                     payload.messages,
                     payload.product_yj_codes,
                     on_logic_sources=publish_logic,
+                    on_retrieval_complete=publish_retrieval_complete,
                     on_agent_trace=capture_agent_trace,
                     provider_name=payload.provider,
                     model_name=payload.model,
@@ -173,6 +186,9 @@ async def stream_chat_response(
             except InvalidMedicineInput as exc:
                 await send({"type": "error", "content": str(exc)})
                 return
+
+            if not retrieval_complete_sent:
+                await publish_retrieval_complete(reply.jev_response)
 
             if not reply.needs_clarification:
                 if reply.sources:
@@ -189,15 +205,6 @@ async def stream_chat_response(
                     await send({"type": "jev_response", "data": reply.jev_response})
                 if reply.notices:
                     await send({"type": "notices", "notices": reply.notices})
-                if jev_was_searched:
-                    await send(
-                        {
-                            "type": "retrieval_status",
-                            "stage": "complete",
-                            "jev_response": reply.jev_response,
-                        }
-                    )
-
             feedback_token: str | None = None
 
             def completed(token: str | None) -> None:

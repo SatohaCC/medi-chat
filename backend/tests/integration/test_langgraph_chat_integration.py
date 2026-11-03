@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncIterator, Sequence
 from typing import Any
 
@@ -270,6 +271,79 @@ async def test_chat_queries_prepares_reply_via_langgraph_for_normal_question(
         chunks.append(chunk)
 
     assert "".join(chunks) == "AI回答テキスト"
+
+
+@pytest.mark.asyncio
+async def test_chat_queries_publishes_retrieval_completion_before_agent_model():
+    events: list[tuple[str, Any]] = []
+    model_started = asyncio.Event()
+    model_release = asyncio.Event()
+    jev_response = {"query": "completed"}
+
+    class MandatoryRetrievalTool:
+        name = "mandatory_retrieval"
+        description = "必須の根拠取得"
+        is_mandatory = True
+
+        async def execute(self, input_data: ToolExecutionInput) -> ToolExecutionResult:
+            events.append(("retrieval_finished", None))
+            return ToolExecutionResult(
+                tool_name=self.name,
+                jev_response=jev_response,
+            )
+
+    class SlowModel:
+        async def ainvoke(
+            self, messages: Sequence[Any], config: dict[str, Any] | None = None
+        ) -> AIMessage:
+            events.append(("answer_model_started", None))
+            model_started.set()
+            await model_release.wait()
+            return AIMessage(content="回答")
+
+    definitions = get_package_insert_definitions()
+    adapter = LangGraphChatAgentAdapter(
+        tools=[MandatoryRetrievalTool()], model=SlowModel()
+    )
+    queries = ChatQueries(
+        intent_classifier=DummyIntentClassifier(),
+        keyword_extractor=DummyKeywordExtractor(),
+        intent_policy=definitions.intent_policy,
+        answer_prompt_policy=definitions.answer_prompt_policy,
+        provider_factory=lambda _: MockLLMProvider(),
+        snapshot_provider=FixedSnapshotProvider(
+            DummyMedicineReader(), DummyEvidenceReader()
+        ),
+        agent_orchestrator=adapter,
+    )
+
+    async def publish_retrieval_complete(response: dict[str, Any] | None) -> None:
+        events.append(("retrieval_complete", response))
+
+    task = asyncio.create_task(
+        queries.prepare_reply(
+            [ChatMessage(role="user", content="質問")],
+            ["1149001F1010"],
+            on_retrieval_complete=publish_retrieval_complete,
+        )
+    )
+    try:
+        await asyncio.wait_for(model_started.wait(), timeout=1)
+        assert events == [
+            ("retrieval_finished", None),
+            ("retrieval_complete", jev_response),
+            ("answer_model_started", None),
+        ]
+        assert not task.done(), "回答生成が終わる前に取得完了を通知する"
+        model_release.set()
+        reply = await asyncio.wait_for(task, timeout=5)
+    finally:
+        model_release.set()
+        if not task.done():
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+
+    assert reply.jev_response == jev_response
 
 
 @pytest.mark.asyncio

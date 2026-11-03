@@ -5,6 +5,8 @@ import subprocess
 import sys
 
 import pytest
+from alembic import command
+from alembic.config import Config
 from backend.infrastructure.persistence.runtime.postgres_readiness import (
     verify_postgres_readiness,
 )
@@ -18,7 +20,7 @@ from backend.tests.integration.test_postgres_registration import publish
 from backend.tests.support.paths import PROJECT_ROOT
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
 from backend.tests.support.registration_oracles import source
-from sqlalchemy import select, update
+from sqlalchemy import insert, select, text, update
 
 
 def test_pg042_explicit_migration_command_is_idempotent(pg_engines):
@@ -111,6 +113,145 @@ def test_pg043_pure_offline_conversion_ignores_database_settings(tmp_path):
     assert result.returncode == 0, result.stderr
     assert (tmp_path / "output" / "document.json").is_file()
     assert (tmp_path / "output" / "search_units.jsonl").is_file()
+
+
+def test_pg044_forward_migration_renames_legacy_attachment_tables_and_preserves_rows(
+    pg_engines, pg_publisher
+):
+    from datetime import UTC, datetime
+    from hashlib import sha256
+
+    raw = source("migration rename preservation")
+    publish(pg_publisher, raw)
+    upload_id = "migration-rename-upload"
+    upload_bytes = b"migration upload bytes"
+    with pg_engines[0].begin() as connection:
+        connection.execute(
+            insert(postgres_schema.uploads).values(
+                upload_id=upload_id,
+                filename="migration.xml",
+                byte_size=len(upload_bytes),
+                source_sha256=sha256(upload_bytes).hexdigest(),
+                expires_at=datetime(2026, 11, 4, tzinfo=UTC),
+                document_id=None,
+            )
+        )
+        connection.execute(
+            insert(postgres_schema.upload_parts).values(
+                upload_id=upload_id,
+                part_index=0,
+                content=upload_bytes,
+            )
+        )
+        stored_version = connection.execute(
+            select(
+                postgres_schema.versions.c.version_id,
+                postgres_schema.versions.c.source,
+                postgres_schema.versions.c.structure,
+                postgres_schema.versions.c.catalogue,
+            )
+        ).one()
+        assert stored_version.structure["transformer_version"] == (
+            "package-insert-domain.v1"
+        )
+
+    config = Config(str(PROJECT_ROOT / "backend" / "postgres-alembic.ini"))
+    with pg_engines[0].begin() as connection:
+        config.attributes["connection"] = connection
+        command.downgrade(config, "pg_20261024_05")
+
+    with pg_engines[0].connect() as connection:
+        legacy_tables = set(
+            connection.execute(
+                text(
+                    "SELECT table_name FROM information_schema.tables "
+                    "WHERE table_schema=current_schema()"
+                )
+            ).scalars()
+        )
+        assert {
+            "attachment_versions",
+            "attachment_assets",
+            "attachment_uploads",
+            "attachment_upload_parts",
+        } <= legacy_tables
+        assert connection.execute(
+            text("SELECT upload_id, part_index, content FROM attachment_upload_parts")
+        ).one() == (upload_id, 0, upload_bytes)
+        assert connection.execute(
+            text("SELECT version_id, source FROM attachment_versions")
+        ).one() == (stored_version.version_id, stored_version.source)
+        assert connection.execute(
+            text(
+                "SELECT structure->>'transformer_version', "
+                "payload_fingerprint = md5(structure::text || catalogue::text) "
+                "FROM attachment_versions"
+            )
+        ).one() == ("attachment-domain.v1", True)
+        legacy_version = connection.execute(
+            text("SELECT structure, catalogue FROM attachment_versions")
+        ).one()
+        assert legacy_version.structure == {
+            **stored_version.structure,
+            "transformer_version": "attachment-domain.v1",
+        }
+        assert legacy_version.catalogue == stored_version.catalogue
+
+    with pg_engines[0].begin() as connection:
+        config.attributes["connection"] = connection
+        command.upgrade(config, "head")
+
+    with pg_engines[0].connect() as connection:
+        migrated_tables = set(
+            connection.execute(
+                text(
+                    "SELECT table_name FROM information_schema.tables "
+                    "WHERE table_schema=current_schema()"
+                )
+            ).scalars()
+        )
+        assert {
+            "package_insert_versions",
+            "package_insert_assets",
+            "package_insert_uploads",
+            "package_insert_upload_parts",
+        } <= migrated_tables
+        assert (
+            not {
+                "attachment_versions",
+                "attachment_assets",
+                "attachment_uploads",
+                "attachment_upload_parts",
+            }
+            & migrated_tables
+        )
+        assert (
+            connection.execute(
+                select(
+                    postgres_schema.versions.c.version_id,
+                    postgres_schema.versions.c.source,
+                    postgres_schema.versions.c.structure,
+                    postgres_schema.versions.c.catalogue,
+                )
+            ).one()
+            == stored_version
+        )
+        assert connection.execute(
+            select(
+                postgres_schema.upload_parts.c.upload_id,
+                postgres_schema.upload_parts.c.part_index,
+                postgres_schema.upload_parts.c.content,
+            )
+        ).one() == (upload_id, 0, upload_bytes)
+        assert connection.execute(
+            text(
+                "SELECT structure->>'transformer_version', "
+                "payload_fingerprint = md5(structure::text || catalogue::text) "
+                "FROM package_insert_versions"
+            )
+        ).one() == ("package-insert-domain.v1", True)
+
+    verify_postgres_readiness(pg_engines[1])
 
 
 def test_pg042_structure_register_uses_explicit_postgres_target(pg_engines, tmp_path):

@@ -10,7 +10,7 @@ from backend import main
 from backend.application.chat.queries.chat import (
     ChatQueries,
 )
-from backend.application.chat.queries.models import ChatMessage
+from backend.application.chat.queries.models import ChatMessage, ChatResponse
 from backend.application.chat.queries.services.reply_preparation import prepare_reply
 from backend.application.medicine.values import SearchGenerationId
 from backend.application.retrieval.interfaces.snapshot_provider import (
@@ -222,25 +222,110 @@ def test_websocket_sends_logic_before_jev_then_replaces_with_integrated_sources(
             assert socket.receive_json() == {
                 "type": "retrieval_status",
                 "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
-                "stage": "jev_searching",
+                "stage": "retrieving",
             }
             early = socket.receive_json()
             assert early["type"] == "sources"
             assert early["sources"][0]["retrieved_by"] == ["logic"]
             assert provider.calls == []
             release.set()
+            complete = socket.receive_json()
+            assert complete["type"] == "retrieval_status"
+            assert complete["stage"] == "complete"
             final = socket.receive_json()
             assert final["type"] == "sources"
             assert len(final["sources"]) == 1
             assert set(final["sources"][0]["retrieved_by"]) == {"logic", "jev"}
             assert socket.receive_json()["type"] == "jev_response"
-            assert socket.receive_json()["stage"] == "complete"
             assert socket.receive_json()["type"] == "text_delta"
             assert socket.receive_json()["type"] == "text_delta"
             assert socket.receive_json()["type"] == "text_done"
             assert len(provider.calls) == 1
     finally:
         release.set()
+
+
+def test_agent_websocket_reports_retrieval_before_slow_llm():
+    request_id = "49c0247f-48a0-48a8-9018-d82d6aa2f29b"
+    model_release = threading.Event()
+    model_finished = threading.Event()
+
+    class SlowAgent:
+        async def run(
+            self,
+            conversation,
+            product_yj_codes=(),
+            *,
+            provider_name=None,
+            model_name=None,
+            on_sources=None,
+            on_retrieval_complete=None,
+        ):
+            if on_retrieval_complete is not None:
+                await on_retrieval_complete({"query": "completed"})
+            assert await asyncio.to_thread(model_release.wait, 5)
+            model_finished.set()
+            return ChatResponse(
+                answer="回答",
+                intent="general",
+                retrieval_strategy="langgraph_agent",
+                jev_response={"query": "completed"},
+            )
+
+    definitions = get_package_insert_definitions()
+    service = AppChatService(
+        application_service=ChatQueries(
+            snapshot_provider=FixedSnapshotProvider(
+                MedicineReader(), OrderedEvidenceReader(False)
+            ),
+            intent_classifier=UnusedIntentClassifier(),
+            keyword_extractor=UnusedKeywordExtractor(),
+            intent_policy=definitions.intent_policy,
+            answer_prompt_policy=definitions.answer_prompt_policy,
+            provider_factory=lambda _: RecordingProvider(),
+            agent_orchestrator=SlowAgent(),
+        )
+    )
+    app = FastAPI()
+    app.include_router(router)
+    app.dependency_overrides[get_chat_service] = lambda: service
+
+    try:
+        with TestClient(app) as client, client.websocket_connect("/api/ws") as socket:
+            socket.send_json(
+                {
+                    "type": "message",
+                    "request_id": request_id,
+                    "product_yj_codes": ["1234567A0000"],
+                    "messages": [{"role": "user", "content": "質問"}],
+                }
+            )
+            assert socket.receive_json() == {
+                "type": "retrieval_status",
+                "request_id": request_id,
+                "stage": "retrieving",
+            }
+            release_watchdog = threading.Timer(2, model_release.set)
+            release_watchdog.start()
+            try:
+                completed = socket.receive_json()
+                assert completed == {
+                    "type": "retrieval_status",
+                    "request_id": request_id,
+                    "stage": "complete",
+                    "jev_response": {"query": "completed"},
+                }
+                assert not model_finished.is_set(), (
+                    "Jev completion must be sent before answer generation finishes"
+                )
+            finally:
+                model_release.set()
+                release_watchdog.cancel()
+
+            while socket.receive_json()["type"] != "text_done":
+                pass
+    finally:
+        model_release.set()
 
 
 @pytest.mark.asyncio
@@ -435,7 +520,7 @@ def test_all_detectors_start_together_and_generation_waits_for_last(
             assert status == {
                 "type": "retrieval_status",
                 "request_id": "a871f25a-1eb7-4c5e-8c6e-4511dce60280",
-                "stage": "jev_searching" if jev_available else "unavailable",
+                "stage": "retrieving",
             }
             for event in started.values():
                 assert event.wait(5), (
@@ -459,6 +544,10 @@ def test_all_detectors_start_together_and_generation_waits_for_last(
                 if event["type"] == "text_done":
                     break
             source_events = [event for event in events if event["type"] == "sources"]
+            status_events = [
+                event for event in events if event["type"] == "retrieval_status"
+            ]
+            assert [event["stage"] for event in status_events] == ["complete"]
             assert {
                 origin
                 for source in source_events[-1]["sources"]
@@ -466,6 +555,7 @@ def test_all_detectors_start_together_and_generation_waits_for_last(
             } == {"logic", "keyword"}
             assert len(provider.calls) == 1
             types = [event["type"] for event in events]
+            assert types.index("retrieval_status") < types.index("text_delta")
             assert max(
                 i for i, kind in enumerate(types) if kind == "sources"
             ) < types.index("text_delta")

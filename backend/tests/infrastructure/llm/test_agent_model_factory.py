@@ -5,6 +5,7 @@ import json
 from unittest.mock import AsyncMock, Mock
 
 import httpx
+import httpx2
 import pytest
 from backend.application.chat.queries.models import ChatMessage
 from backend.infrastructure.agent.langgraph_chat_agent_adapter import (
@@ -195,6 +196,71 @@ async def test_native_tool_roundtrip_preserves_grounding_and_closes_clients(
         # google-genai deliberately leaves a caller-supplied HTTP client to its owner.
         await http_client.aclose()
     assert http_client.is_closed
+
+
+@pytest.mark.asyncio
+async def test_sequential_agent_requests_get_fresh_openai_clients(monkeypatch):
+    requests = []
+    clients = []
+    models = []
+
+    async def respond(request):
+        body = json.loads(request.content)
+        requests.append(body)
+        return httpx2.Response(
+            200,
+            json={
+                "id": f"test-completion-{len(requests)}",
+                "model": "test-model",
+                "object": "chat.completion",
+                "created": 1,
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": {
+                            "role": "assistant",
+                            "content": f"回答{len(requests)}",
+                        },
+                        "finish_reason": "stop",
+                    }
+                ],
+            },
+        )
+
+    def create_openai_model(**kwargs):
+        http_client = httpx2.AsyncClient(transport=httpx2.MockTransport(respond))
+        clients.append(http_client)
+        model = ChatOpenAI(
+            **kwargs,
+            api_key=SecretStr("test-key"),
+            http_async_client=http_client,
+        )
+        models.append(model)
+        return model
+
+    monkeypatch.setattr(agent_model_factory, "ChatOpenAI", create_openai_model)
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    agent = LangGraphChatAgentAdapter(
+        model_factory=agent_model_factory.create_agent_model
+    )
+    conversation = [ChatMessage(role="user", content="test question")]
+
+    first = await agent.run(
+        conversation, provider_name="openai", model_name="test-model"
+    )
+    assert first.answer == "回答1"
+    assert clients[0].is_closed
+    assert models[0].root_async_client.is_closed()
+
+    second = await agent.run(
+        conversation, provider_name="openai", model_name="test-model"
+    )
+    assert second.answer == "回答2"
+    assert len(requests) == len(clients) == len(models) == 2
+    assert clients[0] is not clients[1]
+    assert models[0] is not models[1]
+    assert all(http_client.is_closed for http_client in clients)
+    assert all(model.root_async_client.is_closed() for model in models)
 
 
 @pytest.mark.asyncio

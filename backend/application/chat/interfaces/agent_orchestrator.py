@@ -11,6 +11,9 @@ from typing import Protocol, runtime_checkable
 
 from backend.application.chat.queries.models import ChatMessage, ChatResponse
 from backend.application.retrieval.queries.models import Evidence
+from backend.domain.foundation.json_types import JsonValue
+
+RetrievalCompletionCallback = Callable[[dict[str, JsonValue] | None], Awaitable[None]]
 
 
 @runtime_checkable
@@ -29,6 +32,7 @@ class AgentOrchestrator(Protocol):
         provider_name: str | None = None,
         model_name: str | None = None,
         on_sources: Callable[[list[Evidence]], Awaitable[None]] | None = None,
+        on_retrieval_complete: RetrievalCompletionCallback | None = None,
     ) -> ChatResponse:
         """エージェントを実行してツールを自律的に呼び出し、統合された回答と根拠を生成します。
 
@@ -38,6 +42,8 @@ class AgentOrchestrator(Protocol):
             provider_name: このリクエストで使用する生成プロバイダー。
             model_name: このリクエストで使用するモデル。
             on_sources: 根拠取得時に即座にクライアントへ先行配信するコールバック。
+            on_retrieval_complete: 回答前の必須根拠取得ツールがすべて
+                完了した時に呼ぶコールバック。
 
         Returns:
             回答本文、根拠、特定薬剤、注意事項などを格納したChatResponse。

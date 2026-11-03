@@ -120,7 +120,12 @@ test("TC137 real browser three confirmations and normal single/pair without API 
         {
           type: "retrieval_status",
           request_id: sent.at(-1)?.request_id,
-          stage: "unavailable",
+          stage: "retrieving",
+        },
+        {
+          type: "retrieval_status",
+          request_id: sent.at(-1)?.request_id,
+          stage: "complete",
         },
         { type: "text_delta", request_id: sent.at(-1)?.request_id, content: answer },
         { type: "text_done", request_id: sent.at(-1)?.request_id },

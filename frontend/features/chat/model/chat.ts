@@ -29,7 +29,7 @@ export interface SourceItem {
   retrieved_by: DetectionSource[];
 }
 
-export type RetrievalStatus = "jev_searching" | "complete" | "unavailable";
+export type RetrievalStatus = "retrieving" | "complete";
 
 export type ConnectionStatus = "connecting" | "connected" | "disconnected";
 

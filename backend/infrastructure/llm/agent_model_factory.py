@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from langchain_core.language_models import BaseChatModel
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
+from langchain_openai._compat import httpx as openai_httpx
 
 from backend.config.generation_settings import read_generation_defaults
 
@@ -25,7 +26,8 @@ async def create_agent_model(
     if provider == "openai":
         model = ChatOpenAI(
             model="gpt-6-luna" if target == "luna" else target,
-            timeout=45,
+            # An unhashable Timeout bypasses langchain_openai's shared client cache.
+            timeout=openai_httpx.Timeout(45),
             max_retries=1,
             max_completion_tokens=4096,
         )

@@ -6,6 +6,7 @@ from collections.abc import AsyncGenerator, Awaitable, Callable, Sequence
 
 from backend.application.chat.interfaces.agent_orchestrator import (
     AgentOrchestrator,
+    RetrievalCompletionCallback,
 )
 from backend.application.chat.interfaces.llm_provider import LLMProvider
 from backend.application.chat.queries.models import (
@@ -40,6 +41,7 @@ from backend.application.retrieval.queries.policies.standard import (
 from backend.application.retrieval.queries.services.keyword_search import (
     search_evidence_by_keywords,
 )
+from backend.domain.foundation.json_types import JsonValue
 
 
 class ChatQueries:
@@ -88,21 +90,41 @@ class ChatQueries:
         product_yj_codes: list[str],
         *,
         on_logic_sources: Callable[[list[Evidence]], Awaitable[None]] | None = None,
+        on_retrieval_complete: RetrievalCompletionCallback | None = None,
         provider_name: str | None = None,
         model_name: str | None = None,
     ) -> ChatResponse:
         # エージェントオーケストレーター（LangGraph等）が注入されている場合は、
         # 登録された MedicalTool の自律実行・根拠統合へ委譲
         if self.agent_orchestrator is not None:
-            return await self.agent_orchestrator.run(
+            notified = False
+
+            async def notify_retrieval_complete(
+                jev_response: dict[str, JsonValue] | None,
+            ) -> None:
+                nonlocal notified
+                if notified or on_retrieval_complete is None:
+                    return
+                notified = True
+                await on_retrieval_complete(jev_response)
+
+            reply = await self.agent_orchestrator.run(
                 conversation,
                 product_yj_codes,
                 on_sources=on_logic_sources,
+                on_retrieval_complete=(
+                    notify_retrieval_complete
+                    if on_retrieval_complete is not None
+                    else None
+                ),
                 provider_name=provider_name,
                 model_name=model_name,
             )
+            if on_retrieval_complete is not None:
+                await notify_retrieval_complete(reply.jev_response)
+            return reply
         # 未注入時は従来の確定的な意図分類・キーワード検索パイプラインを実行
-        return await app_prepare_reply(
+        reply = await app_prepare_reply(
             conversation,
             product_yj_codes,
             intent_classifier=self.intent_classifier,
@@ -112,6 +134,9 @@ class ChatQueries:
             snapshot_provider=self.snapshot_provider,
             on_logic_sources=on_logic_sources,
         )
+        if on_retrieval_complete is not None:
+            await on_retrieval_complete(reply.jev_response)
+        return reply
 
     async def stream_answer(
         self,

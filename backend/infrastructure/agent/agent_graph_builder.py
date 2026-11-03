@@ -183,6 +183,11 @@ def build_chat_agent_graph(
             async with mandatory_tool_provider.acquire(request) as request_tools:
                 results.extend(await execute_group(request_tools))
         merged = merge_results(state, results)
+        on_retrieval_complete = config.get("configurable", {}).get(
+            "on_retrieval_complete"
+        )
+        if on_retrieval_complete is not None:
+            await on_retrieval_complete(merged["jev_response"])
         if answer_prompt_policy is None:
             merged["messages"] = [
                 SystemMessage(

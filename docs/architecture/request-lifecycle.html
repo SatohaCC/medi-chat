@@ -855,7 +855,7 @@ async def stream_chat_response(
               <li>Originヘッダーを検査し、許可されていないオリジンからの接続を 1008 コードで拒否。安全な場合は <code>await websocket.accept()</code>。</li>
               <li><code>while True</code> ループで <code>websocket.receive_json()</code> を待機。<code>ping</code> に対しては <code>pong</code> を即答。</li>
               <li><code>WebSocketChatRequest.model_validate(data)</code> で受信メッセージとプロバイダー指定を検証。</li>
-              <li>Jev分類器の準備状況に応じて <code>retrieval_status</code>（stage="jev_searching" または "unavailable"）をクライアントへ通知。</li>
+              <li><code>retrieval_status</code>を<code>retrieving</code>で開始し、回答前の必須根拠取得ツールがすべて完了した後に<code>complete</code>を通知。</li>
               <li>先行根拠配信用コールバック <code>publish_logic(sources)</code> を定義し、<code>service.prepare_reply()</code> に渡して回答準備を開始。</li>
               <li>準備が整ったら（必要なら通知やJev応答を送信後）、<code>closing_stream(service.stream_answer(...))</code> で生成トークンを受信し、<code>{"type": "text_delta", "content": chunk}</code> としてリアルタイム送信。</li>
               <li>ストリーム終了時に <code>{"type": "text_done"}</code> を送信して1往復を完了。</li>

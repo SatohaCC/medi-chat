@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import AsyncGenerator, Awaitable, Callable, Sequence
 from contextlib import aclosing as closing_stream
 from dataclasses import dataclass
+from typing import Any
 from uuid import UUID
 
 from langsmith import trace, traceable
@@ -97,6 +98,8 @@ class AppChatService:
         product_yj_codes: list[str],
         *,
         on_logic_sources: Callable[[list[ChatSource]], Awaitable[None]] | None = None,
+        on_retrieval_complete: Callable[[dict[str, Any] | None], Awaitable[None]]
+        | None = None,
         on_agent_trace: Callable[[FeedbackTraceTarget], None] | None = None,
         provider_name: str | None = None,
         model_name: str | None = None,
@@ -112,6 +115,7 @@ class AppChatService:
             pure_conversation,
             product_yj_codes,
             on_logic_sources=publish_logic if on_logic_sources is not None else None,
+            on_retrieval_complete=on_retrieval_complete,
             provider_name=settings.provider,
             model_name=settings.model,
         )

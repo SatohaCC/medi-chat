@@ -10,6 +10,9 @@ from typing import Any
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 from langchain_core.tools import BaseTool
 
+from backend.application.chat.interfaces.agent_orchestrator import (
+    RetrievalCompletionCallback,
+)
 from backend.application.chat.interfaces.llm_provider import LLMProvider
 from backend.application.chat.interfaces.medical_tool import (
     MedicalTool,
@@ -98,6 +101,7 @@ class LangGraphChatAgentAdapter:
         provider_name: str | None = None,
         model_name: str | None = None,
         on_sources: Callable[[list[Evidence]], Awaitable[None]] | None = None,
+        on_retrieval_complete: RetrievalCompletionCallback | None = None,
     ) -> ChatResponse:
         # Client-supplied system messages cannot override the grounding policy.
         messages: list[BaseMessage] = [
@@ -133,6 +137,7 @@ class LangGraphChatAgentAdapter:
                             "model_name": model_name,
                             "model_holder": [],
                             "model_stack": stack,
+                            "on_retrieval_complete": on_retrieval_complete,
                         },
                     },
                 )
