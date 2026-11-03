@@ -14,14 +14,14 @@ export const BACKEND_DIR = resolve(PROJECT_ROOT, "backend");
 
 function redactRuntimeLogLine(line) {
   return line
-    .replace(/\b((?:proxy-)?authorization\s*[:=]\s*)[^\r\n]*/gi, "$1[REDACTED]")
+    .replace(/(["']?\b(?:proxy-)?authorization\b["']?\s*[:=]\s*)[^\r\n]*/gi, "$1[REDACTED]")
     .replace(/\bBearer\s+\S+/gi, "Bearer [REDACTED]")
     .replace(
-      /\b((?:search[_-]?query|query|question)\s*[=:]\s*)(?:"[^"]*"|'[^']*'|[^\r\n]*)/gi,
+      /(["']?\b(?:search[_-]?query|query|question)\b["']?\s*[=:]\s*)(?:"[^"]*"|'[^']*'|[^\r\n]*)/gi,
       "$1[REDACTED]",
     )
     .replace(
-      /\b([A-Za-z0-9_-]*[_-]?(?:access[_-]?token|refresh[_-]?token|api[_-]?key|client[_-]?secret|private[_-]?key|secret[_-]?key|password|secret|token)\s*[=:]\s*)(?:"[^"]*"|'[^']*'|[^&\s,;]+)/gi,
+      /(["']?\b[A-Za-z0-9_-]*[_-]?(?:access[_-]?token|refresh[_-]?token|api[_-]?key|client[_-]?secret|private[_-]?key|secret[_-]?key|password|secret|token)\b["']?\s*[=:]\s*)(?:"[^"]*"|'[^']*'|[^&\s,;]+)/gi,
       "$1[REDACTED]",
     )
     .replace(/((?:https?:\/\/|\/)[^\s"'<>?]+)\?[^\s"'<>]*/g, "$1?[REDACTED]");

@@ -321,10 +321,11 @@ def test_checks_cannot_certify_files_changed_during_validation(
     )
 
 
-def test_post_edit_formats_before_quick_checks(monkeypatch):
+def test_post_edit_formats_before_quick_checks(tmp_path, monkeypatch):
     from scripts.hooks import quality_gate as gate
 
     order = []
+    monkeypatch.setattr(gate, "ROOT", tmp_path)
     monkeypatch.setattr(
         gate, "edited_paths", lambda event: [gate.ROOT / "backend/main.py"]
     )
