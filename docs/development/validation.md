@@ -68,6 +68,8 @@ Workflow APIを変える場合は、実際の認証主体と必要な権限を�
 
 通常pytestはDB不要テストを実行する。`pg_engines`への直接・間接依存はpostgresへ分類される。fixtureを使わず実DBへ接続する試験は`@pytest.mark.postgres`、Git管理外の原本・生成物を使う試験は`@pytest.mark.source_data`を付ける。CIはsource_dataを除外し、実DBの設定不足をskipへ置き換えない。
 
+開発アクセスログのquery秘匿は対象モジュールで個別に検証する: `pnpm --filter backend exec pytest tests/infrastructure/config/test_dev_logging.py -q`。対象テストだけpytestのログをライブ表示する場合は`-o log_cli=true --log-cli-level=ERROR`を追加する。ライブ表示の設定は`pytest.ini`へグローバル適用しない。backend supervisorのセッションログと明示スキャンは[`scripts/README`](../../scripts/README.md#開発バックエンドの実行ログ)を参照。
+
 `pnpm typecheck:python`はbackendのPyright・mypyと、`pnpm typecheck:scripts`による`scripts/`のPyright・mypyを順に実行する。`pnpm quality:scripts`も開発ツールの型検査を実行する。ルートのpyrightconfigの既定includeはbackendであり、scripts単独検査ではCLI引数で対象を明示する。一部だけの成功を全体成功として扱わない。
 カタログだけの検証は`python -c "from backend.infrastructure.package_insert_definitions.assembly import get_package_insert_definitions; get_package_insert_definitions()"`。実行環境を確認し、これだけで検索・プロンプト・XML経路が検証できたと扱わない。
 

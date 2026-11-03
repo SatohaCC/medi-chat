@@ -16,4 +16,8 @@ class DevelopmentProbeFilter(logging.Filter):
                 and str(status) in {"200", "401"}
             ):
                 return False
+            if isinstance(target, str) and "?" in target:
+                safe_args = list(args)
+                safe_args[2] = f"{target.split('?', maxsplit=1)[0]}?[REDACTED]"
+                record.args = tuple(safe_args)
         return True
