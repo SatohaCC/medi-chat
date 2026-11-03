@@ -34,6 +34,35 @@
 - `.codex/hooks.json`の登録は確認できるが、今回のチャットでの自動発火・信頼状態は未確認。
 - 指示で参照される`.agents/lessons/INDEX.md`は存在しない。過去のGraphifyにある記録の存在や承認状態を現行規約の根拠にしない。
 
+### 追加依頼による第3段階: 同一ファイルの反復編集警告（2026-11-03）
+
+[LangChainのharness engineering記事](https://www.langchain.com/blog/improving-deep-agents-with-harness-engineering)を参考に、同一ファイルへの反復編集に対する早期の再考促進を追加した。
+
+- 既存の`PostToolUse` adapterが認識する`apply_patch`・`Edit`・`Write`イベントについて、ターン内のファイル編集回数を保持する。イベント内の重複パスは1回にまとめる。
+- 同一のリポジトリ内ファイルが5回編集された時点で、一度だけ受入条件と方針の見直しを促す。助言のみで、品質検査や作業をブロックしない。
+- 状態は`.agents/work/.hooks/`の無視対象JSONに限定し、ハッシュ化したターン識別子、相対パス、回数、警告済みマーカーのみを保存する。停止がブロックされた間は保持し、ブロックなしで停止できる場合に削除する。
+- 5回はローカルの編集トレースから計測した値ではなく、初期ヒューリスティック。記事のTerminal Bench成績やモデル別推論配分はこのプロジェクトの設定根拠にしていない。
+- 回帰テストは`test_post_edit_warns_once_after_five_edits`、`test_post_edit_counts_unique_paths_per_turn_and_keeps_state_private`、`test_edit_counts_survive_blocked_stop_and_clear_after_allowed_stop`。
+- `pnpm agent:check --phase quick`と`pnpm agent:check --report tmp/quality/result.json`は終了コード0。quick・fullとも指定した受入テスト3件が成功。fullではDB不要backendテスト978件成功・346件deselected、Hook回帰24件成功、format・型・構造・生成物検査が成功した。通常の開発ツールNode試験は29件成功・Windows外部シグナル2件skip。
+- fullレポートの`excludedLayers`は`postgres`・`browser`・`external_api`。Codexアプリ上のHook自動発火・信頼状態は未検証。
+- シェル経由の編集はこの回数警告の対象外で、終了時の差分検査が扱う。
+
+### 追加依頼による第4段階: ハーネス構成要素との照合（2026-11-03）
+
+[LangChainのハーネス解説](https://www.langchain.com/blog/the-anatomy-of-an-agent-harness)は、モデルの外側にある指示・ツール・実行環境・状態・フィードバック・オーケストレーションをハーネスとしてまとめ、望むエージェント動作から必要な部品を決める考え方を示している。medi-chatの開発用ハーネスを次のように照合した。
+
+| 望む動作 | 既存の仕組み | 所有範囲・限界 |
+|---|---|---|
+| 作業と判断材料を保持する | リポジトリのfilesystem・Git、`AGENTS.md`と対象別資料、`tmp/quality/task.json`、`.agents/work/.hooks/`の検査ログ・証跡 | `task.json`は作業用で、完了時に削除する。Git差分・作業文書を長期の普遍的な記憶とみなさない。 |
+| 操作を実行し、安全な結果を得る | Codexのファイル・shell等のツール、`scripts/checks/quality.mjs`の共通runner | filesystem・shell・networkの権限とsandboxはCodex側が所有する。品質判定のためにrepoから権限を広げない。 |
+| 実行結果から修正し、完了を判定する | `PostToolUse` quick、`Stop` full、受入条件とテストの対応付け、構造化レポート | fullは別の実行段階だが、評価はリポジトリ内の検査に依存し、外部評価器と同等に独立ではない。DB・browser・外部APIも別層。 |
+| 必要な知識を選び、長い作業を続ける | `AGENTS.md`の条件付き資料案内、skillsの段階的参照、Gitと作業記録 | 会話のcompaction・大きなtool出力の退避はCodex側の責務。repo hookは失敗の停滞を止めるが、新しいcontextで自律的に再起動するRalph loopは管理しない。 |
+| 最新情報と並列化を使う | Web/MCPとsubagentは実行環境が提供。`.agents/agents/`に役割定義がある | Web/MCPはrepo外の機能。プロジェクトのfeature-pipelineは明示開始時だけ使う。タスクからsubagentや常駐orchestratorを自動起動しない。 |
+
+この照合では、既存の開発作業で使う部品は揃っており、articleの一覧を機能追加チェックリストとして扱う必要はないと判断した。runtimeや権限の変更は行わない。将来追加する場合は、具体的なagent behavior gap、受入条件、所有する実行環境を先に定めてから設計する。
+
+- 2026-11-03、ユーザーはこの構成要素の照合結果を承認した。
+
 ## 優先順位と受入条件
 
 ### 1. 検証証跡を現在の検証入力に結び付ける
@@ -85,7 +114,11 @@ App Serverや常駐の自律オーケストレーターを追加する必要性�
 - Rulesの`allow`はサンドボックス外実行を確認なしで許可する設定。検証コマンドだからという理由で包括的に追加しない。[公式Rules](https://learn.chatgpt.com/docs/agent-configuration/rules)
 - Windowsの実装やnetworkの可否は実行環境・設定に依存する。文書の一律の説明をこの環境の事実として扱わない。[公式Security](https://learn.chatgpt.com/docs/agent-approvals-security)
 - モデル別成功率・費用、guardianの閾値・待ち時間、固定の5〜8ターンは今回一次資料で検証していない。採用する設計定数や効果の保証に使わない。
-- 高性能モデルなら中間検査を省く、という結論は本プロジェクトでは未評価。現行quick/fullを基準とし、削減は実測で判断する。
+- [Martin Fowlerの記事](https://martinfowler.com/articles/are-harnesses-worth-the-cost.html)は、1つの詳細なJavaサービス課題を各モデル10回実行した小規模実験で、GPT-6 Solはハーネス有無とも10/10合格、GPT-6 Lunaはハーネスなし3/10・あり10/10だったと報告する。Solのハーネスありはなしより約10.5倍のtoken、約3倍の時間、約7倍の推定費用を使った一方、Lunaでは継続フィードバックが合格率を高め、ハーネスありLunaはハーネスなしSolより平均費用が約33%低かった。これはモデル能力だけでなく課題・仕様の詳細さにも左右され、既存コード変更やこのプロジェクトへそのまま一般化できない。
+- この記事の実務上の示唆は、モデルや作業で開発中センサーの頻度を調整しつつ、全モデルで独立した最終受入検査を保つこと。プロジェクトでは`PostToolUse`のquickと`Stop`のfullがこの二段階に当たる。ただしfullは独立の外部評価器ではなく、同じリポジトリの検査と受入テストを実行するため、その独立性には限界がある。
+- 変更前の参考値として、2026-11-03の`pnpm quality:changed --phase quick --report tmp/quality/harness-cost-quick.json`は全4検査が成功し、Python lint 112ms、Backend Mypy 25,499ms、runner構文74ms、Tooling lint 141msだった。同じquick計画内の2つのlintは`scripts/checks`・`scripts/hooks`を重複して検査しており、この1回では合計253ms。単発の時間は環境・cache・入力差を含み、編集ごとのHook実行回数や早期検出した不具合数、総作業費用は測っていない。
+- 現時点では編集後Mypyを含むquickの頻度を下げない。過去に編集時の型診断とquickに型検査がない問題が記録され、その後Mypyを追加している（[LESSON-012](../../.agents/lessons/archived/LESSON-012.md)）。今回の1回の時間測定だけでは、その早期検出価値と繰り返し費用の比較ができない。まず同一の受入条件で代表的な作業・モデル・feedback cadenceを比較し、PostToolUse回数、総所要時間、検査が修正前に捕捉した不具合、最終ゲート結果を記録する。頻度変更は最終ゲートの範囲と合格条件を維持したまま、失敗率を悪化させず総費用を下げる根拠が得られた場合に限る。
+- 2026-11-03、ユーザー承認を受けてこの判断を採用した。運用上の比較条件は[validation](validation.md#共通の実行入口)に記載した。
 
 ## 着手順と検証
 
