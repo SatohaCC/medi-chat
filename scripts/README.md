@@ -9,6 +9,23 @@
 | `postgres/` | PostgreSQLの初期化 |
 | 直下のスクリプト | 開発サーバー起動、環境解決、生成データの出力 |
 
+## 開発バックエンドの実行ログ
+
+`pnpm dev:backend`はsupervisorが起動するbackendのstdout/stderrをコンソールへ表示し、同じ出力を起動ごとの`tmp/logs/dev-backend-*.log`へ保存する。自動再起動後も同じセッションログへ追記する。`pnpm dev`で別起動するfrontendのログは対象外。
+
+ログへ保存・表示する前に、Uvicornアクセスログのクエリ全体、Authorization/Bearer値、`token`・`api_key`・`secret`等の値を伏せる。ログ本文や例外の内容を共有する前に確認し、患者情報を含む原文を外部へ貼り付けない。
+
+セッションを確認する場合は起動時に表示されたファイルを明示する。
+
+```sh
+pnpm logs:check -- tmp/logs/dev-backend-<session>.log
+pnpm logs:check -- tmp/logs/dev-backend-<session>.log --since 2026-11-03T10:00:00Z
+```
+
+`--since`はtimezone付きISO日時で、指定時刻を含む。検査対象は`tmp/logs`直下の生成済みbackendセッションログに限る。Uvicornの`ERROR`/`CRITICAL`とアクセスログのHTTP 5xxを行番号・分類だけで報告し、4xxや一般文中の`Exception`は異常として扱わない。ログ本文・stack traceは出力しない。該当行があれば終了コード1、対象外のパス・不正形式・引数は2、該当なしは0。
+
+ログは起動ごとに分かれ、過去ファイルを自動削除しない。共通品質検査はこれらの稼働ログに依存しない。
+
 ## 共通コマンド
 
 ルートから実行する。いずれも検査対象のソースを自動修正しない。
