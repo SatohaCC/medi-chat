@@ -3,8 +3,8 @@
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from backend.domain.attachment.value_objects import RegistrationVersion
 from backend.domain.medicine.identifiers import YjCode
+from backend.domain.package_insert.value_objects import RegistrationVersion
 from backend.infrastructure.persistence.registration.revision_selection import (
     assign_latest,
 )

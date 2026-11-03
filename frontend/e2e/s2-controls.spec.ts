@@ -60,11 +60,11 @@ test("検索の消去、Enter送信、失敗時の入力保持", async ({ page }
 });
 
 test("XML選択は自動送信せず、失敗後も選択ファイルを保持する", async ({ page }) => {
-  await page.route("**/api/attachment-imports?**", (route) =>
+  await page.route("**/api/package-insert-imports?**", (route) =>
     route.fulfill({ json: { items: [], total_count: 0, limit: 20, offset: 0 } }),
   );
   let requests = 0;
-  await page.route("**/api/attachment-imports", (route) => {
+  await page.route("**/api/package-insert-imports", (route) => {
     requests++;
     return route.fulfill({ status: 503, json: { detail: "テスト取込失敗" } });
   });

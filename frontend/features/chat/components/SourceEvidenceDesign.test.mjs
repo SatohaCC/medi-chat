@@ -187,16 +187,26 @@ test("always retrieved evidence keeps both the safety and question-based reasons
 });
 
 test("progressive panel distinguishes always retrieved evidence from logic hits", () => {
-  const html = renderToStaticMarkup(
+  const retrievingHtml = renderToStaticMarkup(
     createElement(SourceEvidencePanel, {
       sources: [{ ...source, retrieved_by: ["always", "logic"] }],
-      retrievalStatus: "jev_searching",
+      retrievalStatus: "retrieving",
     }),
   );
-  assert.ok(html.includes("常時取得：1件"));
-  assert.ok(html.includes("ロジック：1件"));
-  assert.ok(html.includes("合計：1件"));
-  assert.ok(html.includes("質問内容にかかわらず"));
-  assert.ok(html.includes("取得理由別の件数には重複"));
-  assert.ok(!html.includes("ロジック検索根拠"));
+  assert.ok(retrievingHtml.includes("常時取得：1件"));
+  assert.ok(retrievingHtml.includes("ロジック：1件"));
+  assert.ok(retrievingHtml.includes("合計：1件"));
+  assert.ok(retrievingHtml.includes("根拠を取得中..."));
+  assert.ok(retrievingHtml.includes("質問内容にかかわらず"));
+  assert.ok(retrievingHtml.includes("取得理由別の件数には重複"));
+  assert.ok(!retrievingHtml.includes("ロジック検索根拠"));
+
+  const completeHtml = renderToStaticMarkup(
+    createElement(SourceEvidencePanel, {
+      sources: [{ ...source, retrieved_by: ["always", "logic"] }],
+      retrievalStatus: "complete",
+    }),
+  );
+  assert.ok(completeHtml.includes("根拠取得完了"));
+  assert.ok(!completeHtml.includes("Jev統合完了"));
 });

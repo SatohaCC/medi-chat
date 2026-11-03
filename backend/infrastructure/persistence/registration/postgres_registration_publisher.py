@@ -9,20 +9,25 @@ from sqlalchemy import Text, cast, delete, func, insert, select, text, update
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SQLAlchemyError
 
-from backend.application.attachment_import.commands.models import ImportResult
-from backend.application.attachment_import.errors import (
+from backend.application.package_insert_import.commands.models import ImportResult
+from backend.application.package_insert_import.errors import (
     ImportCancelled,
     ImportConflict,
     ImportStorageError,
 )
-from backend.domain.attachment.identifiers import DocumentId
-from backend.domain.attachment.primitives import AttachmentSha256, RevisionYearMonth
-from backend.domain.attachment.value_objects import RegistrationVersion
 from backend.domain.medicine.identifiers import YjCode
-from backend.infrastructure.document_import.attachment_contracts import (
-    AttachmentArtifactEncoder,
+from backend.domain.package_insert.identifiers import DocumentId
+from backend.domain.package_insert.primitives import (
+    PackageInsertSha256,
+    RevisionYearMonth,
 )
-from backend.infrastructure.document_import.attachment_payloads import DecodedAttachment
+from backend.domain.package_insert.value_objects import RegistrationVersion
+from backend.infrastructure.document_import.package_insert_contracts import (
+    PackageInsertArtifactEncoder,
+)
+from backend.infrastructure.document_import.package_insert_payloads import (
+    DecodedPackageInsert,
+)
 from backend.infrastructure.persistence.maintenance.postgres_registration_cleanup import (
     PostgresRegistrationCleanup,
 )
@@ -42,7 +47,7 @@ from backend.infrastructure.persistence.registration.registration_preparation im
 from backend.infrastructure.persistence.runtime.postgres_integrity import (
     PROJECTION_FINGERPRINT,
 )
-from backend.infrastructure.persistence.schemas import attachment_tables as s
+from backend.infrastructure.persistence.schemas import package_insert_tables as s
 from backend.infrastructure.serialization.import_result_codec import result_dict
 
 
@@ -51,7 +56,7 @@ class PostgresRegistrationPublisher:
         self,
         engine: Engine,
         *,
-        encoder: AttachmentArtifactEncoder,
+        encoder: PackageInsertArtifactEncoder,
         fault: Callable[[str], None] = lambda phase: None,
     ):
         self.engine = engine
@@ -62,7 +67,7 @@ class PostgresRegistrationPublisher:
 
     def publish(
         self,
-        decoded: DecodedAttachment,
+        decoded: DecodedPackageInsert,
         source: bytes,
         *,
         check_cancel: Callable[[], None] = lambda: None,
@@ -236,7 +241,7 @@ class PostgresRegistrationPublisher:
                         )
                     connection.execute(
                         text(
-                            f"UPDATE attachment_versions SET projection_fingerprint={PROJECTION_FINGERPRINT} WHERE version_id=:identity"
+                            f"UPDATE package_insert_versions SET projection_fingerprint={PROJECTION_FINGERPRINT} WHERE version_id=:identity"
                         ),
                         {"identity": identity},
                     )
@@ -306,7 +311,7 @@ class PostgresRegistrationPublisher:
     def _stored_version(record):
         return RegistrationVersion(
             document_id=DocumentId(record["document_id"]),
-            source_sha256=AttachmentSha256(record["source_sha256"]),
+            source_sha256=PackageInsertSha256(record["source_sha256"]),
             yj_codes=frozenset(YjCode(code) for code in record["yj_codes"]),
             revised_at=RevisionYearMonth(record["revised_at"]),
         )

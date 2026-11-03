@@ -27,7 +27,7 @@ export function MessageItem({
   const hasSources =
     (Array.isArray(message.sources) && message.sources.length > 0) ||
     message.retrievalStatus === "complete" ||
-    message.retrievalStatus === "jev_searching";
+    message.retrievalStatus === "retrieving";
   const hasJev = Boolean(message.jevResponse);
   const hasEvidence = message.role === "assistant" && (hasSources || hasJev);
 
@@ -103,8 +103,7 @@ export function MessageItem({
 
         {message.retrievalStatus && message.retrievalStatus !== "complete" && (
           <div role="status" {...stylex.props(styles.statusText)}>
-            {message.retrievalStatus === "jev_searching" && "Jevで根拠を検索中…"}
-            {message.retrievalStatus === "unavailable" && "Jev未接続（ロジック検索のみ）"}
+            {message.retrievalStatus === "retrieving" && "根拠を取得中…"}
           </div>
         )}
 

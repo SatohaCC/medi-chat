@@ -72,15 +72,35 @@ def test_WR001_correlates_all_events(path):
         events = completed(ws)
         assert [e["type"] for e in events] == [
             "retrieval_status",
+            "retrieval_status",
             "sources",
             "jev_response",
             "notices",
-            "retrieval_status",
             "text_delta",
             "text_done",
         ]
         assert events[-2]["content"] == "テスト回答"
-        assert events[1]["sources"][0]["excerpt"] == "原文\n本文"
+        assert events[2]["sources"][0]["excerpt"] == "原文\n本文"
+
+
+def test_retrieval_status_completes_when_tools_finish_with_clarification():
+    class ClarificationService(Service):
+        async def prepare_reply(self, *args, **kwargs):
+            return ChatResponse(
+                answer="対象の医薬品を確認してください。",
+                intent="other",
+                retrieval_strategy="three_detectors",
+                needs_clarification=True,
+            )
+
+    with client(ClarificationService()).websocket_connect("/api/ws") as ws:
+        ws.send_json(request())
+        events = completed(ws)
+
+    assert [
+        event["stage"] for event in events if event["type"] == "retrieval_status"
+    ] == ["retrieving", "complete"]
+    assert events[-1]["type"] == "text_done"
 
 
 @pytest.mark.parametrize(

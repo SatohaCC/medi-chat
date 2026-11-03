@@ -8,8 +8,8 @@ from importlib import import_module
 
 import httpx
 import pytest
-from backend.application.indexing.queries.services.attachment_projection import (
-    project_attachment,
+from backend.application.indexing.queries.services.package_insert_projection import (
+    project_package_insert,
 )
 from backend.application.indexing.values import SearchSectionCode
 from backend.application.medicine.queries.models import ResolvedMedicine
@@ -28,12 +28,12 @@ from backend.infrastructure.persistence.registration.postgres_registration_publi
     PostgresRegistrationPublisher,
 )
 from backend.infrastructure.persistence.runtime.read_workers import ReadWorkers
-from backend.infrastructure.persistence.schemas import attachment_tables as schema
+from backend.infrastructure.persistence.schemas import package_insert_tables as schema
 from backend.infrastructure.pmda_xml.pmda_artifact_encoder import PmdaArtifactEncoder
 from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
 from backend.infrastructure.pmda_xml.xml_file_transformer import transform
-from backend.tests.support.attachment_import_fixtures import xml_source
 from backend.tests.support.authentication import signed_test_headers
+from backend.tests.support.package_insert_import_fixtures import xml_source
 from backend.tests.support.postgres_fixtures import pg_engines as pg_engines
 from sqlalchemy import select
 
@@ -113,7 +113,7 @@ async def test_tc19_all_entries_keep_injected_definition_without_reload(
             decoded = decoder.decode(source)
             bundle = encoder.encode(
                 decoded.document,
-                project_attachment(decoded.document),
+                project_package_insert(decoded.document),
                 decoded.source_info,
             )
             rows = [
@@ -170,7 +170,7 @@ async def test_tc19_all_entries_keep_injected_definition_without_reload(
                 ) as client,
             ):
                 response = await client.post(
-                    "/api/attachment-imports",
+                    "/api/package-insert-imports",
                     files={"file": ("source.xml", source, "application/xml")},
                 )
                 assert response.status_code == 201, response.text

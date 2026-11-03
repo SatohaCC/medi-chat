@@ -11,8 +11,8 @@ import pytest
 from backend.application.indexing.queries.models import SearchUnit
 from backend.application.indexing.values import SearchUnitId
 from backend.application.retrieval.queries.dtos.evidence import evidence_payload
-from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.foundation.exceptions import DomainValidationError
+from backend.domain.package_insert.identifiers import DocumentId
 
 
 @pytest.mark.parametrize(

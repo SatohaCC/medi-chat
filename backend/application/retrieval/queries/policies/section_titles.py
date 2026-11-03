@@ -4,7 +4,7 @@ import re
 from collections.abc import Mapping
 from types import MappingProxyType
 
-from backend.domain.attachment.value_objects import SectionTaxonomy
+from backend.domain.package_insert.value_objects import SectionTaxonomy
 
 SECTION_REFERENCE = re.compile(r"\{section:([0-9]+(?:\.[0-9]+)*)\}")
 

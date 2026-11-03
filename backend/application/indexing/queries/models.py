@@ -13,9 +13,9 @@ from backend.application.indexing.values import (
     SearchUnitText,
     SearchUnitUrl,
 )
-from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.foundation.json_types import JsonValue
 from backend.domain.foundation.value_objects import ImmutableMapping
+from backend.domain.package_insert.identifiers import DocumentId
 
 
 @dataclass(frozen=True, slots=True, eq=False)

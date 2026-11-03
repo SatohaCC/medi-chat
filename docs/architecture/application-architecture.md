@@ -90,7 +90,7 @@ uv run --project backend --locked python scripts/checks/application_architecture
 ### 対象を限定した診断
 
 ```bash
-uv run --project backend --locked python scripts/checks/application_architecture.py --feature attachment_import
+uv run --project backend --locked python scripts/checks/application_architecture.py --feature package_insert_import
 
 # 他プロジェクトへの段階導入時だけ対象を限定して確認
 uv run --project backend --locked python scripts/checks/application_architecture.py --phase enforced
@@ -129,7 +129,7 @@ Domain上の不変条件、契約の責務、Queryが状態を更新しないこ
 
 | Feature | 全規則の残件 | 状態 |
 | --- | ---: | --- |
-| attachment_import | 0 | 取り込み・登録結果の再送を所有 |
+| package_insert_import | 0 | 取り込み・登録結果の再送を所有 |
 | file_upload | 0 | 転送・一時保存を所有 |
 | medicine | 0 | カタログquery、照合policy、参照Handlerへ整理 |
 | indexing | 0 | 不変モデル・値・投影command/policyへ整理 |
@@ -144,4 +144,4 @@ Domain上の不変条件、契約の責務、Queryが状態を更新しないこ
 
 2026-10-24に、先にハーネスの禁止例・許可例55件を検証し、旧配置26件を診断してから本番の配置を移行した。移行後に取り込みのCommandとQueryの共有依存14件を検出し、更新専用の再送契約ImportReplayと参照用ImportQueryReader/ImportDetailへ分離した。指摘を無視する例外やbaselineは増やしていない。
 
-添付文書取り込みはAttachmentImportCommandsとImportHistoryQueriesを別々に注入し、Executorの寿命はComposition Rootが所有する。医薬品カタログはMedicineQueriesが直接実行する。チャット・根拠検索・索引用の純粋な投影は永続状態を変更しないため参照側とする。索引のDB更新自体はInfrastructureの登録トランザクションが担当する。
+添付文書取り込みはPackageInsertImportCommandsとImportHistoryQueriesを別々に注入し、Executorの寿命はComposition Rootが所有する。医薬品カタログはMedicineQueriesが直接実行する。チャット・根拠検索・索引用の純粋な投影は永続状態を変更しないため参照側とする。索引のDB更新自体はInfrastructureの登録トランザクションが担当する。

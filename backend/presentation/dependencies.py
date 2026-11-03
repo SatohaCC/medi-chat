@@ -6,17 +6,17 @@ from typing import Any
 
 from starlette.requests import HTTPConnection
 
-from backend.application.attachment_import.commands.import_documents import (
-    AttachmentImportCommands,
-)
-from backend.application.attachment_import.queries.import_history import (
-    ImportHistoryQueries,
-)
 from backend.application.chat.commands.submit_feedback import SubmitFeedback
 from backend.application.medicine.queries.catalog import (
     MedicineQueries,
 )
 from backend.application.medicine.queries.suggest_medicines import MedicineSuggester
+from backend.application.package_insert_import.commands.import_documents import (
+    PackageInsertImportCommands,
+)
+from backend.application.package_insert_import.queries.import_history import (
+    ImportHistoryQueries,
+)
 
 from .chat_service import AppChatService as ChatService
 
@@ -35,9 +35,9 @@ def get_chat_service(connection: HTTPConnection) -> ChatService:
     return getattr(connection.app.state, "chat_service", None)  # type: ignore[return-value, no-any-return]
 
 
-def get_import_service(connection: HTTPConnection) -> AttachmentImportCommands:
+def get_import_service(connection: HTTPConnection) -> PackageInsertImportCommands:
     """添付文書取り込みサービスを取得する依存関係関数"""
-    return connection.app.state.attachment_import_service  # type: ignore[no-any-return]
+    return connection.app.state.package_insert_import_service  # type: ignore[no-any-return]
 
 
 async def get_medicine_suggester(connection: HTTPConnection) -> MedicineSuggester:
@@ -59,4 +59,4 @@ def get_document_store(connection: HTTPConnection) -> Any:
 
 
 def get_import_queries(connection: HTTPConnection) -> ImportHistoryQueries:
-    return connection.app.state.attachment_import_queries  # type: ignore[no-any-return]
+    return connection.app.state.package_insert_import_queries  # type: ignore[no-any-return]

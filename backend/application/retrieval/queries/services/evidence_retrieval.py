@@ -7,7 +7,6 @@ from copy import deepcopy
 from backend.application.medicine.interfaces.medicine_query_reader import (
     MedicineQueryReader,
 )
-from backend.application.medicine.queries.models import ResolvedMedicine
 from backend.application.medicine.queries.policies.catalog_matching import (
     MedicineCatalog,
 )
@@ -35,10 +34,12 @@ from backend.application.retrieval.queries.models import (
 from backend.application.retrieval.queries.policies.selection import (
     detect_fixed_keyword_criteria as _detect_fixed_keyword_criteria,
 )
-from backend.application.retrieval.queries.policies.selection import merge_evidence
 from backend.application.retrieval.queries.policies.standard import (
     DEFAULT_RETRIEVAL_POLICY,
     EvidenceRetrievalPolicy,
+)
+from backend.application.retrieval.queries.services.evidence_search import (
+    search_evidence,
 )
 from backend.application.retrieval.queries.services.intent_detection import (
     detect_jev_criteria,
@@ -112,7 +113,7 @@ async def _retrieve_evidence(
         criteria: list[SearchCriteria], *, skip_empty: bool = False
     ) -> None:
         if on_logic_sources is not None and not needs_clarification:
-            sources = await _search_evidence(
+            sources = await search_evidence(
                 evidence_reader,
                 tuple(resolved),
                 always_criteria + criteria,
@@ -162,7 +163,7 @@ async def _retrieve_evidence(
             jev_response=deepcopy(jev_response),
             qualifying_intents=qualifying_intents,
         )
-    sources = await _search_evidence(
+    sources = await search_evidence(
         evidence_reader,
         tuple(resolved),
         always_criteria + criteria,
@@ -186,23 +187,6 @@ async def _retrieve_evidence(
         jev_response=deepcopy(jev_response),
         qualifying_intents=qualifying_intents,
     )
-
-
-async def _search_evidence(
-    reader: EvidenceQueryReader,
-    medicines: tuple[ResolvedMedicine, ...],
-    criteria: list[SearchCriteria],
-    *,
-    cache: dict[SearchCriteria, tuple[Evidence, ...]] | None = None,
-) -> list[Evidence]:
-    if cache is None:
-        cache = {}
-    batches = []
-    for condition in criteria:
-        if condition not in cache:
-            cache[condition] = tuple(await reader.search(condition, medicines))
-        batches.append((cache[condition], condition.source))
-    return list(merge_evidence(batches))
 
 
 async def collect_search_criteria(

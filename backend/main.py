@@ -107,7 +107,7 @@ def create_app(
     application.include_router(search_router)
     application.include_router(chat_router)
     application.include_router(chat_websocket_router)
-    from .presentation.attachment_import_routes import router as import_router
+    from .presentation.package_insert_import_routes import router as import_router
 
     application.include_router(import_router)
 

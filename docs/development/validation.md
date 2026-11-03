@@ -15,6 +15,42 @@ backendの依存はuv.lockで管理し、pnpmのbackendスクリプトはuv経�
 
 pnpm-workspaceの`python.enabled=false`でpnpmの別Python環境管理を停止し、Python依存はbackendのuv.lockへ一本化する。backend/pylock.tomlはuv exportの標準形式を保持する。Node依存はルートで`pnpm install --frozen-lockfile`を実行する。一時snapshotの共有node_modulesからpackage managerを実行しない。型検査の比較にはルートの実在Pyrightを直接Nodeで起動して`--project <比較対象config>`を指定できる。
 
+## テスト設計
+
+- 配置は[backendのテスト分類](../architecture/backend-design.md)と、対象パッケージの既存テストを正本にする。frontendのNodeテストはfrontend節を参照し、追加時は対象範囲の既存配置・実行方法に合わせる。
+- 期待結果は要件と公開契約から導き、実装の判定式をコピーしない。Domainモデルは実オブジェクトを使い、外部SDK・通信には適切な既存ダブルを使う。
+- 新規・移動したコードが型・lint・テストの実行対象に入ることを設定と共通入口で確認する。検査対象や入口の変更では隔離した負例で検出能力も確認し、対象外のパスを検査済みと報告しない。
+- Reader/Publisher等の契約分離では、テストが実際に使う組立関数と注入先・公開署名を確認する。DB不要の配線検査と実PostgreSQLの検証を分け、importの更新だけで完了しない。
+- 固定hashの試験はbytes自体の契約か、改行差を許すテキスト内容の契約かを先に決める。後者で正規化する場合はLF/CRLFの両方が通り、内容変更は失敗することを確認する。原本・署名対象・バイナリには改行正規化を適用しない。
+- feature-pipelineを使用中のケースと実テストの対応、Fixture/Fakeの変更による仕様差し戻しは[Skill](../../.agents/skills/feature-pipeline/SKILL.md)の規約に従う。参照だけでパイプラインを開始しない。
+- カタログ/XML変換では[定義ソース](../../backend/infrastructure/package_insert_definitions/README.md)と対象テストを確認し、本書の原本照合規則に従って内容・文脈の保持を検証する。
+
+## 実行条件と資源の検証
+
+### 検査対象と失敗の切り分け
+
+新規・移動パスや共通入口の検出能力は本書の「テスト設計」に従って確認する。失敗した場合はchained exceptionまで読み、業務期待値に達した失敗か、その前の設定・IO・証跡保存の失敗かを区別する。テスト所有の一時領域を使い、必要なら同じfixture・環境で変更前と比較する。PermissionErrorを一律に環境原因とせず、再実行成功で初回失敗や未確定原因を消さない。
+
+独立したE2E実行を並行させる場合は、outputDir・port・build出力を実行ごとに分ける。分離できなければ直列実行する。同一実行内のworker並列化と区別し、証跡保存の競合を製品退行と断定しない。標準mock/realの実行先は下のfrontend節を正本とする。
+
+性能やnative eventの測定では、ready後の実process PIDと起動processの親子・所有関係を確認し、同じ実processからbaselineと測定値を取る。launcher PIDだけで計測欠落を製品不具合と判定しない。停止するのは試験所有と確認したprocessだけにする。
+
+### 通常起動・認証・監視
+
+必須設定・認証応答・DB revisionを変更するときは、テスト用設定だけでなく通常設定とCIのHTTP/WS/OS経路を確認する。秘密値を表示せず、必須キーの有無・接続先の所有範囲・revisionを調べ、frontend節にある既存configured gateで実起動とread-only healthを検証する。設定/DBの変更は依頼範囲に従い、確認のために運用データを自動更新しない。
+
+認証応答を読む開発監視・fixtureも追跡し、期待された認証拒否と未知の応答・通信途絶を分けて確認する。監視の回帰試験では、子processが異常時の停止判定まで生存する条件で、誤再起動を検出できることを確認する。
+
+### 依存環境の所有範囲
+
+interpreter更新や仮想環境の再構築前に、.venv等のlink/reparse point・実target・所有範囲を確認する。共有ストアをプロジェクト専用ディレクトリとして削除・移動しない。専用環境は対象lockで生成し、既存の共有資源や担当外の環境を保持する。通常の専用ディレクトリへ一律の退避・並行環境を要求しない。
+
+### CI・配置先の実行条件
+
+runtime/version指定を変える場合は、配置先builderのruntime選択と、その後のuv等による依存同期を両方確認する。ローカルに特定interpreterがある環境の成功を、配置先での解決成功に置き換えない。採用版でのローカル品質結果と、対象コミットのCI/Preview結果を分けて記録する。
+
+Workflow APIを変える場合は、実際の認証主体と必要な権限を確認し、不要な管理APIを増やさない。マージ等の変更を伴わない同じ読取APIをWorkflowの実トークンで検証し、模擬応答による分岐検証と区別する。管理者gh認証での成功をGITHUB_TOKEN権限の証明にせず、管理者バイパスを追加しない。ローカル検証だけでは実マージ成功を報告しない。
+
 ## Python
 
 | 対象 | 読み取り専用の検証 |
@@ -25,6 +61,8 @@ pnpm-workspaceの`python.enabled=false`でpnpmの別Python環境管理を停止�
 | Domainハーネス | `pnpm --filter backend lint:domain`、検出能力の回帰は`pnpm --filter backend lint:domain:harness` |
 | backendformat確認 | `pnpm --filter backend exec ruff format --check .` |
 | Python型検査（Pyright） | `pnpm typecheck:python` |
+
+通常pytestはDB不要テストを実行する。`pg_engines`への直接・間接依存はpostgresへ分類される。fixtureを使わず実DBへ接続する試験は`@pytest.mark.postgres`、Git管理外の原本・生成物を使う試験は`@pytest.mark.source_data`を付ける。CIはsource_dataを除外し、実DBの設定不足をskipへ置き換えない。
 
 `pnpm typecheck:python`はbackendのPyright・mypyと、`pnpm typecheck:scripts`による`scripts/`のPyright・mypyを順に実行する。`pnpm quality:scripts`も開発ツールの型検査を実行する。ルートのpyrightconfigの既定includeはbackendであり、scripts単独検査ではCLI引数で対象を明示する。一部だけの成功を全体成功として扱わない。
 カタログだけの検証は`python -c "from backend.infrastructure.package_insert_definitions.assembly import get_package_insert_definitions; get_package_insert_definitions()"`。実行環境を確認し、これだけで検索・プロンプト・XML経路が検証できたと扱わない。
@@ -39,6 +77,13 @@ pnpm-workspaceの`python.enabled=false`でpnpmの別Python環境管理を停止�
 | ビルド | `pnpm build` |
 | 接続ヘルパー単体 | `node --experimental-strip-types --test frontend/features/chat/api/chatWebSocket.test.mjs`（対応するNodeが必要） |
 | チャット画面（Playwright / Chromium） | 初回は`pnpm --filter frontend exec playwright install chromium`、実行は`pnpm test:e2e` |
+
+### frontend変更時の確認
+
+- チャット変更ではREST/WebSocketの契約、切断・再接続、進行中の回答と次の送信履歴への影響を対象範囲に応じて確認する。
+- 根拠表示や描画を変える場合は、原本・現行登録形式から読取り・実コンポーネントまで、変更箇所を実際に通る経路を確認する。人工fixtureや別形式の描画成功を、保存済みデータやユーザーの実行中ページの成功へ置き換えない。
+- StyleX等のCSSを変える場合は、必要な実Next.jsのdevelopment・HMR・production経路で生成CSSとcomputed styleを確認する。生成クラス・型・build・独立ハーネスの成功だけでは実アプリへの装飾適用を判定しない。記録時の版のPostCSS順や特定のshorthand対策を、原因未確認の別環境へ機械適用しない。
+- 型・lint・ビルド、接続ヘルパーの単体テスト、ブラウザと実サーバー接続は別の検証層として記録する。configured起動、mock、実接続の経路と資源分離は下記の契約に従う。
 
 ルート`pnpm test`はbackend（旧data_toolsテスト移行済み）であり、frontendのNodeテストを含まない。ブラウザ・実サーバー接続も別に確認する。
 `pnpm test:e2e`は通常devのdotenvと設定解決を保持し、configured PostgreSQLのread-only readiness→実`backend.main:app` OS health（3212）→モックChromium→実接続Chromiumの順に検証する。どの必須層の非0も全体非0とし、未準備/staleをfresh fixture成功で代替しない。configured要求はhealthだけで、DBの自動更新・LLM質問・Web保存をしない。占有portは拒否し、試験所有processだけを終了する。

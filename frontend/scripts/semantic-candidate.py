@@ -9,11 +9,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from backend.application.indexing.queries.services.attachment_projection import (
-    project_active_attachment,
+from backend.application.indexing.queries.services.package_insert_projection import (
+    project_active_package_insert,
 )
 from backend.domain.medicine.identifiers import YjCode
-from backend.infrastructure.persistence.mappings.attachment_document_mapping import (
+from backend.infrastructure.persistence.mappings.package_insert_document_mapping import (
     document_from_payload,
 )
 from backend.infrastructure.serialization.search_payload_codec import (
@@ -55,7 +55,7 @@ def candidate(index):
             memberships.setdefault(row["version_id"], set()).add(YjCode(row["yj_code"]))
     units = []
     for row in sorted(
-        records("attachment_versions"), key=lambda item: item["version_id"]
+        records("package_insert_versions"), key=lambda item: item["version_id"]
     ):
         if row["version_id"] not in memberships:
             continue
@@ -64,7 +64,7 @@ def candidate(index):
             continue
         content = encode_registered_units(
             restored,
-            project_active_attachment(
+            project_active_package_insert(
                 restored, frozenset(memberships[row["version_id"]])
             ),
         )

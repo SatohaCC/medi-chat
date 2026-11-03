@@ -24,7 +24,7 @@ from backend.infrastructure.persistence.queries.postgres_search_snapshot_provide
     PostgresRuntime,
 )
 from backend.infrastructure.persistence.runtime.read_workers import ReadWorkers
-from backend.infrastructure.persistence.schemas import attachment_tables as s
+from backend.infrastructure.persistence.schemas import package_insert_tables as s
 from backend.tests.integration.test_postgres_registration import (
     pg_publisher as pg_publisher,
 )
@@ -137,8 +137,8 @@ async def test_pg024_snapshot_reads_only_needed_structure_and_never_original_byt
 
     def observe(connection, cursor, statement, parameters, context, executemany):
         statements.append(statement.lower())
-        assert "attachment_versions.source" not in statement.lower()
-        assert "attachment_assets" not in statement.lower()
+        assert "package_insert_versions.source" not in statement.lower()
+        assert "package_insert_assets" not in statement.lower()
 
     def refuse_decode(*args, **kwargs):
         raise AssertionError("snapshot must not decode original XML")
@@ -153,10 +153,12 @@ async def test_pg024_snapshot_reads_only_needed_structure_and_never_original_byt
             assert snapshot.document_count == snapshot.unit_count == 1
             assert await snapshot.medicine_reader.read_medicines()
             assert not any(
-                "attachment_versions.structure" in value for value in statements
+                "package_insert_versions.structure" in value for value in statements
             )
             assert await snapshot.evidence_reader.search(warning_criteria(), target())
-            assert any("attachment_versions.structure" in value for value in statements)
+            assert any(
+                "package_insert_versions.structure" in value for value in statements
+            )
     finally:
         event.remove(pg_engines[1], "before_cursor_execute", observe)
         await workers.aclose()

@@ -16,19 +16,19 @@ ROOT = PROJECT_ROOT
         ({"application/retrieval/model.py": "from ..chat import model"}, True),
         (
             {
-                "application/attachment_import/model.py": "from ..file_upload import model"
+                "application/package_insert_import/model.py": "from ..file_upload import model"
             },
             False,
         ),
         (
             {
-                "application/file_upload/model.py": "from ..attachment_import import model"
+                "application/file_upload/model.py": "from ..package_insert_import import model"
             },
             True,
         ),
         (
             {
-                "infrastructure/document_import/attachment_payloads/model.py": "from ...pmda_xml import model"
+                "infrastructure/document_import/package_insert_payloads/model.py": "from ...pmda_xml import model"
             },
             True,
         ),
@@ -158,9 +158,10 @@ def test_import_linter_enforces_configured_contracts(tmp_path, sources, broken):
         "application/chat",
         "application/retrieval",
         "application/medicine",
-        "application/attachment_import",
+        "application/package_insert_import",
         "application/file_upload",
         "infrastructure",
+        "infrastructure/agent",
         "infrastructure/persistence",
         "infrastructure/sources",
         "infrastructure/llm",
@@ -170,8 +171,8 @@ def test_import_linter_enforces_configured_contracts(tmp_path, sources, broken):
         "infrastructure/package_insert_definitions",
         "infrastructure/authentication",
         "infrastructure/document_import",
-        "infrastructure/document_import/attachment_payloads",
-        "infrastructure/document_import/attachment_contracts",
+        "infrastructure/document_import/package_insert_payloads",
+        "infrastructure/document_import/package_insert_contracts",
         "infrastructure/serialization",
         "infrastructure/composition",
         "infrastructure/cli",
@@ -193,7 +194,7 @@ def test_import_linter_enforces_configured_contracts(tmp_path, sources, broken):
         "presentation/chat_dto_mapper.py",
         "presentation/chat_service.py",
         "presentation/dependencies.py",
-        "presentation/attachment_import_routes.py",
+        "presentation/package_insert_import_routes.py",
         "presentation/chat_routes.py",
         "presentation/chat_websocket_routes.py",
         "presentation/health_routes.py",

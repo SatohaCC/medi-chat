@@ -6,12 +6,6 @@ from backend.application.medicine.queries.models import RegisteredMedicine
 from backend.application.medicine.queries.policies.catalog_matching import (
     MedicineCatalog,
 )
-from backend.domain.attachment.identifiers import DocumentId
-from backend.domain.attachment.primitives import PmdaUrl
-from backend.domain.attachment.value_objects import (
-    AttachmentProductRevision,
-    MedicineDocumentReference,
-)
 from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import (
@@ -22,6 +16,12 @@ from backend.domain.medicine.primitives import (
     ProductGroupId,
 )
 from backend.domain.medicine.value_objects import MedicineNames
+from backend.domain.package_insert.identifiers import DocumentId
+from backend.domain.package_insert.primitives import PmdaUrl
+from backend.domain.package_insert.value_objects import (
+    MedicineDocumentReference,
+    PackageInsertProductRevision,
+)
 
 
 def registered(
@@ -44,7 +44,7 @@ def registered(
         reference=MedicineDocumentReference(
             document_id=DocumentId(document_id),
             pmda_url=PmdaUrl("https://example.test/original"),
-            revision=AttachmentProductRevision({"unknown": [1, None]}),
+            revision=PackageInsertProductRevision({"unknown": [1, None]}),
         ),
     )
 

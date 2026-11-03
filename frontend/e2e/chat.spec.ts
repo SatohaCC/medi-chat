@@ -125,7 +125,8 @@ test("WR-049-M1: 薬剤・モデルを指定して質問し、回答と根拠を
     messages: [{ role: "user", content: "根拠を確認したい" }],
   });
   await expect(page.locator('[data-message-role="user"]')).toHaveText("根拠を確認したい");
-  chat.respond({ type: "retrieval_status", stage: "unavailable" });
+  chat.respond({ type: "retrieval_status", stage: "retrieving" });
+  chat.respond({ type: "retrieval_status", stage: "complete" });
   chat.respond({ type: "sources", sources: [source] });
   chat.respond({ type: "text_delta", content: "最初の" });
   await expect(

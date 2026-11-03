@@ -1,7 +1,7 @@
 import { expect, test } from "./helpers/test";
 
 test.beforeEach(async ({ page }) => {
-  await page.route("**/api/attachment-imports?**", (route) =>
+  await page.route("**/api/package-insert-imports?**", (route) =>
     route.fulfill({ json: { items: [], total_count: 0, limit: 20, offset: 0 } }),
   );
 });
@@ -32,7 +32,7 @@ test("original File multipart, metadata, warnings and separate selection", async
 }) => {
   const bytes = Buffer.from("<?xml version='1.0'?><原文>Ａ①</原文>");
   let count = 0;
-  await page.route("**/api/attachment-imports", async (route) => {
+  await page.route("**/api/package-insert-imports", async (route) => {
     count++;
     const request = route.request();
     expect(request.headers()["content-type"]).toMatch(/^multipart\/form-data; boundary=/);
@@ -63,7 +63,7 @@ test("sending disables selection and repeat requests; error allows retry", async
 }) => {
   let count = 0;
   let release: (() => void) | undefined;
-  await page.route("**/api/attachment-imports", async (route) => {
+  await page.route("**/api/package-insert-imports", async (route) => {
     count++;
     if (count === 1) {
       await new Promise<void>((resolve) => {
@@ -105,7 +105,7 @@ test("sending disables selection and repeat requests; error allows retry", async
 for (const failure of ["server", "network"] as const) {
   test(`${failure} failure leaves retry available`, async ({ page }) => {
     let count = 0;
-    await page.route("**/api/attachment-imports", async (route) => {
+    await page.route("**/api/package-insert-imports", async (route) => {
       count++;
       if (count > 1) return route.fulfill({ status: 201, json: result });
       if (failure === "network") return route.abort("failed");
@@ -176,7 +176,7 @@ for (const fixture of [
   },
 ]) {
   test(`TC109 ${fixture.name} registration outcome`, async ({ page }) => {
-    await page.route("**/api/attachment-imports", (route) =>
+    await page.route("**/api/package-insert-imports", (route) =>
       route.fulfill({ status: 200, json: fixture.value }),
     );
     await page.goto("/imports");

@@ -52,7 +52,7 @@ pnpm dev
 - [ローカル開発・DBの準備](docs/development/local-development.md)
 - [バックエンドの概要](backend/README.md)
 - [バックエンドの設計・依存ルール](docs/architecture/backend-design.md)
-- [添付文書の取り込み・登録](docs/development/attachment-import.md)
+- [添付文書の取り込み・登録](docs/development/package-insert-import.md)
 - [PMDAデータの作業案内](data/pmda/README.md)
 - [共通定義の編集方法](backend/infrastructure/package_insert_definitions/README.md)
 - [デプロイ手順](docs/development/vercel-deployment.md)

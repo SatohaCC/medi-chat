@@ -2,12 +2,12 @@
 
 import json
 
-from backend.application.attachment_import.policies import registration_version
-from backend.application.indexing.queries.services.attachment_projection import (
-    project_active_attachment,
+from backend.application.indexing.queries.services.package_insert_projection import (
+    project_active_package_insert,
 )
-from backend.domain.attachment.entities import AttachmentDocument
+from backend.application.package_insert_import.policies import registration_version
 from backend.domain.foundation.json_types import JsonValue
+from backend.domain.package_insert.entities import PackageInsertDocument
 from backend.infrastructure.serialization.search_payload_codec import (
     build_index_unit,
     encode_registered_units,
@@ -15,13 +15,13 @@ from backend.infrastructure.serialization.search_payload_codec import (
 
 
 def projection_records(
-    document: AttachmentDocument,
+    document: PackageInsertDocument,
 ) -> tuple[list[dict[str, JsonValue]], list[dict[str, str]]]:
     version = registration_version(document)
     units: list[dict[str, JsonValue]] = []
     for position, line in enumerate(
         encode_registered_units(
-            document, project_active_attachment(document, version.yj_codes)
+            document, project_active_package_insert(document, version.yj_codes)
         ).splitlines()
     ):
         payload = json.loads(line)
@@ -41,6 +41,6 @@ def projection_records(
     products = [
         {"yj_code": code.value, "section_code": unit.section_code.value}
         for code in sorted(version.yj_codes, key=lambda code: code.value)
-        for unit in project_active_attachment(document, frozenset({code}))
+        for unit in project_active_package_insert(document, frozenset({code}))
     ]
     return units, products

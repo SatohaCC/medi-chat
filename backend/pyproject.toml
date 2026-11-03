@@ -10,6 +10,8 @@ dependencies = [
     "fastapi[standard]>=0.115.0",
     "google-genai>=1.0.0",
     "janome>=0.5.0",
+    "langchain-google-genai>=4.4.2,<5",
+    "langchain-openai>=1.7.3,<2",
     "langgraph>=1.2.17",
     "langsmith>=0.14.12",
     "openai>=1.50.0",
@@ -158,7 +160,7 @@ source_modules = [
     "backend.presentation.*",
 ]
 forbidden_modules = [
-    "backend.presentation.attachment_import_routes",
+    "backend.presentation.package_insert_import_routes",
     "backend.presentation.chat_routes",
     "backend.presentation.chat_websocket_routes",
     "backend.presentation.health_routes",
@@ -170,7 +172,7 @@ forbidden_modules = [
 ]
 as_packages = false
 ignore_imports = [
-    "backend.presentation.attachment_import_routes -> backend.presentation.dependencies",
+    "backend.presentation.package_insert_import_routes -> backend.presentation.dependencies",
     "backend.presentation.chat_routes -> backend.presentation.dependencies",
     "backend.presentation.chat_routes -> backend.presentation.chat_service",
     "backend.presentation.chat_websocket_routes -> backend.presentation.dependencies",
@@ -206,7 +208,7 @@ ignore_imports = [
     "backend.application.retrieval.** -> backend.application.medicine.**",
     "backend.application.retrieval.** -> backend.application.indexing.**",
     "backend.application.chat.** -> backend.application.indexing.**",
-    "backend.application.attachment_import.** -> backend.application.file_upload.**",
+    "backend.application.package_insert_import.** -> backend.application.file_upload.**",
     "backend.application.indexing.** -> backend.application.medicine.**",
 ]
 unmatched_ignore_imports_alerting = "none"
@@ -222,6 +224,7 @@ name = "Persistence does not depend on other technology adapters"
 type = "forbidden"
 source_modules = ["backend.infrastructure.persistence"]
 forbidden_modules = [
+    "backend.infrastructure.agent",
     "backend.infrastructure.llm",
     "backend.infrastructure.intent",
     "backend.infrastructure.morphology",
@@ -242,6 +245,7 @@ source_modules = [
     "backend.infrastructure.sources",
     "backend.infrastructure.authentication",
     "backend.infrastructure.package_insert_definitions",
+    "backend.infrastructure.agent",
 ]
 as_packages = true
 forbidden_modules = [
@@ -260,8 +264,8 @@ name = "Infrastructure payload mappers do not depend on adapter packages"
 type = "forbidden"
 source_modules = [
     "backend.infrastructure.serialization",
-    "backend.infrastructure.document_import.attachment_payloads",
-    "backend.infrastructure.document_import.attachment_contracts",
+    "backend.infrastructure.document_import.package_insert_payloads",
+    "backend.infrastructure.document_import.package_insert_contracts",
 ]
 forbidden_modules = [
     "backend.infrastructure.persistence",
@@ -279,6 +283,7 @@ forbidden_modules = [
 name = "External technology adapters are independent"
 type = "independence"
 modules = [
+    "backend.infrastructure.agent",
     "backend.infrastructure.llm",
     "backend.infrastructure.intent",
     "backend.infrastructure.morphology",

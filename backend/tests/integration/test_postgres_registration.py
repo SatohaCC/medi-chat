@@ -14,25 +14,25 @@ from dataclasses import replace
 import httpx
 import pytest
 import pytest_asyncio
-from backend.application.attachment_import.commands.import_documents import (
-    AttachmentImportCommands,
+from backend.application.package_insert_import.commands.import_documents import (
+    PackageInsertImportCommands,
 )
-from backend.application.attachment_import.errors import (
+from backend.application.package_insert_import.errors import (
     ImportCancelled,
     ImportConflict,
     ImportGone,
     ImportStorageError,
-    InvalidAttachment,
+    InvalidPackageInsert,
 )
-from backend.application.attachment_import.queries.import_history import (
+from backend.application.package_insert_import.queries.import_history import (
     ImportHistoryQueries,
 )
-from backend.domain.attachment.primitives import AttachmentSha256
-from backend.domain.attachment.value_objects import AttachmentFigure
+from backend.domain.package_insert.primitives import PackageInsertSha256
+from backend.domain.package_insert.value_objects import PackageInsertFigure
 from backend.infrastructure.document_import.original_document_registration_adapter import (
     OriginalDocumentRegistration,
 )
-from backend.infrastructure.persistence.mappings.attachment_document_mapping import (
+from backend.infrastructure.persistence.mappings.package_insert_document_mapping import (
     document_from_payload,
     document_to_payload,
 )
@@ -47,11 +47,11 @@ from backend.infrastructure.persistence.registration.registration_payloads impor
     PostgresRegistrationInput,
 )
 from backend.infrastructure.persistence.runtime.import_workers import ImportWorkers
-from backend.infrastructure.persistence.schemas import attachment_tables as s
+from backend.infrastructure.persistence.schemas import package_insert_tables as s
 from backend.infrastructure.pmda_xml.pmda_artifact_encoder import PmdaArtifactEncoder
 from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
-from backend.presentation.attachment_import_routes import router
-from backend.tests.infrastructure.persistence.test_attachment_document_mapping import (
+from backend.presentation.package_insert_import_routes import router
+from backend.tests.infrastructure.persistence.test_package_insert_document_mapping import (
     complete_document,
     observe,
 )
@@ -76,7 +76,7 @@ def pg_publisher(pg_engines):
 
 @pytest_asyncio.fixture
 async def pg_client(pg_publisher):
-    service = AttachmentImportCommands(
+    service = PackageInsertImportCommands(
         executor=ImportWorkers(),
         reader=pg_publisher.results,
         registration=OriginalDocumentRegistration(
@@ -85,8 +85,8 @@ async def pg_client(pg_publisher):
     )
     app = FastAPI()
     app.include_router(router)
-    app.state.attachment_import_service = service
-    app.state.attachment_import_queries = ImportHistoryQueries(
+    app.state.package_insert_import_service = service
+    app.state.package_insert_import_queries = ImportHistoryQueries(
         reader=PostgresImportQueries(pg_publisher.engine), executor=service._executor
     )
     try:
@@ -155,8 +155,8 @@ def test_pg006_007_009_original_and_figures_export_in_new_process(
 import hashlib,json,os
 from sqlalchemy import select
 from backend.infrastructure.persistence.runtime.postgres_engine import create_postgres_engine
-from backend.infrastructure.persistence.schemas import attachment_tables as s
-from backend.infrastructure.persistence.mappings.attachment_document_mapping import document_from_payload
+from backend.infrastructure.persistence.schemas import package_insert_tables as s
+from backend.infrastructure.persistence.mappings.package_insert_document_mapping import document_from_payload
 engine=create_postgres_engine(os.environ['TEST_RUNTIME_DATABASE_URL'],schema=os.environ['PG_EXPORT_SCHEMA'])
 with engine.connect() as c:
  row=c.execute(select(s.versions).where(s.versions.c.version_id==os.environ['PG_EXPORT_VERSION'])).mappings().one()
@@ -286,7 +286,7 @@ def test_pg014_missing_revision_refused(pg_publisher):
         b"",
         source("テスト年月なし"),
     )
-    with pytest.raises(InvalidAttachment) as failure:
+    with pytest.raises(InvalidPackageInsert) as failure:
         publish(pg_publisher, raw)
     assert failure.value.code == "missing_revision"
     with pg_publisher.engine.connect() as connection:
@@ -788,25 +788,25 @@ async def test_pg011_022_http_dtos_match_independent_existing_oracle(
     raw = source("テストHTTP旧版")
     digest = hashlib.sha256(raw).hexdigest()
     response = await pg_client.post(
-        "/api/attachment-imports",
+        "/api/package-insert-imports",
         files={"file": ("テスト.xml", raw, "application/xml")},
     )
     assert response.status_code == 201
     generation = response.json()["generation_id"]
     assert response.json() == expected(raw, generation, 1, ("111111111111",))
     location = response.headers["location"]
-    assert location == f"/api/attachment-imports/000001_test/{digest}"
+    assert location == f"/api/package-insert-imports/000001_test/{digest}"
     get = await pg_client.get(location)
     assert get.status_code == 200 and get.json() == response.json()
     repeat = await pg_client.post(
-        "/api/attachment-imports",
+        "/api/package-insert-imports",
         files={"file": ("テスト.xml", raw, "application/xml")},
     )
     assert repeat.status_code == 200
     assert repeat.json() == expected(raw, generation, 1, ("111111111111",), reused=True)
     new_raw = source("テストHTTP新版", revised_at="2026-11")
     new = await pg_client.post(
-        "/api/attachment-imports",
+        "/api/package-insert-imports",
         files={"file": ("テスト.xml", new_raw, "application/xml")},
     )
     assert new.status_code == 201
@@ -826,7 +826,7 @@ async def test_pg011_022_http_dtos_match_independent_existing_oracle(
         "phase": "publication",
     }
     replay = await pg_client.post(
-        "/api/attachment-imports",
+        "/api/package-insert-imports",
         files={"file": ("テスト.xml", raw, "application/xml")},
     )
     assert replay.status_code == 200
@@ -852,7 +852,7 @@ async def test_pg008_web_missing_figure_warns_without_storing_fake_asset(
 
     raw = graphic("missing.gif")
     response = await pg_client.post(
-        "/api/attachment-imports",
+        "/api/package-insert-imports",
         files={"file": ("テスト.xml", raw, "application/xml")},
     )
     assert response.status_code == 201
@@ -867,7 +867,7 @@ async def test_pg008_web_missing_figure_warns_without_storing_fake_asset(
     body = document.sections[0].body
     assert body is not None
     figure = body.blocks[0]
-    assert isinstance(figure, AttachmentFigure)
+    assert isinstance(figure, PackageInsertFigure)
     assert figure.reference.value == "missing.gif"
 
 
@@ -967,7 +967,7 @@ def test_pg009_handwritten_complete_domain_restored_from_jsonb_in_new_process(
     raw = source("テスト完全構造")
     sha256 = hashlib.sha256(raw).hexdigest()
     original = replace(
-        original, source=replace(original.source, sha256=AttachmentSha256(sha256))
+        original, source=replace(original.source, sha256=PackageInsertSha256(sha256))
     )
     identity = f"{original.document_id.value}:{sha256}"
     with pg_engines[1].begin() as connection:
@@ -1005,9 +1005,9 @@ def test_pg009_handwritten_complete_domain_restored_from_jsonb_in_new_process(
 import os,json
 from sqlalchemy import select
 from backend.infrastructure.persistence.runtime.postgres_engine import create_postgres_engine
-from backend.infrastructure.persistence.schemas import attachment_tables as s
-from backend.infrastructure.persistence.mappings.attachment_document_mapping import document_from_payload
-from backend.tests.infrastructure.persistence.test_attachment_document_mapping import observe
+from backend.infrastructure.persistence.schemas import package_insert_tables as s
+from backend.infrastructure.persistence.mappings.package_insert_document_mapping import document_from_payload
+from backend.tests.infrastructure.persistence.test_package_insert_document_mapping import observe
 engine=create_postgres_engine(os.environ['TEST_RUNTIME_DATABASE_URL'],schema=os.environ['PG_EXPORT_SCHEMA'])
 with engine.connect() as connection:
  document=document_from_payload(connection.execute(select(s.versions.c.structure)).scalar_one())
@@ -1036,13 +1036,13 @@ async def test_pg013_014_http_partial_conflict_and_missing_month_are_atomic(
     original = source("テスト既存", (existing_code,))
     assert (
         await pg_client.post(
-            "/api/attachment-imports",
+            "/api/package-insert-imports",
             files={"file": ("テスト.xml", original, "application/xml")},
         )
     ).status_code == 201
     incoming = source("テスト一部競合", ("111111111111", "222222222222"))
     conflict = await pg_client.post(
-        "/api/attachment-imports",
+        "/api/package-insert-imports",
         files={"file": ("テスト.xml", incoming, "application/xml")},
     )
     assert conflict.status_code == 409
@@ -1054,7 +1054,7 @@ async def test_pg013_014_http_partial_conflict_and_missing_month_are_atomic(
         source("テスト改訂なし"),
     )
     rejected = await pg_client.post(
-        "/api/attachment-imports",
+        "/api/package-insert-imports",
         files={"file": ("テスト.xml", missing, "application/xml")},
     )
     assert rejected.status_code == 422
@@ -1076,7 +1076,7 @@ def test_pg021_real_database_error_rolls_back_cleanup_and_two_maintenance_runs_c
 
     def fail_delete(connection, cursor, statement, parameters, context, executemany):
         nonlocal armed
-        if armed and statement.startswith("DELETE FROM attachment_versions"):
+        if armed and statement.startswith("DELETE FROM package_insert_versions"):
             armed = False
             cursor.execute("SELECT 1/0")
 

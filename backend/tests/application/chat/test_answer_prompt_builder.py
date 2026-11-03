@@ -22,10 +22,10 @@ from backend.application.retrieval.values import (
     EvidenceProductName,
     EvidenceSourceUrl,
 )
-from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.medicine.identifiers import YjCode
 from backend.domain.medicine.primitives import BrandName, GenericName
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
+from backend.domain.package_insert.identifiers import DocumentId
 from backend.infrastructure.package_insert_definitions.definition_assembly import (
     get_package_insert_definitions,
 )

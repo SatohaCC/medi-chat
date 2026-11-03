@@ -129,23 +129,23 @@ export function SourceEvidencePanel({
               <span {...stylex.props(styles.totalBadge)}>{totalCount}件</span>
             </div>
             <div {...stylex.props(styles.countSummary)}>
-              <span>{retrievalStatus === "complete" ? "統合根拠" : "取得済み根拠"}</span>
+              <span>取得済み根拠</span>
               {countSummary.split("、").map((count) => (
                 <span key={count} {...stylex.props(styles.countItem)}>
                   {count}
                 </span>
               ))}
             </div>
-            {retrievalStatus === "jev_searching" && (
+            {retrievalStatus === "retrieving" && (
               <span {...stylex.props(styles.searchingBadge)}>
                 <Zap size={12} strokeWidth={2} aria-hidden="true" />
-                Jev判定と統合中...
+                根拠を取得中...
               </span>
             )}
             {retrievalStatus === "complete" && (
               <span {...stylex.props(styles.completeBadge)}>
                 <Check size={12} strokeWidth={2.5} aria-hidden="true" />
-                Jev統合完了
+                根拠取得完了
               </span>
             )}
           </div>

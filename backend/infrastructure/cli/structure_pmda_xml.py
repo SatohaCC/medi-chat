@@ -145,7 +145,9 @@ def main() -> int:
 def _register(args: argparse.Namespace) -> int:
     from sqlalchemy.exc import SQLAlchemyError
 
-    from backend.application.attachment_import.errors import AttachmentImportError
+    from backend.application.package_insert_import.errors import (
+        PackageInsertImportError,
+    )
     from backend.infrastructure.cli.manage_postgres import (
         load_inputs,
         load_single_input,
@@ -206,7 +208,7 @@ def _register(args: argparse.Namespace) -> int:
             )
         )
         return 0
-    except AttachmentImportError as error:
+    except PackageInsertImportError as error:
         print(f"ERROR: {error.phase}/{error.code}: {error.message}", file=sys.stderr)
         return 1
     except ValueError, OSError, SQLAlchemyError:

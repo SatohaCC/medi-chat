@@ -6,7 +6,7 @@ import { expect, type Page, type TestInfo, test } from "./helpers/test";
 
 // Development chrome is outside the application visual oracle.
 test.beforeEach(async ({ page }) => {
-  await page.route("**/api/attachment-imports?**", (route) =>
+  await page.route("**/api/package-insert-imports?**", (route) =>
     route.fulfill({ json: { items: [], total_count: 0, limit: 20, offset: 0 } }),
   );
   // Remote Spectrum fonts may load or time out between screenshots.
@@ -180,7 +180,7 @@ for (const width of [1280, 390]) {
   for (const state of ["busy", "success", "pending", "superseded"]) {
     test(`V: import ${state} ${width}`, async ({ page }, testInfo) => {
       await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
-      await page.route("**/api/attachment-imports", async (route) => {
+      await page.route("**/api/package-insert-imports", async (route) => {
         if (state === "busy") return new Promise(() => {});
         await route.fulfill({
           json: {

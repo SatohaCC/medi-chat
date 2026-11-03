@@ -20,7 +20,7 @@ from sqlalchemy import create_engine
     "module_name,fixture_name",
     [
         ("backend.tests.integration.test_postgres_registration", "pg_client"),
-        ("backend.tests.presentation.test_attachment_import_http", "client"),
+        ("backend.tests.presentation.test_package_insert_import_http", "client"),
         ("backend.tests.presentation.test_registration_http", "client"),
     ],
 )
@@ -36,8 +36,8 @@ async def test_http_fixture_query_and_replay_readers_are_separate(
     fixture = inspect.unwrap(getattr(module, fixture_name))(publisher)
     try:
         await anext(fixture)
-        command = app.state.attachment_import_service
-        query = app.state.attachment_import_queries
+        command = app.state.package_insert_import_service
+        query = app.state.package_insert_import_queries
         assert command.reader is publisher.results
         assert isinstance(query.reader, PostgresImportQueries)
         assert query.reader.engine is publisher.engine

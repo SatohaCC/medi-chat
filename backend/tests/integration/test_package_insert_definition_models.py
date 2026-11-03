@@ -62,7 +62,7 @@ def test_tc01_single_source_bytes_and_tc03_constructor_ownership() -> None:
     from backend.application.chat.queries.chat import (
         ChatQueries,
     )
-    from backend.domain.attachment.value_objects import SectionDefinition
+    from backend.domain.package_insert.value_objects import SectionDefinition
     from backend.infrastructure.intent.jev_classifier import JevIntentClassifier
     from backend.infrastructure.morphology.janome_keyword_extractor import (
         JanomeKeywordExtractor,

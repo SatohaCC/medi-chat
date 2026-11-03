@@ -19,6 +19,7 @@ from backend.application.medicine.queries.catalog import (
 
 from .chat_models import ChatMessage
 from .chat_service import AppChatService as ChatService
+from .chat_service import FeedbackTraceTarget
 from .dependencies import get_chat_service, get_feedback_user_id
 from .evidence_models import ChatSource
 from .medicine_models import MAX_PRODUCT_YJ_CODES
@@ -142,27 +143,52 @@ async def stream_chat_response(
                 await send({"type": "error", "content": "Medicine corpus is not ready"})
                 return
 
-            jev_was_searched = service.is_jev_available
-            if not service.is_jev_available:
-                await send({"type": "retrieval_status", "stage": "unavailable"})
-            else:
-                await send({"type": "retrieval_status", "stage": "jev_searching"})
+            retrieval_complete_sent = False
+            await send({"type": "retrieval_status", "stage": "retrieving"})
 
             async def publish_logic(sources: list[ChatSource]) -> None:
                 await send(
                     {"type": "sources", "sources": [s.model_dump() for s in sources]}
                 )
 
+            async def publish_retrieval_complete(
+                jev_response: dict[str, Any] | None,
+            ) -> None:
+                nonlocal retrieval_complete_sent
+                if retrieval_complete_sent:
+                    return
+                retrieval_complete_sent = True
+                await send(
+                    {
+                        "type": "retrieval_status",
+                        "stage": "complete",
+                        "jev_response": jev_response,
+                    }
+                )
+
+            agent_feedback_target: FeedbackTraceTarget | None = None
+
+            def capture_agent_trace(target: FeedbackTraceTarget) -> None:
+                nonlocal agent_feedback_target
+                agent_feedback_target = target
+
             try:
                 reply = await service.prepare_reply(
                     payload.messages,
                     payload.product_yj_codes,
                     on_logic_sources=publish_logic,
+                    on_retrieval_complete=publish_retrieval_complete,
+                    on_agent_trace=capture_agent_trace,
+                    provider_name=payload.provider,
+                    model_name=payload.model,
                 )
 
             except InvalidMedicineInput as exc:
                 await send({"type": "error", "content": str(exc)})
                 return
+
+            if not retrieval_complete_sent:
+                await publish_retrieval_complete(reply.jev_response)
 
             if not reply.needs_clarification:
                 if reply.sources:
@@ -179,15 +205,6 @@ async def stream_chat_response(
                     await send({"type": "jev_response", "data": reply.jev_response})
                 if reply.notices:
                     await send({"type": "notices", "notices": reply.notices})
-                if jev_was_searched:
-                    await send(
-                        {
-                            "type": "retrieval_status",
-                            "stage": "complete",
-                            "jev_response": reply.jev_response,
-                        }
-                    )
-
             feedback_token: str | None = None
 
             def completed(token: str | None) -> None:
@@ -202,6 +219,7 @@ async def stream_chat_response(
                     payload.model,
                     user_id=user_id,
                     on_completed=completed,
+                    feedback_target=agent_feedback_target,
                 )
             ) as response:
                 async for chunk in response:

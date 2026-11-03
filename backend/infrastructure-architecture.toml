@@ -21,20 +21,20 @@ allowed_dependencies = ["serialization", "document_import", "package_insert_defi
 "runtime/postgres_readiness" = { symbols = ["verify_postgres_readiness"], consumers = ["composition", "cli", "frontend/scripts"] }
 "maintenance/postgres_registration_cleanup" = { symbols = ["PostgresRegistrationCleanup"], consumers = ["composition", "cli", "persistence.registration"] }
 "schemas/metadata" = { symbols = ["metadata"], consumers = ["backend/migrations", "cli/manage_postgres", "persistence"] }
-"schemas/attachment_tables" = { symbols = ["uploads", "upload_parts", "receipts", "versions", "assets", "units", "unit_products", "active", "generations", "memberships", "state"], consumers = ["backend/migrations", "cli/manage_postgres", "persistence", "frontend/scripts"] }
+"schemas/package_insert_tables" = { symbols = ["uploads", "upload_parts", "receipts", "versions", "assets", "units", "unit_products", "active", "generations", "memberships", "state"], consumers = ["backend/migrations", "cli/manage_postgres", "persistence", "frontend/scripts"] }
 "schemas/authentication_tables" = { symbols = ["users", "identities", "credentials", "families", "refresh_tokens", "attempts", "AUTH_TABLES"], consumers = ["backend/migrations", "cli/manage_postgres", "persistence"] }
 "runtime/postgres_integrity" = { symbols = ["PROJECTION_FINGERPRINT"], consumers = ["backend/migrations", "cli/manage_postgres", "persistence.runtime.postgres_readiness"] }
 "registration/registration_payloads" = { symbols = ["FigureInput", "PostgresRegistrationInput"], consumers = ["cli/manage_postgres"] }
-"mappings/attachment_document_mapping" = { symbols = ["document_from_payload"], consumers = ["cli/manage_postgres", "frontend/scripts"] }
+"mappings/package_insert_document_mapping" = { symbols = ["document_from_payload"], consumers = ["cli/manage_postgres", "frontend/scripts"] }
 "mappings/search_projection_mapping" = { symbols = ["projection_records"], consumers = ["cli/manage_postgres"] }
 
 [adapters.document_import]
-roles = ["attachment_payloads", "attachment_contracts", "original_document_registration_adapter"]
+roles = ["package_insert_payloads", "package_insert_contracts", "original_document_registration_adapter"]
 allowed_dependencies = []
 
 [adapters.document_import.public]
-"attachment_payloads" = { symbols = ["AttachmentSourceInformation", "DecodedAttachment", "ArtifactFile", "ArtifactBundle"], consumers = ["pmda_xml", "persistence", "composition", "cli"] }
-"attachment_contracts" = { symbols = ["AttachmentDecoder", "AttachmentArtifactEncoder", "AttachmentRegistrationPublisher"], consumers = ["pmda_xml", "persistence", "composition", "cli"] }
+"package_insert_payloads" = { symbols = ["PackageInsertSourceInformation", "DecodedPackageInsert", "ArtifactFile", "ArtifactBundle"], consumers = ["pmda_xml", "persistence", "composition", "cli"] }
+"package_insert_contracts" = { symbols = ["PackageInsertDecoder", "PackageInsertArtifactEncoder", "PackageInsertRegistrationPublisher"], consumers = ["pmda_xml", "persistence", "composition", "cli"] }
 "original_document_registration_adapter" = { symbols = ["OriginalDocumentRegistration"], consumers = ["composition", "cli"] }
 
 [adapters.serialization]
@@ -47,11 +47,12 @@ allowed_dependencies = []
 "evidence_mapping" = { symbols = ["build_evidence", "is_scope_heading_only"], consumers = ["persistence", "cli", "frontend/scripts"] }
 
 [adapters.llm]
-roles = ["llm_provider_base", "llm_provider_factory", "openai_provider", "gemini_provider", "fallback_provider", "mock_response_stream", "llm_provider_errors", "llm_error_messages"]
+roles = ["llm_provider_base", "llm_provider_factory", "agent_model_factory", "openai_provider", "gemini_provider", "fallback_provider", "mock_response_stream", "llm_provider_errors", "llm_error_messages"]
 allowed_dependencies = []
 
 [adapters.llm.public]
 "llm_provider_factory" = { symbols = ["create_llm_provider"], consumers = ["composition", "cli"] }
+"agent_model_factory" = { symbols = ["create_agent_model"], consumers = ["composition"] }
 
 [adapters.intent]
 roles = ["jev_classifier", "jev_intent_mapping"]
@@ -111,7 +112,7 @@ allowed_dependencies = []
 
 [adapters.composition]
 roles = ["app_lifespan", "authentication_composition"]
-allowed_dependencies = ["authentication", "observability", "cli", "document_import", "intent", "llm", "morphology", "package_insert_definitions", "persistence", "pmda_xml", "serialization", "sources"]
+allowed_dependencies = ["agent", "authentication", "observability", "cli", "document_import", "intent", "llm", "morphology", "package_insert_definitions", "persistence", "pmda_xml", "serialization", "sources"]
 
 [adapters.composition.public]
 "app_lifespan" = { symbols = ["create_app_lifespan"], consumers = ["backend.main"] }
@@ -128,3 +129,10 @@ allowed_dependencies = ["composition", "authentication", "document_import", "int
 "manage_postgres" = { symbols = ["main"], consumers = [] }
 "structure_pmda_xml" = { symbols = ["main"], consumers = [] }
 "configured_probe" = { symbols = ["probe_factory"], consumers = [] }
+
+[adapters.agent]
+roles = ["langgraph_chat_agent_adapter", "agent_graph_builder", "agent_payloads"]
+allowed_dependencies = []
+
+[adapters.agent.public]
+"langgraph_chat_agent_adapter" = { symbols = ["LangGraphChatAgentAdapter", "LLMProviderChatModelAdapter"], consumers = ["composition"] }

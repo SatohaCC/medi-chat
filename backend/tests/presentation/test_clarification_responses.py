@@ -81,8 +81,15 @@ class ClarificationResponseTests(unittest.TestCase):
 
         self.assertEqual(
             [event["type"] for event in events],
-            ["retrieval_status", "text_delta", "text_done"],
+            [
+                "retrieval_status",
+                "retrieval_status",
+                "text_delta",
+                "text_done",
+            ],
         )
+        self.assertEqual(events[0]["stage"], "retrieving")
+        self.assertEqual(events[1]["stage"], "complete")
         self.assertIn("YJコード", events[1]["content"])
         self.assertEqual(provider.calls, [])
 

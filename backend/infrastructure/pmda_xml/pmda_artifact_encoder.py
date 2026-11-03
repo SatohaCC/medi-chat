@@ -1,19 +1,19 @@
-from backend.application.attachment_import.commands.models import (
+from backend.application.indexing.queries.models import SearchUnit
+from backend.application.package_insert_import.commands.models import (
     ImportedProduct,
     ImportedRevision,
     ImportResult,
     ImportWarning,
 )
-from backend.application.attachment_import.errors import (
+from backend.application.package_insert_import.errors import (
     ImportLimitExceeded,
-    InvalidAttachment,
+    InvalidPackageInsert,
 )
-from backend.application.indexing.queries.models import SearchUnit
-from backend.domain.attachment.entities import AttachmentDocument
-from backend.infrastructure.document_import.attachment_payloads import (
+from backend.domain.package_insert.entities import PackageInsertDocument
+from backend.infrastructure.document_import.package_insert_payloads import (
     ArtifactBundle,
     ArtifactFile,
-    AttachmentSourceInformation,
+    PackageInsertSourceInformation,
 )
 from backend.infrastructure.serialization.import_result_codec import (
     result_dict,
@@ -39,9 +39,9 @@ class PmdaArtifactEncoder:
 
     def encode(
         self,
-        document: AttachmentDocument,
+        document: PackageInsertDocument,
         search_units: tuple[SearchUnit, ...],
-        source_info: AttachmentSourceInformation,
+        source_info: PackageInsertSourceInformation,
     ) -> ArtifactBundle:
         info = source_info
         templates: dict[str, list[dict]] = {}
@@ -51,7 +51,7 @@ class PmdaArtifactEncoder:
             )
         units_by_code = {unit.section_code.value: unit for unit in search_units}
         if units_by_code.keys() != templates.keys():
-            raise InvalidAttachment(
+            raise InvalidPackageInsert(
                 "projection_mismatch", "Numbered body projection is incomplete"
             )
         content = encode_registered_units(document, search_units, registered=False)

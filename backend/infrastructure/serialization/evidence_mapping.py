@@ -33,9 +33,9 @@ from backend.application.retrieval.values import (
     EvidenceGenericName,
     EvidenceSourceUrl,
 )
-from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.foundation.json_types import JsonValue
 from backend.domain.medicine.identifiers import YjCode
+from backend.domain.package_insert.identifiers import DocumentId
 from backend.infrastructure.serialization.json_payload_values import (
     _object,
     _objects,

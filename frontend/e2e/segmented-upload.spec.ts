@@ -8,7 +8,7 @@ test("10MiB XML is sent in bounded bodies without changing original bytes", asyn
   const parts: Buffer[] = [];
   let declaredHash = "";
   let completed = false;
-  await page.route("**/api/attachment-imports**", async (route) => {
+  await page.route("**/api/package-insert-imports**", async (route) => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
     if (request.method() === "GET") {
@@ -57,7 +57,7 @@ test("10MiB XML is sent in bounded bodies without changing original bytes", asyn
 
 test("failed part stops upload and displays server error", async ({ page }) => {
   let completed = false;
-  await page.route("**/api/attachment-imports**", async (route) => {
+  await page.route("**/api/package-insert-imports**", async (route) => {
     const path = new URL(route.request().url()).pathname;
     if (route.request().method() === "GET") {
       await route.fulfill({ json: { items: [], total_count: 0, limit: 20, offset: 0 } });

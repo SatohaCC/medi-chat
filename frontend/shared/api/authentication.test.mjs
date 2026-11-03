@@ -111,7 +111,7 @@ test("mutations are not automatically replayed after a 401", async (t) => {
     return json({}, 401);
   });
   await assert.rejects(
-    auth.authenticatedFetch("/api/attachment-imports", {
+    auth.authenticatedFetch("/api/package-insert-imports", {
       method: "POST",
       body: "original",
     }),

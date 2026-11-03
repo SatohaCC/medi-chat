@@ -9,7 +9,7 @@ from collections import Counter
 from pathlib import PurePosixPath
 from typing import Any
 
-from backend.application.attachment_import.errors import InvalidAttachment
+from backend.application.package_insert_import.errors import InvalidPackageInsert
 from backend.infrastructure.package_insert_definitions.definition_assembly import (
     get_package_insert_definitions,
 )
@@ -46,7 +46,7 @@ def build_artifacts(
     if xml_settings is None:
         xml_settings = get_package_insert_definitions().xml_settings
     if tag_name(root) != "PackIns" or root.attrib.get("drugType") != "Medicine":
-        raise InvalidAttachment(
+        raise InvalidPackageInsert(
             "unsupported_pmda_document", "Expected a PMDA medicine PackIns document"
         )
     namespace = (
@@ -56,7 +56,7 @@ def build_artifacts(
     insert_no = field(root, "PackageInsertNo", xml_settings=xml_settings)
     company = field(root, "CompanyIdentifier", xml_settings=xml_settings)
     if not insert_no or not company:
-        raise InvalidAttachment(
+        raise InvalidPackageInsert(
             "missing_document_identity", "Document identity is required"
         )
     pmda_key = f"{company}_{insert_no}"
@@ -79,9 +79,11 @@ def build_artifacts(
         | {"#comment", "#processing_instruction"}
     ]
     if unknown_root:
-        raise InvalidAttachment("unmapped_root_section", "Unknown root section")
+        raise InvalidPackageInsert("unmapped_root_section", "Unknown root section")
     if not sections:
-        raise InvalidAttachment("missing_sections", "No known numbered sections found")
+        raise InvalidPackageInsert(
+            "missing_sections", "No known numbered sections found"
+        )
     ids = {
         element.attrib["id"]: element
         for element in root.iter()
@@ -243,17 +245,17 @@ def build_artifacts(
         ],
     }
     if duplicate_section_codes or duplicate_unit_ids:
-        raise InvalidAttachment("duplicate_section", "Duplicate numbered section")
+        raise InvalidPackageInsert("duplicate_section", "Duplicate numbered section")
     if unresolved_refs:
-        raise InvalidAttachment(
+        raise InvalidPackageInsert(
             "unresolved_reference", "Internal reference is unresolved"
         )
     if uncovered or unrepresented_text:
-        raise InvalidAttachment(
+        raise InvalidPackageInsert(
             "unrepresented_body", "Original body is not represented"
         )
     if validation["missing_figures"]:
         if strict_assets:
-            raise InvalidAttachment("missing_figure", "Required figure is missing")
+            raise InvalidPackageInsert("missing_figure", "Required figure is missing")
         validation["status"] = "warning"
     return document, units, validation

@@ -9,8 +9,8 @@ from backend.application.indexing.values import (
     SearchUnitSectionCode,
     SearchUnitText,
 )
-from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.foundation.exceptions import DomainValidationError
+from backend.domain.package_insert.identifiers import DocumentId
 
 
 def test_search_unit_keeps_context_label_order_and_duplicates():

@@ -1,7 +1,8 @@
 """B01-B04/B10-B13/B17-B18: real routes, auth guard and trace ownership."""
 
+from collections.abc import AsyncGenerator
 from types import SimpleNamespace
-from typing import cast
+from typing import Any, cast
 from unittest.mock import Mock
 from uuid import uuid4
 
@@ -19,7 +20,7 @@ from backend.presentation.chat_websocket_routes import router as ws_router
 from backend.tests.presentation.test_chat_websocket_lifecycle import completed, request
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from langsmith import Client, tracing_context
+from langsmith import Client, traceable, tracing_context
 
 pytestmark = pytest.mark.anyio
 
@@ -204,6 +205,58 @@ def test_B01_B02_B17_rest_and_ws_target_actual_answer_run():
                 and call.kwargs.get("outputs", {}).get("answer") == "テスト回答"
                 for call in trace_client.update_run.call_args_list
             )
+
+
+async def test_B19_agent_feedback_targets_trace_containing_generation():
+    class AgentAnswers:
+        is_jev_available = False
+
+        @traceable(name="medi_chat.agent_generation", run_type="llm")
+        async def prepare_reply(self, *args: Any, **kwargs: Any) -> ChatResponse:
+            return ChatResponse(
+                answer="Agent回答",
+                intent="general",
+                retrieval_strategy="langgraph_agent",
+            )
+
+        async def stream_answer(self, *args: Any, **kwargs: Any) -> AsyncGenerator[str]:
+            yield "Agent回答"
+
+    codec = SignedFeedbackTokens(secret=b"s" * 32, audience="test")
+    app = app_for(Writer(), codec)
+    app.state.chat_service = AppChatService(
+        application_service=cast(ChatQueries, AgentAnswers()),
+        feedback_token_issuer=codec.issue,
+    )
+    app.include_router(ws_router)
+    trace_client = Mock(spec=Client)
+
+    with (
+        tracing_context(enabled=True, client=trace_client, project_name="test-project"),
+        TestClient(app) as client,
+    ):
+        with client.websocket_connect("/api/ws", headers=headers()) as ws:
+            ws.send_json(request())
+            events = completed(ws)
+        target = codec.verify(events[-1]["feedback_token"], "user")
+
+    runs = {
+        call.kwargs["id"]: call.kwargs
+        for call in trace_client.create_run.call_args_list
+    }
+    prepare_run = next(
+        run for run in runs.values() if run["name"] == "medi_chat.prepare_reply"
+    )
+    generation_run = next(
+        run for run in runs.values() if run["name"] == "medi_chat.agent_generation"
+    )
+    stream_run = next(
+        run for run in runs.values() if run["name"] == "medi_chat.stream_answer"
+    )
+
+    assert generation_run["parent_run_id"] == prepare_run["id"]
+    assert target.run_id == prepare_run["id"]
+    assert target.run_id != stream_run["id"]
 
 
 async def test_B03_B04_no_token_when_disabled_or_incomplete():

@@ -6,26 +6,26 @@ import threading
 from unittest.mock import Mock
 
 import pytest
-from backend.application.attachment_import.commands.import_documents import (
-    AttachmentImportCommands,
+from backend.application.file_upload.commands.models import UploadedSource, UploadSpec
+from backend.application.package_insert_import.commands.import_documents import (
+    PackageInsertImportCommands,
 )
-from backend.application.attachment_import.interfaces.import_replay import (
+from backend.application.package_insert_import.interfaces.import_replay import (
     ImportReplay,
 )
-from backend.application.attachment_import.interfaces.upload_import_receipts import (
+from backend.application.package_insert_import.interfaces.upload_import_receipts import (
     UploadImportReceipts,
-)
-from backend.application.file_upload.commands.models import UploadedSource, UploadSpec
-from backend.infrastructure.document_import.attachment_contracts import (
-    AttachmentDecoder,
-    AttachmentRegistrationPublisher,
 )
 from backend.infrastructure.document_import.original_document_registration_adapter import (
     OriginalDocumentRegistration,
 )
+from backend.infrastructure.document_import.package_insert_contracts import (
+    PackageInsertDecoder,
+    PackageInsertRegistrationPublisher,
+)
 from backend.infrastructure.persistence.runtime.import_workers import ImportWorkers
 from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
-from backend.tests.support.attachment_import_fixtures import encoded, xml_source
+from backend.tests.support.package_insert_import_fixtures import encoded, xml_source
 
 
 class UnusedStore:
@@ -81,14 +81,14 @@ def spec():
 
 
 def make_service(**kwargs):
-    return AttachmentImportCommands(
+    return PackageInsertImportCommands(
         executor=ImportWorkers(),
         reader=Mock(spec=ImportReplay),
         upload_receipts=Mock(spec=UploadImportReceipts, find=Mock(return_value=None)),
         **kwargs,
         registration=OriginalDocumentRegistration(
-            decoder=Mock(spec=AttachmentDecoder),
-            publisher=Mock(spec=AttachmentRegistrationPublisher),
+            decoder=Mock(spec=PackageInsertDecoder),
+            publisher=Mock(spec=PackageInsertRegistrationPublisher),
         ),
     )
 
@@ -116,7 +116,7 @@ async def test_shutdown_waits_for_publication_and_upload_completion(
             assert release.wait(5)
             return result
 
-    service = AttachmentImportCommands(
+    service = PackageInsertImportCommands(
         executor=ImportWorkers(),
         reader=Mock(spec=ImportReplay),
         upload_store=Store(),
@@ -161,7 +161,7 @@ async def test_shutdown_waits_for_publication_and_upload_completion(
     "code, discarded", [("upload_incomplete", False), ("invalid_document", True)]
 )
 async def test_finish_failure_preserves_only_repairable_sessions(code, discarded):
-    from backend.application.attachment_import.errors import ImportConflict
+    from backend.application.package_insert_import.errors import ImportConflict
 
     calls = []
 
@@ -233,15 +233,15 @@ async def test_shutdown_waits_cancelled_creation_cleanup_and_rejects_new_request
 async def test_completed_upload_replays_without_reimporting_original(
     concurrent_completion,
 ):
-    from backend.application.attachment_import.commands.models import (
-        UploadImportReceipt,
-    )
-    from backend.application.attachment_import.interfaces.original_document_registration import (
-        OriginalDocumentRegistration as RegistrationPort,
-    )
     from backend.application.file_upload.errors import UploadGone
     from backend.application.file_upload.interfaces.temporary_file_store import (
         TemporaryFileStore,
+    )
+    from backend.application.package_insert_import.commands.models import (
+        UploadImportReceipt,
+    )
+    from backend.application.package_insert_import.interfaces.original_document_registration import (
+        OriginalDocumentRegistration as RegistrationPort,
     )
 
     result = encoded(xml_source()).result
@@ -253,7 +253,7 @@ async def test_completed_upload_replays_without_reimporting_original(
     registration = Mock(spec=RegistrationPort)
     reader = Mock(spec=ImportReplay)
     reader.replay_result.return_value = result
-    service = AttachmentImportCommands(
+    service = PackageInsertImportCommands(
         registration=registration,
         reader=reader,
         executor=ImportWorkers(),

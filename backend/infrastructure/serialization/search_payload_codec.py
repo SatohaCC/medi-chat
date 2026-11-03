@@ -19,13 +19,6 @@ from backend.application.medicine.queries.models import RegisteredMedicine
 from backend.application.retrieval.queries.policies.selection import (
     section_code_matches,
 )
-from backend.domain.attachment.entities import AttachmentDocument
-from backend.domain.attachment.identifiers import DocumentId
-from backend.domain.attachment.primitives import PmdaUrl
-from backend.domain.attachment.value_objects import (
-    AttachmentProductRevision,
-    MedicineDocumentReference,
-)
 from backend.domain.foundation.json_types import JsonValue
 from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.identifiers import YjCode
@@ -36,6 +29,13 @@ from backend.domain.medicine.primitives import (
     HiraganaName,
 )
 from backend.domain.medicine.value_objects import MedicineNames
+from backend.domain.package_insert.entities import PackageInsertDocument
+from backend.domain.package_insert.identifiers import DocumentId
+from backend.domain.package_insert.primitives import PmdaUrl
+from backend.domain.package_insert.value_objects import (
+    MedicineDocumentReference,
+    PackageInsertProductRevision,
+)
 from backend.domain.shared.services import normalize_search_text
 from backend.infrastructure.serialization.json_payload_values import (
     _object,
@@ -159,7 +159,7 @@ def unit_matches_sections(
 
 
 def encode_registered_units(
-    document: AttachmentDocument,
+    document: PackageInsertDocument,
     units: tuple[SearchUnit, ...],
     *,
     registered: bool = True,
@@ -275,7 +275,7 @@ def build_index_document(
                             source.get("pmda_url") or metadata.get("pmda_url") or ""
                         )
                     ),
-                    revision=AttachmentProductRevision(revision),
+                    revision=PackageInsertProductRevision(revision),
                 ),
             )
         )

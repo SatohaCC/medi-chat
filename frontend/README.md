@@ -42,7 +42,7 @@ owner/app接続を`TEST_DATABASE_URL`/`TEST_RUNTIME_DATABASE_URL`へ明示して
 
 ## 共通UIとStyleX（移行中）
 
-画面は `features/chat` / `features/medicine-selection` / `features/attachment-import`
+画面は `features/chat` / `features/medicine-selection` / `features/package-insert-import`
 の公開entryからrouteへ接続します。model/hooks/apiはRAC/StyleXに依存せず、接続先は
 `shared/api/endpoints.ts` が解決します。Jev型はchat model、薬剤型はmedicine-selection modelの所有です。
 

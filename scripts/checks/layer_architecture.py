@@ -75,6 +75,7 @@ OS_IO_FUNCTIONS = {
 }
 
 ALLOWED_INFRASTRUCTURE_PACKAGES = {
+    "agent",
     "observability",
     "authentication",
     "cli",

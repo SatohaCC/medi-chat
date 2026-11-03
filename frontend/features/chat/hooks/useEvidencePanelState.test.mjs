@@ -23,6 +23,38 @@ function TestConsumer({ options, onRender }) {
   );
 }
 
+function InteractiveTest({ onComplete }) {
+  const messages = [
+    { role: "user", content: "質問1" },
+    { role: "assistant", content: "回答1", sources: [{ unit_id: "u1" }] },
+    { role: "user", content: "質問2" },
+    { role: "assistant", content: "回答2", sources: [{ unit_id: "u2" }] },
+  ];
+  const panel = useEvidencePanelState({
+    messages,
+    entries: [],
+    baseline: [],
+    persistentAdditional: [],
+  });
+  const [step, setStep] = useState(0);
+  const results = useRef([]);
+
+  if (step === 0) {
+    results.current.push({ step: "initial", openIndex: panel.openEvidenceIndex });
+    panel.handleToggleEvidence(1);
+    setStep(1);
+  } else if (step === 1) {
+    results.current.push({ step: "opened_older", openIndex: panel.openEvidenceIndex });
+    panel.closeEvidence();
+    setStep(2);
+  } else if (step === 2) {
+    results.current.push({ step: "closed_older", openIndex: panel.openEvidenceIndex });
+    onComplete(results.current);
+  }
+
+  return createElement("div", null, String(panel.openEvidenceIndex));
+}
+
 test("useEvidencePanelState: 根拠がない場合はパネルが自動で開かない", () => {
   let captured;
   const messages = [
@@ -87,47 +119,24 @@ test("useEvidencePanelState: アシスタントに根拠がある場合は最新
 
 test("useEvidencePanelState: 2件以上根拠がある際に過去の根拠を閉じても最新へ誤フォールバックせず閉じた状態を維持する", () => {
   let recordedResults;
-  function InteractiveTest() {
-    const messages = [
-      { role: "user", content: "質問1" },
-      { role: "assistant", content: "回答1", sources: [{ unit_id: "u1" }] },
-      { role: "user", content: "質問2" },
-      { role: "assistant", content: "回答2", sources: [{ unit_id: "u2" }] },
-    ];
-    const panel = useEvidencePanelState({
-      messages,
-      entries: [],
-      baseline: [],
-      persistentAdditional: [],
-    });
-    const [step, setStep] = useState(0);
-    const results = useRef([]);
-
-    if (step === 0) {
-      results.current.push({ step: "initial", openIndex: panel.openEvidenceIndex });
-      panel.handleToggleEvidence(1);
-      setStep(1);
-    } else if (step === 1) {
-      results.current.push({ step: "opened_older", openIndex: panel.openEvidenceIndex });
-      panel.closeEvidence();
-      setStep(2);
-    } else if (step === 2) {
-      results.current.push({ step: "closed_older", openIndex: panel.openEvidenceIndex });
-      recordedResults = results.current;
-    }
-
-    return createElement("div", null, String(panel.openEvidenceIndex));
-  }
-
-  renderToStaticMarkup(createElement(InteractiveTest));
+  renderToStaticMarkup(
+    createElement(InteractiveTest, {
+      onComplete: (results) => {
+        recordedResults = results;
+      },
+    }),
+  );
 
   assert.ok(recordedResults, "結果が記録されていること");
   assert.equal(recordedResults[0].openIndex, 3, "初期状態は最新の回答2（index 3）が開く");
-  assert.equal(recordedResults[1].openIndex, 1, "過去の回答1をクリックするとindex 1に切り替わる");
+  assert.equal(
+    recordedResults[1].openIndex,
+    1,
+    "過去の回答1をクリックするとindex 1に切り替わる",
+  );
   assert.equal(
     recordedResults[2].openIndex,
     null,
     "過去の根拠を閉じた際、index 3へ誤って再展開されず null のまま閉じる",
   );
 });
-

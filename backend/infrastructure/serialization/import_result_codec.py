@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from backend.application.attachment_import.commands.models import (
+from backend.application.package_insert_import.commands.models import (
     ImportedProduct,
     ImportedRevision,
     ImportResult,

@@ -8,12 +8,6 @@ from backend.application.medicine.queries.policies.catalog_matching import (
     MedicineCatalog,
     _ProductGroup,
 )
-from backend.domain.attachment.identifiers import DocumentId
-from backend.domain.attachment.primitives import PmdaUrl
-from backend.domain.attachment.value_objects import (
-    AttachmentProductRevision,
-    MedicineDocumentReference,
-)
 from backend.domain.medicine.entities import MedicineProduct
 from backend.domain.medicine.exceptions import MedicineDomainError
 from backend.domain.medicine.identifiers import YjCode
@@ -24,6 +18,12 @@ from backend.domain.medicine.primitives import (
     HiraganaName,
 )
 from backend.domain.medicine.value_objects import MedicineNames
+from backend.domain.package_insert.identifiers import DocumentId
+from backend.domain.package_insert.primitives import PmdaUrl
+from backend.domain.package_insert.value_objects import (
+    MedicineDocumentReference,
+    PackageInsertProductRevision,
+)
 
 
 @pytest.fixture
@@ -42,7 +42,7 @@ def registered_medicines() -> tuple[RegisteredMedicine, ...]:
             reference=MedicineDocumentReference(
                 document_id=DocumentId(f"doc{index}"),
                 pmda_url=PmdaUrl("https://example.test"),
-                revision=AttachmentProductRevision({}),
+                revision=PackageInsertProductRevision({}),
             ),
         )
         for index, name in enumerate(["アルファ", "ベータ"])
@@ -124,7 +124,7 @@ def test_一般名aliasと薬剤全情報を保持する() -> None:
         reference=MedicineDocumentReference(
             document_id=DocumentId("alias-doc"),
             pmda_url=PmdaUrl("https://example.test/original?key=1"),
-            revision=AttachmentProductRevision(
+            revision=PackageInsertProductRevision(
                 {
                     "date": "2026-09-30",
                     "source": {"label": "原文"},
@@ -161,7 +161,7 @@ def test_names_for_yj_codes_includes_raw_names_and_brackets() -> None:
         reference=MedicineDocumentReference(
             document_id=DocumentId("doc-sw"),
             pmda_url=PmdaUrl("https://example.test/sw"),
-            revision=AttachmentProductRevision({}),
+            revision=PackageInsertProductRevision({}),
         ),
     )
     medicines = (expected,)

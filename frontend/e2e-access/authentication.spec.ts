@@ -24,7 +24,7 @@ async function mockAuthentication(context: BrowserContext, initial = false) {
     }
     return state.valid ? route.fulfill({ json: principal() }) : route.fulfill({ status: 401, json: { detail: { code: "authentication_required" } } });
   });
-  await context.route("**/api/attachment-imports?**", (route) => route.fulfill({ json: { items: [], total_count: 0, limit: 20, offset: 0 } }));
+  await context.route("**/api/package-insert-imports?**", (route) => route.fulfill({ json: { items: [], total_count: 0, limit: 20, offset: 0 } }));
   return state;
 }
 

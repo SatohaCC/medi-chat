@@ -9,6 +9,20 @@ class GenerationDefaults:
     provider: str
     model: str
 
+    def resolve(self, provider: str | None, model: str | None) -> GenerationDefaults:
+        selected = provider or self.provider
+        if model:
+            return GenerationDefaults(selected, model)
+        if selected == self.provider:
+            return GenerationDefaults(selected, self.model)
+        return GenerationDefaults(
+            selected,
+            {
+                "openai": "gpt-6-luna",
+                "gemini": "gemini-3.8-flash",
+            }[selected],
+        )
+
 
 def read_generation_defaults() -> GenerationDefaults:
     return GenerationDefaults(

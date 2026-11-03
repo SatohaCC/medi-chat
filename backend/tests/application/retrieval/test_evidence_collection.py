@@ -20,8 +20,8 @@ from backend.application.retrieval.values import (
     EvidenceProductName,
     EvidenceSourceUrl,
 )
-from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.medicine.identifiers import YjCode
+from backend.domain.package_insert.identifiers import DocumentId
 
 
 def make_evidence(unit_id="unit", code="11.1", excerpt="原文\n本文", **kwargs):

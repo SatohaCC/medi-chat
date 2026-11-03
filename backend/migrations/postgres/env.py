@@ -4,9 +4,9 @@ from alembic import context
 from backend.infrastructure.persistence.runtime.postgres_engine import (
     create_postgres_engine,
 )
-from backend.infrastructure.persistence.schemas.attachment_tables import uploads
 from backend.infrastructure.persistence.schemas.authentication_tables import users
 from backend.infrastructure.persistence.schemas.metadata import metadata
+from backend.infrastructure.persistence.schemas.package_insert_tables import uploads
 from sqlalchemy import inspect
 
 config = context.config

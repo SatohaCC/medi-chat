@@ -1,6 +1,6 @@
 """医薬品候補は根拠Readerを要求せず、読取終了まで世代を所有する。"""
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 
@@ -35,7 +35,7 @@ async def test_catalogue_keeps_and_releases_its_medicine_only_snapshot(fail_read
         released = False
 
         @asynccontextmanager
-        async def acquire(self) -> AsyncIterator[MedicineSnapshot]:
+        async def acquire(self) -> AsyncGenerator[MedicineSnapshot]:
             self.active = True
             try:
                 yield Snapshot(generation_id=generation_id, medicine_reader=Reader())

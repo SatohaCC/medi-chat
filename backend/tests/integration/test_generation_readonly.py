@@ -2,11 +2,11 @@
 
 import httpx
 import pytest
-from backend.application.attachment_import.errors import ImportCancelled
+from backend.application.package_insert_import.errors import ImportCancelled
 from backend.infrastructure.persistence.queries.postgres_import_query_reader import (
     PostgresImportQueries,
 )
-from backend.infrastructure.persistence.schemas import attachment_tables as schema
+from backend.infrastructure.persistence.schemas import package_insert_tables as schema
 from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
 from backend.tests.integration.test_postgres_registration import (
     pg_publisher as pg_publisher,
@@ -74,7 +74,7 @@ async def test_pg021_pending_startup_has_no_cleanup_writes_then_explicit_mainten
         ):
             assert (await client.get("/health")).status_code == 200
             saved = await client.get(
-                f"/api/attachment-imports/{result.document_id}/{result.source_sha256}"
+                f"/api/package-insert-imports/{result.document_id}/{result.source_sha256}"
             )
             assert saved.json()["status"] == "registered_cleanup_pending"
     finally:

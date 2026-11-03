@@ -3,10 +3,12 @@
 from dataclasses import dataclass
 from typing import Any, TypedDict
 
-from backend.application.attachment_import.commands.models import ImportResult
-from backend.domain.attachment.value_objects import RegistrationVersion
+from backend.application.package_insert_import.commands.models import ImportResult
 from backend.domain.foundation.json_types import JsonValue
-from backend.infrastructure.document_import.attachment_payloads import DecodedAttachment
+from backend.domain.package_insert.value_objects import RegistrationVersion
+from backend.infrastructure.document_import.package_insert_payloads import (
+    DecodedPackageInsert,
+)
 
 
 @dataclass(frozen=True)
@@ -18,7 +20,7 @@ class FigureInput:
 
 @dataclass(frozen=True)
 class PostgresRegistrationInput:
-    decoded: DecodedAttachment
+    decoded: DecodedPackageInsert
     source: bytes
     figures: tuple[FigureInput, ...] = ()
 

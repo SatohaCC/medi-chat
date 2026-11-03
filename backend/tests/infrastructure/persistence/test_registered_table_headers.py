@@ -3,8 +3,8 @@
 import json
 
 import pytest
-from backend.application.indexing.queries.services.attachment_projection import (
-    project_active_attachment,
+from backend.application.indexing.queries.services.package_insert_projection import (
+    project_active_package_insert,
 )
 from backend.domain.medicine.identifiers import YjCode
 from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
@@ -25,7 +25,7 @@ CASES = [
 def test_current_encoder_saves_declared_column_titles(stem, yj_code):
     source = next((PROJECT_ROOT / "data/pmda/originals").rglob(f"{stem}.xml"))
     document = PmdaXmlDecoder().decode(source.read_bytes()).document
-    units = project_active_attachment(document, frozenset({YjCode(yj_code)}))
+    units = project_active_package_insert(document, frozenset({YjCode(yj_code)}))
     unit = next(unit for unit in units if unit.section_code.value == "10")
     payload = json.loads(encode_registered_units(document, (unit,)))
     assert payload["schema_version"] == "medi-chat.pmda-sections.v4"

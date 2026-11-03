@@ -94,7 +94,7 @@ ALLOWED_DOMAIN_INTERNAL_DEPENDENCIES: dict[str, set[str]] = {
 ALLOWED_APPLICATION_CONTEXT_DEPENDENCIES: dict[str, set[str]] = {
     "chat": {"retrieval", "medicine", "indexing"},
     "retrieval": {"medicine", "indexing"},
-    "attachment_import": {"file_upload"},
+    "package_insert_import": {"file_upload"},
     "file_upload": set(),
     "indexing": {"medicine"},
     "medicine": set(),
@@ -106,6 +106,7 @@ INFRASTRUCTURE_ROOT_PAYLOAD_MODULES = {
     "import_payloads",
 }
 ALLOWED_INFRASTRUCTURE_PACKAGES = {
+    "agent",
     "observability",
     "authentication",
     "cli",
@@ -349,7 +350,7 @@ def _allowed_module(module: str, *, caller: str) -> bool:
         ("from ..foundation.primitives.identifiers import EntityStringId\n", True),
         ("from backend.domain.foundation.primitives import identifiers\n", True),
         ("from .primitives import SearchKeyword\n", False),
-        ("from ..attachment.identifiers import DocumentId\n", False),
+        ("from ..package_insert.identifiers import DocumentId\n", False),
         ("from ..shared.services import normalize_match_text\n", False),
         (
             "from backend.infrastructure.package_insert_definitions.definition_assembly import PackageInsertDefinitions\n",
@@ -368,7 +369,7 @@ def test_public_identifiers_only_depend_on_stdlib_and_id_base(
 ) -> None:
     violations = find_inner_layer_violations(
         source,
-        module_name="backend.domain.attachment.identifiers",
+        module_name="backend.domain.package_insert.identifiers",
         filename="identifiers_fixture.py",
     )
     assert bool(violations) is not allowed, violations
@@ -613,7 +614,7 @@ def test_backend_root_contains_only_onion_layers_and_exceptions() -> None:
     [
         (
             "backend.application.fixture",
-            "from backend.domain.attachment import entities\n",
+            "from backend.domain.package_insert import entities\n",
             True,
         ),
         (
@@ -699,8 +700,8 @@ def test_new_public_module_paths_are_importable_without_legacy_packages() -> Non
             id="type_checking_import",
         ),
         pytest.param(
-            "from backend.domain.attachment.value_objects import IntentPolicy\n"
-            "from backend.domain.attachment.services import format_scoped_text\n",
+            "from backend.domain.package_insert.value_objects import IntentPolicy\n"
+            "from backend.domain.package_insert.services import format_scoped_text\n",
             None,
             id="owned_domain_imports",
         ),
@@ -754,7 +755,7 @@ def test_legacy_facades_are_not_required() -> None:
 def test_domain_cannot_depend_on_application(source: str) -> None:
     violations = find_inner_layer_violations(
         source,
-        module_name="backend.domain.attachment.fixture",
+        module_name="backend.domain.package_insert.fixture",
         filename="domain_fixture.py",
     )
     assert violations
@@ -765,7 +766,7 @@ def test_domain_cannot_depend_on_application(source: str) -> None:
     "module_name", ["backend.domain.fixture", "backend.application.fixture"]
 )
 def test_pure_owned_models_and_formatting_are_allowed(module_name: str) -> None:
-    source = "from backend.domain.attachment.value_objects import IntentPolicy\nfrom backend.domain.attachment.services import section_code_sort_key\n"
+    source = "from backend.domain.package_insert.value_objects import IntentPolicy\nfrom backend.domain.package_insert.services import section_code_sort_key\n"
     assert (
         find_inner_layer_violations(
             source, module_name=module_name, filename="shared_fixture.py"
@@ -783,7 +784,7 @@ def test_pure_owned_models_and_formatting_are_allowed(module_name: str) -> None:
 def test_application_can_depend_on_domain() -> None:
     assert (
         find_inner_layer_violations(
-            "from backend.domain.attachment import entities\n",
+            "from backend.domain.package_insert import entities\n",
             module_name="backend.application.fixture",
             filename="application_fixture.py",
         )
@@ -796,14 +797,14 @@ def test_domain_models_have_explicit_primitive_entity_value_object_ownership() -
     expected_modules = {
         "BaseString": "backend.domain.foundation.primitives.primitives",
         "BaseFiniteFloat": "backend.domain.foundation.primitives.primitives",
-        "DocumentId": "backend.domain.attachment.identifiers",
+        "DocumentId": "backend.domain.package_insert.identifiers",
         "ProductGroupId": "backend.domain.medicine.primitives",
         "MedicineProduct": "backend.domain.medicine.entities",
         "IntentName": "backend.application.retrieval.values",
-        "PmdaUrl": "backend.domain.attachment.primitives",
+        "PmdaUrl": "backend.domain.package_insert.primitives",
         "Probability": "backend.application.retrieval.values",
         "SearchKeyword": "backend.application.retrieval.values",
-        "SectionCode": "backend.domain.attachment.primitives",
+        "SectionCode": "backend.domain.package_insert.primitives",
         "SearchUnitId": "backend.application.indexing.values",
         "YjCode": "backend.domain.medicine.identifiers",
         "JsonValue": "backend.domain.foundation.json_types",
@@ -903,22 +904,22 @@ def test_domain_has_no_compatibility_facades() -> None:
             "IO os.getenv",
         ),
         (
-            "backend.domain.attachment.primitives",
+            "backend.domain.package_insert.primitives",
             "from .value_objects import SearchCriteria\n",
             1,
-            "import backend.domain.attachment.value_objects.SearchCriteria",
+            "import backend.domain.package_insert.value_objects.SearchCriteria",
         ),
         (
-            "backend.domain.attachment.value_objects",
+            "backend.domain.package_insert.value_objects",
             "from .entities import SearchUnit\n",
             1,
-            "import backend.domain.attachment.entities.SearchUnit",
+            "import backend.domain.package_insert.entities.SearchUnit",
         ),
         (
-            "backend.domain.attachment.entities",
+            "backend.domain.package_insert.entities",
             "from .services import merge_evidence\n",
             1,
-            "import backend.domain.attachment.services.merge_evidence",
+            "import backend.domain.package_insert.services.merge_evidence",
         ),
         (
             "backend.application.medicine.queries.suggest_medicines",
@@ -940,9 +941,9 @@ def test_domain_has_no_compatibility_facades() -> None:
         ),
         (
             "backend.presentation.search_routes",
-            "from ..domain.attachment.repositories import EvidenceQueryReader\n",
+            "from ..domain.package_insert.repositories import EvidenceQueryReader\n",
             1,
-            "import backend.domain.attachment.repositories.EvidenceQueryReader",
+            "import backend.domain.package_insert.repositories.EvidenceQueryReader",
         ),
         (
             "backend.infrastructure.persistence.registration.postgres_registration_publisher",
@@ -951,10 +952,10 @@ def test_domain_has_no_compatibility_facades() -> None:
             "import backend.infrastructure.composition.app_lifespan.create_app_lifespan",
         ),
         (
-            "backend.domain.attachment.primitives",
+            "backend.domain.package_insert.primitives",
             "from . import value_objects\n",
             1,
-            "import backend.domain.attachment.value_objects",
+            "import backend.domain.package_insert.value_objects",
         ),
         (
             "backend.application.medicine.queries.suggest_medicines",
@@ -976,9 +977,9 @@ def test_domain_has_no_compatibility_facades() -> None:
         ),
         (
             "backend.presentation.search_routes",
-            "from ..domain.attachment import repositories\n",
+            "from ..domain.package_insert import repositories\n",
             1,
-            "import backend.domain.attachment.repositories",
+            "import backend.domain.package_insert.repositories",
         ),
         (
             "backend.infrastructure.persistence.registration.postgres_registration_publisher",
@@ -988,15 +989,15 @@ def test_domain_has_no_compatibility_facades() -> None:
         ),
         (
             "backend.presentation.request_logging",
-            "from ..domain.attachment.value_objects import Evidence\n",
+            "from ..domain.package_insert.value_objects import Evidence\n",
             1,
-            "import backend.domain.attachment.value_objects.Evidence",
+            "import backend.domain.package_insert.value_objects.Evidence",
         ),
         (
             "backend.presentation.request_logging",
-            'def f(x: "backend.domain.attachment.value_objects.Evidence") -> None:\n    pass\n',
+            'def f(x: "backend.domain.package_insert.value_objects.Evidence") -> None:\n    pass\n',
             1,
-            "annotation backend.domain.attachment.value_objects.Evidence",
+            "annotation backend.domain.package_insert.value_objects.Evidence",
         ),
         (
             "backend.presentation.chat_service",
@@ -1005,31 +1006,31 @@ def test_domain_has_no_compatibility_facades() -> None:
             "annotation backend.domain.medicine.entities.MedicineProduct",
         ),
         (
-            "backend.domain.attachment.services",
+            "backend.domain.package_insert.services",
             "from ..medicine.entities import MedicineProduct\n",
             1,
             "import backend.domain.medicine.entities.MedicineProduct",
         ),
         (
-            "backend.domain.attachment.services",
+            "backend.domain.package_insert.services",
             'def f(x: "backend.domain.medicine.entities.MedicineProduct") -> None:\n    pass\n',
             1,
             "annotation backend.domain.medicine.entities.MedicineProduct",
         ),
         (
             "backend.domain.foundation.primitives.base",
-            "from ...attachment.primitives import AttachmentText\n",
+            "from ...package_insert.primitives import PackageInsertText\n",
             1,
-            "import backend.domain.attachment.primitives.AttachmentText",
+            "import backend.domain.package_insert.primitives.PackageInsertText",
         ),
         (
             "backend.domain.shared.services",
-            'def f(x: "backend.domain.attachment.primitives.AttachmentText") -> None:\n    pass\n',
+            'def f(x: "backend.domain.package_insert.primitives.PackageInsertText") -> None:\n    pass\n',
             1,
-            "annotation backend.domain.attachment.primitives.AttachmentText",
+            "annotation backend.domain.package_insert.primitives.PackageInsertText",
         ),
         (
-            "backend.domain.attachment.primitives",
+            "backend.domain.package_insert.primitives",
             "from ..shared.services import normalize_match_text\n",
             1,
             "import backend.domain.shared.services.normalize_match_text",
@@ -1047,7 +1048,7 @@ def test_domain_has_no_compatibility_facades() -> None:
             "annotation backend.application.retrieval.interfaces.snapshot_provider.RetrievalSnapshotProvider",
         ),
         (
-            "backend.application.indexing.queries.services.attachment_projection",
+            "backend.application.indexing.queries.services.package_insert_projection",
             "from backend.application.retrieval.queries.services.evidence_retrieval import retrieve_evidence\n",
             1,
             "import backend.application.retrieval.queries.services.evidence_retrieval.retrieve_evidence",
@@ -1077,28 +1078,28 @@ def test_domain_has_no_compatibility_facades() -> None:
             "import backend",
         ),
         (
-            "backend.domain.attachment.primitives",
-            "import backend.domain.attachment.exceptions\nx: backend.domain.attachment.value_objects.SearchCriteria\n",
+            "backend.domain.package_insert.primitives",
+            "import backend.domain.package_insert.exceptions\nx: backend.domain.package_insert.value_objects.SearchCriteria\n",
             2,
-            "annotation backend.domain.attachment.value_objects.SearchCriteria",
+            "annotation backend.domain.package_insert.value_objects.SearchCriteria",
         ),
         (
-            "backend.domain.attachment.primitives",
-            "import backend.domain.attachment.exceptions\nx = backend.domain.attachment.value_objects.SearchCriteria\n",
+            "backend.domain.package_insert.primitives",
+            "import backend.domain.package_insert.exceptions\nx = backend.domain.package_insert.value_objects.SearchCriteria\n",
             2,
-            "import backend.domain.attachment.value_objects.SearchCriteria",
+            "import backend.domain.package_insert.value_objects.SearchCriteria",
         ),
         (
             "backend.presentation.chat_service",
-            "from ..domain.attachment.repositories import EvidenceQueryReader\n",
+            "from ..domain.package_insert.repositories import EvidenceQueryReader\n",
             1,
-            "import backend.domain.attachment.repositories.EvidenceQueryReader",
+            "import backend.domain.package_insert.repositories.EvidenceQueryReader",
         ),
         (
             "backend.presentation.evidence_models",
-            "from ..domain.attachment.primitives import DetectionSource\n",
+            "from ..domain.package_insert.primitives import DetectionSource\n",
             1,
-            "import backend.domain.attachment.primitives.DetectionSource",
+            "import backend.domain.package_insert.primitives.DetectionSource",
         ),
         (
             "backend.presentation.chat_models",
@@ -1189,7 +1190,7 @@ def test_import_linter_contracts_detect_submodule_violations() -> None:
     synthetic_violations = (
         (
             "Domain does not depend on outer layers",
-            "backend.domain.attachment.services",
+            "backend.domain.package_insert.services",
             "backend.application.chat.queries.services.answer_question",
         ),
         (
@@ -1210,36 +1211,36 @@ def test_import_linter_contracts_detect_submodule_violations() -> None:
         (
             "Config does not depend on layers",
             "backend.config.runtime_settings",
-            "backend.domain.attachment.services",
+            "backend.domain.package_insert.services",
         ),
         (
             "Presentation does not depend on domain",
             "backend.presentation.search_routes",
-            "backend.domain.attachment.services",
+            "backend.domain.package_insert.services",
         ),
         (
             "Presentation does not depend on domain",
             "backend.presentation.search_routes",
-            "backend.domain.attachment.value_objects",
+            "backend.domain.package_insert.value_objects",
         ),
         (
             "Presentation does not depend on domain",
             "backend.presentation.chat_service",
-            "backend.domain.attachment.repositories",
+            "backend.domain.package_insert.repositories",
         ),
         (
             "Presentation does not depend on domain",
             "backend.presentation.evidence_models",
-            "backend.domain.attachment.primitives",
+            "backend.domain.package_insert.primitives",
         ),
         (
             "Presentation does not depend on domain",
             "backend.presentation.chat_dto_mapper",
-            "backend.domain.attachment.value_objects",
+            "backend.domain.package_insert.value_objects",
         ),
         (
             "Presentation does not depend on domain",
-            "backend.presentation.attachment_import_routes",
+            "backend.presentation.package_insert_import_routes",
             "backend.domain.foundation.exceptions",
         ),
         (
@@ -1274,7 +1275,7 @@ def test_import_linter_contracts_detect_submodule_violations() -> None:
         ),
         (
             "Non-chat application contexts do not depend on chat",
-            "backend.application.attachment_import.commands.import_documents",
+            "backend.application.package_insert_import.commands.import_documents",
             "backend.application.chat.queries.services.answer_question",
         ),
         (
@@ -1285,16 +1286,16 @@ def test_import_linter_contracts_detect_submodule_violations() -> None:
         (
             "Medicine catalogue does not depend on retrieval use cases",
             "backend.application.medicine.queries.catalog",
-            "backend.application.indexing.queries.services.attachment_projection",
+            "backend.application.indexing.queries.services.package_insert_projection",
         ),
         (
             "Application contexts follow directed pipeline boundaries",
-            "backend.application.indexing.queries.services.attachment_projection",
+            "backend.application.indexing.queries.services.package_insert_projection",
             "backend.application.retrieval.queries.services.evidence_retrieval",
         ),
         (
             "Application contexts follow directed pipeline boundaries",
-            "backend.application.attachment_import.commands.import_documents",
+            "backend.application.package_insert_import.commands.import_documents",
             "backend.application.retrieval.queries.services.evidence_retrieval",
         ),
         (
@@ -1334,43 +1335,43 @@ def test_import_linter_contracts_detect_submodule_violations() -> None:
         ),
         (
             "Domain contexts are independent",
-            "backend.domain.attachment.services",
+            "backend.domain.package_insert.services",
             "backend.domain.medicine.entities",
         ),
         (
             "Foundation does not depend on business vocabulary",
             "backend.domain.foundation.primitives.base",
-            "backend.domain.attachment.primitives",
+            "backend.domain.package_insert.primitives",
         ),
         (
             "Shared does not depend on business contexts",
             "backend.domain.shared.services",
-            "backend.domain.attachment.primitives",
+            "backend.domain.package_insert.primitives",
         ),
         (
             "Public identifiers do not expose business implementation",
-            "backend.domain.attachment.identifiers",
-            "backend.domain.attachment.primitives",
+            "backend.domain.package_insert.identifiers",
+            "backend.domain.package_insert.primitives",
         ),
         (
             "Domain primitives do not depend on value objects, entities, repositories, or services",
-            "backend.domain.attachment.primitives",
-            "backend.domain.attachment.value_objects",
+            "backend.domain.package_insert.primitives",
+            "backend.domain.package_insert.value_objects",
         ),
         (
             "Domain value objects do not depend on entities, repositories, or services",
-            "backend.domain.attachment.value_objects",
-            "backend.domain.attachment.entities",
+            "backend.domain.package_insert.value_objects",
+            "backend.domain.package_insert.entities",
         ),
         (
             "Domain entities do not depend on repositories or services",
-            "backend.domain.attachment.entities",
-            "backend.domain.attachment.services",
+            "backend.domain.package_insert.entities",
+            "backend.domain.package_insert.services",
         ),
         (
             "Domain repositories do not depend on services",
-            "backend.domain.attachment.repositories",
-            "backend.domain.attachment.services",
+            "backend.domain.package_insert.repositories",
+            "backend.domain.package_insert.services",
         ),
     )
 
@@ -1554,7 +1555,7 @@ def test_retrieval_is_owned_by_application_without_domain_facade():
             False,
         ),
         (
-            "backend.domain.attachment.services",
+            "backend.domain.package_insert.services",
             "backend.application.retrieval.queries.policies.selection.merge_evidence",
             False,
         ),

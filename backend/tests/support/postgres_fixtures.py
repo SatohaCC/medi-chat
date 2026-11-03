@@ -89,7 +89,7 @@ def pg_api(pg_engines, monkeypatch):
         PmdaArtifactEncoder,
     )
     from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
-    from backend.tests.support.attachment_import_fixtures import xml_source
+    from backend.tests.support.package_insert_import_fixtures import xml_source
 
     raw = xml_source(
         "<AdverseEvents><Detail><Lang>頭痛に注意してください。記載0 頭痛に注意してください。記載1 頭痛に注意してください。記載2</Lang></Detail></AdverseEvents>"

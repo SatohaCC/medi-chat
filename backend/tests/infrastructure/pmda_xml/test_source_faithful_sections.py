@@ -7,14 +7,14 @@ from backend.application.indexing.queries.models import (
     SearchParagraph,
     SearchTableBlock,
 )
-from backend.application.indexing.queries.services.attachment_projection import (
-    project_active_attachment,
-    project_attachment,
+from backend.application.indexing.queries.services.package_insert_projection import (
+    project_active_package_insert,
+    project_package_insert,
 )
-from backend.domain.attachment.value_objects import AttachmentTableBlock
 from backend.domain.medicine.identifiers import YjCode
-from backend.infrastructure.document_import.attachment_payloads import (
-    AttachmentSourceInformation,
+from backend.domain.package_insert.value_objects import PackageInsertTableBlock
+from backend.infrastructure.document_import.package_insert_payloads import (
+    PackageInsertSourceInformation,
 )
 from backend.infrastructure.pmda_xml.pmda_artifact_encoder import PmdaArtifactEncoder
 from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
@@ -23,7 +23,7 @@ from backend.infrastructure.serialization.search_payload_codec import (
     encode_registered_units,
     registered_unit_text,
 )
-from backend.tests.support.attachment_import_fixtures import (
+from backend.tests.support.package_insert_import_fixtures import (
     encoded,
     json_artifact,
     xml_source,
@@ -43,9 +43,11 @@ def test_major_projection_preserves_interleaved_parent_and_child_order(active):
     )
     decoded = PmdaXmlDecoder().decode(source)
     units = (
-        project_active_attachment(decoded.document, frozenset({YjCode("111111111111")}))
+        project_active_package_insert(
+            decoded.document, frozenset({YjCode("111111111111")})
+        )
         if active
-        else project_attachment(decoded.document)
+        else project_package_insert(decoded.document)
     )
     (unit,) = units
     expected = [
@@ -101,7 +103,7 @@ def test_parent_table_rows_separated_by_child_are_not_merged():
         + '<ContraIndicatedCombinations id="s101"><Detail><Lang>CHILD</Lang></Detail>'
         "</ContraIndicatedCombinations>" + drug("AFTER") + "</Interactions>"
     )
-    (unit,) = project_attachment(PmdaXmlDecoder().decode(source).document)
+    (unit,) = project_package_insert(PmdaXmlDecoder().decode(source).document)
     assert [type(block) for block in unit.blocks] == [
         SearchTableBlock,
         SearchParagraph,
@@ -136,7 +138,7 @@ def test_major_section_is_one_saved_record_with_original_children():
         "10.1",
         "10.2",
     ]
-    (unit,) = project_attachment(decoded.document)
+    (unit,) = project_package_insert(decoded.document)
     assert unit.section_code.value == "10"
     assert all(
         text in unit.text.value
@@ -152,7 +154,7 @@ def test_major_section_is_one_saved_record_with_original_children():
         "10.1",
         "10.2",
     ]
-    (active,) = project_active_attachment(
+    (active,) = project_active_package_insert(
         decoded.document, frozenset({YjCode("111111111111")})
     )
     (payload,) = [
@@ -187,7 +189,7 @@ def test_revision_marked_current_is_used_without_reordering_source(previous_firs
             previous + b"</DateOfPreparationOrRevision>",
         )
     decoded = PmdaXmlDecoder().decode(source)
-    assert isinstance(decoded.source_info, AttachmentSourceInformation)
+    assert isinstance(decoded.source_info, PackageInsertSourceInformation)
     _, products = build_index_document(decoded.source_info.document)
     assert products[0].revision["source_label"] == "今回"
     assert products[0].revision["year_month"] == "2026-10"
@@ -202,7 +204,7 @@ def test_short_detail_stays_body_without_a_header_and_keeps_source_order():
         "<SimpleList><Item><Detail><Lang>内側の本文</Lang></Detail></Item></SimpleList>"
         "<Detail><Lang>末尾の本文</Lang></Detail></Item></SimpleList></Warnings>"
     )
-    (unit,) = project_attachment(PmdaXmlDecoder().decode(source).document)
+    (unit,) = project_package_insert(PmdaXmlDecoder().decode(source).document)
     paragraphs = [block for block in unit.blocks if isinstance(block, SearchParagraph)]
     assert len(paragraphs) == len(unit.blocks)
     assert [block.text.value for block in paragraphs] == [
@@ -219,7 +221,7 @@ def test_explicit_header_is_distinct_from_body():
         "<Warnings><SimpleList><Item><Header><Lang>原文見出し</Lang></Header>"
         "<Detail><Lang>原文本文</Lang></Detail></Item></SimpleList></Warnings>"
     )
-    (unit,) = project_attachment(PmdaXmlDecoder().decode(source).document)
+    (unit,) = project_package_insert(PmdaXmlDecoder().decode(source).document)
     paragraphs = [block for block in unit.blocks if isinstance(block, SearchParagraph)]
     assert len(paragraphs) == len(unit.blocks)
     assert [(block.text.value, block.is_heading) for block in paragraphs] == [
@@ -244,7 +246,7 @@ def test_generic_table_first_row_is_not_promoted_to_column_headings():
     table = next(
         block.table
         for block in section.body.blocks
-        if isinstance(block, AttachmentTableBlock)
+        if isinstance(block, PackageInsertTableBlock)
     )
     assert table.columns == ()
     assert [[cell.text.value for cell in row] for row in table.rows] == [
@@ -253,7 +255,7 @@ def test_generic_table_first_row_is_not_promoted_to_column_headings():
     ]
     assert table.rows[0][0].rowspan.value == 2
     assert table.rows[1][0].column.value == 1
-    (unit,) = project_active_attachment(
+    (unit,) = project_active_package_insert(
         decoded.document, frozenset({YjCode("111111111111")})
     )
     payload = json.loads(encode_registered_units(decoded.document, (unit,)))

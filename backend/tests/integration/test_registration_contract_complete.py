@@ -1,7 +1,7 @@
 import hashlib
 
 import pytest
-from backend.infrastructure.persistence.schemas import attachment_tables as schema
+from backend.infrastructure.persistence.schemas import package_insert_tables as schema
 from backend.tests.presentation.test_registration_http import client as client
 from backend.tests.presentation.test_registration_http import post
 from backend.tests.presentation.test_registration_http import publisher as publisher
@@ -76,7 +76,7 @@ async def test_tc106_all_registration_dtos_have_fixed_complete_fields(
     a, b = "111111111111", "222222222222"
     old = source("O共通", (a, b))
     old_id = f"000001_test:{hashlib.sha256(old).hexdigest()}"
-    url = f"/api/attachment-imports/000001_test/{hashlib.sha256(old).hexdigest()}"
+    url = f"/api/package-insert-imports/000001_test/{hashlib.sha256(old).hexdigest()}"
     response = await post(client, old)
     assert response.status_code == 201, response.text
     assert response.json() == expected(old, current_generation(publisher), 1, (a, b))
@@ -215,7 +215,7 @@ async def test_tc107_old_input_boundaries_real_publisher_preserve_snapshot(
 ):
     assert (await post(client, source("旧公開"))).status_code == 201
     before = digest(publisher.engine)
-    response = await client.post("/api/attachment-imports", files=files)
+    response = await client.post("/api/package-insert-imports", files=files)
     assert response.status_code == status
     assert response.json() == {
         "detail": {"code": code, "message": message, "phase": "validation"}

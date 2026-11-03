@@ -3,10 +3,10 @@
 import json
 from pathlib import Path
 
-from backend.application.attachment_import.errors import AttachmentImportError
-from backend.application.indexing.queries.services.attachment_projection import (
-    project_attachment,
+from backend.application.indexing.queries.services.package_insert_projection import (
+    project_package_insert,
 )
+from backend.application.package_insert_import.errors import PackageInsertImportError
 from backend.infrastructure.package_insert_definitions.definition_assembly import (
     get_package_insert_definitions,
 )
@@ -44,9 +44,11 @@ def transform(
             source_filename=source_path.as_posix(),
         ).decode(source)
         bundle = PmdaArtifactEncoder().encode(
-            decoded.document, project_attachment(decoded.document), decoded.source_info
+            decoded.document,
+            project_package_insert(decoded.document),
+            decoded.source_info,
         )
-    except AttachmentImportError as error:
+    except PackageInsertImportError as error:
         raise ValueError(f"Transformation failed validation: {error.code}") from error
     target.mkdir(parents=True, exist_ok=True)
     for artifact in bundle.files:

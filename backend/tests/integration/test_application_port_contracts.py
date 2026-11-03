@@ -53,12 +53,6 @@ from backend.application.retrieval.values import (
     Probability,
     SearchKeyword,
 )
-from backend.domain.attachment.identifiers import DocumentId
-from backend.domain.attachment.primitives import PmdaUrl
-from backend.domain.attachment.value_objects import (
-    AttachmentProductRevision,
-    MedicineDocumentReference,
-)
 from backend.domain.foundation.json_types import JsonValue
 from backend.domain.foundation.primitives.primitives import (
     BaseFiniteFloat,
@@ -73,6 +67,12 @@ from backend.domain.medicine.primitives import (
 )
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.domain.medicine.value_objects import MedicineNames
+from backend.domain.package_insert.identifiers import DocumentId
+from backend.domain.package_insert.primitives import PmdaUrl
+from backend.domain.package_insert.value_objects import (
+    MedicineDocumentReference,
+    PackageInsertProductRevision,
+)
 from backend.infrastructure.intent.jev_classifier import JevIntentClassifier
 from backend.infrastructure.morphology.janome_keyword_extractor import (
     JanomeKeywordExtractor,
@@ -332,7 +332,7 @@ def fixed_medicines():
             reference=MedicineDocumentReference(
                 document_id=DocumentId("test_001"),
                 pmda_url=PmdaUrl("https://example.test/package-insert"),
-                revision=AttachmentProductRevision({}),
+                revision=PackageInsertProductRevision({}),
             ),
         ),
     )

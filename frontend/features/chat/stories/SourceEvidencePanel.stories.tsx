@@ -74,14 +74,14 @@ export const AvailableSectionsOverview: Story = {
   },
 };
 
-export const JevSearchingState: Story = {
-  name: "Jev判定取得中状態 (jev_searching)",
+export const RetrievingState: Story = {
+  name: "根拠取得中状態 (retrieving)",
   args: {
     sources: [
       packageInsertMockData.section1_warning,
       packageInsertMockData.section2_contraindication,
     ],
-    retrievalStatus: "jev_searching",
+    retrievalStatus: "retrieving",
     onClose: () => alert("Close panel clicked"),
   },
 };

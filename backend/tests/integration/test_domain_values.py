@@ -11,12 +11,6 @@ from backend.application.medicine.queries.models import (
 )
 from backend.application.medicine.queries.policies.catalog_matching import _ProductGroup
 from backend.application.retrieval.values import DetectionSource, Probability
-from backend.domain.attachment.identifiers import DocumentId
-from backend.domain.attachment.primitives import PmdaUrl
-from backend.domain.attachment.value_objects import (
-    AttachmentProductRevision,
-    MedicineDocumentReference,
-)
 from backend.domain.foundation.exceptions import DomainValidationError
 from backend.domain.foundation.json_types import JsonValue
 from backend.domain.medicine.entities import MedicineProduct
@@ -28,6 +22,12 @@ from backend.domain.medicine.primitives import (
 )
 from backend.domain.medicine.value_objects import MedicineMatch as DomainMedicineMatch
 from backend.domain.medicine.value_objects import MedicineNames
+from backend.domain.package_insert.identifiers import DocumentId
+from backend.domain.package_insert.primitives import PmdaUrl
+from backend.domain.package_insert.value_objects import (
+    MedicineDocumentReference,
+    PackageInsertProductRevision,
+)
 from backend.tests.application.retrieval.test_evidence_collection import make_evidence
 
 
@@ -78,7 +78,7 @@ def test_medicine_group_keeps_aggregate_state_private():
         reference=MedicineDocumentReference(
             document_id=DocumentId("document"),
             pmda_url=PmdaUrl("https://example.test"),
-            revision=AttachmentProductRevision({}),
+            revision=PackageInsertProductRevision({}),
         ),
     )
     group = _ProductGroup(
@@ -112,7 +112,7 @@ def test_medicine_revision_is_independent_of_input_and_public_output():
             reference=MedicineDocumentReference(
                 document_id=DocumentId("自由なID"),
                 pmda_url=PmdaUrl("https://example.test"),
-                revision=AttachmentProductRevision(payload),
+                revision=PackageInsertProductRevision(payload),
             ),
         )
         for _ in range(2)

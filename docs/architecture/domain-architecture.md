@@ -73,7 +73,7 @@ uv run --project backend --locked python scripts/checks/domain_architecture.py -
 ### 対象を限定した診断
 
 ```bash
-uv run --project backend --locked python scripts/checks/domain_architecture.py --context attachment
+uv run --project backend --locked python scripts/checks/domain_architecture.py --context package_insert
 ```
 
 rootはスクリプト配置から解決し、cwdに依存しない。`--root <repo>`で独立した合成コードにも適用できる。診断はリポジトリ相対パス・1始まりの行番号・規則IDを返す。`--context`は診断の絞り込みであり、CIでは指定しない。

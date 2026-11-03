@@ -8,8 +8,8 @@ from backend.application.retrieval.queries.models import (
     EvidenceSection,
     SearchCriteria,
 )
-from backend.application.retrieval.queries.services.evidence_retrieval import (
-    _search_evidence,
+from backend.application.retrieval.queries.services.evidence_search import (
+    search_evidence,
 )
 from backend.application.retrieval.values import (
     DetectionSource,
@@ -18,8 +18,8 @@ from backend.application.retrieval.values import (
     EvidenceProductName,
     EvidenceSourceUrl,
 )
-from backend.domain.attachment.identifiers import DocumentId
 from backend.domain.medicine.identifiers import YjCode
+from backend.domain.package_insert.identifiers import DocumentId
 
 
 def evidence(index, code="11.1", text=None):
@@ -53,7 +53,7 @@ class Batches:
 async def test_全取得経路の検索結果は件数を制限せず重複だけを除く():
     units = tuple(evidence(index) for index in range(40))
     reader = Batches(dict.fromkeys(DetectionSource, units))
-    sources = await _search_evidence(
+    sources = await search_evidence(
         reader, (), [SearchCriteria(source=source) for source in DetectionSource]
     )
     assert len(sources) == 40
@@ -81,7 +81,7 @@ async def test_重複はunit_idだけで除去し固有unitと取得元を保持
             DetectionSource.KEYWORD: (units[0], units[3]),
         }
     )
-    sources = await _search_evidence(
+    sources = await search_evidence(
         reader, (), [SearchCriteria(source=source) for source in reader.values]
     )
     assert len(sources) == 4

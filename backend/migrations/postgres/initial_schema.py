@@ -32,7 +32,7 @@ receipts = Table(
     Column("cleanup_reason", Text, nullable=False),
 )
 versions = Table(
-    "attachment_versions",
+    "package_insert_versions",
     metadata,
     Column(
         "version_id",
@@ -48,12 +48,12 @@ versions = Table(
     CheckConstraint("byte_size = octet_length(source)", name="source_byte_size"),
 )
 assets = Table(
-    "attachment_assets",
+    "package_insert_assets",
     metadata,
     Column(
         "version_id",
         Text,
-        ForeignKey("attachment_versions.version_id", ondelete="CASCADE"),
+        ForeignKey("package_insert_versions.version_id", ondelete="CASCADE"),
         primary_key=True,
     ),
     Column("logical_name", Text, primary_key=True),
@@ -69,7 +69,7 @@ units = Table(
     Column(
         "version_id",
         Text,
-        ForeignKey("attachment_versions.version_id", ondelete="CASCADE"),
+        ForeignKey("package_insert_versions.version_id", ondelete="CASCADE"),
         primary_key=True,
     ),
     Column("unit_id", Text, primary_key=True),
@@ -86,7 +86,10 @@ active = Table(
     metadata,
     Column("yj_code", Text, primary_key=True),
     Column(
-        "version_id", Text, ForeignKey("attachment_versions.version_id"), nullable=False
+        "version_id",
+        Text,
+        ForeignKey("package_insert_versions.version_id"),
+        nullable=False,
     ),
 )
 generations = Table(
@@ -106,7 +109,10 @@ memberships = Table(
     ),
     Column("yj_code", Text, primary_key=True),
     Column(
-        "version_id", Text, ForeignKey("attachment_versions.version_id"), nullable=False
+        "version_id",
+        Text,
+        ForeignKey("package_insert_versions.version_id"),
+        nullable=False,
     ),
 )
 state = Table(

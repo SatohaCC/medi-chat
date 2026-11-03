@@ -11,7 +11,7 @@ depends_on = None
 
 def upgrade():
     op.create_table(
-        "attachment_uploads",
+        "package_insert_uploads",
         sa.Column("upload_id", sa.Text, primary_key=True),
         sa.Column("filename", sa.Text, nullable=False),
         sa.Column("byte_size", sa.Integer, nullable=False),
@@ -23,14 +23,14 @@ def upgrade():
         ),
     )
     op.create_index(
-        "ix_attachment_uploads_expires_at", "attachment_uploads", ["expires_at"]
+        "ix_package_insert_uploads_expires_at", "package_insert_uploads", ["expires_at"]
     )
     op.create_table(
-        "attachment_upload_parts",
+        "package_insert_upload_parts",
         sa.Column(
             "upload_id",
             sa.Text,
-            sa.ForeignKey("attachment_uploads.upload_id", ondelete="CASCADE"),
+            sa.ForeignKey("package_insert_uploads.upload_id", ondelete="CASCADE"),
             primary_key=True,
         ),
         sa.Column("part_index", sa.Integer, primary_key=True),
@@ -43,5 +43,5 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_table("attachment_upload_parts")
-    op.drop_table("attachment_uploads")
+    op.drop_table("package_insert_upload_parts")
+    op.drop_table("package_insert_uploads")

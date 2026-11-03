@@ -73,10 +73,18 @@ def test_RESTとWebSocketで回答と根拠とLLM入力が一致する(pg_api) -
 
     assert len(provider.calls) == 2
     assert provider.calls[0] == provider.calls[1]
+    retrieval_status_events = [
+        event for event in events if event["type"] == "retrieval_status"
+    ]
+    assert [event["stage"] for event in retrieval_status_events] == [
+        "retrieving",
+        "complete",
+    ]
     assert [event["type"] for event in events] == [
         "retrieval_status",
-        *["sources"] * len(source_events),
-        "text_delta",
+        *["sources"] * (len(source_events) - 1),
+        "retrieval_status",
+        "sources",
         "text_delta",
         "text_done",
     ]

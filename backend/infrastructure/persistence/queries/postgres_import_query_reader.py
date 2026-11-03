@@ -6,13 +6,13 @@ from sqlalchemy import text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SQLAlchemyError
 
-from backend.application.attachment_import.commands.models import ImportResult
-from backend.application.attachment_import.errors import (
+from backend.application.package_insert_import.commands.models import ImportResult
+from backend.application.package_insert_import.errors import (
     ImportGone,
     ImportNotFound,
     ImportStorageError,
 )
-from backend.application.attachment_import.queries.dtos.import_views import (
+from backend.application.package_insert_import.queries.dtos.import_views import (
     ImportDetail,
     ImportPage,
     ImportProductView,

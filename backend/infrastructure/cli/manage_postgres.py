@@ -13,14 +13,14 @@ from alembic.config import Config
 from sqlalchemy import delete, insert, select, text
 from sqlalchemy.exc import SQLAlchemyError
 
-import backend.infrastructure.persistence.schemas.attachment_tables as s
-from backend.application.attachment_import.errors import AttachmentImportError
+import backend.infrastructure.persistence.schemas.package_insert_tables as s
+from backend.application.package_insert_import.errors import PackageInsertImportError
 from backend.config.runtime_environment import load_runtime_environment
 from backend.domain.foundation.json_types import JsonValue
 from backend.infrastructure.persistence.maintenance.postgres_registration_cleanup import (
     PostgresRegistrationCleanup,
 )
-from backend.infrastructure.persistence.mappings.attachment_document_mapping import (
+from backend.infrastructure.persistence.mappings.package_insert_document_mapping import (
     document_from_payload,
 )
 from backend.infrastructure.persistence.mappings.search_projection_mapping import (
@@ -202,7 +202,7 @@ def rebuild_projections(engine, *, schema: str, confirm_schema: str):
                 )
             connection.execute(
                 text(
-                    f"UPDATE attachment_versions SET projection_fingerprint={PROJECTION_FINGERPRINT} WHERE version_id=:identity"
+                    f"UPDATE package_insert_versions SET projection_fingerprint={PROJECTION_FINGERPRINT} WHERE version_id=:identity"
                 ),
                 {"identity": row.version_id},
             )
@@ -265,7 +265,7 @@ def main() -> int:
             result = {"maintenance": "complete"}
         print(json.dumps(result, ensure_ascii=False))
         return 0
-    except AttachmentImportError as error:
+    except PackageInsertImportError as error:
         print(
             json.dumps(
                 {

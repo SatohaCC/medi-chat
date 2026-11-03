@@ -40,7 +40,7 @@ def test_http_import_preserves_separately_located_initial_original(
     )
     with TestClient(app, headers=signed_test_headers()) as client:
         response = client.post(
-            "/api/attachment-imports",
+            "/api/package-insert-imports",
             files={
                 "file": (
                     "new.xml",

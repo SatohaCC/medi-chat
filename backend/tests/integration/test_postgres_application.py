@@ -189,7 +189,7 @@ async def test_pg033_real_process_without_input_access_restarts_from_db(
                         response = await client.get(path)
                         assert response.status_code == 200, response.text
                     result = await client.get(
-                        f"/api/attachment-imports/{receipt.document_id}/{receipt.source_sha256}"
+                        f"/api/package-insert-imports/{receipt.document_id}/{receipt.source_sha256}"
                     )
                     assert result.status_code == 200, result.text
                     answer = await client.post(

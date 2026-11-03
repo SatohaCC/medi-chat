@@ -4,9 +4,9 @@ import hashlib
 import json
 
 import pytest
-from backend.application.attachment_import.errors import (
+from backend.application.package_insert_import.errors import (
     ImportConflict,
-    InvalidAttachment,
+    InvalidPackageInsert,
 )
 from backend.infrastructure.persistence.queries.postgres_search_snapshot_provider import (
     PostgresRuntime,
@@ -15,7 +15,7 @@ from backend.infrastructure.persistence.registration.registration_payloads impor
     PostgresRegistrationInput as RegistrationInput,
 )
 from backend.infrastructure.persistence.runtime.read_workers import ReadWorkers
-from backend.infrastructure.persistence.schemas import attachment_tables as schema
+from backend.infrastructure.persistence.schemas import package_insert_tables as schema
 from backend.infrastructure.pmda_xml.pmda_xml_decoder import PmdaXmlDecoder
 from backend.tests.integration.test_postgres_registration import pg_publisher, publish
 from backend.tests.presentation.test_registration_http import client as client
@@ -124,7 +124,7 @@ def test_missing_revision_is_rejected_before_any_registration(publisher):
         b"",
         document("2026-01", "本文"),
     )
-    with pytest.raises(InvalidAttachment) as failure:
+    with pytest.raises(InvalidPackageInsert) as failure:
         publish(publisher, value)
     assert failure.value.code == "missing_revision"
     assert rows(publisher, "SELECT COUNT(*) FROM registration_receipts") == [(0,)]

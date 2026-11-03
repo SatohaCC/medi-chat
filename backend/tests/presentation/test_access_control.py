@@ -73,7 +73,7 @@ def test_direct_api_is_closed_and_legacy_credentials_do_not_work(protected):
     for path in (
         "/api/search",
         "/api/chat",
-        "/api/attachment-imports",
+        "/api/package-insert-imports",
         "/health",
         "/api?key=old",
     ):
