@@ -74,7 +74,9 @@ filetype==1.2.0
 google-auth==2.58.1
     # via google-genai
 google-genai==2.34.0
-    # via medi-chat-backend
+    # via
+    #   langchain-google-genai
+    #   medi-chat-backend
 h11==0.16.0
     # via
     #   httpcore
@@ -158,7 +160,9 @@ markupsafe==3.0.3
 mdurl==0.1.2
     # via markdown-it-py
 openai==3.41.0
-    # via medi-chat-backend
+    # via
+    #   langchain-openai
+    #   medi-chat-backend
 orjson==3.13.0
     # via
     #   langgraph-sdk
