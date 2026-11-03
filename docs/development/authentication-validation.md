@@ -89,4 +89,4 @@ Windows・Python 3.14・論理CPU16、RSA2048の試験鍵、DBなしの局所測
 
 作業ログはリポジトリルートからの相対パス`tmp/auth-validation/`へ保存した。`backend-final.txt`、`quality-complete.txt`、`auth-browser-final.txt`、`browser-regression.txt`、`build-final.txt`、`load.json`を区別する。これらはローカル試験成果物で、Git管理へ追加していない。
 
-必須認証設定導入時の通常起動確認について、`.agents/lessons/pending_review/LESSON-013.md`へ承認待ちの観察・提案を記録した。未承認のため規約・INDEXへ登録していない。Next.jsが生成した`frontend/AGENTS.md`の見出し変更は、そのガイドに従って保持した。
+必須認証設定導入時の通常起動確認について、当時承認待ちとして記録した観察・提案は[LESSON-013](../../.agents/lessons/archived/LESSON-013.md)に保持している。統合後の現在の確認手順は[validation](validation.md)を参照する。原記録の過去の検証結果を今回再検証したものではない。Next.jsが生成した`frontend/AGENTS.md`の見出し変更は、そのガイドに従って保持した。

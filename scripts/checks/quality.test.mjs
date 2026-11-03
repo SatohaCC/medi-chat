@@ -3,7 +3,7 @@ import test from "node:test";
 import { invocationFor, planFor, runPlan, scopesFor } from "./quality.mjs";
 
 test("documentation changes do not start runtime checks", () => {
-  assert.deepEqual(scopesFor(["docs/architecture/backend-design.md", ".agents/guides/backend.md"]), []);
+  assert.deepEqual(scopesFor(["docs/architecture/backend-design.md", "AGENTS.md"]), []);
 });
 
 test("staged/deleted/backend and shared configuration select affected scopes", () => {

@@ -46,15 +46,7 @@ graphify-out/
 *.log
 yj
 /docs/reference/
-/.agents/*
-!/.agents/README.md
-!/.agents/guides/
-!/.agents/lessons/
-!/.agents/archive/
-!/.agents/agents/
-!/.agents/skills/
-/.agents/skills/*
-!/.agents/skills/feature-pipeline/
+/.agents/
 skills-lock.json
 .vscode/
 .vercel/
@@ -66,7 +58,7 @@ skills-lock.json
 .DS_Store
 Thumbs.db
 
-# Local task records stay under .agents/work/ and are excluded above.
+# Agent instructions, skills and task records under .agents/ stay local.
 
 # Package insert source/body datasets are supplied locally, not redistributed.
 /data/pmda/originals/

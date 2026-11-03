@@ -459,3 +459,17 @@ tests/
 項目番号・正式名称・階層・項目が扱う範囲は `domain/package_insert/value_objects.py` の型付き定義が正本です。項目の範囲は `SectionScope`、名称は `DefinitionTitle`、番号は `NumberedSectionCode` で保持します。原文本文・原文見出しをこの定義で上書きしません。
 
 `application/retrieval/queries/policies/standard.py` が質問意図・検索条件・分類対応を所有し、常時参照は独立した `EvidenceRetrievalPolicy` が所有します。`application/chat/queries/policies/standard.py` は回答指示・表示名を投影します。InfrastructureはXMLタグやSDK設定を持ち、`package_insert_definitions/assembly.py` で各層の型を組み立てます。JSONカタログ・スキーマ・互換読込はありません。参照整合性とDomainの不変条件はPythonモデルの構築時に検証します。
+
+## 変更時の確認
+
+- 設計文書・READMEを現在のコードと差分に照らし、配置変更中の状態や未承認案を確定規約として扱わない。公開APIのJSON項目、REST/WebSocketイベント、LLMへ渡す会話・根拠、CLI/module起動の契約に影響する変更を計画で明示する。
+- 依存境界は[backend/pyproject.toml](../../backend/pyproject.toml)のImport Linterと[構造検査](../../backend/tests/architecture/test_architecture_dependencies.py)で確認する。PresentationからDomainへの完全禁止等を維持し、ignore_importsや再公開で迂回しない。必要な検査の入口は[validation](../development/validation.md)を参照する。
+- Applicationの配置・公開範囲・絶対importは[Application規約](application-architecture.md)、Domainの配置・公開ID・不変性は[Domain規約](domain-architecture.md)に従う。新規コンテキストにも適用し、構造検査と業務不変条件の検証を区別する。
+- モジュール移動や再公開の削除では、利用側・テスト・CLI・起動点と相対importの深さを確認する。ファイル移動・構文確認・import成功だけで実行時の契約適合を判定しない。
+- 添付文書カタログ、検索、Jev、プロンプトの共通定義は[定義ソース](../../backend/infrastructure/package_insert_definitions/README.md)を正本とし、経路ごとに別の対応表を作らない。原文の見出し・本文・出典・改訂情報を保持する。
+- Lifespan配線は`backend/infrastructure/composition/app_lifespan.py`、リクエスト単位のDependsは`backend/presentation/dependencies.py`、会話ユースケースの束ねは`backend/application/chat/queries/chat.py`（ChatQueries）を起点に確認する。外部SDK/PostgreSQLの変更では対象経路の非同期動作・例外・終了処理を受入条件に応じて検証する。
+- REST/WebSocketイベントやReader/Publisher等の契約を変える場合は、利用側・直接呼出し・fixture・Composition Rootまで追跡する。契約別にCommand/Queryの注入先を確認し、テスト側に旧契約の配線を残さない。
+- 途中結果・累積配信では、変更対象に応じて内容・取得元・回数・順序・空結果を確認する。IO回数を計測し、完了済み処理の再実行を防ぐ。await追加時は検索/送信の待機中にも必要な処理が開始できること、例外・取消時の子タスク回収を検証する。
+- 取り込み・保存先・回復経路を変える場合は、現行構成で初期登録後のHTTP追加登録と失敗後の同一原本再送まで確認する。原本・既存文書の保持も確認し、旧保存方式の互換処理を復活させない。
+- 公開順序をDBクエリへ移す場合は、同順位、大小英字、日本語、改訂等の入力で期待順序を固定して検証する。照合方式は公開契約に合わせ、全クエリへ特定localeを強制しない。
+- 必須設定・認証応答・DB revisionの変更では、通常起動・CIのHTTP/WS/OS経路と、応答を判定する監視・fixtureを確認する。起動・環境・配置先の検証、外部LLM実通信とテストダブルの区別は[validation](../development/validation.md)を使う。
