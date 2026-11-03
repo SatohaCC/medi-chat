@@ -1,16 +1,19 @@
 import { createHash } from "node:crypto";
 
-export function acceptanceEvidence(output) {
+export function acceptanceEvidence(output, runner = "auto") {
+  output = output.replace(/\u001b\[[0-9;]*m/g, "");
   const nodeSummary = [...output.matchAll(/^(?:#|ℹ)\s*tests\s+\d+/gm)].at(-1);
-  if (nodeSummary) output = output.slice(nodeSummary.index);
-  else {
+  if ((runner === "node" || runner === "auto") && nodeSummary) output = output.slice(nodeSummary.index);
+  else if (runner === "pytest") {
     const summary = output.split(/\r?\n/).filter((line) => /\b\d+ (?:passed|failed|skipped|xfailed|xpassed)\b/.test(line)).at(-1);
     if (summary) output = summary;
   }
-  const passed = [...output.matchAll(/(?:\b(\d+) passed\b|(?:#|ℹ)\s*pass\s+(\d+))/g)].at(-1);
+  const passedPattern = runner === "playwright" ? /\b(\d+) passed\b/g : /(?:\b(\d+) passed\b|(?:#|ℹ)\s*pass\s+(\d+))/g;
+  const passed = [...output.matchAll(passedPattern)]
+    .reduce((total, match) => total + Number(match[1] ?? match[2]), 0);
   const incomplete = [...output.matchAll(/(?:\b(\d+) (?:skipped|xfailed|xpassed|todo)\b|(?:#|ℹ)\s*(?:skipped|todo)\s+(\d+))/g)]
     .some((match) => Number(match[1] ?? match[2]) > 0);
-  return { passed: Number(passed?.[1] ?? passed?.[2] ?? 0), incomplete };
+  return { passed, incomplete };
 }
 
 export function failureFeedback(task, status, output = "") {

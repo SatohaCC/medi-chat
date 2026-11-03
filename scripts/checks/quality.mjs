@@ -123,7 +123,7 @@ export function runPlan(plan, execute = spawnSync, reportPath = null) {
     });
     const output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
     if (task.requireEvidence && report.tasks[index].status === "passed") {
-      const evidence = acceptanceEvidence(output);
+      const evidence = acceptanceEvidence(output, task.testRunner);
       report.tasks[index].evidence = evidence;
       if (!evidence.passed || evidence.incomplete) report.tasks[index].status = "incomplete";
     }

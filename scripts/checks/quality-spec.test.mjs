@@ -42,6 +42,7 @@ test("integration layers require an explicit specification and use only register
   spec.requirements[0].checks = [{ kind: "suite", name: "postgres" }, { kind: "suite", name: "browser" }];
   const plan = specificationPlan(spec, root);
   assert.deepEqual(plan.tasks.map((task) => task.args), [["test:postgres"], ["test:e2e"]]);
+  assert.deepEqual(plan.tasks.map((task) => task.testRunner), ["pytest", "playwright"]);
   assert.deepEqual(plan.scopes, ["backend", "frontend"]);
   assert.deepEqual(specificationPlan(spec, root, "quick").tasks, []);
   spec.requirements[0].checks = [{ kind: "suite", name: "shell" }];
@@ -100,4 +101,13 @@ test("zero tests and skipped acceptance criteria never certify a requirement", (
   assert.deepEqual(acceptanceEvidence("1 passed, 12 deselected"), { passed: 1, incomplete: false });
   assert.deepEqual(acceptanceEvidence("ℹ pass 3\nℹ skipped 0"), { passed: 3, incomplete: false });
   assert.deepEqual(acceptanceEvidence("1 skipped\nℹ tests 3\nℹ pass 3\nℹ skipped 0"), { passed: 3, incomplete: false });
+});
+
+test("browser evidence preserves skipped counts on separate lines and in earlier required layers", () => {
+  assert.deepEqual(acceptanceEvidence("  1 skipped\n  2 passed (1.2s)", "playwright"), { passed: 2, incomplete: true });
+  assert.deepEqual(acceptanceEvidence("mock suite\n  1 skipped\n  2 passed (1.2s)\nreal suite\n  3 passed (2.0s)", "playwright"), { passed: 5, incomplete: true });
+  assert.deepEqual(acceptanceEvidence("mock suite\n  2 passed (1.2s)\nreal suite\n  3 passed (2.0s)", "playwright"), { passed: 5, incomplete: false });
+  assert.deepEqual(acceptanceEvidence("ℹ tests 1\nℹ pass 1\nℹ skipped 0\n  1 skipped\n  2 passed (1.2s)", "playwright"), { passed: 2, incomplete: true });
+  assert.deepEqual(acceptanceEvidence("ℹ tests 1\nℹ pass 1\nℹ skipped 0", "playwright"), { passed: 0, incomplete: false });
+  assert.equal(runPlan([{ label: "Browser acceptance", command: "pnpm", args: ["test:e2e"], requireEvidence: true, testRunner: "playwright" }], () => ({ status: 0, stdout: "  1 skipped\n  2 passed (1.2s)" })), 1);
 });

@@ -52,7 +52,8 @@ export function specificationPlan(spec, root, phase = "full") {
           : ["--experimental-strip-types", "--test", "--test-timeout=60000", check.path];
       }
       const key = JSON.stringify([command, args]);
-      if (!tasks.has(key)) tasks.set(key, { label: `Acceptance: ${check.path ?? check.name}${check.test ? `::${check.test}` : ""}`, command, args, layer, requireEvidence: true, specification: spec.task, requirements: [], reasons: [] });
+      const testRunner = layer === "browser" ? "playwright" : command === "uv" || layer === "postgres" ? "pytest" : "node";
+      if (!tasks.has(key)) tasks.set(key, { label: `Acceptance: ${check.path ?? check.name}${check.test ? `::${check.test}` : ""}`, command, args, layer, testRunner, requireEvidence: true, specification: spec.task, requirements: [], reasons: [] });
       tasks.get(key).requirements.push(requirement.id);
       tasks.get(key).reasons.push(requirement.acceptance);
     }
