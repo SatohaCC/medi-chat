@@ -2,7 +2,7 @@
 
 ## 共通の実行入口
 
-手動・CI・Codex hooksからの検査は`pnpm quality`を入口にする。側別は`pnpm quality:backend`・`pnpm quality:frontend`・`pnpm quality:scripts`、現在の変更範囲は`pnpm quality:changed`。実行前に`--list`で対象コマンドを確認できる。構成とhooksの動作は[scripts/README](../../scripts/README.md)を参照する。
+エージェント共通の変更範囲検査は`pnpm agent:check`、全体手動検査は`pnpm quality`を入口にする。側別は`pnpm quality:backend`・`pnpm quality:frontend`・`pnpm quality:scripts`。実行前に`--list`で対象コマンドを確認できる。構成と各エージェントHook adapterは[scripts/README](../../scripts/README.md)を参照する。
 
 この入口はソースを自動修正しない。通常のbackendテストから実DB・非公開原本を必要とするテストを除き、frontendはNodeの単体テストを実行する。実PostgreSQL・ブラウザ・外部APIの検証は別に選択し、共通コマンドの成功で代替しない。
 

@@ -1,6 +1,6 @@
 # 開発ツールと品質検査
 
-テスト本体とlint・型検査設定は`backend/`・`frontend/`が所有する。共有の実行入口は`checks/quality.mjs`。手動・CI・Codex hooksはこの入口から同じパッケージコマンドを呼ぶ。
+テスト本体とlint・型検査設定は`backend/`・`frontend/`が所有する。全エージェントが利用する共有CLIは`pnpm agent:check`で、実行計画は`checks/quality.mjs`が所有する。手動・CI・各エージェントのHook adapterはこのCLIから同じパッケージ検査を呼べる。
 
 | 場所 | 責務 |
 | --- | --- |
@@ -23,6 +23,8 @@ pnpm quality:changed          # HEADとの差分と未追跡ファイルから�
 pnpm quality:changed --phase quick
 pnpm quality:changed --list   # 実行計画だけ表示
 pnpm quality:scripts --report tmp/quality-scripts.json # 機械可読な結果も保存（親ディレクトリは事前作成）
+pnpm agent:check --phase quick # エージェント共通の変更範囲検査
+pnpm agent:check --report tmp/quality/result.json # 完了前の検査と構造化レポート
 ```
 
 `full`は対象側のlint・format確認・型検査・単体テストを実行し、backendでは構造検査も含む。`scripts`ではツールの回帰と生成物の整合性も検査する。`quick`はlint・実行入口の構文確認に加え、backendではプロジェクトのMypyを`--no-incremental -p backend`で実行する。失敗・起動不能・タイムアウトは非0で終了し、他の検査も続けて結果を表示する。一時ファイルとuvキャッシュはプロジェクト内のGit管理外領域を使う。
@@ -69,6 +71,8 @@ quickは指定unit受入検査と既存の軽量検査、fullは全指定受入�
 ## Codex hooks
 
 [.codex/hooks.json](../.codex/hooks.json)が登録先。
+
+ここに記載するPostToolUse/Stopイベント形式、receipt、停滞回数はCodex adapter固有。共通の品質計画・`--spec`・JSONレポートは`pnpm agent:check`で別のエージェントからも直接利用できる。編集後と完了前の自動実行には、各製品側でこのコマンドを呼ぶHookが必要。
 
 - `PostToolUse`: ファイル編集ツールの入力を解析し、編集されたPythonだけをRuff整形した後、対象側のquick検査を実行する。シェル経由の編集は終了時の差分検査で拾う。
 - `Stop`: staged・unstaged・削除・未追跡を含む変更範囲のfull検査を実行する。文書のみの変更ではコード検査を起動しない。
