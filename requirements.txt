@@ -134,7 +134,7 @@ langgraph-prebuilt==1.1.1
     # via langgraph
 langgraph-sdk==0.4.9
     # via langgraph
-langsmith==0.14.12
+langsmith==0.14.16
     # via
     #   langchain-core
     #   medi-chat-backend
