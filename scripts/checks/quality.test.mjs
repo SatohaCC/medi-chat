@@ -1,6 +1,76 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { invocationFor, planFor, runPlan, scopesFor } from "./quality.mjs";
+import { mkdtempSync, readFileSync, writeFileSync, mkdirSync, renameSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { execFileSync } from "node:child_process";
+import { changedPaths, invocationFor, planFor, runPlan, scopesFor } from "./quality.mjs";
+
+test("reports distinguish failure, timeout, launch error and unexecuted work", () => {
+  const folder = mkdtempSync(join(tmpdir(), "quality-report-"));
+  try {
+    const reportPath = join(folder, "report.json");
+    const plan = ["success", "failure", "timeout", "missing"].map((label) => ({ label, command: process.execPath, args: [] }));
+    const outcomes = [
+      { status: 0 }, { status: 2 },
+      { status: null, error: Object.assign(new Error("timeout"), { code: "ETIMEDOUT" }) },
+      { status: null, error: Object.assign(new Error("missing"), { code: "ENOENT" }) },
+    ];
+    let index = 0;
+    assert.equal(runPlan(plan, () => {
+      const current = JSON.parse(readFileSync(reportPath, "utf8"));
+      assert.equal(current.tasks[index].status, "not_run");
+      assert.notEqual(current.status, "passed");
+      return outcomes[index++];
+    }, reportPath), 1);
+    const report = JSON.parse(readFileSync(reportPath, "utf8"));
+    assert.deepEqual(report.tasks.map((task) => task.status), ["passed", "failed", "timeout", "start_error"]);
+    assert.equal(report.status, "failed");
+    assert.equal(report.tasks[1].exitCode, 2);
+    assert.deepEqual(report.excludedLayers, ["postgres", "browser", "external_api"]);
+    assert.equal(runPlan([], undefined, reportPath), 0);
+    assert.equal(JSON.parse(readFileSync(reportPath, "utf8")).status, "not_run");
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+});
+
+test("real Git changes retain both sides of renames and shared settings select all scopes", () => {
+  const folder = mkdtempSync(join(tmpdir(), "quality-git-"));
+  const git = (...args) => execFileSync("git", args, { cwd: folder, stdio: "pipe" });
+  try {
+    git("init");
+    mkdirSync(join(folder, "backend"));
+    writeFileSync(join(folder, "backend/old.py"), "fixture");
+    writeFileSync(join(folder, "pnpm-lock.yaml"), "before");
+    git("add", ".");
+    git("-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "--no-verify", "-m", "fixture");
+    mkdirSync(join(folder, "scripts"));
+    renameSync(join(folder, "backend/old.py"), join(folder, "scripts/new.py"));
+    git("add", ".");
+    writeFileSync(join(folder, "pnpm-lock.yaml"), "after");
+    writeFileSync(join(folder, "backend/untracked.py"), "new");
+    assert.deepEqual(changedPaths(folder), ["backend/old.py", "backend/untracked.py", "pnpm-lock.yaml", "scripts/new.py"]);
+    assert.deepEqual(scopesFor(changedPaths(folder)), ["backend", "frontend", "scripts"]);
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+});
+
+test("every existing frontend and tooling Node test is included in the full plan", () => {
+  const tracked = execFileSync("git", ["ls-files", "-z"], { encoding: "utf8" }).split("\0");
+  const planned = new Set(planFor(["frontend", "scripts"]).flatMap((task) => task.args));
+  for (const path of tracked.filter((path) => /^(frontend|scripts)\/.*\.test\.mjs$/.test(path))) {
+    assert.ok(planned.has(path), `Node test is outside the quality plan: ${path}`);
+  }
+});
+
+test("CI retains the shared backend and tooling gates plus the separate PostgreSQL gate", () => {
+  const workflow = readFileSync(new URL("../../.github/workflows/postgres-contracts.yml", import.meta.url), "utf8");
+  for (const command of ["pnpm quality:backend", "pnpm quality:scripts", "pnpm test:postgres"]) {
+    assert.ok(workflow.includes(`run: ${command}`), `Missing CI gate: ${command}`);
+  }
+});
 
 test("documentation changes do not start runtime checks", () => {
   assert.deepEqual(scopesFor(["docs/architecture/backend-design.md", "AGENTS.md"]), []);
