@@ -3,11 +3,13 @@
 import argparse
 import json
 import os
+import re
 import socket
 import subprocess
 import sys
 import tempfile
 import time
+from typing import Protocol
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
@@ -26,6 +28,78 @@ from backend.infrastructure.persistence.runtime.postgres_readiness import (
     verify_postgres_readiness,
 )
 from backend.project_paths import PROJECT_ROOT
+
+_ERROR_LINE = re.compile(r"\b(?:ERROR|CRITICAL):", re.IGNORECASE)
+_EXCEPTION_LINE = re.compile(r"^\s*[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*(?:Error|Exception):")
+
+
+class _ReadableBinaryLog(Protocol):
+    def flush(self) -> None: ...
+
+    def seek(self, offset: int, whence: int = 0) -> int: ...
+
+    def read(self, n: int = -1) -> bytes: ...
+
+
+def _redact_startup_log_line(line: str) -> str:
+    line = re.sub(
+        r"\b((?:postgres(?:ql)?(?:\+\w+)?|mysql(?:\+\w+)?|redis(?:\+\w+)?)://)[^/\s:@]+:[^@\s/]+@",
+        r"\1[REDACTED]@",
+        line,
+        flags=re.IGNORECASE,
+    )
+    line = re.sub(
+        r"([\"']?\b(?:proxy-)?authorization\b[\"']?\s*[:=]\s*)[^\r\n]*",
+        r"\1[REDACTED]",
+        line,
+        flags=re.IGNORECASE,
+    )
+    line = re.sub(r"\bBearer\s+\S+", "Bearer [REDACTED]", line, flags=re.IGNORECASE)
+    line = re.sub(
+        r"([\"']?\b(?:search[_-]?query|query|question)\b[\"']?\s*[=:]\s*)(?:\"[^\"]*\"|'[^']*'|[^\r\n]*)",
+        r"\1[REDACTED]",
+        line,
+        flags=re.IGNORECASE,
+    )
+    line = re.sub(
+        r"([\"']?\b[A-Za-z0-9_-]*[_-]?(?:access[_-]?token|refresh[_-]?token|api[_-]?key|client[_-]?secret|private[_-]?key|secret[_-]?key|password|secret|token)\b[\"']?\s*[=:]\s*)(?:\"[^\"]*\"|'[^']*'|[^&\s,;]+)",
+        r"\1[REDACTED]",
+        line,
+        flags=re.IGNORECASE,
+    )
+    return re.sub(
+        r"((?:https?://|postgres(?:ql)?(?:\+\w+)?://|mysql(?:\+\w+)?://|redis(?:\+\w+)?://|/)[^\s\"'<>?]+)\?[^\s\"'<>]*",
+        r"\1?[REDACTED]",
+        line,
+        flags=re.IGNORECASE,
+    )
+
+
+def startup_log_diagnostics(contents: str) -> list[str]:
+    """Return a short, redacted error summary without traceback or request logs."""
+    diagnostics = []
+    for line in contents.splitlines():
+        if "Traceback (most recent call last)" in line:
+            continue
+        if not _ERROR_LINE.search(line) and not _EXCEPTION_LINE.search(line):
+            continue
+        summary = _redact_startup_log_line(line).strip()[:500]
+        if summary and summary not in diagnostics:
+            diagnostics.append(summary)
+    return diagnostics[-6:]
+
+
+def _captured_startup_diagnostics(log: _ReadableBinaryLog) -> list[str]:
+    log.flush()
+    log.seek(0)
+    return startup_log_diagnostics(log.read().decode("utf-8", errors="replace"))
+
+
+def _probe_failure(message: str, log: _ReadableBinaryLog) -> RuntimeError:
+    diagnostics = _captured_startup_diagnostics(log)
+    if diagnostics:
+        message += "\nStartup diagnostics:\n" + "\n".join(diagnostics)
+    return RuntimeError(message)
 
 
 def terminate_owned(process: subprocess.Popen) -> None:
@@ -109,8 +183,9 @@ def run_gate(
             deadline = time.monotonic() + timeout
             while time.monotonic() < deadline:
                 if process.poll() is not None:
-                    raise RuntimeError(
-                        "Configured main failed to start; verify PostgreSQL readiness and configuration"
+                    raise _probe_failure(
+                        "Configured main failed to start; verify PostgreSQL readiness and configuration",
+                        log,
                     )
                 try:
                     with urlopen(
@@ -129,7 +204,7 @@ def run_gate(
                 except URLError, TimeoutError, ConnectionError:
                     pass
                 time.sleep(0.1)
-            raise RuntimeError("Configured OS health timed out")
+            raise _probe_failure("Configured OS health timed out", log)
         finally:
             terminate_owned(process)
 

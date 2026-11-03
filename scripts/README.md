@@ -26,6 +26,8 @@ pnpm logs:check -- tmp/logs/dev-backend-<session>.log --since 2026-11-03T10:00:0
 
 ログは起動ごとに分かれ、過去ファイルを自動削除しない。共通品質検査はこれらの稼働ログに依存しない。
 
+`logs:check`は指定された開発backendセッションの事後確認です。`agent:check`はその過去ログを読みませんが、full検査でbackend差分を検出した場合は、通常設定のDBを使う専用health probeを起動して起動失敗とOS healthを自動確認します。quickと`quality:backend`はこのprobeを実行しません。古いセッションログのエラーを新しい作業へ混ぜないため、稼働ログを調べる場合は引き続き対象セッションを明示してください。
+
 ## 共通コマンド
 
 ルートから実行する。いずれも検査対象のソースを自動修正しない。
@@ -46,9 +48,9 @@ pnpm agent:check --report tmp/quality/result.json # 完了前の検査と構造�
 
 `full`は対象側のlint・format確認・型検査・単体テストを実行し、backendでは構造検査も含む。`scripts`ではツールの回帰と生成物の整合性も検査する。`quick`はlint・実行入口の構文確認に加え、backendではプロジェクトのMypyを`--no-incremental -p backend`で実行する。失敗・起動不能・タイムアウトは非0で終了し、他の検査も続けて結果を表示する。一時ファイルとuvキャッシュはプロジェクト内のGit管理外領域を使う。
 
-実PostgreSQL・ブラウザ・外部APIは変更パスだけから自動選択しない。実PostgreSQL・ブラウザは下の仕様JSONで明示選択できる。必要な前提は[検証手順](../docs/development/validation.md)を参照する。CIは共通のbackend・scripts検査に加え、実PostgreSQL契約を実行する。
+実PostgreSQL契約・ブラウザ・外部APIは変更パスだけから自動選択しない。backendの通常起動確認は`agent:check`・`quality:changed`のfullでbackend scopeがある場合に自動選択する。quickや`quality:backend`など個別計画では、通常設定の起動確認を下の仕様JSONで明示選択できる。必要な前提は[検証手順](../docs/development/validation.md)を参照する。CIは共通のbackend・scripts検査に加え、実PostgreSQL契約を実行する。
 
-`--report <path>`は実行前に全検査を`not_run`として保存し、各検査後に状態・終了コード・所要時間・コマンドを更新する。状態は`passed`・`failed`・`start_error`・`timeout`・`incomplete`・`not_run`。空の実行計画は終了コード0でもレポートでは`not_run`とする。通常の回帰検査の`passed`はコマンドの正常終了を示す。仕様から追加した受入検査は後述の成功件数とskipも確認する。未選択の実DB・ブラウザ・外部APIは`excludedLayers`に記録する。選択しただけの層を検証成功と扱わず、各taskの状態を確認する。
+`--report <path>`は実行前に全検査を`not_run`として保存し、各検査後に状態・終了コード・所要時間・コマンドを更新する。状態は`passed`・`failed`・`start_error`・`timeout`・`incomplete`・`not_run`。空の実行計画は終了コード0でもレポートでは`not_run`とする。通常の回帰検査の`passed`はコマンドの正常終了を示す。仕様から追加した受入検査は後述の成功件数とskipも確認する。未選択のbackend起動・実DB・ブラウザ・外部APIは`excludedLayers`に記録する。選択しただけの層を検証成功と扱わず、各taskの状態を確認する。
 
 ## 仕様に基づくテスト選択
 
@@ -56,7 +58,7 @@ pnpm agent:check --report tmp/quality/result.json # 完了前の検査と構造�
 
 - `kind: python`は`backend/tests/`または`scripts/hooks/`の既存テストを選ぶ。任意の`test`にpytestの関数・クラス・`TestClass::test_method`を指定できる。実DB・非公開原本のマーカーは除外されるため、それらが必要なら通常のunit指定で代替しない。
 - `kind: node`は`frontend/features/`・`frontend/shared/`・`frontend/scripts/`・`scripts/`の既存`.test.mjs`を選ぶ。
-- `kind: suite, name: postgres`は`pnpm test:postgres`、`name: browser`は`pnpm test:e2e`を選ぶ。DB・原本・port等は既存の検証規約に従う。外部LLMの実通信は含まない。
+- `kind: suite, name: postgres`は`pnpm test:postgres`、`name: browser`は`pnpm test:e2e`、`name: backend-startup`は通常設定のbackend起動確認を選ぶ。backend起動確認は`uv run --project backend --locked python -m backend.infrastructure.cli.configured_e2e_gate`を実行し、configured PostgreSQL readinessと実アプリのOS healthを検証する。起動失敗時はtraceback全体や秘密値を出さず、redactしたERROR行と例外要約を品質出力へ返す。DBのmigration・初期登録・更新は行わず、health専用port 3212が使用中なら失敗する。試験所有のprobe processだけを停止する。DB・原本・port等は既存の検証規約に従い、外部LLMの実通信は含まない。
 - 空の対応・未知のキー/種類・任意コマンド・存在しないファイル・ディレクトリ外への参照は拒否する。
 
 ```sh
@@ -69,7 +71,7 @@ pnpm quality:changed --spec docs/development/quality-task.example.json --report 
 
 quickは指定unit受入検査と既存の軽量検査、fullは全指定受入検査と通常の回帰検査を行う。integrationはquickで実行しないため、quick成功は作業全体の完了根拠にならない。実行時間上限は既存のrunner各コマンド300秒・Stop全体540秒のまま。大きなintegrationが上限を超えた場合は未解決として報告し、独立実行の結果と区別する。
 
-受入検査ではNode・pytest・Playwrightの最終サマリーから1件以上の成功とskip/xfail/xpass/todoなしを確認する。未実施や未知の出力形式は`incomplete`でゲートを失敗させる。マーカーで対象外とした`deselected`は対象テストの成功件数に加えない。テストの内容が仕様を網羅していること自体は、この集計では証明しない。
+受入検査ではNode・pytest・Playwrightの最終サマリーから1件以上の成功とskip/xfail/xpass/todoなしを確認する。backend-startupは終了コードに加え、readiness成功とOS healthの`status: ok`が出力されたことを確認する。未実施や未知の出力形式は`incomplete`でゲートを失敗させる。マーカーで対象外とした`deselected`は対象テストの成功件数に加えない。テストの内容が仕様を網羅していること自体は、この集計では証明しない。
 
 実行計画の`testRunner`に従って集計する。Node・pytestは当該実行の最終サマリー、Playwrightはmock・realを含む必要な層のサマリーをまとめて読み、別行や前の層にあるskipも保持する。補助Node実行の成功件数をブラウザ成功件数に加えない。
 

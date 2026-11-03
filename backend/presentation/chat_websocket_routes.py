@@ -10,6 +10,7 @@ from json import JSONDecodeError
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+from langsmith import trace
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from backend.application.medicine.errors import InvalidMedicineInput
@@ -124,7 +125,9 @@ async def stream_chat_response(
     abort_requested = False
     terminal = False
 
-    async def generate(payload: WebSocketChatRequest, request_id: str) -> None:
+    async def generate(
+        payload: WebSocketChatRequest, request_id: str
+    ) -> dict[str, Any]:
         async def send(event: dict[str, Any]) -> None:
             nonlocal terminal
             if terminal:
@@ -139,9 +142,9 @@ async def stream_chat_response(
                     MedicineQueries.validate_product_codes(payload.product_yj_codes)
                 except InvalidMedicineInput as exc:
                     await send({"type": "error", "content": str(exc)})
-                    return
+                    return {"status": "invalid_input"}
                 await send({"type": "error", "content": "Medicine corpus is not ready"})
-                return
+                return {"status": "unavailable"}
 
             retrieval_complete_sent = False
             await send({"type": "retrieval_status", "stage": "retrieving"})
@@ -185,7 +188,7 @@ async def stream_chat_response(
 
             except InvalidMedicineInput as exc:
                 await send({"type": "error", "content": str(exc)})
-                return
+                return {"status": "invalid_input"}
 
             if not retrieval_complete_sent:
                 await publish_retrieval_complete(reply.jev_response)
@@ -211,6 +214,7 @@ async def stream_chat_response(
                 nonlocal feedback_token
                 feedback_token = token
 
+            answer_chunks: list[str] = []
             async with closing_stream(
                 service.stream_answer(
                     reply,
@@ -224,14 +228,39 @@ async def stream_chat_response(
             ) as response:
                 async for chunk in response:
                     await send({"type": "text_delta", "content": chunk})
+                    answer_chunks.append(chunk)
 
             await send({"type": "text_done", "feedback_token": feedback_token})
+            return {"status": "completed", "answer": "".join(answer_chunks)}
         except asyncio.CancelledError:
             if abort_requested:
                 await send({"type": "aborted"})
             raise
         except Exception:
             await send({"type": "error", "content": "Answer generation failed"})
+            return {"status": "error"}
+
+    async def traced_generate(payload: WebSocketChatRequest, request_id: str) -> None:
+        metadata = {"transport": "websocket", "request_id": request_id}
+        if user_id:
+            metadata["user_id"] = user_id
+        with trace(
+            "medi_chat.chat_turn",
+            "chain",
+            inputs={
+                "message_count": len(payload.messages),
+                "product_yj_codes": payload.product_yj_codes,
+                "provider": payload.provider,
+                "model": payload.model,
+            },
+            metadata=metadata,
+        ) as run:
+            outputs = await generate(payload, request_id)
+            if run is not None:
+                if outputs["status"] == "completed":
+                    run.end(outputs=outputs)
+                else:
+                    run.end(outputs=outputs, error=outputs["status"])
 
     async def join_active() -> None:
         if active is not None:
@@ -352,7 +381,7 @@ async def stream_chat_response(
             abort_requested = False
             terminal = False
             active_id = request_id
-            active = asyncio.create_task(generate(payload, request_id))
+            active = asyncio.create_task(traced_generate(payload, request_id))
 
     except WebSocketDisconnect:
         disconnected = True

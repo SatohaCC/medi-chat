@@ -3,7 +3,7 @@ import { spawnSync } from "node:child_process";
 import { mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { resolve, relative } from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadSpecification } from "./quality-spec.mjs";
+import { loadSpecification, registeredSuite } from "./quality-spec.mjs";
 import { acceptanceEvidence, failureFeedback } from "./quality-feedback.mjs";
 
 export const ROOT = fileURLToPath(new URL("../../", import.meta.url));
@@ -33,7 +33,7 @@ function nodeTests(folder) {
     .sort();
 }
 
-export function planFor(scopes, phase = "full") {
+export function planFor(scopes, phase = "full", { includeBackendStartup = false } = {}) {
   const plan = [];
   const pnpm = (label, ...args) => plan.push({ label, command: "pnpm", args });
   const uv = (label, ...args) => plan.push({ label, command: "uv", args: ["run", "--project", "backend", "--locked", ...args] });
@@ -43,6 +43,17 @@ export function planFor(scopes, phase = "full") {
       uv("Python lint", "ruff", "check", "backend", "scripts/checks", "scripts/hooks");
       uv("Backend Mypy", "mypy", "--config-file", "backend/pyproject.toml", "--no-incremental", "-p", "backend");
     } else {
+      if (includeBackendStartup) {
+        const suite = registeredSuite("backend-startup");
+        plan.push({
+          label: "Configured backend startup and OS health",
+          command: suite.command,
+          args: [...suite.args],
+          layer: "backend-startup",
+          testRunner: suite.testRunner,
+          requireEvidence: true,
+        });
+      }
       pnpm("Backend lint and architecture", "--filter", "backend", "lint");
       uv("Backend format", "ruff", "format", "--check", "backend", "scripts/checks", "scripts/hooks");
       pnpm("Python types (Pyright and mypy)", "typecheck:python");
@@ -74,6 +85,19 @@ export function planFor(scopes, phase = "full") {
   return plan;
 }
 
+export function buildQualityPlan(scopes, specification, phase = "full", changed = false) {
+  const combinedScopes = [...new Set([...scopes, ...specification.scopes])];
+  const explicitlySelectedStartup = specification.tasks.some((task) => task.layer === "backend-startup");
+  const includeBackendStartup = changed
+    && phase === "full"
+    && combinedScopes.includes("backend")
+    && !explicitlySelectedStartup;
+  return [
+    ...specification.tasks,
+    ...planFor(combinedScopes, phase, { includeBackendStartup }),
+  ];
+}
+
 export function changedPaths(root = ROOT) {
   const collect = (args) => {
     const result = spawnSync("git", args, { cwd: root, encoding: "utf8" });
@@ -91,7 +115,8 @@ export function runPlan(plan, execute = spawnSync, reportPath = null) {
   const report = {
     version: 1,
     status: "not_run",
-    excludedLayers: ["postgres", "browser", "external_api"].filter((layer) => !plan.some((task) => task.layer === layer)),
+    excludedLayers: ["backend-startup", "postgres", "browser", "external_api"]
+      .filter((layer) => !plan.some((task) => task.layer === layer)),
     tasks: plan.map((task) => ({ ...task, status: "not_run", exitCode: null, durationMs: 0 })),
   };
   const save = () => {
@@ -169,7 +194,7 @@ export function main(args) {
   const specIndex = args.indexOf("--spec");
   if (specIndex >= 0 && (!args[specIndex + 1] || args[specIndex + 1].startsWith("--"))) throw new Error("--spec requires a JSON path");
   const specification = loadSpecification(ROOT, specIndex < 0 ? undefined : args[specIndex + 1], phase);
-  const plan = [...specification.tasks, ...planFor([...new Set([...scopes, ...specification.scopes])], phase)];
+  const plan = buildQualityPlan(scopes, specification, phase, args.includes("--changed"));
   if (args.includes("--list")) {
     console.log(JSON.stringify(plan, null, 2));
     return 0;

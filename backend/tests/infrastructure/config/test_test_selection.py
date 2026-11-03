@@ -96,6 +96,19 @@ def test_isolated_environment():
     selection_project.runpytest_subprocess("-q").assert_outcomes(passed=1)
 
 
+def test_explicit_postgres_run_disables_developer_dotenv(selection_project):
+    selection_project.makepyfile(
+        """
+import os
+
+def test_isolated_environment():
+    assert os.environ['PYTHON_DOTENV_DISABLED'] == '1'
+    assert os.environ['MEDI_CHAT_DATABASE_URL'] == 'postgresql+psycopg://unused@127.0.0.1:1/unused'
+"""
+    )
+    selection_project.runpytest_subprocess("--postgres", "-q").assert_outcomes(passed=1)
+
+
 def test_explicit_postgres_run_without_credentials_fails_instead_of_skipping(
     selection_project, monkeypatch
 ):

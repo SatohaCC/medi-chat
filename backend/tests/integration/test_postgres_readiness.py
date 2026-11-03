@@ -32,6 +32,13 @@ def test_pg034_035_prepared_readiness_has_no_ddl_original_or_structure_transfer(
     pg_engines, pg_publisher
 ):
     publish(pg_publisher, source("テスト準備状態"))
+    with pg_engines[0].connect() as connection:
+        assert (
+            connection.execute(
+                text("SELECT version_num FROM alembic_version")
+            ).scalar_one()
+            == "pg_20261103_07"
+        )
     statements = []
 
     def observe(connection, cursor, statement, parameters, context, executemany):

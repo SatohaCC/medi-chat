@@ -4,7 +4,7 @@ import { mkdtempSync, readFileSync, writeFileSync, mkdirSync, renameSync, rmSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
-import { changedPaths, invocationFor, planFor, runPlan, scopesFor } from "./quality.mjs";
+import { buildQualityPlan, changedPaths, invocationFor, planFor, runPlan, scopesFor } from "./quality.mjs";
 
 test("reports distinguish failure, timeout, launch error and unexecuted work", () => {
   const folder = mkdtempSync(join(tmpdir(), "quality-report-"));
@@ -27,7 +27,7 @@ test("reports distinguish failure, timeout, launch error and unexecuted work", (
     assert.deepEqual(report.tasks.map((task) => task.status), ["passed", "failed", "timeout", "start_error"]);
     assert.equal(report.status, "failed");
     assert.equal(report.tasks[1].exitCode, 2);
-    assert.deepEqual(report.excludedLayers, ["postgres", "browser", "external_api"]);
+    assert.deepEqual(report.excludedLayers, ["backend-startup", "postgres", "browser", "external_api"]);
     assert.equal(runPlan([], undefined, reportPath), 0);
     assert.equal(JSON.parse(readFileSync(reportPath, "utf8")).status, "not_run");
   } finally {
@@ -93,6 +93,30 @@ test("full checks include tests, types and architecture without DB/browser comma
   assert.match(commands, /chatWebSocket.test.mjs/);
   assert.match(commands, /test_quality_gate.py/);
   assert.doesNotMatch(commands, /test:postgres|test:e2e|--write|--fix/);
+});
+
+test("backend startup runs automatically in changed full checks, not quick or package-only plans", () => {
+  const noSpecification = { scopes: [], tasks: [] };
+  const normalFull = buildQualityPlan(["backend"], noSpecification, "full", false);
+  const changedFull = buildQualityPlan(["backend"], noSpecification, "full", true);
+  const changedQuick = buildQualityPlan(["backend"], noSpecification, "quick", true);
+  const startupTasks = changedFull.filter((task) => task.layer === "backend-startup");
+
+  assert.equal(normalFull.some((task) => task.layer === "backend-startup"), false);
+  assert.equal(startupTasks.length, 1);
+  assert.deepEqual(startupTasks[0].args, [
+    "run", "--project", "backend", "--locked", "python", "-m",
+    "backend.infrastructure.cli.configured_e2e_gate",
+  ]);
+  assert.equal(startupTasks[0].requireEvidence, true);
+  assert.equal(changedQuick.some((task) => task.layer === "backend-startup"), false);
+
+  const explicitStartup = {
+    scopes: ["backend"],
+    tasks: [{ ...startupTasks[0], label: "Acceptance: backend-startup" }],
+  };
+  const noDuplicate = buildQualityPlan(["backend"], explicitStartup, "full", true);
+  assert.equal(noDuplicate.filter((task) => task.layer === "backend-startup").length, 1);
 });
 
 test("quick checks include uncached Mypy but omit test suites", () => {
