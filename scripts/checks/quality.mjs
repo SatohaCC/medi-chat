@@ -1,5 +1,5 @@
 // Shared, read-only quality entry point for manual runs, CI and Codex hooks.
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { resolve, relative } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -41,7 +41,7 @@ export function planFor(scopes, phase = "full", { includeBackendStartup = false 
   if (scopes.includes("backend")) {
     if (phase === "quick") {
       uv("Python lint", "ruff", "check", "backend", "scripts/checks", "scripts/hooks");
-      uv("Backend Mypy", "mypy", "--config-file", "backend/pyproject.toml", "--no-incremental", "-p", "backend");
+      uv("Backend Mypy", "mypy", "--config-file", "backend/pyproject.toml", "-p", "backend");
     } else {
       if (includeBackendStartup) {
         const suite = registeredSuite("backend-startup");
@@ -87,7 +87,9 @@ export function planFor(scopes, phase = "full", { includeBackendStartup = false 
 
 export function buildQualityPlan(scopes, specification, phase = "full", changed = false) {
   const combinedScopes = [...new Set([...scopes, ...specification.scopes])];
-  const explicitlySelectedStartup = specification.tasks.some((task) => task.layer === "backend-startup");
+  const explicitlySelectedStartup = specification.tasks.some(
+    (task) => task.layer === "backend-startup" || task.layer === "browser"
+  );
   const includeBackendStartup = changed
     && phase === "full"
     && combinedScopes.includes("backend")
@@ -96,6 +98,12 @@ export function buildQualityPlan(scopes, specification, phase = "full", changed 
     ...specification.tasks,
     ...planFor(combinedScopes, phase, { includeBackendStartup }),
   ];
+}
+
+export function taskResource(task) {
+  if (task.resource) return task.resource;
+  if (task.layer === "backend-startup" || task.layer === "browser") return "configured-backend-probe";
+  return null;
 }
 
 export function changedPaths(root = ROOT) {
@@ -110,7 +118,91 @@ export function changedPaths(root = ROOT) {
   ])].sort();
 }
 
-export function runPlan(plan, execute = spawnSync, reportPath = null) {
+export function executeAsync(command, args, options = {}) {
+  return new Promise((resolve) => {
+    let child;
+    let stdout = "";
+    let stderr = "";
+    try {
+      child = spawn(command, args, {
+        cwd: options.cwd,
+        shell: options.shell,
+        env: options.env,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+    } catch (error) {
+      resolve({ status: null, error, stdout: "", stderr: "" });
+      return;
+    }
+    const maxBuffer = options.maxBuffer ?? 16 * 1024 * 1024;
+    child.stdout?.setEncoding("utf8");
+    child.stderr?.setEncoding("utf8");
+    child.stdout?.on("data", (chunk) => {
+      stdout += chunk;
+      if (stdout.length + stderr.length > maxBuffer) {
+        child.kill();
+        resolve({ status: null, error: new Error("maxBuffer exceeded"), stdout, stderr });
+      }
+    });
+    child.stderr?.on("data", (chunk) => {
+      stderr += chunk;
+      if (stdout.length + stderr.length > maxBuffer) {
+        child.kill();
+        resolve({ status: null, error: new Error("maxBuffer exceeded"), stdout, stderr });
+      }
+    });
+    let timer;
+    if (options.timeout) {
+      timer = setTimeout(() => {
+        const timeoutError = new Error("ETIMEDOUT");
+        timeoutError.code = "ETIMEDOUT";
+        child.kill();
+        resolve({ status: null, error: timeoutError, stdout, stderr });
+      }, options.timeout);
+    }
+    child.on("error", (error) => {
+      if (timer) clearTimeout(timer);
+      resolve({ status: null, error, stdout, stderr });
+    });
+    child.on("close", (status) => {
+      if (timer) clearTimeout(timer);
+      resolve({ status, error: null, stdout, stderr });
+    });
+  });
+}
+
+function recordTaskResult(report, index, task, result, started, save) {
+  Object.assign(report.tasks[index], {
+    status: result.error?.code === "ETIMEDOUT" ? "timeout"
+      : result.error ? "start_error" : result.status === 0 ? "passed" : "failed",
+    exitCode: result.status ?? null,
+    durationMs: Date.now() - started,
+  });
+  const output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
+  if (task.requireEvidence && report.tasks[index].status === "passed") {
+    const evidence = acceptanceEvidence(output, task.testRunner);
+    report.tasks[index].evidence = evidence;
+    if (!evidence.passed || evidence.incomplete) report.tasks[index].status = "incomplete";
+  }
+  const feedback = failureFeedback(task, report.tasks[index].status, output);
+  report.tasks[index].feedback = feedback;
+
+  console.log(`\n[quality] ${task.label}`);
+  if (result.stdout) process.stdout.write(result.stdout);
+  if (result.stderr) process.stderr.write(result.stderr);
+  if (feedback) console.error(`[quality] Next: ${feedback.suggestion} See ${feedback.docs}`);
+  if (report.tasks[index].status !== "passed") {
+    console.error(`[quality] FAILED: ${task.label}${result.error ? `: ${result.error.message}` : ""}`);
+  }
+
+  report.status = report.tasks.some((entry) => entry.status === "not_run") ? "not_run"
+    : report.tasks.every((entry) => entry.status === "passed") ? "passed" : "failed";
+  save();
+
+  return report.tasks[index].status !== "passed";
+}
+
+export function runPlan(plan, execute = spawnSync, reportPath = null, { concurrency = 1 } = {}) {
   let failed = false;
   const report = {
     version: 1,
@@ -125,43 +217,79 @@ export function runPlan(plan, execute = spawnSync, reportPath = null) {
   save();
   const temporary = resolve(ROOT, "tmp/quality");
   mkdirSync(temporary, { recursive: true });
+  const execOptions = {
+    cwd: ROOT,
+    stdio: "pipe",
+    encoding: "utf8",
+    maxBuffer: 16 * 1024 * 1024,
+    timeout: 300_000,
+    env: { ...process.env, UV_CACHE_DIR: resolve(ROOT, ".uv-cache"), TMP: temporary, TEMP: temporary, TMPDIR: temporary },
+  };
+
+  if (concurrency > 1 || (execute && (execute === executeAsync || execute.constructor?.name === "AsyncFunction"))) {
+    return (async () => {
+      const completed = new Set();
+      const inProgress = new Set();
+      const activeResources = new Set();
+      const waiters = new Set();
+
+      function getNextTaskIndex() {
+        for (let i = 0; i < plan.length; i++) {
+          if (completed.has(i) || inProgress.has(i)) continue;
+          const resource = taskResource(plan[i]);
+          if (resource && activeResources.has(resource)) continue;
+          inProgress.add(i);
+          if (resource) activeResources.add(resource);
+          return i;
+        }
+        return -1;
+      }
+
+      function notifyWaiters() {
+        for (const wake of waiters) wake();
+        waiters.clear();
+      }
+
+      async function worker() {
+        while (completed.size < plan.length) {
+          const index = getNextTaskIndex();
+          if (index === -1) {
+            if (completed.size === plan.length) break;
+            await new Promise((wake) => waiters.add(wake));
+            continue;
+          }
+          const task = plan[index];
+          const invocation = invocationFor(task);
+          const started = Date.now();
+          const result = await execute(invocation.command, invocation.args, {
+            ...execOptions,
+            shell: invocation.shell,
+          });
+          if (recordTaskResult(report, index, task, result, started, save)) failed = true;
+          const resource = taskResource(task);
+          if (resource) activeResources.delete(resource);
+          inProgress.delete(index);
+          completed.add(index);
+          notifyWaiters();
+        }
+      }
+      const workers = Array.from(
+        { length: Math.min(concurrency, Math.max(1, plan.length)) },
+        () => worker()
+      );
+      await Promise.all(workers);
+      return Number(failed);
+    })();
+  }
+
   for (const [index, task] of plan.entries()) {
-    console.log(`\n[quality] ${task.label}`);
     const invocation = invocationFor(task);
     const started = Date.now();
     const result = execute(invocation.command, invocation.args, {
-      cwd: ROOT,
-      stdio: "pipe",
-      encoding: "utf8",
-      maxBuffer: 16 * 1024 * 1024,
+      ...execOptions,
       shell: invocation.shell,
-      timeout: 300_000,
-      env: { ...process.env, UV_CACHE_DIR: resolve(ROOT, ".uv-cache"), TMP: temporary, TEMP: temporary, TMPDIR: temporary },
     });
-    if (result.stdout) process.stdout.write(result.stdout);
-    if (result.stderr) process.stderr.write(result.stderr);
-    Object.assign(report.tasks[index], {
-      status: result.error?.code === "ETIMEDOUT" ? "timeout"
-        : result.error ? "start_error" : result.status === 0 ? "passed" : "failed",
-      exitCode: result.status ?? null,
-      durationMs: Date.now() - started,
-    });
-    const output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
-    if (task.requireEvidence && report.tasks[index].status === "passed") {
-      const evidence = acceptanceEvidence(output, task.testRunner);
-      report.tasks[index].evidence = evidence;
-      if (!evidence.passed || evidence.incomplete) report.tasks[index].status = "incomplete";
-    }
-    const feedback = failureFeedback(task, report.tasks[index].status, output);
-    report.tasks[index].feedback = feedback;
-    if (feedback) console.error(`[quality] Next: ${feedback.suggestion} See ${feedback.docs}`);
-    report.status = report.tasks.some((entry) => entry.status === "not_run") ? "not_run"
-      : report.tasks.every((entry) => entry.status === "passed") ? "passed" : "failed";
-    save();
-    if (report.tasks[index].status !== "passed") {
-      console.error(`[quality] FAILED: ${task.label}${result.error ? `: ${result.error.message}` : ""}`);
-      failed = true;
-    }
+    if (recordTaskResult(report, index, task, result, started, save)) failed = true;
   }
   return Number(failed);
 }
@@ -181,7 +309,7 @@ export function invocationFor(task, platform = process.platform, npmExecPath = p
   return { ...task, shell: false };
 }
 
-export function main(args) {
+export async function main(args) {
   const phaseIndex = args.indexOf("--phase");
   const phase = phaseIndex < 0 ? "full" : args[phaseIndex + 1];
   const scopeIndex = args.indexOf("--scope");
@@ -202,10 +330,18 @@ export function main(args) {
   if (!plan.length) console.log("[quality] No code or tooling changes to check.");
   const reportIndex = args.indexOf("--report");
   if (reportIndex >= 0 && !args[reportIndex + 1]) throw new Error("--report requires a path");
-  return runPlan(plan, spawnSync, reportIndex >= 0 ? resolve(args[reportIndex + 1]) : null);
+
+  const concurrencyIndex = args.indexOf("--concurrency");
+  const concurrency = args.includes("--serial")
+    ? 1
+    : concurrencyIndex >= 0
+      ? parseInt(args[concurrencyIndex + 1], 10)
+      : (args.includes("--parallel") || phase === "full" ? 4 : 1);
+  const executor = concurrency > 1 ? executeAsync : spawnSync;
+  return await runPlan(plan, executor, reportIndex >= 0 ? resolve(args[reportIndex + 1]) : null, { concurrency });
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  try { process.exitCode = main(process.argv.slice(2)); }
+  try { process.exitCode = await main(process.argv.slice(2)); }
   catch (error) { console.error(error.message); process.exitCode = 1; }
 }
