@@ -78,7 +78,7 @@ export function specificationPlan(spec, root, phase = "full") {
         testRunner = python ? "pytest" : "node";
         args = python
           ? ["run", "--project", "backend", "--locked", "python", "-m", "pytest", check.path + (check.test ? `::${check.test}` : ""), "-m", "not postgres and not source_data", "-q"]
-          : ["--experimental-strip-types", "--test", "--test-timeout=60000", check.path];
+          : ["--disable-warning=ExperimentalWarning", "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", "--experimental-strip-types", "--test", "--test-timeout=60000", check.path];
       }
       const key = JSON.stringify([command, args]);
       if (!tasks.has(key)) tasks.set(key, { label: `Acceptance: ${check.path ?? check.name}${check.test ? `::${check.test}` : ""}`, command, args, layer, testRunner, requireEvidence: true, specification: spec.task, requirements: [], reasons: [] });
