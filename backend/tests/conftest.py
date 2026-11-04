@@ -1,6 +1,16 @@
 """Keep ordinary test runs independent of PostgreSQL credentials."""
 
+import asyncio
+import inspect
 from pathlib import Path
+
+# Python 3.14 deprecates asyncio.iscoroutinefunction in favor of inspect.iscoroutinefunction.
+# Upstream libraries (e.g. langsmith) still reference asyncio.iscoroutinefunction.
+if (
+    hasattr(asyncio, "iscoroutinefunction")
+    and asyncio.iscoroutinefunction is not inspect.iscoroutinefunction
+):
+    asyncio.iscoroutinefunction = inspect.iscoroutinefunction  # type: ignore[assignment]
 
 import pytest
 from sqlalchemy import event
