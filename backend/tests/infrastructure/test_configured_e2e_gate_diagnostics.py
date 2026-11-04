@@ -1,21 +1,17 @@
 import json
 from tempfile import TemporaryFile
-from unittest.mock import MagicMock
 
 import pytest
 from backend.config.database_settings import PostgresDatabaseSettings
 from backend.infrastructure.cli.configured_e2e_gate import (
     _probe_failure,
     check_postgres_reachable,
+    run_gate,
     startup_log_diagnostics,
 )
 from backend.infrastructure.cli.configured_e2e_gate import (
     main as gate_main,
 )
-from backend.infrastructure.persistence.runtime.postgres_readiness import (
-    verify_postgres_readiness,
-)
-from sqlalchemy.exc import OperationalError
 
 
 def test_startup_failure_summary_includes_error_and_schema_code_without_traceback():
@@ -69,18 +65,12 @@ def test_check_postgres_reachable_raises_environment_unavailable_on_unreachable_
     assert "docker compose --env-file .env.postgres up -d --wait" in str(exc_info.value)
 
 
-def test_verify_postgres_readiness_identifies_connection_failure_as_environment_unavailable():
-    engine = MagicMock()
-    engine.connect.side_effect = OperationalError(
-        "connection to server at '127.0.0.1', port 5432 failed: Connection refused",
-        {},
-        ConnectionRefusedError("Connection refused"),
-    )
-
+def test_run_gate_raises_environment_unavailable_when_postgres_unreachable():
+    settings = PostgresDatabaseSettings("postgresql://app:secret@127.0.0.1:59999/test")
     with pytest.raises(
-        RuntimeError, match="environment_unavailable: PostgreSQL connection refused"
+        RuntimeError, match="environment_unavailable: PostgreSQL is not reachable"
     ) as exc_info:
-        verify_postgres_readiness(engine)
+        run_gate(settings)
 
     assert "docker compose --env-file .env.postgres up -d --wait" in str(exc_info.value)
 
