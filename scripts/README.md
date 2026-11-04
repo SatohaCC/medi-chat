@@ -117,8 +117,11 @@ hooks定義の変更後はCodex側で定義を確認・信頼する操作が必�
 
 [.agents/hooks.json](../.agents/hooks.json)が登録先。Codexの`.codex/hooks.json`と同様に`quality-gate`と`privacy-gate`を分離して定義し、イベントアダプター [`scripts/hooks/antigravity_adapter.py`](hooks/antigravity_adapter.py) 経由で呼び出す。
 
+登録コマンドはワークスペースルートを基準にし、`backend`と`scripts/hooks/antigravity_adapter.py`を参照する。編集後の品質ゲート通知はPostToolUseの戻り値には含めず、次のPreInvocationで一時メッセージとして渡す。
+
 - `quality-gate`:
   - `PostToolUse` (`matcher: "edit_file|write_file|replace_file_content|write_to_file|multi_replace_file_content"`, timeout 600): ファイル編集後にPythonコードのRuff自動整形および編集ループ検出を行う。
+  - `PreInvocation` (timeout 30): 直前のPostToolUseで記録したquick検査結果・編集ループ警告を`injectSteps`の一時メッセージとしてエージェントへ渡す。PostToolUseの応答は仕様に従い空の`{}`を返す。
   - `Stop` (timeout 600): 差分・未追跡ファイルに対する受入・回帰検査を実行し、失敗時は `{"decision": "continue", "reason": "..."}` を返して完了を差し戻す。
 - `privacy-gate`:
   - `PostToolUse` (`matcher: "edit_file|write_file|replace_file_content|write_to_file|multi_replace_file_content|run_command"`, timeout 60): 編集に加えシェルコマンド実行後にも個人パス・禁止語の漏洩を即座に検査する。

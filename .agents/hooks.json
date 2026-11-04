@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run --project ../backend python ../scripts/hooks/antigravity_adapter.py quality-post-tool",
+            "command": "uv run --project backend python scripts/hooks/antigravity_adapter.py quality-post-tool",
             "timeout": 600
           }
         ]
@@ -15,8 +15,15 @@
     "Stop": [
       {
         "type": "command",
-        "command": "uv run --project ../backend python ../scripts/hooks/antigravity_adapter.py quality-stop",
+        "command": "uv run --project backend python scripts/hooks/antigravity_adapter.py quality-stop",
         "timeout": 600
+      }
+    ],
+    "PreInvocation": [
+      {
+        "type": "command",
+        "command": "uv run --project backend python scripts/hooks/antigravity_adapter.py quality-pre-invocation",
+        "timeout": 30
       }
     ]
   },
@@ -27,7 +34,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run --project ../backend python ../scripts/hooks/antigravity_adapter.py privacy-post-tool",
+            "command": "uv run --project backend python scripts/hooks/antigravity_adapter.py privacy-post-tool",
             "timeout": 60
           }
         ]
@@ -36,7 +43,7 @@
     "Stop": [
       {
         "type": "command",
-        "command": "uv run --project ../backend python ../scripts/hooks/antigravity_adapter.py privacy-stop",
+        "command": "uv run --project backend python scripts/hooks/antigravity_adapter.py privacy-stop",
         "timeout": 60
       }
     ]

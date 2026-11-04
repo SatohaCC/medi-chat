@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -99,6 +100,80 @@ def test_quality_post_tool_translates_write_to_file(monkeypatch):
     assert captured_events[0]["tool_name"] == "Write"
     assert captured_events[0]["tool_input"]["file_path"] == "scripts/sample.py"
     assert captured_events[0]["turn_id"] == "current"
+
+
+def test_quality_post_tool_feedback_is_delivered_once_on_pre_invocation(
+    tmp_path, monkeypatch
+):
+    from scripts.hooks import quality_gate
+
+    monkeypatch.setattr(adapter, "ROOT", tmp_path)
+    feedback = iter(("Fix the type error.", "Preserve the edit-loop warning."))
+
+    monkeypatch.setattr(
+        quality_gate,
+        "main",
+        lambda event: {"hookSpecificOutput": {"additionalContext": next(feedback)}},
+    )
+
+    for step_idx in (11, 12):
+        result = adapter.handle_quality_post_tool(
+            {
+                "toolCall": {
+                    "name": "replace_file_content",
+                    "args": {"TargetFile": "backend/app.py"},
+                },
+                "stepIdx": step_idx,
+                "conversationId": "quality-feedback-turn",
+            }
+        )
+        assert result == {}
+
+    expected = {
+        "injectSteps": [
+            {
+                "ephemeralMessage": (
+                    "Quality gate feedback from the previous edit:\n"
+                    "Fix the type error.\n\nPreserve the edit-loop warning."
+                )
+            }
+        ]
+    }
+    assert (
+        adapter.handle_quality_pre_invocation(
+            {"conversationId": "quality-feedback-turn"}
+        )
+        == expected
+    )
+    assert (
+        adapter.handle_quality_pre_invocation(
+            {"conversationId": "quality-feedback-turn"}
+        )
+        == {}
+    )
+
+
+def test_registered_hook_commands_resolve_from_workspace_root():
+    hooks_path = ROOT / ".agents/hooks.json"
+    data = json.loads(hooks_path.read_text(encoding="utf-8"))
+    commands = [
+        hook["command"]
+        for group in data.values()
+        for handlers in group.values()
+        for handler in handlers
+        for hook in handler.get("hooks", [handler])
+    ]
+
+    assert commands
+    assert all("../" not in command for command in commands)
+    for command in commands:
+        tokens = shlex.split(command)
+        project_path = Path(tokens[tokens.index("--project") + 1])
+        adapter_path = Path(tokens[tokens.index("python") + 1])
+        assert (ROOT / project_path).resolve() == (ROOT / "backend").resolve()
+        assert (ROOT / adapter_path).resolve() == (
+            ROOT / "scripts/hooks/antigravity_adapter.py"
+        ).resolve()
 
 
 def test_privacy_post_tool_handles_run_command(monkeypatch):
@@ -245,12 +320,16 @@ def test_registered_antigravity_hooks_json_matches_codex_coverage():
 
     q_gate = data["quality-gate"]
     assert "PostToolUse" in q_gate
+    assert "PreInvocation" in q_gate
     assert "Stop" in q_gate
     q_matcher = q_gate["PostToolUse"][0]["matcher"]
     assert "replace_file_content" in q_matcher
     assert "write_to_file" in q_matcher
     assert "edit_file" in q_matcher
     assert q_gate["PostToolUse"][0]["hooks"][0]["timeout"] == 600
+    pre_invocation_hook = q_gate["PreInvocation"][0]
+    assert pre_invocation_hook["timeout"] == 30
+    assert pre_invocation_hook["command"].endswith("quality-pre-invocation")
     assert q_gate["Stop"][0]["timeout"] == 600
 
     p_gate = data["privacy-gate"]
@@ -267,6 +346,7 @@ def test_registered_antigravity_hooks_json_matches_codex_coverage():
 def test_cli_launcher_granular_actions():
     for action in (
         "quality-post-tool",
+        "quality-pre-invocation",
         "privacy-post-tool",
     ):
         result = subprocess.run(

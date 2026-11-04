@@ -59,7 +59,16 @@ def handle_quality_post_tool(payload: dict) -> dict:
     }
     from scripts.hooks import quality_gate
 
-    quality_gate.main(codex_event)
+    quality_decision = quality_gate.main(codex_event)
+    additional_context = quality_decision.get("hookSpecificOutput", {}).get(
+        "additionalContext"
+    )
+    if isinstance(additional_context, str) and additional_context.strip():
+        queue_quality_feedback(
+            str(payload.get("conversationId") or "current"),
+            payload.get("stepIdx"),
+            additional_context,
+        )
     return {}
 
 
@@ -80,6 +89,63 @@ def handle_privacy_post_tool(payload: dict) -> dict:
     if decision and "additionalContext" in decision.get("hookSpecificOutput", {}):
         print(decision["hookSpecificOutput"]["additionalContext"], file=sys.stderr)
     return {}
+
+
+def quality_feedback_path(
+    directory: Path, turn: str, step_idx: object, context: str
+) -> Path:
+    turn_key = hashlib.sha256(turn.encode("utf-8")).hexdigest()[:24]
+    if type(step_idx) is int and step_idx >= 0:
+        step_key = f"{step_idx:010d}"
+    else:
+        step_key = hashlib.sha256(context.encode("utf-8")).hexdigest()[:12]
+    return directory / f"{turn_key}.{step_key}.quality-feedback.json"
+
+
+def queue_quality_feedback(turn: str, step_idx: object, context: str) -> None:
+    directory = ROOT / ".agents/work/.hooks"
+    directory.mkdir(parents=True, exist_ok=True)
+    path = quality_feedback_path(directory, turn, step_idx, context)
+    path.write_text(json.dumps(context, ensure_ascii=False), encoding="utf-8")
+
+
+def take_quality_feedback(turn: str) -> list[str]:
+    directory = ROOT / ".agents/work/.hooks"
+    if not directory.is_dir():
+        return []
+
+    turn_key = hashlib.sha256(turn.encode("utf-8")).hexdigest()[:24]
+    messages = []
+    for path in sorted(directory.glob(f"{turn_key}.*.quality-feedback.json")):
+        try:
+            context = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(context, str) and context.strip():
+                messages.append(context)
+        except (ValueError, OSError):
+            print("Invalid quality feedback receipt; discarding it.", file=sys.stderr)
+        finally:
+            try:
+                path.unlink(missing_ok=True)
+            except OSError:
+                print("Could not clear quality feedback receipt.", file=sys.stderr)
+    return messages
+
+
+def handle_quality_pre_invocation(payload: dict) -> dict:
+    turn_id = str(payload.get("conversationId") or "current")
+    messages = take_quality_feedback(turn_id)
+    if not messages:
+        return {}
+    return {
+        "injectSteps": [
+            {
+                "ephemeralMessage": (
+                    "Quality gate feedback from the previous edit:\n"
+                    + "\n\n".join(messages)
+                )
+            }
+        ]
+    }
 
 
 def handle_quality_stop(payload: dict) -> dict:
@@ -179,6 +245,8 @@ def main(action: str | None = None) -> dict:
 
     if action in ("quality-post-tool",):
         return handle_quality_post_tool(payload)
+    if action in ("quality-pre-invocation",):
+        return handle_quality_pre_invocation(payload)
     if action in ("privacy-post-tool",):
         return handle_privacy_post_tool(payload)
     if action in ("quality-stop",):
