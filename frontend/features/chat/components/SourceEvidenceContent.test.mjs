@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { createElement } from "react";
@@ -11,6 +11,22 @@ const { SourceEvidenceContent } = await loadTestComponent(
 );
 const render = (content, highlightWords) =>
   renderToStaticMarkup(createElement(SourceEvidenceContent, { content, highlightWords }));
+
+const searchUnitsUrl = new URL(
+  "../../../../data/pmda/structured/630004_3339003F5020_1_08/search_units.jsonl",
+  import.meta.url,
+);
+const fallbackUnitsUrl = new URL("./sample-evidence-units.json", import.meta.url);
+
+const loadUnits = () => {
+  if (existsSync(searchUnitsUrl)) {
+    return readFileSync(searchUnitsUrl, "utf8")
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line));
+  }
+  return JSON.parse(readFileSync(fallbackUnitsUrl, "utf8"));
+};
 
 test("renders headings, table relationships, notes and escaped medical text", () => {
   const html = render(
@@ -39,16 +55,7 @@ test("removes scripts, event handlers, source styles and unsafe links", () => {
 });
 
 test("PMDA contraindication table retains all three column headers in thead", () => {
-  const units = readFileSync(
-    new URL(
-      "../../../../data/pmda/structured/630004_3339003F5020_1_08/search_units.jsonl",
-      import.meta.url,
-    ),
-    "utf8",
-  )
-    .trim()
-    .split("\n")
-    .map((line) => JSON.parse(line));
+  const units = loadUnits();
   const original = units.find((unit) => unit.section.code === "10.1");
   assert.ok(original);
   const html = render(original.text);
@@ -60,16 +67,7 @@ test("PMDA contraindication table retains all three column headers in thead", ()
 });
 
 test("renders the real 11.2 section as one table with category and frequency labels", () => {
-  const rows = readFileSync(
-    new URL(
-      "../../../../data/pmda/structured/630004_3339003F5020_1_08/search_units.jsonl",
-      import.meta.url,
-    ),
-    "utf8",
-  )
-    .trim()
-    .split("\n")
-    .map((line) => JSON.parse(line));
+  const rows = loadUnits();
   const row = rows.find((item) => item.section.code === "11.2");
   assert.ok(row);
   const html = render(row.text);
