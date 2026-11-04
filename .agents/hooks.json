@@ -2,7 +2,7 @@
   "quality-gate": {
     "PostToolUse": [
       {
-        "matcher": "edit_file|write_file",
+        "matcher": "edit_file|write_file|replace_file_content|write_to_file|multi_replace_file_content",
         "hooks": [
           {
             "type": "command",
@@ -23,7 +23,7 @@
   "privacy-gate": {
     "PostToolUse": [
       {
-        "matcher": "edit_file|write_file|run_command",
+        "matcher": "edit_file|write_file|replace_file_content|write_to_file|multi_replace_file_content|run_command",
         "hooks": [
           {
             "type": "command",
