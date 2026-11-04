@@ -46,7 +46,8 @@ graphify-out/
 *.log
 yj
 /docs/reference/
-/.agents/
+/.agents/*
+!/.agents/hooks.json
 skills-lock.json
 .vscode/
 .vercel/
