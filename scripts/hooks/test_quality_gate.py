@@ -39,7 +39,8 @@ def test_same_diagnostic_stops_repair_even_when_source_changes(
 
     def execute(command, **kwargs):
         calls.append(command)
-        Path(command[-1]).write_text(
+        report_path = command[command.index("--report") + 1]
+        Path(report_path).write_text(
             json.dumps(
                 {
                     "tasks": [
@@ -288,6 +289,7 @@ def test_stop_runs_checks_and_reuses_only_current_success(
     assert gate.main(event) == {}
     assert gate.main(event) == {}
     assert len(calls) == 1
+    assert "--require-spec" in calls[0][0]
     source.write_text("after", encoding="utf-8")
     assert gate.main(event) == {}
     assert len(calls) == 2
@@ -336,13 +338,17 @@ def test_post_edit_formats_before_quick_checks(tmp_path, monkeypatch):
 
     monkeypatch.setattr(gate, "format_python", format_event)
 
+    calls = []
+
     def execute(*args, **kwargs):
         order.append("check")
+        calls.append(args)
         return SimpleNamespace(returncode=0)
 
     monkeypatch.setattr(gate.subprocess, "run", execute)
     assert gate.main({"hook_event_name": "PostToolUse"}) == {}
     assert order == ["format", "check"]
+    assert "--require-spec" in calls[0][0]
 
 
 def test_post_edit_returns_type_failure_and_stop_blocks(

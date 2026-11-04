@@ -9,7 +9,7 @@
   "description": "PMDA package inserts search and AI real-time streaming chat system.",
   "scripts": {
     "quality": "node scripts/checks/quality.mjs",
-    "agent:check": "node scripts/checks/quality.mjs --changed",
+    "agent:check": "node scripts/checks/quality.mjs --changed --require-spec",
     "quality:changed": "node scripts/checks/quality.mjs --changed",
     "quality:backend": "node scripts/checks/quality.mjs --scope backend",
     "quality:frontend": "node scripts/checks/quality.mjs --scope frontend",

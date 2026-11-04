@@ -44,13 +44,14 @@ pnpm quality:changed --list   # 実行計画だけ表示
 pnpm quality:scripts --report tmp/quality-scripts.json # 機械可読な結果も保存（親ディレクトリは事前作成）
 pnpm agent:check --phase quick # エージェント共通の変更範囲検査
 pnpm agent:check --report tmp/quality/result.json # 完了前の検査と構造化レポート
+node scripts/checks/verify-clean-checkout.mjs --ref <commit> # 指定commitを隔離worktreeで再検証
 ```
 
-`full`は対象側のlint・format確認・型検査・単体テストを実行し、backendでは構造検査も含む。`scripts`ではツールの回帰と生成物の整合性も検査する。`quick`はlint・実行入口の構文確認に加え、backendではプロジェクトのMypyを`-p backend`で実行する。失敗・起動不能・タイムアウトは非0で終了し、他の検査も続けて結果を表示する。一時ファイルとuvキャッシュはプロジェクト内のGit管理外領域を使う。
+`full`は対象側のlint・format確認・型検査・単体テストを実行し、backendでは構造検査も含む。`scripts`ではツールの回帰と生成物の整合性も検査する。`quick`はlint・実行入口の構文確認に加え、backendではプロジェクトのMypyを`-p backend`で実行する。失敗・起動不能・タイムアウトは非0で終了し、他の検査も続けて結果を表示する。一時ファイルはプロジェクト内のGit管理外領域を使い、uv cacheは`UV_CACHE_DIR`指定時にその場所、未指定時に`.uv-cache`を使う。
 
 実PostgreSQL契約・ブラウザ・外部APIは変更パスだけから自動選択しない。backendの通常起動確認は`agent:check`・`quality:changed`のfullでbackend scopeがある場合に自動選択する。quickや`quality:backend`など個別計画では、通常設定の起動確認を下の仕様JSONで明示選択できる。必要な前提は[検証手順](../docs/development/validation.md)を参照する。CIは共通のbackend・frontend・scripts検査に加え、実PostgreSQL契約を実行する。
 
-`--report <path>`は実行前に全検査を`not_run`として保存し、各検査後に状態・終了コード・所要時間・コマンドを更新する。状態は`passed`・`failed`・`start_error`・`timeout`・`incomplete`・`not_run`。空の実行計画は終了コード0でもレポートでは`not_run`とする。通常の回帰検査の`passed`はコマンドの正常終了を示す。仕様から追加した受入検査は後述の成功件数とskipも確認する。未選択のbackend起動・実DB・ブラウザ・外部APIは`excludedLayers`に記録する。選択しただけの層を検証成功と扱わず、各taskの状態を確認する。
+`--report <path>`は実行前に全検査を`not_run`として保存し、各検査後に状態・終了コード・所要時間・コマンドを更新する。状態は`passed`・`failed`・`start_error`・`timeout`・`incomplete`・`not_run`。taskに追加runtimeがあれば`runtimes`へ記録する。空の実行計画は終了コード0でもレポートでは`not_run`とする。通常の回帰検査の`passed`はコマンドの正常終了を示す。仕様から追加した受入検査は後述の成功件数とskipも確認する。未選択のbackend起動・実DB・source_data・ブラウザ・外部APIは`excludedLayers`に記録する。選択しただけの層を検証成功と扱わず、各taskの状態を確認する。
 
 ## 仕様に基づくテスト選択
 
@@ -58,7 +59,7 @@ pnpm agent:check --report tmp/quality/result.json # 完了前の検査と構造�
 
 - `kind: python`は`backend/tests/`または`scripts/hooks/`の既存テストを選ぶ。任意の`test`にpytestの関数・クラス・`TestClass::test_method`を指定できる。実DB・非公開原本のマーカーは除外されるため、それらが必要なら通常のunit指定で代替しない。
 - `kind: node`は`frontend/features/`・`frontend/shared/`・`frontend/scripts/`・`scripts/`の既存`.test.mjs`を選ぶ。
-- `kind: suite, name: postgres`は`pnpm test:postgres`、`name: browser`は`pnpm test:e2e`、`name: backend-startup`は通常設定のbackend起動確認を選ぶ。backend起動確認は`uv run --project backend --locked python -m backend.infrastructure.cli.configured_e2e_gate`を実行し、configured PostgreSQL readinessと実アプリのOS healthを検証する。起動失敗時はtraceback全体や秘密値を出さず、redactしたERROR行と例外要約を品質出力へ返す。DBのmigration・初期登録・更新は行わず、health専用port 3212が使用中なら失敗する。試験所有のprobe processだけを停止する。DB・原本・port等は既存の検証規約に従い、外部LLMの実通信は含まない。
+- `kind: suite, name: postgres`は`pnpm test:postgres`、`name: browser`は`pnpm test:e2e`、`name: backend-startup`は通常設定のbackend起動確認、`name: source-data`はPMDA構造化データを使う表示確認を選ぶ。source-data suiteは明示選択時だけ実行し、入力がなければ失敗する。通常unitのfixture成功に置き換えない。backend起動確認は`uv run --project backend --locked python -m backend.infrastructure.cli.configured_e2e_gate`を実行し、configured PostgreSQL readinessと実アプリのOS healthを検証する。起動失敗時はtraceback全体や秘密値を出さず、redactしたERROR行と例外要約を品質出力へ返す。DBのmigration・初期登録・更新は行わず、health専用port 3212が使用中なら失敗する。試験所有のprobe processだけを停止する。DB・原本・port等は既存の検証規約に従い、外部LLMの実通信は含まない。
 - 空の対応・未知のキー/種類・任意コマンド・存在しないファイル・ディレクトリ外への参照は拒否する。
 
 ```sh
@@ -67,7 +68,7 @@ pnpm quality:changed --spec docs/development/quality-task.example.json --phase q
 pnpm quality:changed --spec docs/development/quality-task.example.json --report tmp/quality/results.json
 ```
 
-実際の作業用はGit管理外の`tmp/quality/task.json`に置くと、手動・PostToolUse・Stopが自動で同じ仕様を読む。作業が終わったらこの作業用ファイルを削除する。例は開発ツール用なので、製品機能の作業ではその受入条件とテストに書き換える。明示した`--spec`がない場合、作業用ファイルもなければ従来のパス選択を使う。`--scope`より仕様で必要な側を優先して追加し、通常の回帰検査は削らない。同じテストを複数要件が参照しても受入検査は1回にまとめ、要件ID・選択理由を計画とレポートへ残す。
+実際の作業用はGit管理外の`tmp/quality/task.json`に置くと、手動・PostToolUse・Stopが同じ仕様を読む。`pnpm agent:check`とCodex Hookはコードscopeでこの仕様を必須にする。quickからfullの完了検査とHookの完了判定が終わるまでspecを保持し、その後に削除する。例は開発ツール用なので、製品機能の作業ではその受入条件とテストに書き換える。spec必須を付けない`quality`・`quality:changed`は通常の回帰検査用で、受入specの完了証明ではない。`--scope`より仕様で必要な側を優先して追加し、通常の回帰検査は削らない。同じテストを複数要件が参照しても受入検査は1回にまとめ、要件ID・選択理由を計画とレポートへ残す。
 
 quickは指定unit受入検査と既存の軽量検査、fullは全指定受入検査と通常の回帰検査を行う。integrationはquickで実行しないため、quick成功は作業全体の完了根拠にならない。実行時間上限は既存のrunner各コマンド300秒・Stop全体540秒のまま。大きなintegrationが上限を超えた場合は未解決として報告し、独立実行の結果と区別する。
 
@@ -86,6 +87,11 @@ quickは指定unit受入検査と既存の軽量検査、fullは全指定受入�
 [Sandboxと承認の記事](https://azukiazusa.dev/blog/codex-sandbox-agent-authorization/)および[公式Rules](https://learn.chatgpt.com/docs/agent-configuration/rules)に従い、品質結果と実行権限は分ける。仕様JSONが選べるのは登録済み検査だけで、承認ルール・サンドボックス・network設定は変更しない。権限/接続のエラーには通常の承認経路で切り分ける候補を返し、`allow`の追加や保護領域の変更を自己修復に使わない。記事中の過去の設定名・OS実装を、この環境の設定としてコピーしない。
 
 `scripts/checks/quality.test.mjs`は隔離Gitリポジトリでrename両側・未追跡・共有設定の検出を確認し、Git管理下のfrontend・scriptsの全Nodeテストがfull計画に含まれることも検査する。新しい配置を追加してこの検査が失敗した場合は、探索範囲を更新する。CI定義の回帰はbackend・frontend・scripts・PostgreSQL入口の存在を検査するもので、GitHub上の実行成功を保証しない。CIはfrontendについても`quality:frontend`全体およびNext.js本番ビルドを実行する。
+frontendのNodeテストは[scripts/checks/test-runtime-requirements.json](checks/test-runtime-requirements.json)で追加runtimeを宣言する。Node/Python連携テストは通常unitから分け、レポートへ両runtimeを記録する。新規`.test.mjs`はruntime有無にかかわらずfull計画へ含まれる。`scripts/checks/source-data-guard.mjs --check`はfrontendとscriptsのNodeテストからGit除外PMDA原本・構造化データへの直接パス参照と、`join`/`resolve`で組み立ててファイル読取へ渡すパスを検出する。計算済みパスの伝播や動的import等を網羅的に証明しないため、clean checkout検証を併用する。
+
+`node scripts/checks/verify-clean-checkout.mjs --ref <commit>`は指定commitのdetached worktreeをOS一時領域に作成し、lock済みNode/Python依存の導入と`pnpm quality`を実行する。通常時はworktree内の`.uv-cache`を使う。`--offline`は設定済みの`UV_CACHE_DIR`、未指定時は`uv cache dir`が示す既定cacheを同期と品質検査の両方で再利用し、既存cacheだけから依存を導入する。報告は`tmp/quality/clean-checkout-*.json`へ保存し、試験所有worktreeだけを削除する。未commit差分や未追跡ファイルは対象commitへコピーしない。この入口の成功は指定commitだけの結果であり、現在の作業ツリーやGitHub Actionsの成功へ置き換えない。
+
+`quality:scripts`ではPyYAMLでCI workflowのjob構造・frontend runtime準備・依存同期の順序を検査する。これは定義の検査であり、GitHub Actions上の実行成功は別に確認する。
 
 ## Codex hooks
 
@@ -93,10 +99,10 @@ quickは指定unit受入検査と既存の軽量検査、fullは全指定受入�
 
 ここに記載するPostToolUse/Stopイベント形式、receipt、停滞回数はCodex adapter固有。共通の品質計画・`--spec`・JSONレポートは`pnpm agent:check`で別のエージェントからも直接利用できる。編集後と完了前の自動実行には、各製品側でこのコマンドを呼ぶHookが必要。
 
-- `PostToolUse`: ファイル編集ツールの入力を解析し、編集されたPythonだけをRuff整形した後、対象側のquick検査を実行する。シェル経由の編集は終了時の差分検査で拾う。
+- `PostToolUse`: ファイル編集ツールの入力を解析し、編集されたPythonだけをRuff整形した後、`--require-spec`付きで対象側のquick検査を実行する。シェル経由の編集は終了時の差分検査で拾う。
 - `PostToolUse`は対象ファイルの編集回数もターン単位で数える。`apply_patch`・`Edit`・`Write`イベント内の同じパスは1回として扱い、同じリポジトリ内ファイルへの5回目の編集で、受入条件と方針を見直す一度限りの非ブロッキング警告を返す。5回は使用状況で調整する初期ヒューリスティック。
 - 編集回数の状態は無視対象の`.agents/work/.hooks/`に、ハッシュ化したターン識別子とリポジトリ相対パス・回数・警告済みマーカーだけを保存する。ファイル本文やプロンプトは保存しない。`Stop`が完了をブロックした場合は状態を維持し、ブロックしない場合は削除する。この警告はシェル経由の編集を数えず、シェル経由の差分は引き続き`Stop`検査が扱う。
-- `Stop`: staged・unstaged・削除・未追跡を含む変更範囲のfull検査を実行する。文書のみの変更ではコード検査を起動しない。
+- `Stop`: `--require-spec`付きでstaged・unstaged・削除・未追跡を含む変更範囲のfull検査を実行する。文書のみの変更ではcode scopeがなくspecを要求しない。
 - 同一ターン・同一内容の成功結果は再利用する。検査中に内容が変わった場合は成功を認定しない。
 - 再利用の識別子にはHEAD、差分ファイル、Git管理下のJSON/TOML/YAML/INI/lock設定、`scripts/checks`・`scripts/hooks`、Python/Node版指定、作業用`tmp/quality/task.json`も含める。検査計画や作業仕様の変更でも再検証する。依存環境そのものや外部サービスの状態は識別子の対象外。壊れた証跡は診断を出して再検証する。
 - 失敗時は修正を要求する。同じ内容で既に継続した場合は再度継続させず、失敗の報告を促す。環境不足を成功と扱わない。

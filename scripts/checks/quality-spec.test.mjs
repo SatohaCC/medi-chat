@@ -36,6 +36,7 @@ test("missing requirements, unknown commands, unsafe paths and nonexistent tests
   ]) assert.throws(() => specificationPlan(mutation(), root));
   assert.throws(() => loadSpecification(root, "missing.json"));
   assert.deepEqual(loadSpecification(root), { scopes: [], tasks: [] });
+  assert.throws(() => loadSpecification(root, undefined, "full", true), /quality specification is required/);
 }));
 
 test("integration layers require an explicit specification and use only registered commands", () => fixture((root, spec) => {
@@ -43,14 +44,17 @@ test("integration layers require an explicit specification and use only register
     { kind: "suite", name: "postgres" },
     { kind: "suite", name: "browser" },
     { kind: "suite", name: "backend-startup" },
+    { kind: "suite", name: "source-data" },
   ];
   const plan = specificationPlan(spec, root);
   assert.deepEqual(plan.tasks.map((task) => task.args), [
     ["test:postgres"],
     ["test:e2e"],
     ["run", "--project", "backend", "--locked", "python", "-m", "backend.infrastructure.cli.configured_e2e_gate"],
+    ["--disable-warning=ExperimentalWarning", "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", "--experimental-strip-types", "--test", "frontend/features/chat/components/SourceEvidenceContent.source-data.mjs"],
   ]);
-  assert.deepEqual(plan.tasks.map((task) => task.testRunner), ["pytest", "playwright", "configured-backend"]);
+  assert.equal(plan.tasks[3].command, process.execPath);
+  assert.deepEqual(plan.tasks.map((task) => task.testRunner), ["pytest", "playwright", "configured-backend", "node"]);
   assert.deepEqual(plan.scopes, ["backend", "frontend"]);
   assert.deepEqual(specificationPlan(spec, root, "quick").tasks, []);
   spec.requirements[0].checks = [{ kind: "suite", name: "shell" }];
@@ -115,14 +119,21 @@ test("feedback retains stable failure identity across line shifts and distinguis
   const dbUnavail = failureFeedback(
     { label: "Configured gate", testRunner: "configured-backend" },
     "failed",
-    "Configured gate failed: environment_unavailable: PostgreSQL is not reachable at 127.0.0.1:5432; start database with 'docker compose --env-file .env.postgres up -d --wait'",
+    "Configured gate failed: environment_unavailable: connection_refused: PostgreSQL is not reachable at 127.0.0.1:5432; start database with 'docker compose --env-file .env.postgres up -d --wait'",
   );
   assert.ok(dbUnavail.identity);
   assert.deepEqual(dbUnavail.diagnostics, [
-    "environment_unavailable: PostgreSQL is not reachable at 127.0.0.1:5432; start database with 'docker compose --env-file .env.postgres up -d --wait'",
+    "environment_unavailable: connection_refused: PostgreSQL is not reachable at 127.0.0.1:5432; start database with 'docker compose --env-file .env.postgres up -d --wait'",
   ]);
   assert.match(dbUnavail.suggestion, /docker compose --env-file \.env\.postgres up -d --wait/);
-  assert.match(dbUnavail.suggestion, /PostgreSQLが未起動または接続不能です/);
+  assert.match(dbUnavail.suggestion, /接続が拒否された/);
+  const remoteDbUnavailable = failureFeedback(
+    { label: "Configured gate", testRunner: "configured-backend" },
+    "failed",
+    "Configured gate failed: environment_unavailable: name_resolution_failed: PostgreSQL is not reachable at db.internal:5432",
+  );
+  assert.match(remoteDbUnavailable.suggestion, /名前解決/);
+  assert.doesNotMatch(remoteDbUnavailable.suggestion, /docker compose/);
   const dbGeneric = failureFeedback(
     { label: "Configured gate", testRunner: "configured-backend" },
     "failed",

@@ -57,7 +57,11 @@ export function failureFeedback(task, status, output = "") {
   else if (status === "timeout") suggestion = "ログから停止した検査を特定し、所有するprocess・接続先・待ち条件を調べる。タイムアウト延長だけで解消扱いにしない。";
   else if (task.testRunner === "configured-backend") {
     if (/environment_unavailable|connection refused|is the server running|not reachable/i.test(output)) {
-      suggestion = "PostgreSQLが未起動または接続不能です。ローカルDBコンテナを起動してください: docker compose --env-file .env.postgres up -d --wait";
+      if (/docker compose --env-file \.env\.postgres up -d --wait/i.test(output)) {
+        suggestion = "PostgreSQLへの接続が拒否された。ローカルDBコンテナを起動してください: docker compose --env-file .env.postgres up -d --wait";
+      } else {
+        suggestion = "PostgreSQLへ接続できない。readiness reasonを確認し、接続先・名前解決・network timeoutを切り分ける。リモート接続先へローカルDockerの案内を適用しない。";
+      }
     } else {
       suggestion = "configured PostgreSQL readinessまたは実アプリのOS healthが失敗した。接続設定・schema revision・登録状態・port 3212を確認する。検査はDBを自動修復しない。";
     }

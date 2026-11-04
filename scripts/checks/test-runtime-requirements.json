@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "tests": {
+    "frontend/scripts/semantic-compare.test.mjs": ["node", "python"]
+  }
+}

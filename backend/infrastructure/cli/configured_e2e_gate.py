@@ -1,6 +1,7 @@
 """Read-only configured PostgreSQL readiness and owned OS health probe."""
 
 import argparse
+import errno
 import json
 import os
 import re
@@ -33,6 +34,27 @@ from backend.project_paths import PROJECT_ROOT
 
 _ERROR_LINE = re.compile(r"\b(?:ERROR|CRITICAL):", re.IGNORECASE)
 _EXCEPTION_LINE = re.compile(r"^\s*[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*(?:Error|Exception):")
+_LOCAL_DATABASE_HOSTS = {"localhost", "127.0.0.1", "::1"}
+_LOCAL_DATABASE_GUIDE = "docker compose --env-file .env.postgres up -d --wait"
+
+
+class EnvironmentUnavailable(RuntimeError):
+    def __init__(self, reason: str, host: str, port: int) -> None:
+        self.reason = reason
+        self.host = host
+        self.port = port
+        self.guide = (
+            _LOCAL_DATABASE_GUIDE
+            if reason == "connection_refused" and host.lower() in _LOCAL_DATABASE_HOSTS
+            else None
+        )
+        message = (
+            f"environment_unavailable: {reason}: PostgreSQL is not reachable "
+            f"at {host}:{port}"
+        )
+        if self.guide:
+            message += f"; start database with '{self.guide}'"
+        super().__init__(message)
 
 
 class _ReadableBinaryLog(Protocol):
@@ -135,11 +157,18 @@ def check_postgres_reachable(database_url: str, *, timeout: float = 1.0) -> None
     try:
         with socket.create_connection((host, port), timeout=timeout):
             pass
+    except socket.gaierror as exc:
+        raise EnvironmentUnavailable("name_resolution_failed", host, port) from exc
+    except TimeoutError as exc:
+        raise EnvironmentUnavailable("connection_timeout", host, port) from exc
     except OSError as exc:
-        raise RuntimeError(
-            f"environment_unavailable: PostgreSQL is not reachable at {host}:{port}; "
-            "start database with 'docker compose --env-file .env.postgres up -d --wait'"
-        ) from exc
+        if exc.errno == errno.ECONNREFUSED:
+            reason = "connection_refused"
+        elif exc.errno in {errno.EHOSTUNREACH, errno.ENETUNREACH}:
+            reason = "network_unreachable"
+        else:
+            reason = "connection_error"
+        raise EnvironmentUnavailable(reason, host, port) from exc
 
 
 def run_gate(
@@ -241,14 +270,14 @@ def main() -> int:
                 flush=True,
             )
     except (RuntimeError, ValueError, OSError) as exc:
-        if "environment_unavailable" in str(exc):
+        if isinstance(exc, EnvironmentUnavailable):
             print(
                 json.dumps(
                     {
                         "backend": "postgresql",
                         "readiness": "environment_unavailable",
-                        "reason": "connection_refused",
-                        "guide": "docker compose --env-file .env.postgres up -d --wait",
+                        "reason": exc.reason,
+                        **({"guide": exc.guide} if exc.guide else {}),
                     },
                     ensure_ascii=False,
                 ),

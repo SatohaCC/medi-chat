@@ -25,6 +25,18 @@ const SUITES = {
     ],
     testRunner: "configured-backend",
   },
+  "source-data": {
+    scope: "frontend",
+    command: process.execPath,
+    args: [
+      "--disable-warning=ExperimentalWarning",
+      "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON",
+      "--experimental-strip-types",
+      "--test",
+      "frontend/features/chat/components/SourceEvidenceContent.source-data.mjs",
+    ],
+    testRunner: "node",
+  },
 };
 
 export function registeredSuite(name) {
@@ -89,8 +101,11 @@ export function specificationPlan(spec, root, phase = "full") {
   return { task: spec.task, scopes: [...scopes].sort(), tasks: [...tasks.values()] };
 }
 
-export function loadSpecification(root, path, phase) {
+export function loadSpecification(root, path, phase, required = false) {
   const target = resolve(root, path ?? DEFAULT_SPEC);
-  if (!existsSync(target) && path === undefined) return { scopes: [], tasks: [] };
+  if (!existsSync(target) && path === undefined) {
+    if (required) throw new Error(`A quality specification is required but ${DEFAULT_SPEC} is missing`);
+    return { scopes: [], tasks: [] };
+  }
   return specificationPlan(JSON.parse(readFileSync(target, "utf8")), root, phase);
 }
