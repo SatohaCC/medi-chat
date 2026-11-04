@@ -1,12 +1,13 @@
 // Shared, read-only quality entry point for manual runs, CI and Codex hooks.
 import { spawn, spawnSync } from "node:child_process";
-import { mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { resolve, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadSpecification, registeredSuite } from "./quality-spec.mjs";
 import { acceptanceEvidence, failureFeedback } from "./quality-feedback.mjs";
 
 export const ROOT = fileURLToPath(new URL("../../", import.meta.url));
+const TEST_RUNTIME_REQUIREMENTS = resolve(ROOT, "scripts/checks/test-runtime-requirements.json");
 
 export function scopesFor(paths) {
   const scopes = new Set();
@@ -26,18 +27,62 @@ export function scopesFor(paths) {
   return [...scopes].sort();
 }
 
-function nodeTests(folder) {
-  return readdirSync(resolve(ROOT, folder), { recursive: true, withFileTypes: true })
+export function requireSpecificationForScope(required, scopes) {
+  return Boolean(required && scopes.length > 0);
+}
+
+function nodeTests(folder, root = ROOT) {
+  return readdirSync(resolve(root, folder), { recursive: true, withFileTypes: true })
     .filter((entry) => entry.isFile() && entry.name.endsWith(".test.mjs"))
-    .map((entry) => relative(ROOT, resolve(entry.parentPath, entry.name)).replaceAll("\\", "/"))
+    .map((entry) => relative(root, resolve(entry.parentPath, entry.name)).replaceAll("\\", "/"))
     .sort();
+}
+
+export function findUnregisteredPythonBridgeTests(tests, requirements, readSource) {
+  return tests.filter((path) => {
+    const source = readSource(path);
+    const startsPythonProcess = /\b(?:execFileSync|execFile|spawnSync|spawn|execSync)\s*\(/.test(source);
+    const namesPythonRuntime = /["'`](?:uv|python(?:3)?(?:\.exe)?)["'`]/.test(source);
+    return startsPythonProcess && namesPythonRuntime && !requirements.tests[path]?.includes("python");
+  });
+}
+
+export function partitionNodeTests(tests, requirements, readSource = () => "") {
+  if (requirements.version !== 1 || !requirements.tests || typeof requirements.tests !== "object") {
+    throw new Error("Invalid test runtime requirements manifest");
+  }
+  const knownTests = new Set(tests);
+  const unknown = Object.keys(requirements.tests).filter((path) => !knownTests.has(path));
+  if (unknown.length) throw new Error(`Runtime requirements reference unknown tests: ${unknown.join(", ")}`);
+  for (const [path, runtimes] of Object.entries(requirements.tests)) {
+    if (!Array.isArray(runtimes) || runtimes.length !== 2 || runtimes[0] !== "node" || runtimes[1] !== "python") {
+      throw new Error(`Invalid runtimes for ${path}; expected ["node", "python"]`);
+    }
+  }
+  const unregistered = findUnregisteredPythonBridgeTests(tests, requirements, readSource);
+  if (unregistered.length) throw new Error(`Python-backed tests need runtime metadata: ${unregistered.join(", ")}`);
+  const pythonTests = tests.filter((path) => requirements.tests[path]?.includes("python"));
+  const pythonSet = new Set(pythonTests);
+  return {
+    node: tests.filter((path) => !pythonSet.has(path)),
+    python: pythonTests,
+  };
+}
+
+export function nodeTestGroups(scopes, root = ROOT) {
+  const directories = scopes.includes("frontend")
+    ? ["frontend/features", "frontend/shared", "frontend/scripts"]
+    : [];
+  const tests = directories.flatMap((folder) => nodeTests(folder, root));
+  const requirements = JSON.parse(readFileSync(resolve(root, "scripts/checks/test-runtime-requirements.json"), "utf8"));
+  return partitionNodeTests(tests, requirements, (path) => readFileSync(resolve(root, path), "utf8"));
 }
 
 export function planFor(scopes, phase = "full", { includeBackendStartup = false } = {}) {
   const plan = [];
   const pnpm = (label, ...args) => plan.push({ label, command: "pnpm", args });
   const uv = (label, ...args) => plan.push({ label, command: "uv", args: ["run", "--project", "backend", "--locked", ...args] });
-  const node = (label, args) => plan.push({ label, command: process.execPath, args });
+  const node = (label, args, options = {}) => plan.push({ label, command: process.execPath, args, ...options });
   if (scopes.includes("backend")) {
     if (phase === "quick") {
       uv("Python lint", "ruff", "check", "backend", "scripts/checks", "scripts/hooks");
@@ -66,18 +111,24 @@ export function planFor(scopes, phase = "full", { includeBackendStartup = false 
       pnpm("Frontend format", "--filter", "frontend", "exec", "biome", "format", ".");
       pnpm("StyleX lint", "--filter", "frontend", "lint:stylex");
       pnpm("Frontend types", "typecheck:frontend");
-      const tests = ["frontend/features", "frontend/shared", "frontend/scripts"].flatMap(nodeTests);
-      node("Frontend unit tests", ["--disable-warning=ExperimentalWarning", "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", "--experimental-strip-types", "--test", "--test-timeout=60000", ...tests]);
+      const tests = nodeTestGroups(scopes);
+      node("Frontend Node unit tests", ["--disable-warning=ExperimentalWarning", "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", "--experimental-strip-types", "--test", "--test-timeout=60000", ...tests.node]);
+      if (tests.python.length) {
+        node("Frontend Node tests requiring Python", ["--disable-warning=ExperimentalWarning", "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", "--experimental-strip-types", "--test", "--test-timeout=60000", ...tests.python], { runtimes: ["node", "python"] });
+      }
     }
   }
   if (scopes.includes("scripts")) {
-    if (phase === "full") node("Development tooling tests", ["--test", "--test-timeout=60000", ...nodeTests("scripts")]);
+    if (phase === "full") {
+      node("Development tooling tests", ["--test", "--test-timeout=60000", ...nodeTests("scripts")]);
+      node("Source-data dependency guard", ["scripts/checks/source-data-guard.mjs", "--check"]);
+    }
     else node("Quality runner syntax", ["--check", "scripts/checks/quality.mjs"]);
     uv("Tooling lint", "ruff", "check", "scripts/checks", "scripts/hooks");
     if (phase === "full") {
       uv("Tooling format", "ruff", "format", "--check", "scripts/checks", "scripts/hooks");
       pnpm("Tooling types (Pyright and mypy)", "typecheck:scripts");
-      uv("Hook regression tests", "python", "-m", "pytest", "scripts/hooks/test_quality_gate.py", "scripts/hooks/test_privacy_gate.py", "-q");
+      uv("Hook regression tests", "python", "-m", "pytest", "scripts/hooks/test_quality_gate.py", "scripts/hooks/test_privacy_gate.py", "scripts/hooks/test_quality_ci_contract.py", "-q");
       pnpm("Generated requirements", "vercel:requirements:check");
       uv("Generated search guide", "python", "-m", "backend.infrastructure.cli.export_search_guide", "--check");
     }
@@ -321,7 +372,12 @@ export async function main(args) {
     : scope === "all" ? ["backend", "frontend", "scripts"] : [scope];
   const specIndex = args.indexOf("--spec");
   if (specIndex >= 0 && (!args[specIndex + 1] || args[specIndex + 1].startsWith("--"))) throw new Error("--spec requires a JSON path");
-  const specification = loadSpecification(ROOT, specIndex < 0 ? undefined : args[specIndex + 1], phase);
+  const specification = loadSpecification(
+    ROOT,
+    specIndex < 0 ? undefined : args[specIndex + 1],
+    phase,
+    requireSpecificationForScope(args.includes("--require-spec"), scopes),
+  );
   const plan = buildQualityPlan(scopes, specification, phase, args.includes("--changed"));
   if (args.includes("--list")) {
     console.log(JSON.stringify(plan, null, 2));

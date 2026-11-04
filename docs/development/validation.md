@@ -2,13 +2,17 @@
 
 ## 共通の実行入口
 
-エージェント共通の変更範囲検査は`pnpm agent:check`、全体手動検査は`pnpm quality`を入口にする。側別は`pnpm quality:backend`・`pnpm quality:frontend`・`pnpm quality:scripts`。実行前に`--list`で対象コマンドを確認できる。構成と各エージェントHook adapterは[scripts/README](../../scripts/README.md)を参照する。
+エージェント共通の変更範囲検査は`pnpm agent:check`、全体手動検査は`pnpm quality`を入口にする。側別は`pnpm quality:backend`・`pnpm quality:frontend`・`pnpm quality:scripts`。実行前に`--list`で対象コマンドを確認できる。`agent:check`とCodex Hookはコード変更scopeで作業用specを必須とし、文書だけの変更では要求しない。specの条件・登録済み検査・Hook adapterは[scripts/README](../../scripts/README.md)を参照する。
 
 この入口はソースを自動修正しない。通常のbackendテストから実DB・非公開原本を必要とするテストを除き、frontendはNodeの単体テストを実行する。`agent:check`・`quality:changed`のfull検査はbackend scopeを含む場合に、通常設定のbackend起動とread-only health probeを自動実行する。quickと側別の`quality:backend`では実行しない。実PostgreSQL契約・ブラウザ・外部APIの検証は別に選択し、共通コマンドの成功で代替しない。
 
 開発中のquick検査は早期フィードバック、完了時のfull検査は受入判断に使う。モデルへの信頼で最終検査を省略しない。quickの頻度や範囲を変える場合は、同じ受入条件と検証範囲を保った代表的な作業で、変更前後の反復数・総所要時間・修正前に検出した不具合・最終結果を比較する。単一実行の時間やモデル名だけから検査を削らない。fullの最終ゲートと受入条件は頻度変更後も維持し、テスト結果だけで仕様網羅を証明したとは扱わない。[検査頻度とコストの背景](harness-strengthening-plan.md#調査文書を適用する際の留保)
 
-受入条件がある作業では、[仕様JSONの例](quality-task.example.json)に従って要件ID・受入条件・対応テストを定義し、`--spec <JSON>`で選択する。作業用`tmp/quality/task.json`は手動・hooks共通で自動読込する。通常の回帰検査も維持する。登録可能なテスト、integrationの明示選択、受入検査の未実施判定、修正フィードバック・停滞停止は[scripts/README](../../scripts/README.md#仕様に基づくテスト選択)を正本とする。自然言語の仕様からテスト内容の妥当性まで自動判定するものではない。
+受入条件がある作業では、[仕様JSONの例](quality-task.example.json)に従って要件ID・受入条件・対応テストを定義し、`--spec <JSON>`で選択する。作業用`tmp/quality/task.json`は手動・hooks共通で自動読込する。`pnpm agent:check`またはHookを使うコード作業は、quick・fullと完了前処理が済むまでspecを保持する。通常の回帰検査も維持する。登録可能なテスト、integrationの明示選択、受入検査の未実施判定、修正フィードバック・停滞停止は[scripts/README](../../scripts/README.md#仕様に基づくテスト選択)を正本とする。自然言語の仕様からテスト内容の妥当性まで自動判定するものではない。
+
+frontendのNodeテストはNode単体とPython連携に分け、後者の追加runtimeを`scripts/checks/test-runtime-requirements.json`へ登録する。Node/Python連携テストにはNodeとPython双方を準備し、どちらかの起動不能も失敗として扱う。`quality:scripts`はCI workflowのjob構造・準備手順を回帰検査するが、GitHub Actions上の成功を代替しない。`scripts/checks/source-data-guard.mjs --check`はテスト中のPMDA原本/生成物の直接パスと、`join`/`resolve`で組み立ててファイル読取に渡す経路を調べる。計算済みの任意パスや動的import等の全経路は静的に証明しない。
+
+指定commitの再現確認は`node scripts/checks/verify-clean-checkout.mjs --ref <commit>`を使う。detached worktreeにlock済み依存を導入し、full品質ゲートを実行する。未commit変更はコピーされず、成功レポートは指定commitにだけ対応する。GitHub CI・実PostgreSQL・browser・外部APIは別の検証層として記録する。
 
 pytestの設定はルート`pytest.ini`で共有する。`pytest`と`python -m pytest`のどちらからもbackendとscriptsをimportできる。`testpaths`は`backend/tests`と`scripts/hooks`で、backend用のDB隔離・マーカー選別は既存の`backend/tests/conftest.py`が担当する。
 
@@ -26,7 +30,7 @@ pnpm-workspaceの`python.enabled=false`でpnpmの別Python環境管理を停止�
 - 新規・移動したコードが型・lint・テストの実行対象に入ることを設定と共通入口で確認する。検査対象や入口の変更では隔離した負例で検出能力も確認し、対象外のパスを検査済みと報告しない。
 - Reader/Publisher等の契約分離では、テストが実際に使う組立関数と注入先・公開署名を確認する。DB不要の配線検査と実PostgreSQLの検証を分け、importの更新だけで完了しない。
 - 固定hashの試験はbytes自体の契約か、改行差を許すテキスト内容の契約かを先に決める。後者で正規化する場合はLF/CRLFの両方が通り、内容変更は失敗することを確認する。原本・署名対象・バイナリには改行正規化を適用しない。
-- feature-pipelineを使用中のケースと実テストの対応、Fixture/Fakeの変更による仕様差し戻しは[Skill](../../.agents/skills/feature-pipeline/SKILL.md)の規約に従う。参照だけでパイプラインを開始しない。
+- feature-pipelineを使用中のケースと実テストの対応、Fixture/Fakeの変更による仕様差し戻しは利用可能な共通Skillの規約に従う。参照だけでパイプラインを開始しない。
 - カタログ/XML変換では[定義ソース](../../backend/infrastructure/package_insert_definitions/README.md)と対象テストを確認し、本書の原本照合規則に従って内容・文脈の保持を検証する。
 
 ## 実行条件と資源の検証
@@ -83,6 +87,9 @@ Workflow APIを変える場合は、実際の認証主体と必要な権限を�
 | 型 | `pnpm typecheck:frontend` |
 | ビルド | `pnpm build` |
 | 接続ヘルパー単体 | `node --experimental-strip-types --test frontend/features/chat/api/chatWebSocket.test.mjs`（対応するNodeが必要） |
+| frontendのNode単体テスト | 共通full検査がfrontend内のすべての`.test.mjs`を実行する。Git除外PMDAデータは通常unitの入力にしない |
+| NodeからPythonを呼ぶ統合unit | 共通full検査でruntime manifest登録分を独立実行し、両方のruntime不足を失敗として扱う |
+| PMDA生成データの明示表示確認 | 作業specの`{ "kind": "suite", "name": "source-data" }`（入力ファイルがなければ失敗） |
 | チャット画面（Playwright / Chromium） | 初回は`pnpm --filter frontend exec playwright install chromium`、実行は`pnpm test:e2e` |
 
 ### frontend変更時の確認

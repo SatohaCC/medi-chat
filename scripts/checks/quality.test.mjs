@@ -4,7 +4,7 @@ import { mkdtempSync, readFileSync, writeFileSync, mkdirSync, renameSync, rmSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
-import { buildQualityPlan, changedPaths, invocationFor, planFor, runPlan, scopesFor, taskResource } from "./quality.mjs";
+import { buildQualityPlan, changedPaths, invocationFor, nodeTestGroups, partitionNodeTests, planFor, requireSpecificationForScope, runPlan, scopesFor, taskResource } from "./quality.mjs";
 
 test("reports distinguish failure, timeout, launch error and unexecuted work", () => {
   const folder = mkdtempSync(join(tmpdir(), "quality-report-"));
@@ -65,6 +65,55 @@ test("every existing frontend and tooling Node test is included in the full plan
   }
 });
 
+test("Python-backed frontend tests are grouped separately with explicit runtime metadata", () => {
+  const groups = nodeTestGroups(["frontend"]);
+  assert.equal(groups.node.includes("frontend/scripts/semantic-compare.test.mjs"), false);
+  assert.deepEqual(groups.python, ["frontend/scripts/semantic-compare.test.mjs"]);
+  assert.deepEqual(partitionNodeTests(["node.test.mjs", "bridge.test.mjs"], {
+    version: 1,
+    tests: { "bridge.test.mjs": ["node", "python"] },
+  }), {
+    node: ["node.test.mjs"],
+    python: ["bridge.test.mjs"],
+  });
+  assert.throws(() => partitionNodeTests(["bridge.test.mjs"], {
+    version: 1,
+    tests: {},
+  }, () => 'spawnSync("uv", ["run", "python", "-m", "pytest"]);'), /Python-backed tests need runtime metadata/);
+  assert.deepEqual(partitionNodeTests(["bridge.test.mjs"], {
+    version: 1,
+    tests: { "bridge.test.mjs": ["node", "python"] },
+  }, () => 'spawnSync("uv", ["run", "python", "-m", "pytest"]);'), {
+    node: [],
+    python: ["bridge.test.mjs"],
+  });
+  assert.throws(() => partitionNodeTests(["bridge.test.mjs"], {
+    version: 1,
+    tests: { "bridge.test.mjs": ["node"] },
+  }), /Invalid runtimes/);
+  assert.throws(() => partitionNodeTests(["node.test.mjs"], {
+    version: 1,
+    tests: { "removed.test.mjs": ["node", "python"] },
+  }), /unknown tests/);
+
+  const plan = planFor(["frontend"]);
+  const pythonTask = plan.find((task) => task.label === "Frontend Node tests requiring Python");
+  assert.deepEqual(pythonTask.runtimes, ["node", "python"]);
+  assert.ok(pythonTask.args.includes("frontend/scripts/semantic-compare.test.mjs"));
+  assert.equal(plan.some((task) => task.args.includes("SourceEvidenceContent.source-data.mjs")), false);
+  const explicitData = buildQualityPlan([], {
+    scopes: ["frontend"],
+    tasks: [{
+      label: "Acceptance: source-data",
+      command: process.execPath,
+      args: ["--test", "frontend/features/chat/components/SourceEvidenceContent.source-data.mjs"],
+      layer: "source-data",
+      testRunner: "node",
+    }],
+  }, "full");
+  assert.equal(explicitData.some((task) => task.layer === "source-data"), true);
+});
+
 test("CI retains the shared backend and tooling gates plus the separate PostgreSQL gate", () => {
   const workflow = readFileSync(new URL("../../.github/workflows/postgres-contracts.yml", import.meta.url), "utf8");
   for (const command of ["pnpm quality:backend", "pnpm quality:scripts", "pnpm test:postgres", "pnpm quality:frontend", "pnpm --filter frontend build"]) {
@@ -74,6 +123,19 @@ test("CI retains the shared backend and tooling gates plus the separate PostgreS
 
 test("documentation changes do not start runtime checks", () => {
   assert.deepEqual(scopesFor(["docs/architecture/backend-design.md", "AGENTS.md"]), []);
+});
+
+test("required acceptance specifications apply to code scopes but not documentation-only changes", () => {
+  assert.equal(requireSpecificationForScope(true, ["frontend"]), true);
+  assert.equal(requireSpecificationForScope(true, ["backend", "scripts"]), true);
+  assert.equal(requireSpecificationForScope(true, []), false);
+  assert.equal(requireSpecificationForScope(false, ["frontend"]), false);
+});
+
+test("quality runner executes the ignored-source-data guard in the full scripts plan", () => {
+  const plan = planFor(["scripts"]);
+  const guard = plan.find((task) => task.label === "Source-data dependency guard");
+  assert.deepEqual(guard.args, ["scripts/checks/source-data-guard.mjs", "--check"]);
 });
 
 test("staged/deleted/backend and shared configuration select affected scopes", () => {

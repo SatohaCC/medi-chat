@@ -1,9 +1,12 @@
+import errno
 import json
+import socket
 from tempfile import TemporaryFile
 
 import pytest
 from backend.config.database_settings import PostgresDatabaseSettings
 from backend.infrastructure.cli.configured_e2e_gate import (
+    EnvironmentUnavailable,
     _probe_failure,
     check_postgres_reachable,
     run_gate,
@@ -54,25 +57,63 @@ def test_probe_failure_reads_and_includes_captured_startup_diagnostics():
     assert "RuntimeError: schema_not_ready: expected migration" in str(error)
 
 
-def test_check_postgres_reachable_raises_environment_unavailable_on_unreachable_host():
-    with pytest.raises(
-        RuntimeError, match="environment_unavailable: PostgreSQL is not reachable"
-    ) as exc_info:
-        check_postgres_reachable(
-            "postgresql://app:secret@127.0.0.1:59999/test", timeout=0.05
-        )
+@pytest.mark.parametrize(
+    ("error", "reason", "has_local_guide"),
+    [
+        (
+            ConnectionRefusedError(errno.ECONNREFUSED, "refused"),
+            "connection_refused",
+            True,
+        ),
+        (
+            socket.gaierror(socket.EAI_AGAIN, "temporary DNS failure"),
+            "name_resolution_failed",
+            False,
+        ),
+        (TimeoutError("timed out"), "connection_timeout", False),
+        (OSError(errno.EHOSTUNREACH, "host unreachable"), "network_unreachable", False),
+        (OSError("unknown socket error"), "connection_error", False),
+    ],
+)
+def test_check_postgres_reachable_classifies_socket_failures_without_claiming_docker(
+    monkeypatch, error, reason, has_local_guide
+):
+    def fail(*args, **kwargs):
+        raise error
 
-    assert "docker compose --env-file .env.postgres up -d --wait" in str(exc_info.value)
+    monkeypatch.setattr(
+        "backend.infrastructure.cli.configured_e2e_gate.socket.create_connection", fail
+    )
+    with pytest.raises(RuntimeError) as exc_info:
+        check_postgres_reachable("postgresql://app:secret@127.0.0.1:59999/test")
+
+    assert f"environment_unavailable: {reason}" in str(exc_info.value)
+    assert (
+        "docker compose --env-file .env.postgres up -d --wait" in str(exc_info.value)
+    ) is has_local_guide
+    assert "secret" not in str(exc_info.value)
 
 
-def test_run_gate_raises_environment_unavailable_when_postgres_unreachable():
+def test_run_gate_raises_environment_unavailable_when_postgres_unreachable(monkeypatch):
+    monkeypatch.setattr(
+        "backend.infrastructure.cli.configured_e2e_gate.socket.create_connection",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            ConnectionRefusedError(errno.ECONNREFUSED, "refused")
+        ),
+    )
     settings = PostgresDatabaseSettings("postgresql://app:secret@127.0.0.1:59999/test")
     with pytest.raises(
-        RuntimeError, match="environment_unavailable: PostgreSQL is not reachable"
+        RuntimeError, match="environment_unavailable: connection_refused"
     ) as exc_info:
         run_gate(settings)
 
     assert "docker compose --env-file .env.postgres up -d --wait" in str(exc_info.value)
+
+
+def test_remote_connection_refusal_does_not_suggest_local_docker():
+    error = EnvironmentUnavailable("connection_refused", "db.internal", 5432)
+    assert error.guide is None
+    assert "docker compose" not in str(error)
 
 
 def test_configured_e2e_gate_main_outputs_receipt_on_environment_unavailable(
@@ -84,10 +125,7 @@ def test_configured_e2e_gate_main_outputs_receipt_on_environment_unavailable(
     )
 
     def failing_gate(*args, **kwargs):
-        raise RuntimeError(
-            "environment_unavailable: PostgreSQL is not reachable at 127.0.0.1:5432; "
-            "start database with 'docker compose --env-file .env.postgres up -d --wait'"
-        )
+        raise EnvironmentUnavailable("connection_refused", "127.0.0.1", 5432)
 
     monkeypatch.setattr(
         "backend.infrastructure.cli.configured_e2e_gate.run_gate", failing_gate
