@@ -13,6 +13,8 @@ from typing import Protocol
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
+from sqlalchemy.engine import make_url
+
 from backend.config.authentication_settings import read_authentication_settings
 from backend.config.database_settings import (
     PostgresDatabaseSettings,
@@ -125,6 +127,21 @@ def selected_settings() -> PostgresDatabaseSettings:
     return resolve_postgres_database_settings()
 
 
+def check_postgres_reachable(database_url: str, *, timeout: float = 1.0) -> None:
+    """Fast socket probe to check if the database host is reachable before running queries."""
+    url = make_url(database_url)
+    host = url.host or "127.0.0.1"
+    port = url.port or 5432
+    try:
+        with socket.create_connection((host, port), timeout=timeout):
+            pass
+    except OSError as exc:
+        raise RuntimeError(
+            f"environment_unavailable: PostgreSQL is not reachable at {host}:{port}; "
+            "start database with 'docker compose --env-file .env.postgres up -d --wait'"
+        ) from exc
+
+
 def run_gate(
     settings: PostgresDatabaseSettings,
     *,
@@ -132,6 +149,7 @@ def run_gate(
     timeout: float = 30,
     schema: str = "public",
 ) -> dict:
+    check_postgres_reachable(settings.database_url)
     engine = create_postgres_engine(settings.database_url, schema=schema)
     try:
         verify_postgres_readiness(engine)
@@ -223,6 +241,19 @@ def main() -> int:
                 flush=True,
             )
     except (RuntimeError, ValueError, OSError) as exc:
+        if "environment_unavailable" in str(exc):
+            print(
+                json.dumps(
+                    {
+                        "backend": "postgresql",
+                        "readiness": "environment_unavailable",
+                        "reason": "connection_refused",
+                        "guide": "docker compose --env-file .env.postgres up -d --wait",
+                    },
+                    ensure_ascii=False,
+                ),
+                flush=True,
+            )
         print(f"Configured gate failed: {exc}", flush=True)
         return 1
     return 0

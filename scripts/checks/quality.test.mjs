@@ -67,7 +67,7 @@ test("every existing frontend and tooling Node test is included in the full plan
 
 test("CI retains the shared backend and tooling gates plus the separate PostgreSQL gate", () => {
   const workflow = readFileSync(new URL("../../.github/workflows/postgres-contracts.yml", import.meta.url), "utf8");
-  for (const command of ["pnpm quality:backend", "pnpm quality:scripts", "pnpm test:postgres"]) {
+  for (const command of ["pnpm quality:backend", "pnpm quality:scripts", "pnpm test:postgres", "pnpm quality:frontend", "pnpm --filter frontend build"]) {
     assert.ok(workflow.includes(`run: ${command}`), `Missing CI gate: ${command}`);
   }
 });

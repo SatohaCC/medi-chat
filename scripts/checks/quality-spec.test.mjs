@@ -112,6 +112,23 @@ test("feedback retains stable failure identity across line shifts and distinguis
   const lint = failureFeedback({ label: "Python lint" }, "failed", "F401 [*] `os` imported but unused\n --> a.py:12:1\n");
   assert.ok(lint.identity);
   assert.match(lint.suggestion, /未使用importを削除/);
+  const dbUnavail = failureFeedback(
+    { label: "Configured gate", testRunner: "configured-backend" },
+    "failed",
+    "Configured gate failed: environment_unavailable: PostgreSQL is not reachable at 127.0.0.1:5432; start database with 'docker compose --env-file .env.postgres up -d --wait'",
+  );
+  assert.ok(dbUnavail.identity);
+  assert.deepEqual(dbUnavail.diagnostics, [
+    "environment_unavailable: PostgreSQL is not reachable at 127.0.0.1:5432; start database with 'docker compose --env-file .env.postgres up -d --wait'",
+  ]);
+  assert.match(dbUnavail.suggestion, /docker compose --env-file \.env\.postgres up -d --wait/);
+  assert.match(dbUnavail.suggestion, /PostgreSQLが未起動または接続不能です/);
+  const dbGeneric = failureFeedback(
+    { label: "Configured gate", testRunner: "configured-backend" },
+    "failed",
+    "Configured gate failed: schema_not_ready",
+  );
+  assert.match(dbGeneric.suggestion, /schema revision・登録状態/);
 });
 
 test("a real failing Node test yields a diagnostic and repair advice in the report", () => {

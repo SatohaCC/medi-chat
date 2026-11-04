@@ -48,7 +48,7 @@ pnpm agent:check --report tmp/quality/result.json # 完了前の検査と構造�
 
 `full`は対象側のlint・format確認・型検査・単体テストを実行し、backendでは構造検査も含む。`scripts`ではツールの回帰と生成物の整合性も検査する。`quick`はlint・実行入口の構文確認に加え、backendではプロジェクトのMypyを`-p backend`で実行する。失敗・起動不能・タイムアウトは非0で終了し、他の検査も続けて結果を表示する。一時ファイルとuvキャッシュはプロジェクト内のGit管理外領域を使う。
 
-実PostgreSQL契約・ブラウザ・外部APIは変更パスだけから自動選択しない。backendの通常起動確認は`agent:check`・`quality:changed`のfullでbackend scopeがある場合に自動選択する。quickや`quality:backend`など個別計画では、通常設定の起動確認を下の仕様JSONで明示選択できる。必要な前提は[検証手順](../docs/development/validation.md)を参照する。CIは共通のbackend・scripts検査に加え、実PostgreSQL契約を実行する。
+実PostgreSQL契約・ブラウザ・外部APIは変更パスだけから自動選択しない。backendの通常起動確認は`agent:check`・`quality:changed`のfullでbackend scopeがある場合に自動選択する。quickや`quality:backend`など個別計画では、通常設定の起動確認を下の仕様JSONで明示選択できる。必要な前提は[検証手順](../docs/development/validation.md)を参照する。CIは共通のbackend・frontend・scripts検査に加え、実PostgreSQL契約を実行する。
 
 `--report <path>`は実行前に全検査を`not_run`として保存し、各検査後に状態・終了コード・所要時間・コマンドを更新する。状態は`passed`・`failed`・`start_error`・`timeout`・`incomplete`・`not_run`。空の実行計画は終了コード0でもレポートでは`not_run`とする。通常の回帰検査の`passed`はコマンドの正常終了を示す。仕様から追加した受入検査は後述の成功件数とskipも確認する。未選択のbackend起動・実DB・ブラウザ・外部APIは`excludedLayers`に記録する。選択しただけの層を検証成功と扱わず、各taskの状態を確認する。
 
@@ -85,7 +85,7 @@ quickは指定unit受入検査と既存の軽量検査、fullは全指定受入�
 
 [Sandboxと承認の記事](https://azukiazusa.dev/blog/codex-sandbox-agent-authorization/)および[公式Rules](https://learn.chatgpt.com/docs/agent-configuration/rules)に従い、品質結果と実行権限は分ける。仕様JSONが選べるのは登録済み検査だけで、承認ルール・サンドボックス・network設定は変更しない。権限/接続のエラーには通常の承認経路で切り分ける候補を返し、`allow`の追加や保護領域の変更を自己修復に使わない。記事中の過去の設定名・OS実装を、この環境の設定としてコピーしない。
 
-`scripts/checks/quality.test.mjs`は隔離Gitリポジトリでrename両側・未追跡・共有設定の検出を確認し、Git管理下のfrontend・scriptsの全Nodeテストがfull計画に含まれることも検査する。新しい配置を追加してこの検査が失敗した場合は、探索範囲を更新する。CI定義の回帰はbackend・scripts・PostgreSQL入口の存在を検査するもので、GitHub上の実行成功を保証しない。現在のCIはfrontendについて認証ヘルパー単体を実行し、`quality:frontend`全体は実行しない。
+`scripts/checks/quality.test.mjs`は隔離Gitリポジトリでrename両側・未追跡・共有設定の検出を確認し、Git管理下のfrontend・scriptsの全Nodeテストがfull計画に含まれることも検査する。新しい配置を追加してこの検査が失敗した場合は、探索範囲を更新する。CI定義の回帰はbackend・frontend・scripts・PostgreSQL入口の存在を検査するもので、GitHub上の実行成功を保証しない。CIはfrontendについても`quality:frontend`全体およびNext.js本番ビルドを実行する。
 
 ## Codex hooks
 
