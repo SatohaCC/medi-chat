@@ -87,7 +87,9 @@ export function planFor(scopes, phase = "full", { includeBackendStartup = false 
 
 export function buildQualityPlan(scopes, specification, phase = "full", changed = false) {
   const combinedScopes = [...new Set([...scopes, ...specification.scopes])];
-  const explicitlySelectedStartup = specification.tasks.some((task) => task.layer === "backend-startup");
+  const explicitlySelectedStartup = specification.tasks.some(
+    (task) => task.layer === "backend-startup" || task.layer === "browser"
+  );
   const includeBackendStartup = changed
     && phase === "full"
     && combinedScopes.includes("backend")
@@ -96,6 +98,12 @@ export function buildQualityPlan(scopes, specification, phase = "full", changed 
     ...specification.tasks,
     ...planFor(combinedScopes, phase, { includeBackendStartup }),
   ];
+}
+
+export function taskResource(task) {
+  if (task.resource) return task.resource;
+  if (task.layer === "backend-startup" || task.layer === "browser") return "configured-backend-probe";
+  return null;
 }
 
 export function changedPaths(root = ROOT) {
@@ -220,10 +228,36 @@ export function runPlan(plan, execute = spawnSync, reportPath = null, { concurre
 
   if (concurrency > 1 || (execute && (execute === executeAsync || execute.constructor?.name === "AsyncFunction"))) {
     return (async () => {
-      let nextIndex = 0;
+      const completed = new Set();
+      const inProgress = new Set();
+      const activeResources = new Set();
+      const waiters = new Set();
+
+      function getNextTaskIndex() {
+        for (let i = 0; i < plan.length; i++) {
+          if (completed.has(i) || inProgress.has(i)) continue;
+          const resource = taskResource(plan[i]);
+          if (resource && activeResources.has(resource)) continue;
+          inProgress.add(i);
+          if (resource) activeResources.add(resource);
+          return i;
+        }
+        return -1;
+      }
+
+      function notifyWaiters() {
+        for (const wake of waiters) wake();
+        waiters.clear();
+      }
+
       async function worker() {
-        while (nextIndex < plan.length) {
-          const index = nextIndex++;
+        while (completed.size < plan.length) {
+          const index = getNextTaskIndex();
+          if (index === -1) {
+            if (completed.size === plan.length) break;
+            await new Promise((wake) => waiters.add(wake));
+            continue;
+          }
           const task = plan[index];
           const invocation = invocationFor(task);
           const started = Date.now();
@@ -232,6 +266,11 @@ export function runPlan(plan, execute = spawnSync, reportPath = null, { concurre
             shell: invocation.shell,
           });
           if (recordTaskResult(report, index, task, result, started, save)) failed = true;
+          const resource = taskResource(task);
+          if (resource) activeResources.delete(resource);
+          inProgress.delete(index);
+          completed.add(index);
+          notifyWaiters();
         }
       }
       const workers = Array.from(

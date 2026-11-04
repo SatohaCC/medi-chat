@@ -4,7 +4,7 @@ import { mkdtempSync, readFileSync, writeFileSync, mkdirSync, renameSync, rmSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
-import { buildQualityPlan, changedPaths, invocationFor, planFor, runPlan, scopesFor } from "./quality.mjs";
+import { buildQualityPlan, changedPaths, invocationFor, planFor, runPlan, scopesFor, taskResource } from "./quality.mjs";
 
 test("reports distinguish failure, timeout, launch error and unexecuted work", () => {
   const folder = mkdtempSync(join(tmpdir(), "quality-report-"));
@@ -119,6 +119,16 @@ test("backend startup runs automatically in changed full checks, not quick or pa
   assert.equal(noDuplicate.filter((task) => task.layer === "backend-startup").length, 1);
 });
 
+test("specification selecting browser suite suppresses automatic backend-startup duplicate", () => {
+  const browserSpec = {
+    scopes: ["frontend"],
+    tasks: [{ label: "Acceptance: browser", command: "pnpm", args: ["test:e2e"], layer: "browser" }],
+  };
+  const plan = buildQualityPlan(["backend"], browserSpec, "full", true);
+  assert.equal(plan.some((task) => task.layer === "browser"), true);
+  assert.equal(plan.some((task) => task.layer === "backend-startup"), false);
+});
+
 test("quick checks include cached Backend Mypy but omit test suites", () => {
   const labels = planFor(["backend", "frontend"], "quick").map((task) => task.label);
   assert.deepEqual(labels, ["Python lint", "Backend Mypy", "Frontend lint"]);
@@ -175,6 +185,39 @@ test("runPlan executes tasks concurrently with concurrency > 1", async () => {
     const report = JSON.parse(readFileSync(reportPath, "utf8"));
     assert.equal(report.status, "passed");
     assert.equal(report.tasks.length, 4);
+    assert.equal(report.tasks.every((t) => t.status === "passed"), true);
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+});
+
+test("runPlan serializes tasks that share a probe port resource", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "quality-resource-"));
+  try {
+    const reportPath = join(folder, "report.json");
+    let activeProbes = 0;
+    let maxActiveProbes = 0;
+    const plan = [
+      { label: "probe-1", command: "test", args: ["probe-startup"], layer: "backend-startup" },
+      { label: "probe-2", command: "test", args: ["probe-browser"], layer: "browser" },
+      { label: "unit", command: "test", args: ["unit"] },
+    ];
+    const mockExecute = async (cmd, args) => {
+      const isProbe = args[0] === "probe-startup" || args[0] === "probe-browser";
+      if (isProbe) {
+        activeProbes++;
+        maxActiveProbes = Math.max(maxActiveProbes, activeProbes);
+      }
+      await new Promise((r) => setTimeout(r, 40));
+      if (isProbe) activeProbes--;
+      return { status: 0, stdout: "ok\n" };
+    };
+    const exitCode = await runPlan(plan, mockExecute, reportPath, { concurrency: 3 });
+    assert.equal(exitCode, 0);
+    assert.equal(maxActiveProbes, 1, "Probe tasks must be serialized and never run concurrently");
+    const report = JSON.parse(readFileSync(reportPath, "utf8"));
+    assert.equal(report.status, "passed");
+    assert.equal(report.tasks.length, 3);
     assert.equal(report.tasks.every((t) => t.status === "passed"), true);
   } finally {
     rmSync(folder, { recursive: true, force: true });
