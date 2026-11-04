@@ -47,7 +47,7 @@ pnpm agent:check --report tmp/quality/result.json # 完了前の検査と構造�
 node scripts/checks/verify-clean-checkout.mjs --ref <commit> # 指定commitを隔離worktreeで再検証
 ```
 
-`full`は対象側のlint・format確認・型検査・単体テストを実行し、backendでは構造検査も含む。`scripts`ではツールの回帰と生成物の整合性も検査する。`quick`はlint・実行入口の構文確認に加え、backendではプロジェクトのMypyを`-p backend`で実行する。失敗・起動不能・タイムアウトは非0で終了し、他の検査も続けて結果を表示する。一時ファイルとuvキャッシュはプロジェクト内のGit管理外領域を使う。
+`full`は対象側のlint・format確認・型検査・単体テストを実行し、backendでは構造検査も含む。`scripts`ではツールの回帰と生成物の整合性も検査する。`quick`はlint・実行入口の構文確認に加え、backendではプロジェクトのMypyを`-p backend`で実行する。失敗・起動不能・タイムアウトは非0で終了し、他の検査も続けて結果を表示する。一時ファイルはプロジェクト内のGit管理外領域を使い、uv cacheは`UV_CACHE_DIR`指定時にその場所、未指定時に`.uv-cache`を使う。
 
 実PostgreSQL契約・ブラウザ・外部APIは変更パスだけから自動選択しない。backendの通常起動確認は`agent:check`・`quality:changed`のfullでbackend scopeがある場合に自動選択する。quickや`quality:backend`など個別計画では、通常設定の起動確認を下の仕様JSONで明示選択できる。必要な前提は[検証手順](../docs/development/validation.md)を参照する。CIは共通のbackend・frontend・scripts検査に加え、実PostgreSQL契約を実行する。
 
@@ -89,7 +89,7 @@ quickは指定unit受入検査と既存の軽量検査、fullは全指定受入�
 `scripts/checks/quality.test.mjs`は隔離Gitリポジトリでrename両側・未追跡・共有設定の検出を確認し、Git管理下のfrontend・scriptsの全Nodeテストがfull計画に含まれることも検査する。新しい配置を追加してこの検査が失敗した場合は、探索範囲を更新する。CI定義の回帰はbackend・frontend・scripts・PostgreSQL入口の存在を検査するもので、GitHub上の実行成功を保証しない。CIはfrontendについても`quality:frontend`全体およびNext.js本番ビルドを実行する。
 frontendのNodeテストは[scripts/checks/test-runtime-requirements.json](checks/test-runtime-requirements.json)で追加runtimeを宣言する。Node/Python連携テストは通常unitから分け、レポートへ両runtimeを記録する。新規`.test.mjs`はruntime有無にかかわらずfull計画へ含まれる。`scripts/checks/source-data-guard.mjs --check`はfrontendとscriptsのNodeテストからGit除外PMDA原本・構造化データへの直接パス参照と、`join`/`resolve`で組み立ててファイル読取へ渡すパスを検出する。計算済みパスの伝播や動的import等を網羅的に証明しないため、clean checkout検証を併用する。
 
-`node scripts/checks/verify-clean-checkout.mjs --ref <commit>`は指定commitのdetached worktreeをOS一時領域に作成し、lock済みNode/Python依存の導入と`pnpm quality`を実行する。`--offline`は依存をローカルcacheだけから導入する。報告は`tmp/quality/clean-checkout-*.json`へ保存し、試験所有worktreeだけを削除する。未commit差分や未追跡ファイルは対象commitへコピーしない。この入口の成功は指定commitだけの結果であり、現在の作業ツリーやGitHub Actionsの成功へ置き換えない。
+`node scripts/checks/verify-clean-checkout.mjs --ref <commit>`は指定commitのdetached worktreeをOS一時領域に作成し、lock済みNode/Python依存の導入と`pnpm quality`を実行する。通常時はworktree内の`.uv-cache`を使う。`--offline`は設定済みの`UV_CACHE_DIR`、未指定時は`uv cache dir`が示す既定cacheを同期と品質検査の両方で再利用し、既存cacheだけから依存を導入する。報告は`tmp/quality/clean-checkout-*.json`へ保存し、試験所有worktreeだけを削除する。未commit差分や未追跡ファイルは対象commitへコピーしない。この入口の成功は指定commitだけの結果であり、現在の作業ツリーやGitHub Actionsの成功へ置き換えない。
 
 `quality:scripts`ではPyYAMLでCI workflowのjob構造・frontend runtime準備・依存同期の順序を検査する。これは定義の検査であり、GitHub Actions上の実行成功は別に確認する。
 

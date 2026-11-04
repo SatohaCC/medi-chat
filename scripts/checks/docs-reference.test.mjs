@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
@@ -14,6 +15,9 @@ const GUIDES = [
   "docs/development/harness-strengthening-plan.md",
 ];
 const RETIRED_GUIDE_DIRECTORY = [".agents", "lessons"].join("/");
+const TRACKED_PATHS = new Set(
+  execFileSync("git", ["ls-files", "-z"], { cwd: ROOT, encoding: "utf8" }).split("\0").filter(Boolean),
+);
 
 function localMarkdownTargets(file) {
   const source = readFileSync(resolve(ROOT, file), "utf8");
@@ -29,7 +33,14 @@ function localMarkdownTargets(file) {
 
 test("active work guides use current documentation without local lesson-system links", () => {
   const missing = GUIDES.flatMap(localMarkdownTargets)
-    .filter(({ target, absolute }) => target && !existsSync(absolute));
+    .filter(({ target, absolute }) => {
+      if (!target) return false;
+      const relativeTarget = relative(ROOT, absolute).replaceAll("\\", "/").replace(/\/$/, "");
+      const tracked = relativeTarget === ""
+        || TRACKED_PATHS.has(relativeTarget)
+        || [...TRACKED_PATHS].some((path) => path.startsWith(`${relativeTarget}/`));
+      return !existsSync(absolute) || !tracked;
+    });
   const obsoleteReferences = GUIDES.filter((file) =>
     readFileSync(resolve(ROOT, file), "utf8").includes(RETIRED_GUIDE_DIRECTORY),
   );

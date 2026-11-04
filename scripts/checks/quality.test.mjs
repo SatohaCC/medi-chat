@@ -35,6 +35,23 @@ test("reports distinguish failure, timeout, launch error and unexecuted work", (
   }
 });
 
+test("quality runner preserves an explicitly selected uv cache", () => {
+  const previousCacheDirectory = process.env.UV_CACHE_DIR;
+  const configuredCacheDirectory = join(tmpdir(), "shared-uv-cache");
+  let receivedCacheDirectory;
+  process.env.UV_CACHE_DIR = configuredCacheDirectory;
+  try {
+    assert.equal(runPlan([{ label: "cache", command: "node", args: [] }], (_command, _args, options) => {
+      receivedCacheDirectory = options.env.UV_CACHE_DIR;
+      return { status: 0 };
+    }), 0);
+  } finally {
+    if (previousCacheDirectory === undefined) delete process.env.UV_CACHE_DIR;
+    else process.env.UV_CACHE_DIR = previousCacheDirectory;
+  }
+  assert.equal(receivedCacheDirectory, configuredCacheDirectory);
+});
+
 test("real Git changes retain both sides of renames and shared settings select all scopes", () => {
   const folder = mkdtempSync(join(tmpdir(), "quality-git-"));
   const git = (...args) => execFileSync("git", args, { cwd: folder, stdio: "pipe" });

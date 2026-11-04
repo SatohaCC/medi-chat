@@ -57,7 +57,7 @@
 | 操作を実行し、安全な結果を得る | Codexのファイル・shell等のツール、`scripts/checks/quality.mjs`の共通runner | filesystem・shell・networkの権限とsandboxはCodex側が所有する。品質判定のためにrepoから権限を広げない。 |
 | 実行結果から修正し、完了を判定する | `PostToolUse` quick、`Stop` full、受入条件とテストの対応付け、構造化レポート | fullは別の実行段階だが、評価はリポジトリ内の検査に依存し、外部評価器と同等に独立ではない。DB・browser・外部APIも別層。 |
 | 必要な知識を選び、長い作業を続ける | `AGENTS.md`の条件付き資料案内、skillsの段階的参照、Gitと作業記録 | 会話のcompaction・大きなtool出力の退避はCodex側の責務。repo hookは失敗の停滞を止めるが、新しいcontextで自律的に再起動するRalph loopは管理しない。 |
-| 最新情報と並列化を使う | Web/MCPとsubagentは実行環境が提供。`.agents/agents/`に役割定義がある | Web/MCPはrepo外の機能。プロジェクトのfeature-pipelineは明示開始時だけ使う。タスクからsubagentや常駐orchestratorを自動起動しない。 |
+| 最新情報と並列化を使う | Web/MCP、subagent、役割定義は実行環境が提供 | Web/MCPはrepo外の機能。プロジェクトのfeature-pipelineは明示開始時だけ使う。タスクからsubagentや常駐orchestratorを自動起動しない。 |
 
 この照合では、既存の開発作業で使う部品は揃っており、articleの一覧を機能追加チェックリストとして扱う必要はないと判断した。runtimeや権限の変更は行わない。将来追加する場合は、具体的なagent behavior gap、受入条件、所有する実行環境を先に定めてから設計する。
 

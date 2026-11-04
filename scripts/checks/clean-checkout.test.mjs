@@ -4,7 +4,30 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { createCleanWorktree, isContained, resolveCommit } from "./verify-clean-checkout.mjs";
+import { createCleanWorktree, isContained, resolveCommit, verificationUvCacheDirectory } from "./verify-clean-checkout.mjs";
+
+test("offline clean checkout reuses the configured or default uv cache across its steps", () => {
+  assert.equal(
+    verificationUvCacheDirectory("/tmp/worktree", {
+      offline: true,
+      configuredCacheDirectory: "/home/test/.cache/uv",
+      defaultCacheDirectory: "/unused/default",
+    }),
+    "/home/test/.cache/uv",
+  );
+  assert.equal(
+    verificationUvCacheDirectory("/tmp/worktree", {
+      offline: true,
+      defaultCacheDirectory: "/home/test/.cache/uv",
+    }),
+    "/home/test/.cache/uv",
+  );
+  assert.equal(verificationUvCacheDirectory("/tmp/worktree"), join("/tmp/worktree", ".uv-cache"));
+  assert.throws(
+    () => verificationUvCacheDirectory("/tmp/worktree", { offline: true }),
+    /requires an available uv cache/,
+  );
+});
 
 function runNodeTest(root, path) {
   const env = { ...process.env };

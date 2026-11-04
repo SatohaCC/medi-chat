@@ -25,6 +25,17 @@ export function isContained(parent, target) {
   return Boolean(child && child !== ".." && !child.startsWith(`..${sep}`) && !isAbsolute(child));
 }
 
+export function verificationUvCacheDirectory(worktreePath, {
+  offline = false,
+  configuredCacheDirectory,
+  defaultCacheDirectory,
+} = {}) {
+  if (!offline) return join(worktreePath, ".uv-cache");
+  const cacheDirectory = configuredCacheDirectory?.trim() || defaultCacheDirectory?.trim();
+  if (!cacheDirectory) throw new Error("Offline clean-checkout verification requires an available uv cache");
+  return cacheDirectory;
+}
+
 export function resolveCommit(root, ref) {
   if (typeof ref !== "string" || !ref.trim()) throw new Error("A Git commit or ref is required");
   let revision;
@@ -109,6 +120,33 @@ export function verifyCleanCheckout(ref, { offline = false } = {}) {
   };
   let error = null;
   try {
+    const configuredCachePath = process.env.UV_CACHE_DIR?.trim();
+    const configuredCacheDirectory = configuredCachePath
+      ? isAbsolute(configuredCachePath) ? configuredCachePath : resolve(ROOT, configuredCachePath)
+      : undefined;
+    let defaultCacheDirectory;
+    if (offline && !configuredCacheDirectory) {
+      const cacheEnvironment = { ...process.env };
+      delete cacheEnvironment.UV_CACHE_DIR;
+      const cacheResult = spawnSync("uv", ["cache", "dir"], {
+        cwd: ROOT,
+        encoding: "utf8",
+        windowsHide: true,
+        env: cacheEnvironment,
+      });
+      if (cacheResult.error || cacheResult.status !== 0 || !cacheResult.stdout.trim()) {
+        throw new Error(`Cannot find the default uv cache${cacheResult.error ? `: ${cacheResult.error.message}` : ""}`);
+      }
+      defaultCacheDirectory = cacheResult.stdout.trim();
+    }
+    const pythonEnvironment = {
+      ...process.env,
+      UV_CACHE_DIR: verificationUvCacheDirectory(worktree.path, {
+        offline,
+        configuredCacheDirectory,
+        defaultCacheDirectory,
+      }),
+    };
     const installArgs = ["install", "--frozen-lockfile", ...(offline ? ["--offline"] : [])];
     const pnpmInstall = pnpmInvocation(installArgs);
     runStep("Install locked Node dependencies", pnpmInstall.command, pnpmInstall.args, worktree.path, steps, {
@@ -120,7 +158,7 @@ export function verifyCleanCheckout(ref, { offline = false } = {}) {
       ["sync", "--project", "backend", "--locked", ...(offline ? ["--offline"] : [])],
       worktree.path,
       steps,
-      { env: { ...process.env, UV_CACHE_DIR: join(worktree.path, ".uv-cache") } },
+      { env: pythonEnvironment },
     );
 
     const reportPath = "tmp/quality/clean-checkout.json";
@@ -128,7 +166,7 @@ export function verifyCleanCheckout(ref, { offline = false } = {}) {
     const quality = pnpmInvocation(["quality", "--report", reportPath]);
     runStep("Run full quality suite", quality.command, quality.args, worktree.path, steps, {
       shell: quality.shell,
-      env: { ...process.env, UV_CACHE_DIR: join(worktree.path, ".uv-cache") },
+      env: pythonEnvironment,
     });
     const fullReportPath = join(worktree.path, reportPath);
     if (!existsSync(fullReportPath)) throw new Error("Full quality report was not written");
