@@ -106,3 +106,25 @@ jobs:
             '${{ job.services.postgres.id }}' bash < scripts/postgres/init.sh
       - name: All real PostgreSQL tests using synthetic source data
         run: pnpm test:postgres -q
+
+  frontend-quality:
+    name: Frontend quality and Next.js build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.head.sha || '' }}
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 12.6.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: ".nvmrc"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Frontend format, lint, StyleX, types and unit tests
+        run: pnpm quality:frontend
+      - name: Production Next.js build verification
+        run: pnpm --filter frontend build

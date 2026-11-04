@@ -80,7 +80,20 @@ def verify_postgres_readiness(engine: Engine, *, projections: bool = True) -> No
             ).scalar_one()
             if invalid:
                 raise RuntimeError("publication_state_invalid")
-    except SQLAlchemyError:
+    except SQLAlchemyError as exc:
+        err_msg = str(exc).lower()
+        if any(
+            term in err_msg
+            for term in (
+                "could not connect",
+                "connection refused",
+                "is the server running",
+            )
+        ):
+            raise RuntimeError(
+                "environment_unavailable: PostgreSQL connection refused; "
+                "start database with 'docker compose --env-file .env.postgres up -d --wait'"
+            ) from None
         raise RuntimeError(
             "schema_not_ready: PostgreSQL connection, permissions or schema unavailable"
         ) from None
