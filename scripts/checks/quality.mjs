@@ -67,7 +67,7 @@ export function planFor(scopes, phase = "full", { includeBackendStartup = false 
       pnpm("StyleX lint", "--filter", "frontend", "lint:stylex");
       pnpm("Frontend types", "typecheck:frontend");
       const tests = ["frontend/features", "frontend/shared", "frontend/scripts"].flatMap(nodeTests);
-      node("Frontend unit tests", ["--experimental-strip-types", "--test", "--test-timeout=60000", ...tests]);
+      node("Frontend unit tests", ["--disable-warning=ExperimentalWarning", "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", "--experimental-strip-types", "--test", "--test-timeout=60000", ...tests]);
     }
   }
   if (scopes.includes("scripts")) {
