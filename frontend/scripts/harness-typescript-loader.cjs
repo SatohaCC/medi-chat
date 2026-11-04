@@ -1,6 +1,6 @@
 const { transformSync } = require("next/dist/build/swc");
 const babel = require("next/dist/compiled/babel/core");
-const config = require("../babel.config.js");
+const config = require("../babel.config.cjs");
 
 module.exports = function transpile(source) {
   // Type checking belongs to tsc; transpilation must not depend on the TS 5 API.

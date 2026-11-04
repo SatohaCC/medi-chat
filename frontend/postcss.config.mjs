@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import babelConfig from "./babel.config.js";
+import babelConfig from "./babel.config.cjs";
 
 // Resolve from this configuration's runtime location. Turbopack's dev runtime
 // may append the workspace subpath to the package root; require the real file.
