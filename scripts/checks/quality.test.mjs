@@ -119,11 +119,11 @@ test("backend startup runs automatically in changed full checks, not quick or pa
   assert.equal(noDuplicate.filter((task) => task.layer === "backend-startup").length, 1);
 });
 
-test("quick checks include uncached Mypy but omit test suites", () => {
+test("quick checks include cached Backend Mypy but omit test suites", () => {
   const labels = planFor(["backend", "frontend"], "quick").map((task) => task.label);
   assert.deepEqual(labels, ["Python lint", "Backend Mypy", "Frontend lint"]);
   const mypy = planFor(["backend"], "quick").find((task) => task.label === "Backend Mypy");
-  assert.ok(mypy.args.includes("--no-incremental"));
+  assert.ok(!mypy.args.includes("--no-incremental"));
   assert.deepEqual(mypy.args.slice(-2), ["-p", "backend"]);
 });
 
@@ -153,4 +153,30 @@ test("failed or unstarted commands fail the gate and remaining checks still run"
   assert.equal(runPlan(plan, () => ({ status: ++calls === 1 ? 1 : 0 })), 1);
   assert.equal(calls, 2);
   assert.equal(runPlan(plan, () => ({ status: null, error: new Error("missing executable") })), 1);
+});
+
+test("runPlan executes tasks concurrently with concurrency > 1", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "quality-parallel-"));
+  try {
+    const reportPath = join(folder, "report.json");
+    let active = 0;
+    let maxActive = 0;
+    const plan = [1, 2, 3, 4].map((n) => ({ label: `task-${n}`, command: "test", args: [] }));
+    const mockExecute = async () => {
+      active++;
+      maxActive = Math.max(maxActive, active);
+      await new Promise((r) => setTimeout(r, 40));
+      active--;
+      return { status: 0, stdout: "ok\n" };
+    };
+    const exitCode = await runPlan(plan, mockExecute, reportPath, { concurrency: 2 });
+    assert.equal(exitCode, 0);
+    assert.ok(maxActive >= 2, `Expected concurrency >= 2, got ${maxActive}`);
+    const report = JSON.parse(readFileSync(reportPath, "utf8"));
+    assert.equal(report.status, "passed");
+    assert.equal(report.tasks.length, 4);
+    assert.equal(report.tasks.every((t) => t.status === "passed"), true);
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
 });
