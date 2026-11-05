@@ -124,16 +124,4 @@ export const styles = stylex.create({
     },
     transition: "background-color 0.15s ease",
   },
-  referenceRow: {
-    display: "flex",
-    flexWrap: "wrap",
-    alignItems: "center",
-    gap: "var(--space-inline-tight)",
-    fontSize: "12px",
-  },
-  referenceLink: {
-    color: "var(--user-bg)",
-    textDecoration: "underline",
-    textUnderlineOffset: "2px",
-  },
 });

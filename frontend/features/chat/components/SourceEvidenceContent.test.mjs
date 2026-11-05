@@ -85,3 +85,25 @@ test("highlights specified words in text and tables with mark.search-highlight",
   assert.match(html, /<mark class="search-highlight">頭痛<\/mark>/);
   assert.match(html, /<mark class="search-highlight">発熱<\/mark>/);
 });
+
+test("strips data-product-scope and product scope paragraphs when applicability is uniform", () => {
+  const html = render(
+    '<p data-product-scope="true">対象製品: メトグルコ錠250mg [YJ: 3962002F2027]</p><h3 data-section-code="1">1 警告</h3><p>重篤な乳酸アシドーシスを起こすことがある。</p>',
+  );
+  assert.doesNotMatch(html, /data-product-scope|対象製品/);
+  assert.match(html, /1 警告/);
+  assert.match(html, /重篤な乳酸アシドーシスを起こすことがある。/);
+});
+
+test("preserves product-scope labels when applicability changes within a card", () => {
+  const html = render(
+    '<p data-product-scope="true">対象製品: 製品A錠10mg [YJ: 111111111111]</p>' +
+      "<p>製品Aのみの禁忌</p>" +
+      '<p data-product-scope="true">対象製品: 製品B細粒20% [YJ: 222222222222]</p>' +
+      "<p>製品Bのみの禁忌</p>",
+  );
+  assert.match(html, /対象製品: 製品A錠10mg/);
+  assert.match(html, /対象製品: 製品B細粒20%/);
+  assert.match(html, /製品Aのみの禁忌/);
+  assert.match(html, /製品Bのみの禁忌/);
+});

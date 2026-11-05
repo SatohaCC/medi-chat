@@ -27,6 +27,59 @@ interface HastNode {
   children?: HastNode[];
 }
 
+function stripProductScopePlugin() {
+  function getScopeText(child: HastNode): string | null {
+    if (child.type !== "element") return null;
+    if (
+      child.properties?.dataProductScope != null ||
+      child.properties?.["data-product-scope"] != null
+    ) {
+      const first = child.children?.[0];
+      return typeof first?.value === "string" ? first.value.trim() : "";
+    }
+    if (child.tagName === "p" || child.tagName === "h3") {
+      const first = child.children?.[0];
+      if (
+        first?.type === "text" &&
+        typeof first.value === "string" &&
+        first.value.trimStart().startsWith("対象製品:")
+      ) {
+        return first.value.trim();
+      }
+    }
+    return null;
+  }
+
+  function collectScopes(node: HastNode, scopes: Set<string>) {
+    if (!node.children) return;
+    for (const child of node.children) {
+      const scope = getScopeText(child);
+      if (scope !== null) {
+        scopes.add(scope);
+      }
+      collectScopes(child, scopes);
+    }
+  }
+
+  function filterScopes(node: HastNode) {
+    if (!node.children) return;
+    node.children = node.children.filter((child) => getScopeText(child) === null);
+    for (const child of node.children) filterScopes(child);
+  }
+
+  return (tree: HastNode) => {
+    const scopes = new Set<string>();
+    collectScopes(tree, scopes);
+    // When a section contains multiple distinct product scopes within the card,
+    // preserve the labels so users can distinguish which blocks apply to each product.
+    // When the card only has a single scope (or none), the label is redundant
+    // with the card-wide product header and can be safely stripped.
+    if (scopes.size <= 1) {
+      filterScopes(tree);
+    }
+  };
+}
+
 // PMDA HTML may place its header row inside tbody. Preserve its cells and spans,
 // while exposing actual th rows as a semantic table header.
 function tableHeaderPlugin() {
@@ -116,6 +169,7 @@ export function SourceEvidenceContent({
 }) {
   const rehypePlugins: ComponentProps<typeof ReactMarkdown>["rehypePlugins"] = [
     rehypeRaw,
+    stripProductScopePlugin,
     ...(highlightWords && highlightWords.length > 0
       ? [createHighlightPlugin(highlightWords)]
       : []),
