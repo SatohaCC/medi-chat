@@ -159,7 +159,7 @@ markupsafe==3.0.3
     #   mako
 mdurl==0.1.2
     # via markdown-it-py
-openai==3.42.0
+openai==3.42.1
     # via
     #   langchain-openai
     #   medi-chat-backend
