@@ -75,7 +75,7 @@ test("interaction design preserves source columns, notes and provenance without 
   ])
     assert.ok(html.includes(text), text);
   assert.match(html, /href="https:\/\/example.invalid\/source"/);
-  assert.match(html, /href="https:\/\/example.invalid\/ref"/);
+  assert.doesNotMatch(html, /参照先:|href="https:\/\/example.invalid\/ref"/);
   assert.doesNotMatch(html, /本剤の投与は禁忌|代替薬|休薬|指導記録を確定|CYP/);
 });
 

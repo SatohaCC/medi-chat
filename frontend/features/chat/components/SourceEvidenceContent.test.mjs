@@ -85,3 +85,12 @@ test("highlights specified words in text and tables with mark.search-highlight",
   assert.match(html, /<mark class="search-highlight">頭痛<\/mark>/);
   assert.match(html, /<mark class="search-highlight">発熱<\/mark>/);
 });
+
+test("strips data-product-scope and product scope paragraphs from body content", () => {
+  const html = render(
+    '<p data-product-scope="true">対象製品: メトグルコ錠250mg [YJ: 3962002F2027]</p><h3 data-section-code="1">1 警告</h3><p>重篤な乳酸アシドーシスを起こすことがある。</p>',
+  );
+  assert.doesNotMatch(html, /data-product-scope|対象製品/);
+  assert.match(html, /1 警告/);
+  assert.match(html, /重篤な乳酸アシドーシスを起こすことがある。/);
+});

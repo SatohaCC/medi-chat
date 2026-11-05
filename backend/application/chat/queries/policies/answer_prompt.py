@@ -11,6 +11,15 @@ from backend.application.medicine.queries.models import ResolvedMedicine
 from backend.application.retrieval.queries.models import Evidence
 
 
+def _escape_attr(value: str) -> str:
+    return (
+        value.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+    )
+
+
 def build_answer_system_prompt(
     sources: list[Evidence],
     resolved_medicines: list[ResolvedMedicine],
@@ -28,52 +37,64 @@ def build_answer_system_prompt(
             f"- {med.generic_name} (販売名: {brands}) [YJコード: {yj}]"
         )
 
-    source_blocks = []
+    grouped_docs: dict[tuple[str, str, str, str, str], list[tuple[int, Evidence]]] = {}
     for i, s in enumerate(sources, 1):
-        sec_code = s.section.get("code", "")
-        sec_title = s.section.get("title", "")
-        sec_name = f"{sec_code} {sec_title}".strip()
-        revision = " / ".join(
-            str(value)
-            for key in ("source_label", "year_month", "version")
-            if (value := s.document_revision.get(key)) not in (None, "")
+        product_name = s.product_name.value if s.product_name is not None else ""
+        yj_codes = ", ".join(code.value for code in s.product_yj_codes)
+        revision = (
+            " / ".join(
+                str(value)
+                for key in ("source_label", "year_month", "version")
+                if (value := s.document_revision.get(key)) not in (None, "")
+            )
+            or "不明"
         )
-        references = []
-        for reference in s.references:
-            kind = str(reference.get("kind") or "参照")
-            target_section_code = str(reference.get("target_section_code") or "")
-            target_section = (
-                f"項目 {target_section_code}" if target_section_code else ""
-            )
-            target_url = str(reference.get("target_url") or "")
-            destination = " ".join(
-                part for part in (target_section, target_url) if part
-            )
-            references.append(f"{kind}: {destination}".rstrip(": "))
-        details: list[str] = []
-        if s.columns:
-            details.extend(
-                f"{column.title}: {s.columns[column.id]}"
-                for column in answer_prompt_policy.interaction_columns
-                if s.columns.get(column.id)
-            )
-        if not details and s.excerpt.value:
-            details.append(s.excerpt.value)
-        content_text = "\n  ".join(details)
-        source_blocks.append(
-            f"[根拠 {i}] (単位ID: {s.unit_id.value})\n"
-            f"- 対象製品: {s.product_name.value if s.product_name is not None else ''}\n"
-            f"- YJコード: {', '.join(code.value for code in s.product_yj_codes)}\n"
-            f"- 改訂情報: {revision or '不明'}\n"
-            f"- 項目: {sec_name}\n"
-            f"- 出典URL: {s.url.value if s.url is not None else '不明'}\n"
-            f"- 参照先: {'; '.join(references) if references else 'なし'}\n"
-            f"- 内容:\n  {content_text}"
+        url = s.url.value if s.url is not None else "不明"
+        key = (s.document_id.value, product_name, yj_codes, revision, url)
+        grouped_docs.setdefault(key, []).append((i, s))
+
+    doc_blocks = []
+    for (_, product_name, yj_codes, revision, url), items in grouped_docs.items():
+        evidence_blocks = []
+        for i, s in items:
+            sec_code = s.section.get("code", "")
+            sec_title = s.section.get("title", "")
+            sec_name = f"{sec_code} {sec_title}".strip()
+            details: list[str] = []
+            if s.columns:
+                details.extend(
+                    f"{column.title}: {s.columns[column.id]}"
+                    for column in answer_prompt_policy.interaction_columns
+                    if s.columns.get(column.id)
+                )
+            if not details and s.excerpt.value:
+                details.append(s.excerpt.value)
+            content_text = "\n".join(details)
+            if content_text:
+                indented = "\n".join(
+                    f"      {line}" for line in content_text.splitlines()
+                )
+                evidence_blocks.append(
+                    f'    <evidence id="{i}" unit_id="{_escape_attr(s.unit_id.value)}" section="{_escape_attr(sec_name)}">\n'
+                    f"{indented}\n"
+                    f"    </evidence>"
+                )
+            else:
+                evidence_blocks.append(
+                    f'    <evidence id="{i}" unit_id="{_escape_attr(s.unit_id.value)}" section="{_escape_attr(sec_name)}" />'
+                )
+        evidences_text = "\n".join(evidence_blocks)
+        doc_blocks.append(
+            f'  <package_insert product="{_escape_attr(product_name)}" yj_code="{_escape_attr(yj_codes)}" revision="{_escape_attr(revision)}" url="{_escape_attr(url)}">\n'
+            f"{evidences_text}\n"
+            f"  </package_insert>"
         )
 
     sources_text = (
-        "\n\n".join(source_blocks)
-        if source_blocks
+        "<provided_package_inserts>\n"
+        + "\n".join(doc_blocks)
+        + "\n</provided_package_inserts>"
+        if doc_blocks
         else "（該当する記載は見つかりませんでした）"
     )
 

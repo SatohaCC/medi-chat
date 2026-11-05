@@ -94,38 +94,6 @@ export function SourceEvidenceCard({
               </>
             )}
           </div>
-          {source.references && source.references.length > 0 && (
-            <div {...stylex.props(styles.referenceRow)}>
-              <span>参照先: </span>
-              {source.references.map((reference, referenceIndex) => {
-                const label = [
-                  reference.kind,
-                  reference.target_section_code
-                    ? `項目 ${reference.target_section_code}`
-                    : null,
-                ]
-                  .filter(Boolean)
-                  .join(" / ");
-                return (
-                  <span key={`${label}-${referenceIndex}`}>
-                    {reference.target_url ? (
-                      <a
-                        href={reference.target_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        {...stylex.props(styles.referenceLink)}
-                      >
-                        {label || reference.target_url}
-                      </a>
-                    ) : (
-                      label || "参照"
-                    )}
-                    {referenceIndex < source.references.length - 1 ? ", " : ""}
-                  </span>
-                );
-              })}
-            </div>
-          )}
         </div>
       </ExpandableEvidenceContent>
     </div>

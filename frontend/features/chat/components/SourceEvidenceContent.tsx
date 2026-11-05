@@ -27,6 +27,35 @@ interface HastNode {
   children?: HastNode[];
 }
 
+function stripProductScopePlugin() {
+  function visit(node: HastNode) {
+    if (!node.children) return;
+    node.children = node.children.filter((child) => {
+      if (child.type === "element") {
+        if (
+          child.properties?.dataProductScope != null ||
+          child.properties?.["data-product-scope"] != null
+        ) {
+          return false;
+        }
+        if (child.tagName === "p" || child.tagName === "h3") {
+          const first = child.children?.[0];
+          if (
+            first?.type === "text" &&
+            typeof first.value === "string" &&
+            first.value.trimStart().startsWith("対象製品:")
+          ) {
+            return false;
+          }
+        }
+      }
+      return true;
+    });
+    for (const child of node.children) visit(child);
+  }
+  return (tree: HastNode) => visit(tree);
+}
+
 // PMDA HTML may place its header row inside tbody. Preserve its cells and spans,
 // while exposing actual th rows as a semantic table header.
 function tableHeaderPlugin() {
@@ -116,6 +145,7 @@ export function SourceEvidenceContent({
 }) {
   const rehypePlugins: ComponentProps<typeof ReactMarkdown>["rehypePlugins"] = [
     rehypeRaw,
+    stripProductScopePlugin,
     ...(highlightWords && highlightWords.length > 0
       ? [createHighlightPlugin(highlightWords)]
       : []),

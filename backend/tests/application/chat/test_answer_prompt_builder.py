@@ -32,8 +32,8 @@ from backend.infrastructure.package_insert_definitions.definition_assembly impor
 
 
 class AnswerPromptBuilderTests(unittest.TestCase):
-    def test_prompt_contains_revision_url_and_references(self) -> None:
-        source = ChatSource(
+    def test_prompt_formats_xml_grouped_by_medicine_and_omits_references(self) -> None:
+        source1 = ChatSource(
             unit_id=SearchUnitId("unit-1"),
             document_id=DocumentId("doc-1"),
             product_name=EvidenceProductName("テスト錠"),
@@ -67,6 +67,24 @@ class AnswerPromptBuilderTests(unittest.TestCase):
             ),
             url=EvidenceSourceUrl("https://example.test/doc#section-10-1"),
         )
+        source2 = ChatSource(
+            unit_id=SearchUnitId("unit-2"),
+            document_id=DocumentId("doc-1"),
+            product_name=EvidenceProductName("テスト錠"),
+            generic_name=EvidenceGenericName("テスト成分"),
+            product_yj_codes=(YjCode("1234567A8901"),),
+            document_revision=DocumentRevision(
+                {
+                    "source_label": "今回",
+                    "year_month": "2026-09",
+                    "version": "第2版",
+                }
+            ),
+            section=EvidenceSection({"code": "11.1", "title": "重大な副作用"}),
+            kind=SearchUnitKind("text"),
+            excerpt=EvidenceExcerpt("ショックがあらわれることがある。"),
+            url=EvidenceSourceUrl("https://example.test/doc#section-10-1"),
+        )
         medicine = ResolvedMedicine(
             medicine=DomainMedicineMatch(
                 generic_name=GenericName("テスト成分"),
@@ -77,17 +95,28 @@ class AnswerPromptBuilderTests(unittest.TestCase):
         )
 
         prompt = build_answer_system_prompt(
-            [source],
+            [source1, source2],
             [medicine],
             "interaction",
             answer_prompt_policy=get_package_insert_definitions().answer_prompt_policy,
         )
 
-        self.assertIn("1234567A8901", prompt)
-        self.assertIn("今回 / 2026-09 / 第2版", prompt)
-        self.assertIn("https://example.test/doc#section-10-1", prompt)
-        self.assertIn("項目 2", prompt)
-        self.assertIn("https://example.test/doc#section-2", prompt)
+        self.assertIn("<provided_package_inserts>", prompt)
+        self.assertIn('product="テスト錠"', prompt)
+        self.assertIn('yj_code="1234567A8901"', prompt)
+        self.assertIn('revision="今回 / 2026-09 / 第2版"', prompt)
+        self.assertIn('url="https://example.test/doc#section-10-1"', prompt)
+        self.assertIn(
+            '<evidence id="1" unit_id="unit-1" section="10.1 併用禁忌">', prompt
+        )
+        self.assertIn(
+            '<evidence id="2" unit_id="unit-2" section="11.1 重大な副作用">', prompt
+        )
+        self.assertIn("薬剤名: 相手薬", prompt)
+        self.assertIn("ショックがあらわれることがある。", prompt)
+        self.assertNotIn("参照先", prompt)
+        self.assertNotIn("HeaderRef", prompt)
+        self.assertEqual(prompt.count("<package_insert "), 1)
         self.assertIn("改訂情報と出典URLを明記", prompt)
 
 
