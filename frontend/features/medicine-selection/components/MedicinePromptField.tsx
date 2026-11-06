@@ -10,7 +10,7 @@ import { Button } from "@react-spectrum/s2/Button";
 import Send from "@react-spectrum/s2/icons/ArrowUpSend";
 import Stop from "@react-spectrum/s2/icons/StopProcessing";
 import * as stylex from "@stylexjs/stylex";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { TokenFieldContext } from "react-aria-components/TokenField";
 import { MAX_MESSAGE_LENGTH } from "../../../shared/api/chatLimits";
 import type { MedicineEntry } from "../model/medicineAutocomplete";
@@ -48,9 +48,27 @@ export function MedicinePromptField({
   const blocked = disabled || isStreaming || !canSend || !content || tooLong;
 
   const [, startTransition] = useTransition();
-  const [activeQuery, setActiveQuery] = useState("");
-  const [suggestedMedicines, setSuggestedMedicines] = useState<MedicineEntry[]>([]);
-  const pendingQueryRef = useRef("");
+  const [transitionQuery, setTransitionQuery] = useState("");
+  const lastRequestedKeyRef = useRef<{ query: string; entries: MedicineEntry[] }>({
+    query: "",
+    entries: medicineEntries,
+  });
+
+  // Calculate search results in the rendering phase during transition, not in the synchronous startTransition callback
+  const cachedResult = useMemo(() => {
+    if (!transitionQuery.trim() || medicineEntries.length === 0) {
+      return {
+        query: transitionQuery,
+        entries: medicineEntries,
+        matches: [] as MedicineEntry[],
+      };
+    }
+    return {
+      query: transitionQuery,
+      entries: medicineEntries,
+      matches: searchMedicines(transitionQuery, medicineEntries, 8),
+    };
+  }, [transitionQuery, medicineEntries]);
 
   useEffect(() => {
     if (containerRef.current) {
@@ -63,15 +81,15 @@ export function MedicinePromptField({
 
   const updateQueryTransition = useCallback(
     (query: string) => {
-      if (pendingQueryRef.current === query) return;
-      pendingQueryRef.current = query;
-      setActiveQuery(query);
+      if (
+        lastRequestedKeyRef.current.query === query &&
+        lastRequestedKeyRef.current.entries === medicineEntries
+      ) {
+        return;
+      }
+      lastRequestedKeyRef.current = { query, entries: medicineEntries };
       startTransition(() => {
-        if (!query.trim()) {
-          setSuggestedMedicines([]);
-        } else {
-          setSuggestedMedicines(searchMedicines(query, medicineEntries, 8));
-        }
+        setTransitionQuery(query);
       });
     },
     [medicineEntries],
@@ -85,16 +103,22 @@ export function MedicinePromptField({
         return null;
       }
 
-      if (pendingQueryRef.current !== query) {
+      if (
+        lastRequestedKeyRef.current.query !== query ||
+        lastRequestedKeyRef.current.entries !== medicineEntries
+      ) {
         queueMicrotask(() => {
           updateQueryTransition(query);
         });
       }
 
-      const matches =
-        activeQuery === query && suggestedMedicines.length > 0
-          ? suggestedMedicines
-          : searchMedicines(query, medicineEntries, 8);
+      // Ensure cached results belong to the current query and catalog to prevent showing stale mismatches
+      let matches: MedicineEntry[];
+      if (cachedResult.query === query && cachedResult.entries === medicineEntries) {
+        matches = cachedResult.matches;
+      } else {
+        matches = searchMedicines(query, medicineEntries, 8);
+      }
 
       if (matches.length === 0) {
         return null;
@@ -124,14 +148,7 @@ export function MedicinePromptField({
         </InsertTokenMenuItem>
       ));
     },
-    [
-      dismissedContent,
-      content,
-      updateQueryTransition,
-      activeQuery,
-      suggestedMedicines,
-      medicineEntries,
-    ],
+    [dismissedContent, content, updateQueryTransition, cachedResult, medicineEntries],
   );
 
   const handleSubmit = useCallback(
