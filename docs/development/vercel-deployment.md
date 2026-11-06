@@ -50,7 +50,7 @@ AUTH_PUBLIC_KEYS=SET_JSON_MAPPING_KID_TO_PUBLIC_PEM
 ALLOWED_ORIGINS=https://YOUR-FRONTEND.vercel.app
 ```
 
-`VERCEL=1`の環境では、Vercelが設定する`VERCEL_URL`・`VERCEL_BRANCH_URL`・`VERCEL_PROJECT_PRODUCTION_URL`を許可Originへ追加する。PreviewごとのURLを手入力する必要はない。独自ドメインは`ALLOWED_ORIGINS`へ明示する。任意の`*.vercel.app`全体は許可しない。Servicesは環境変数を共有するため、秘密情報には`NEXT_PUBLIC_`を付けない。
+`VERCEL=1`の環境では、Vercelが設定する`VERCEL_URL`・`VERCEL_BRANCH_URL`・`VERCEL_PROJECT_PRODUCTION_URL`を許可Originへ追加する。PreviewごとのURLを手入力する必要はない。`VERCEL=1`では`ALLOWED_ORIGINS`未設定時にも開発用localhost/127.0.0.1のOriginを追加しない。独自ドメインは`ALLOWED_ORIGINS`へ明示する。任意の`*.vercel.app`全体は許可しない。Servicesは環境変数を共有するため、秘密情報には`NEXT_PUBLIC_`を付けない。
 
 Neonが発行する接続文字列のホストを許可リストへ明示する。TLSとchannel bindingを必須とし、URL内の`host`や`options`による接続先の上書きを拒否する。証明書検証方式を使う場合は`sslmode=verify-full&sslrootcert=system`も利用できる。ローカル接続と専用テストDBの既存の制限は維持する。
 
