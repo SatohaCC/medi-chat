@@ -71,12 +71,16 @@ class LLMKeywordExpander(KeywordExpander):
 
     async def _generate_expansion(self, query: str) -> tuple[str, ...]:
         provider = self._provider_factory(self._provider_name)
+        # FallbackLLMProvider によるモック対話・エラー文字列出力を防ぎ、エラー時は例外を伝播させる
+        raw_provider = getattr(provider, "provider", provider)
         messages = [
             {"role": "system", "content": _EXPANSION_SYSTEM_PROMPT},
             {"role": "user", "content": f"検索キーワード: {query}"},
         ]
         chunks: list[str] = []
-        async for chunk in provider.stream_response(messages, model=self._model_name):
+        async for chunk in raw_provider.stream_response(
+            messages, model=self._model_name
+        ):
             if chunk:
                 chunks.append(chunk)
 
@@ -91,29 +95,28 @@ class LLMKeywordExpander(KeywordExpander):
             if (t := raw.strip())
         }
 
-        # 1. JSON配列の抽出を試みる
         match = re.search(r"\[.*?\]", output, re.DOTALL)
-        if match:
-            try:
-                parsed: Any = json.loads(match.group(0))
-                if isinstance(parsed, list):
-                    terms = [
-                        t
-                        for x in parsed
-                        if isinstance(x, str)
-                        and len(t := x.strip()) >= 2
-                        and t.lower() not in original_terms
-                    ]
-                    if terms:
-                        return tuple(list(dict.fromkeys(terms))[:4])
-            except Exception:
-                pass
+        if not match:
+            return ()
 
-        # 2. JSON解析失敗時のトークン分割フォールバック
-        cleaned = re.sub(r"[\[\]\"'、,`\n\r]", " ", output)
-        fallback_terms = [
-            term
-            for raw in cleaned.split()
-            if len(term := raw.strip()) >= 2 and term.lower() not in original_terms
-        ]
-        return tuple(list(dict.fromkeys(fallback_terms))[:4])
+        try:
+            parsed: Any = json.loads(match.group(0))
+            if isinstance(parsed, list):
+                terms = [
+                    t
+                    for x in parsed
+                    if isinstance(x, str)
+                    and 2 <= len(t := x.strip()) <= 30
+                    and "\n" not in t
+                    and not any(
+                        marker in t
+                        for marker in ("モック", "APIキー", "エラー", "【", "】")
+                    )
+                    and t.lower() not in original_terms
+                ]
+                if terms:
+                    return tuple(list(dict.fromkeys(terms))[:4])
+        except Exception:
+            pass
+
+        return ()
