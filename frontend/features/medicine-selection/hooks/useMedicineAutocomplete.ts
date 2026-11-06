@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { type MedicineEntry, searchMedicines } from "../model/medicineAutocomplete";
 import { useMedicineEntries } from "./useMedicineEntries";
 
@@ -21,6 +21,7 @@ export function useMedicineAutocomplete({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [activeToken, setActiveToken] = useState("");
   const [tokenRange, setTokenRange] = useState<[number, number]>([0, 0]);
+  const [, startTransition] = useTransition();
 
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -53,16 +54,18 @@ export function useMedicineAutocomplete({
         return;
       }
 
-      const results = searchMedicines(token, entries, 8);
-      if (results.length > 0) {
-        setSuggestions(results);
-        setActiveToken(token);
-        setTokenRange([start, cursor]);
-        setSelectedIndex(0);
-        setIsOpen(true);
-      } else {
-        setIsOpen(false);
-      }
+      startTransition(() => {
+        const results = searchMedicines(token, entries, 8);
+        if (results.length > 0) {
+          setSuggestions(results);
+          setActiveToken(token);
+          setTokenRange([start, cursor]);
+          setSelectedIndex(0);
+          setIsOpen(true);
+        } else {
+          setIsOpen(false);
+        }
+      });
     },
     [entries],
   );

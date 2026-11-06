@@ -3,14 +3,14 @@
 import {
   InsertTokenMenuItem,
   PromptField,
-  type PromptFieldValue,
+  PromptFieldValue,
   PromptTokenField,
 } from "@react-spectrum/ai";
 import { Button } from "@react-spectrum/s2/Button";
 import Send from "@react-spectrum/s2/icons/ArrowUpSend";
 import Stop from "@react-spectrum/s2/icons/StopProcessing";
 import * as stylex from "@stylexjs/stylex";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { TokenFieldContext } from "react-aria-components/TokenField";
 import { MAX_MESSAGE_LENGTH } from "../../../shared/api/chatLimits";
 import type { MedicineEntry } from "../model/medicineAutocomplete";
@@ -47,6 +47,11 @@ export function MedicinePromptField({
   const tooLong = Array.from(content).length > MAX_MESSAGE_LENGTH;
   const blocked = disabled || isStreaming || !canSend || !content || tooLong;
 
+  const [, startTransition] = useTransition();
+  const [activeQuery, setActiveQuery] = useState("");
+  const [suggestedMedicines, setSuggestedMedicines] = useState<MedicineEntry[]>([]);
+  const pendingQueryRef = useRef("");
+
   useEffect(() => {
     if (containerRef.current) {
       const textbox = containerRef.current.querySelector('[role="textbox"]');
@@ -56,6 +61,22 @@ export function MedicinePromptField({
     }
   }, []);
 
+  const updateQueryTransition = useCallback(
+    (query: string) => {
+      if (pendingQueryRef.current === query) return;
+      pendingQueryRef.current = query;
+      setActiveQuery(query);
+      startTransition(() => {
+        if (!query.trim()) {
+          setSuggestedMedicines([]);
+        } else {
+          setSuggestedMedicines(searchMedicines(query, medicineEntries, 8));
+        }
+      });
+    },
+    [medicineEntries],
+  );
+
   const renderCompletions = useCallback(
     (filterValue: string) => {
       if (dismissedContent === content) return null;
@@ -63,7 +84,18 @@ export function MedicinePromptField({
       if (!query.trim()) {
         return null;
       }
-      const matches = searchMedicines(query, medicineEntries, 8);
+
+      if (pendingQueryRef.current !== query) {
+        queueMicrotask(() => {
+          updateQueryTransition(query);
+        });
+      }
+
+      const matches =
+        activeQuery === query && suggestedMedicines.length > 0
+          ? suggestedMedicines
+          : searchMedicines(query, medicineEntries, 8);
+
       if (matches.length === 0) {
         return null;
       }
@@ -92,7 +124,14 @@ export function MedicinePromptField({
         </InsertTokenMenuItem>
       ));
     },
-    [medicineEntries, dismissedContent, content],
+    [
+      dismissedContent,
+      content,
+      updateQueryTransition,
+      activeQuery,
+      suggestedMedicines,
+      medicineEntries,
+    ],
   );
 
   const handleSubmit = useCallback(
@@ -117,6 +156,25 @@ export function MedicinePromptField({
         onChange={(next) => {
           if (buildPayloadContent(next).trim() !== content) setDismissedContent(null);
           onChange(next);
+
+          try {
+            const anchor = next.findText(
+              next.caretPosition,
+              PromptFieldValue.Direction.Backward,
+              /[@＠]/,
+            );
+            if (anchor != null) {
+              const q = next
+                .slice(anchor, next.caretPosition)
+                .toString()
+                .replace(/^[@＠]/, "");
+              updateQueryTransition(q);
+            } else {
+              updateQueryTransition("");
+            }
+          } catch {
+            // fallback handled by renderCompletions queueMicrotask
+          }
         }}
         onSubmit={handleSubmit}
         isGenerating={isStreaming}
