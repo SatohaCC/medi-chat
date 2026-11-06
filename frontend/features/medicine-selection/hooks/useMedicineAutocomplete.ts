@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { type MedicineEntry, searchMedicines } from "../model/medicineAutocomplete";
 import { useMedicineEntries } from "./useMedicineEntries";
 
@@ -17,14 +17,32 @@ export function useMedicineAutocomplete({
 }: UseMedicineAutocompleteOptions) {
   const { entries } = useMedicineEntries();
   const [isOpen, setIsOpen] = useState(false);
-  const [suggestions, setSuggestions] = useState<MedicineEntry[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [activeToken, setActiveToken] = useState("");
   const [tokenRange, setTokenRange] = useState<[number, number]>([0, 0]);
+  const [transitionToken, setTransitionToken] = useState("");
+  const [, startTransition] = useTransition();
 
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const justAcceptedRef = useRef(false);
+
+  // Calculate suggestions during the rendering phase rather than synchronously in startTransition
+  const suggestions = useMemo(() => {
+    if (!transitionToken.trim() || entries.length === 0) {
+      return [];
+    }
+    return searchMedicines(transitionToken, entries, 8);
+  }, [transitionToken, entries]);
+
+  useEffect(() => {
+    if (transitionToken.trim() && suggestions.length > 0) {
+      setSelectedIndex(0);
+      setIsOpen(true);
+    } else {
+      setIsOpen(false);
+    }
+  }, [suggestions, transitionToken]);
 
   // Update suggestions based on text at cursor
   const updateSuggestions = useCallback(
@@ -53,16 +71,12 @@ export function useMedicineAutocomplete({
         return;
       }
 
-      const results = searchMedicines(token, entries, 8);
-      if (results.length > 0) {
-        setSuggestions(results);
-        setActiveToken(token);
-        setTokenRange([start, cursor]);
-        setSelectedIndex(0);
-        setIsOpen(true);
-      } else {
-        setIsOpen(false);
-      }
+      setActiveToken(token);
+      setTokenRange([start, cursor]);
+
+      startTransition(() => {
+        setTransitionToken(token);
+      });
     },
     [entries],
   );

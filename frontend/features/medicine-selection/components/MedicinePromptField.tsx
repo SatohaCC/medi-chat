@@ -3,14 +3,14 @@
 import {
   InsertTokenMenuItem,
   PromptField,
-  type PromptFieldValue,
+  PromptFieldValue,
   PromptTokenField,
 } from "@react-spectrum/ai";
 import { Button } from "@react-spectrum/s2/Button";
 import Send from "@react-spectrum/s2/icons/ArrowUpSend";
 import Stop from "@react-spectrum/s2/icons/StopProcessing";
 import * as stylex from "@stylexjs/stylex";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { TokenFieldContext } from "react-aria-components/TokenField";
 import { MAX_MESSAGE_LENGTH } from "../../../shared/api/chatLimits";
 import type { MedicineEntry } from "../model/medicineAutocomplete";
@@ -47,6 +47,29 @@ export function MedicinePromptField({
   const tooLong = Array.from(content).length > MAX_MESSAGE_LENGTH;
   const blocked = disabled || isStreaming || !canSend || !content || tooLong;
 
+  const [, startTransition] = useTransition();
+  const [transitionQuery, setTransitionQuery] = useState("");
+  const lastRequestedKeyRef = useRef<{ query: string; entries: MedicineEntry[] }>({
+    query: "",
+    entries: medicineEntries,
+  });
+
+  // Calculate search results in the rendering phase during transition, not in the synchronous startTransition callback
+  const cachedResult = useMemo(() => {
+    if (!transitionQuery.trim() || medicineEntries.length === 0) {
+      return {
+        query: transitionQuery,
+        entries: medicineEntries,
+        matches: [] as MedicineEntry[],
+      };
+    }
+    return {
+      query: transitionQuery,
+      entries: medicineEntries,
+      matches: searchMedicines(transitionQuery, medicineEntries, 8),
+    };
+  }, [transitionQuery, medicineEntries]);
+
   useEffect(() => {
     if (containerRef.current) {
       const textbox = containerRef.current.querySelector('[role="textbox"]');
@@ -56,6 +79,22 @@ export function MedicinePromptField({
     }
   }, []);
 
+  const updateQueryTransition = useCallback(
+    (query: string) => {
+      if (
+        lastRequestedKeyRef.current.query === query &&
+        lastRequestedKeyRef.current.entries === medicineEntries
+      ) {
+        return;
+      }
+      lastRequestedKeyRef.current = { query, entries: medicineEntries };
+      startTransition(() => {
+        setTransitionQuery(query);
+      });
+    },
+    [medicineEntries],
+  );
+
   const renderCompletions = useCallback(
     (filterValue: string) => {
       if (dismissedContent === content) return null;
@@ -63,7 +102,24 @@ export function MedicinePromptField({
       if (!query.trim()) {
         return null;
       }
-      const matches = searchMedicines(query, medicineEntries, 8);
+
+      if (
+        lastRequestedKeyRef.current.query !== query ||
+        lastRequestedKeyRef.current.entries !== medicineEntries
+      ) {
+        queueMicrotask(() => {
+          updateQueryTransition(query);
+        });
+      }
+
+      // Ensure cached results belong to the current query and catalog to prevent showing stale mismatches
+      let matches: MedicineEntry[];
+      if (cachedResult.query === query && cachedResult.entries === medicineEntries) {
+        matches = cachedResult.matches;
+      } else {
+        matches = searchMedicines(query, medicineEntries, 8);
+      }
+
       if (matches.length === 0) {
         return null;
       }
@@ -92,7 +148,7 @@ export function MedicinePromptField({
         </InsertTokenMenuItem>
       ));
     },
-    [medicineEntries, dismissedContent, content],
+    [dismissedContent, content, updateQueryTransition, cachedResult, medicineEntries],
   );
 
   const handleSubmit = useCallback(
@@ -117,6 +173,25 @@ export function MedicinePromptField({
         onChange={(next) => {
           if (buildPayloadContent(next).trim() !== content) setDismissedContent(null);
           onChange(next);
+
+          try {
+            const anchor = next.findText(
+              next.caretPosition,
+              PromptFieldValue.Direction.Backward,
+              /[@＠]/,
+            );
+            if (anchor != null) {
+              const q = next
+                .slice(anchor, next.caretPosition)
+                .toString()
+                .replace(/^[@＠]/, "");
+              updateQueryTransition(q);
+            } else {
+              updateQueryTransition("");
+            }
+          } catch {
+            // fallback handled by renderCompletions queueMicrotask
+          }
         }}
         onSubmit={handleSubmit}
         isGenerating={isStreaming}
