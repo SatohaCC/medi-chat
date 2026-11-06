@@ -92,6 +92,16 @@ Workflow APIを変える場合は、実際の認証主体と必要な権限を�
 | PMDA生成データの明示表示確認 | 作業specの`{ "kind": "suite", "name": "source-data" }`（入力ファイルがなければ失敗） |
 | チャット画面（Playwright / Chromium） | 初回は`pnpm --filter frontend exec playwright install chromium`、実行は`pnpm test:e2e` |
 
+### production画面のレスポンスヘッダー
+
+`pnpm --filter frontend test:e2e:headers`は専用port 3124でproduction buildと`next start`を実行する。通常の`.next`とは分離した`.next-e2e-build`を使うため、同じ出力先を使う別buildとは直列に実行する。ブラウザを起動せず実HTTP応答を検査するPlaywright APIテストで、backend・DB・ログイン済み利用者は必要としない。
+
+画面5経路のGET/HEADをCookieの有無で確認し、`Cache-Control: private, no-store`、`Referrer-Policy: no-referrer`とNext.jsのコンテンツネゴシエーション用Varyを検証する。faviconが表示層ポリシーの対象外であることも確認する。
+
+Next.js 16のファイル規約は`frontend/proxy.ts`と`export function proxy`。16.4.4のNode.js Proxyはbuild出力の`ƒ Proxy (Middleware)`と`.next-e2e-build/server/functions-config-manifest.json`の`/_middleware`で確認できる。Edge用`middleware-manifest.json`の`middleware: {}`だけで未実行と判断しない。最終的な保証は実HTTP応答で確認する。
+
+Proxy自身は`Vary: Cookie`を追加するが、16.4.4の最終画面応答ではNext.jsが合成したVaryにCookieは残らない。Cookieによるキャッシュ分離に依存せず、最終応答の`private, no-store`を保存防止の必須条件として検証する。Proxy単体テストをproductionヘッダーの検証成功に置き換えない。
+
 ### frontend変更時の確認
 
 - チャット変更ではREST/WebSocketの契約、切断・再接続、進行中の回答と次の送信履歴への影響を対象範囲に応じて確認する。
