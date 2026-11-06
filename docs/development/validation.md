@@ -94,9 +94,9 @@ Workflow APIを変える場合は、実際の認証主体と必要な権限を�
 
 ### production画面のレスポンスヘッダー
 
-`pnpm --filter frontend test:e2e:headers`は専用port 3124でproduction buildと`next start`を実行する。通常の`.next`とは分離した`.next-e2e-build`を使うため、同じ出力先を使う別buildとは直列に実行する。ブラウザを起動せず実HTTP応答を検査するPlaywright APIテストで、backend・DB・ログイン済み利用者は必要としない。
+`pnpm --filter frontend test:e2e:headers`は専用port 3124でproduction buildと`next start`を実行する。通常の`.next`とは分離した`.next-e2e-build`を使うため、同じ出力先を使う別buildとは直列に実行する。実HTTP応答を検査するPlaywright APIテストとChromiumテストで、backend・DB・ログイン済み利用者は必要としない。Chromiumのインストールが必要。
 
-画面5経路のGET/HEADをCookieの有無で確認し、`Cache-Control: private, no-store`、`Referrer-Policy: no-referrer`とNext.jsのコンテンツネゴシエーション用Varyを検証する。faviconが表示層ポリシーの対象外であることも確認する。
+画面5経路のGET/HEADをCookieの有無で確認し、`Cache-Control: private, no-store`、`Referrer-Policy: no-referrer`とNext.jsのコンテンツネゴシエーション用Varyを検証する。faviconがキャッシュ・Referrerポリシーの対象外であることも確認する。全ルートにはnext.config.tsからX-Frame-Options: DENY、X-Content-Type-Options: nosniff、Permissions-Policy（camera/microphone/geolocation/paymentを無効）を付与する。Chromiumでログイン画面の表示・入力、ブラウザ機能の拒否、iframe埋め込み拒否を確認する。これらのヘッダーはNext.jsへの応答に適用され、VercelでFastAPIへ直接振り分けるAPIや別サーバーのStorybookには適用されない。
 
 Next.js 16のファイル規約は`frontend/proxy.ts`と`export function proxy`。16.4.4のNode.js Proxyはbuild出力の`ƒ Proxy (Middleware)`と`.next-e2e-build/server/functions-config-manifest.json`の`/_middleware`で確認できる。Edge用`middleware-manifest.json`の`middleware: {}`だけで未実行と判断しない。最終的な保証は実HTTP応答で確認する。
 

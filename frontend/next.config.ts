@@ -11,6 +11,21 @@ const nextConfig: NextConfig = {
   distDir: process.env.MEDI_CHAT_NEXT_DIST_DIR || ".next",
   devIndicators: process.env.MEDI_CHAT_TEST_UI === "1" ? false : undefined,
   reactCompiler: true,
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(), payment=()",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

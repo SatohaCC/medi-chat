@@ -5,7 +5,8 @@ export default defineConfig({
   outputDir: "./test-results/headers",
   workers: 1,
   retries: 0,
-  use: { baseURL: "http://127.0.0.1:3124" },
+  use: { baseURL: "http://127.0.0.1:3124", browserName: "chromium" },
+
   webServer: {
     command:
       "pnpm exec next build && pnpm exec next start --hostname 127.0.0.1 --port 3124",
