@@ -29,10 +29,11 @@ class LocalCredentials:
             self.limit.release()
 
     def authenticate(self, login_id: str, password: str) -> tuple[str, int] | None:
-        if not self.limit.acquire(blocking=False):
+        # Finish database I/O before occupying scarce Argon2 capacity.
+        record = self.store.credential(login_id)
+        if not self.limit.acquire(timeout=2.0):
             raise LoginLimited()
         try:
-            record = self.store.credential(login_id)
             valid: bool
             try:
                 valid = self.hasher.verify(
