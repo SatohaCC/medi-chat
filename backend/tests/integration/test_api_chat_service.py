@@ -146,7 +146,19 @@ async def test_prepared_application_reply_is_retained_until_generation(monkeypat
 
 
 @pytest.mark.asyncio
-async def test_lifespan_composes_application_service_before_api_adapter(monkeypatch):
+@pytest.mark.parametrize(
+    "cookie_setting, expected_secure", [(None, True), ("true", True), ("false", False)]
+)
+@pytest.mark.parametrize("db_host", ["localhost", "remote.example"])
+@pytest.mark.parametrize("vercel", ["0", "1"])
+async def test_lifespan_composes_application_service_before_api_adapter(
+    monkeypatch, cookie_setting, expected_secure, db_host, vercel
+):
+    if cookie_setting is None:
+        monkeypatch.delenv("AUTH_COOKIE_SECURE", raising=False)
+    else:
+        monkeypatch.setenv("AUTH_COOKIE_SECURE", cookie_setting)
+    monkeypatch.setenv("VERCEL", vercel)
     from types import SimpleNamespace
     from unittest.mock import AsyncMock, Mock
 
@@ -196,7 +208,7 @@ async def test_lifespan_composes_application_service_before_api_adapter(monkeypa
 
     lifespan = app_lifespan.create_app_lifespan(
         definitions=get_package_insert_definitions(),
-        settings=PostgresDatabaseSettings("postgresql://unused"),
+        settings=PostgresDatabaseSettings(f"postgresql://user@{db_host}/test"),
         chat_service_factory=adapter_factory,
         llm_provider_factory=provider_factory,
         intent_classifier_cls=Classifier,
@@ -206,6 +218,7 @@ async def test_lifespan_composes_application_service_before_api_adapter(monkeypa
     )
     app = FastAPI()
     async with lifespan(app):
+        assert app.state.auth_secure_cookies is expected_secure
         application = received[0]
         assert isinstance(application, ChatQueries)
         classifier = application.intent_classifier

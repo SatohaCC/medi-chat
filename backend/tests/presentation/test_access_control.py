@@ -198,9 +198,11 @@ def test_unconfigured_authentication_fails_closed(protected):
     assert client.get("/api/search").status_code == 503
 
 
-def test_hosted_cookies_are_secure(protected):
+@pytest.mark.parametrize("secure", [True, False])
+@pytest.mark.parametrize("endpoint", ["login", "refresh", "logout", "rejected-refresh"])
+def test_hosted_cookies_are_secure(protected, secure, endpoint):
     app, client, _ = protected
-    app.state.auth_secure_cookies = True
+    app.state.auth_secure_cookies = secure
     now = int(time.time())
     app.state.authentication.login.execute.return_value = LoginResult(
         "test-user", now + 1800, now + 604800, "signed", "opaque"
@@ -210,7 +212,19 @@ def test_hosted_cookies_are_secure(protected):
         headers=HEADERS,
         json={"login_id": "test", "password": "test password long enough"},
     )
-    assert all("Secure" in cookie for cookie in response.headers.get_list("set-cookie"))
+    if endpoint == "refresh":
+        app.state.authentication.refresh.execute.return_value = LoginResult(
+            "test-user", now + 1800, now + 604800, "signed", "opaque"
+        )
+        response = client.post("/api/auth/refresh", headers=HEADERS)
+    elif endpoint == "logout":
+        response = client.post("/api/auth/logout", headers=HEADERS)
+    elif endpoint == "rejected-refresh":
+        app.state.authentication.refresh.execute.side_effect = AuthenticationRequired()
+        response = client.post("/api/auth/refresh", headers=HEADERS)
+    cookies = response.headers.get_list("set-cookie")
+    assert len(cookies) == 2
+    assert all(("Secure" in cookie) is secure for cookie in cookies)
 
 
 def test_ws_expiry_cancels_running_generation(tokens):

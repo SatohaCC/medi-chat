@@ -39,7 +39,7 @@ createはログインIDとパスワードを対話入力する。パスワード
 - `/api/auth/login`、`refresh`、`logout`、`me`を使用する。トークンはJSONへ出さず、HttpOnly Cookieだけへ保存する。
 - アクセスJWTは30分。更新系列はログインから7日の絶対期限。更新しても7日を延長せず、直前のJWTもこの期限を超えない。
 - 通常APIは署名・用途・発行者・宛先・期限をローカル検証し、認証用DBを照会しない。業務データのDB照会は別である。
-- アクセスCookieはPath=/、更新CookieはPath=/api/auth。Domain指定なし、SameSite=Lax。非ローカルDB利用時とVercelではSecure必須。ローカルHTTP用設定のまま外部公開しない。
+- アクセスCookieはPath=/、更新CookieはPath=/api/auth。Domain指定なし、SameSite=Lax。Secureは既定で有効。AUTH_COOKIE_SECURE=true/false（大小文字不問）で明示設定する。空文字・不正値は起動エラー。HTTP開発時だけfalseを設定する。DB接続先やVercelには依存しない。ローカルHTTP用設定のまま外部公開しない。
 - 更新系HTTPは許可Originと`X-Medi-Chat-CSRF: 1`が必要。WebSocketも許可Originが必要。独自ドメインや開発ポートは`ALLOWED_ORIGINS`へ明示する。資格情報付きCORSで`*`は使用しない。
 - WSはaccept前と接続中の期限を検証する。期限で生成を中断し、4001で閉じる。ブラウザは更新後に再接続するが、質問・インポートを勝手に再送しない。
 - 複数タブはWeb Locksで更新を直列化する。非対応ブラウザでは期限切れ時に再ログインする。更新応答を失った場合も同じ更新値を自動再送しない。

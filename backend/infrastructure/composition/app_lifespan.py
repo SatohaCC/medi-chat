@@ -22,6 +22,7 @@ from backend.application.package_insert_import.commands.import_documents import 
 from backend.application.package_insert_import.queries.import_history import (
     ImportHistoryQueries,
 )
+from backend.config.authentication_settings import read_authentication_settings
 from backend.config.database_settings import PostgresDatabaseSettings
 from backend.config.generation_settings import read_generation_defaults
 from backend.infrastructure.agent.langgraph_chat_agent_adapter import (
@@ -103,8 +104,10 @@ def create_app_lifespan(
                 if feedback is not None
                 else None
             )
+            auth_settings = read_authentication_settings()
+            application.state.auth_secure_cookies = auth_settings.cookie_secure
             application.state.authentication = await asyncio.to_thread(
-                compose_authentication, engine
+                compose_authentication, engine, auth_settings
             )
             await workers.run(lambda: verify_postgres_readiness(engine))
             await asyncio.to_thread(janome_initializer)

@@ -77,9 +77,6 @@ def create_app(
     # Next.js フロントエンド向けの CORS 設定
     allowed_origins = read_allowed_origins()
     application.add_middleware(AccessControlMiddleware)
-    application.state.auth_secure_cookies = (
-        not settings.is_local or os.environ.get("VERCEL") == "1"
-    )
     register_authentication_errors(application)
     application.include_router(authentication_router)
     application.add_middleware(

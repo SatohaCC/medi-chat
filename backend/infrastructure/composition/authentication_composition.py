@@ -8,7 +8,7 @@ from backend.application.authentication.commands.login import Login
 from backend.application.authentication.commands.logout import Logout
 from backend.application.authentication.commands.refresh import Refresh
 from backend.application.authentication.queries.authenticate import Authenticate
-from backend.config.authentication_settings import read_authentication_settings
+from backend.config.authentication_settings import AuthenticationSettings
 from backend.infrastructure.authentication.access_refresh_tokens import (
     JwtTokens,
     RefreshSecrets,
@@ -19,8 +19,9 @@ from backend.infrastructure.persistence.stores.postgres_authentication_store imp
 )
 
 
-def compose_authentication(engine: Engine) -> SimpleNamespace:
-    settings = read_authentication_settings()
+def compose_authentication(
+    engine: Engine, settings: AuthenticationSettings
+) -> SimpleNamespace:
     tokens = JwtTokens(
         private_key=settings.private_key.get_secret_value(),
         public_keys=settings.public_keys,
