@@ -47,12 +47,13 @@ allowed_dependencies = []
 "evidence_mapping" = { symbols = ["build_evidence", "is_scope_heading_only"], consumers = ["persistence", "cli", "frontend/scripts"] }
 
 [adapters.llm]
-roles = ["llm_provider_base", "llm_provider_factory", "agent_model_factory", "openai_provider", "gemini_provider", "fallback_provider", "mock_response_stream", "llm_provider_errors", "llm_error_messages"]
+roles = ["llm_provider_base", "llm_provider_factory", "agent_model_factory", "openai_provider", "gemini_provider", "fallback_provider", "mock_response_stream", "llm_provider_errors", "llm_error_messages", "llm_keyword_expansion_adapter"]
 allowed_dependencies = []
 
 [adapters.llm.public]
 "llm_provider_factory" = { symbols = ["create_llm_provider"], consumers = ["composition", "cli"] }
 "agent_model_factory" = { symbols = ["create_agent_model"], consumers = ["composition"] }
+"llm_keyword_expansion_adapter" = { symbols = ["LLMKeywordExpander"], consumers = ["composition"] }
 
 [adapters.intent]
 roles = ["jev_classifier", "jev_intent_mapping"]

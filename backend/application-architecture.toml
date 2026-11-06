@@ -19,7 +19,7 @@ public_modules = ["queries.models", "queries.chat", "interfaces.llm_provider", "
 
 [features.retrieval]
 depends_on = ["medicine", "indexing"]
-public_modules = ["queries.models", "values", "queries.policies.selection", "queries.policies.standard", "queries.policies.section_titles", "queries.dtos.evidence", "queries.services.evidence_retrieval", "queries.services.retrieval_session", "queries.services.intent_detection", "queries.services.keyword_detection", "queries.services.keyword_search", "interfaces.evidence_query_reader", "interfaces.intent_classifier", "interfaces.keyword_extractor", "interfaces.snapshot_provider"]
+public_modules = ["queries.models", "values", "queries.policies.selection", "queries.policies.standard", "queries.policies.section_titles", "queries.dtos.evidence", "queries.services.evidence_retrieval", "queries.services.retrieval_session", "queries.services.intent_detection", "queries.services.keyword_detection", "queries.services.keyword_search", "interfaces.evidence_query_reader", "interfaces.intent_classifier", "interfaces.keyword_extractor", "interfaces.keyword_expander", "interfaces.snapshot_provider"]
 
 [features.indexing]
 depends_on = ["medicine"]

@@ -13,3 +13,4 @@ class KeywordSearchResponse(BaseModel):
     query: str
     items: list[ChatSource] = Field(default_factory=list)
     total_count: int = 0
+    expanded_keywords: list[str] = Field(default_factory=list)

@@ -38,6 +38,9 @@ from backend.infrastructure.document_import.original_document_registration_adapt
 )
 from backend.infrastructure.intent.jev_classifier import JevIntentClassifier
 from backend.infrastructure.llm.agent_model_factory import create_agent_model
+from backend.infrastructure.llm.llm_keyword_expansion_adapter import (
+    LLMKeywordExpander,
+)
 from backend.infrastructure.llm.llm_provider_factory import create_llm_provider
 from backend.infrastructure.morphology.janome_keyword_extraction import (
     get_janome_tokenizer,
@@ -149,15 +152,22 @@ def create_app_lifespan(
                 else create_agent_model,
                 answer_prompt_policy=definitions.answer_prompt_policy,
             )
+            effective_provider_factory = llm_provider_factory or create_llm_provider
+            keyword_expander = LLMKeywordExpander(
+                effective_provider_factory,
+                provider_name="openai",
+                model_name="gpt-6-luna",
+            )
             application_service = ChatQueries(
                 intent_classifier=classifier,
                 keyword_extractor=keywords,
                 intent_policy=definitions.intent_policy,
                 retrieval_policy=definitions.retrieval_policy,
                 answer_prompt_policy=definitions.answer_prompt_policy,
-                provider_factory=llm_provider_factory or create_llm_provider,
+                provider_factory=effective_provider_factory,
                 snapshot_provider=runtime,
                 agent_orchestrator=agent_orchestrator,
+                keyword_expander=keyword_expander,
             )
             application.state.chat_service = chat_service_factory(
                 application_service=application_service,

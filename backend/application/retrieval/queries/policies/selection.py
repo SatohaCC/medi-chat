@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from dataclasses import replace
 from typing import Protocol
 
@@ -66,13 +66,18 @@ def detect_fixed_keyword_criteria(
     )
 
 
-def build_keyword_search_criteria(query: str) -> SearchCriteria | None:
-    """空白区切りの2文字以上の入力語からキーワード検索条件を組み立てる。"""
-    terms = tuple(
-        SearchKeyword(term)
-        for raw in re.split(r"[\s　]+", query)
-        if len(term := raw.strip()) >= 2
-    )
+def build_keyword_search_criteria(
+    query: str,
+    additional_keywords: Sequence[str] = (),
+) -> SearchCriteria | None:
+    """空白区切りの2文字以上の入力語と追加語からキーワード検索条件を組み立てる。"""
+    raw_terms: list[str] = [
+        term for raw in re.split(r"[\s　]+", query) if len(term := raw.strip()) >= 2
+    ]
+    for additional in additional_keywords:
+        if len(term := additional.strip()) >= 2:
+            raw_terms.append(term)
+    terms = tuple(SearchKeyword(term) for term in dict.fromkeys(raw_terms))
     if not terms:
         return None
     return SearchCriteria(

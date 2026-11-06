@@ -39,13 +39,26 @@ async def search_package_inserts(
             description="絞り込み対象の医薬品YJコード（未指定時は全医薬品を検索）",
         ),
     ] = None,
+    expand: Annotated[
+        bool,
+        Query(
+            description="LLMによる類似語・類義語拡張を有効にするか",
+        ),
+    ] = False,
 ) -> KeywordSearchResponse:
     """添付文書からキーワードに合致する根拠単位を検索する"""
     try:
         if chat_service is None:
             MedicineQueries.validate_product_codes(yj_codes or ())
-            return KeywordSearchResponse(query=q, items=[], total_count=0)
-        items = await chat_service.search_keywords(q, yj_codes or ())
+            return KeywordSearchResponse(
+                query=q, items=[], total_count=0, expanded_keywords=[]
+            )
+        result = await chat_service.search_keywords(q, yj_codes or (), expand=expand)
     except InvalidMedicineInput as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from None
-    return KeywordSearchResponse(query=q, items=items, total_count=len(items))
+    return KeywordSearchResponse(
+        query=q,
+        items=result.items,
+        total_count=len(result.items),
+        expanded_keywords=result.expanded_keywords,
+    )

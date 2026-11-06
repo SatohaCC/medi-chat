@@ -5,6 +5,7 @@ import type { KeywordSearchResponse } from "../model/search";
 export async function searchPackageInserts(
   query: string,
   yjCodes: string[] = [],
+  expand = false,
 ): Promise<KeywordSearchResponse> {
   const base = backendBaseUrl();
   const params = new URLSearchParams();
@@ -13,6 +14,9 @@ export async function searchPackageInserts(
     if (yj.trim()) {
       params.append("yj_codes", yj.trim());
     }
+  }
+  if (expand) {
+    params.set("expand", "true");
   }
 
   const url = `${base}/api/search?${params.toString()}`;

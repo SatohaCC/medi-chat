@@ -214,6 +214,7 @@ export function createSupervisor({
               cwd,
               stdio: ["inherit", "pipe", "pipe"],
               shell: false,
+              detached: process.platform === "win32",
             });
           } catch (err) {
             finish({ code: 1, signal: null, error: err });
