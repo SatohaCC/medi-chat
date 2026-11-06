@@ -40,3 +40,22 @@ def test_private_key_file_cannot_escape_project(monkeypatch):
     monkeypatch.setenv("AUTH_PRIVATE_KEY_FILE", "../outside.pem")
     with pytest.raises(ValueError, match="missing or invalid"):
         read_authentication_settings()
+
+
+@pytest.mark.parametrize(
+    "value, expected",
+    [(None, True), ("true", True), ("TRUE", True), ("false", False), ("FALSE", False)],
+)
+def test_cookie_security_configuration(monkeypatch, value, expected):
+    if value is None:
+        monkeypatch.delenv("AUTH_COOKIE_SECURE", raising=False)
+    else:
+        monkeypatch.setenv("AUTH_COOKIE_SECURE", value)
+    assert read_authentication_settings().cookie_secure is expected
+
+
+@pytest.mark.parametrize("value", ["", "0", "1", "yes", "invalid"])
+def test_invalid_cookie_security_is_rejected(monkeypatch, value):
+    monkeypatch.setenv("AUTH_COOKIE_SECURE", value)
+    with pytest.raises(ValueError, match="missing or invalid"):
+        read_authentication_settings()

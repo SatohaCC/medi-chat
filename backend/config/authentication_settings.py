@@ -15,6 +15,7 @@ class AuthenticationSettings(BaseModel):
     key_id: str = Field(min_length=1)
     private_key: SecretStr
     public_keys: dict[str, str] = Field(min_length=1)
+    cookie_secure: bool = True
     hash_parallelism: int = Field(default=2, ge=1, le=8)
     login_limit: int = Field(default=10, ge=1)
     address_limit: int = Field(default=60, ge=1)
@@ -37,7 +38,11 @@ def read_authentication_settings() -> AuthenticationSettings:
             private = path.read_text(encoding="utf-8")
         if not private:
             raise ValueError("Private key is required")
+        cookie_secure = os.environ.get("AUTH_COOKIE_SECURE", "true").lower()
+        if cookie_secure not in {"true", "false"}:
+            raise ValueError("Invalid cookie security configuration")
         return AuthenticationSettings(
+            cookie_secure=cookie_secure == "true",
             issuer=os.environ["AUTH_ISSUER"],
             audience=os.environ["AUTH_AUDIENCE"],
             key_id=os.environ["AUTH_KEY_ID"],
