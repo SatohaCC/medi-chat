@@ -27,13 +27,20 @@ from backend.application.chat.queries.services.stream_reply import (
 from backend.application.retrieval.interfaces.intent_classifier import (
     IntentClassifier,
 )
+from backend.application.retrieval.interfaces.keyword_expander import (
+    KeywordExpander,
+)
 from backend.application.retrieval.interfaces.keyword_extractor import (
     KeywordExtractor,
 )
 from backend.application.retrieval.interfaces.snapshot_provider import (
     RetrievalSnapshotProvider,
 )
-from backend.application.retrieval.queries.models import Evidence, IntentPolicy
+from backend.application.retrieval.queries.models import (
+    Evidence,
+    IntentPolicy,
+    KeywordSearchResult,
+)
 from backend.application.retrieval.queries.policies.standard import (
     DEFAULT_RETRIEVAL_POLICY,
     EvidenceRetrievalPolicy,
@@ -58,6 +65,7 @@ class ChatQueries:
         provider_factory: Callable[[str | None], LLMProvider],
         snapshot_provider: RetrievalSnapshotProvider,
         agent_orchestrator: AgentOrchestrator | None = None,
+        keyword_expander: KeywordExpander | None = None,
     ) -> None:
         self.intent_classifier = intent_classifier
         self.keyword_extractor = keyword_extractor
@@ -67,6 +75,7 @@ class ChatQueries:
         self.provider_factory = provider_factory
         self.snapshot_provider = snapshot_provider
         self.agent_orchestrator = agent_orchestrator
+        self.keyword_expander = keyword_expander
 
     @property
     def is_jev_available(self) -> bool:
@@ -76,11 +85,15 @@ class ChatQueries:
         self,
         query: str,
         product_yj_codes: Sequence[str] = (),
-    ) -> tuple[Evidence, ...]:
+        *,
+        expand: bool = False,
+    ) -> KeywordSearchResult:
         return await search_evidence_by_keywords(
             query,
             product_yj_codes,
             keyword_extractor=self.keyword_extractor,
+            keyword_expander=self.keyword_expander,
+            expand=expand,
             snapshot_provider=self.snapshot_provider,
         )
 

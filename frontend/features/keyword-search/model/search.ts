@@ -4,4 +4,5 @@ export interface KeywordSearchResponse {
   query: string;
   items: SourceItem[];
   total_count: number;
+  expanded_keywords?: string[];
 }

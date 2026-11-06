@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Sequence
 
 from backend.application.medicine.interfaces.medicine_query_reader import (
@@ -14,13 +15,18 @@ from backend.application.medicine.values import parse_yj_codes
 from backend.application.retrieval.interfaces.evidence_query_reader import (
     EvidenceQueryReader,
 )
+from backend.application.retrieval.interfaces.keyword_expander import (
+    KeywordExpander,
+)
 from backend.application.retrieval.interfaces.keyword_extractor import (
     KeywordExtractor,
 )
 from backend.application.retrieval.interfaces.snapshot_provider import (
     RetrievalSnapshotProvider,
 )
-from backend.application.retrieval.queries.models import Evidence
+from backend.application.retrieval.queries.models import (
+    KeywordSearchResult,
+)
 from backend.application.retrieval.queries.policies.selection import (
     build_keyword_search_criteria,
     merge_evidence,
@@ -34,8 +40,10 @@ async def search_evidence_by_keywords(
     product_yj_codes: Sequence[str] = (),
     *,
     keyword_extractor: KeywordExtractor | None = None,
+    keyword_expander: KeywordExpander | None = None,
+    expand: bool = False,
     snapshot_provider: RetrievalSnapshotProvider,
-) -> tuple[Evidence, ...]:
+) -> KeywordSearchResult:
     """キーワードと任意の対象医薬品コードに基づいて添付文書の根拠を検索する。"""
     codes = parse_yj_codes(product_yj_codes)
     async with snapshot_provider.acquire() as snapshot:
@@ -45,6 +53,8 @@ async def search_evidence_by_keywords(
             medicine_reader=snapshot.medicine_reader,
             evidence_reader=snapshot.evidence_reader,
             keyword_extractor=keyword_extractor,
+            keyword_expander=keyword_expander,
+            expand=expand,
         )
 
 
@@ -55,11 +65,13 @@ async def _search_evidence_by_keywords(
     medicine_reader: MedicineQueryReader,
     evidence_reader: EvidenceQueryReader,
     keyword_extractor: KeywordExtractor | None = None,
-) -> tuple[Evidence, ...]:
+    keyword_expander: KeywordExpander | None = None,
+    expand: bool = False,
+) -> KeywordSearchResult:
     """キーワードと任意の対象医薬品コードに基づいて添付文書の根拠を検索する。"""
     medicines = await medicine_reader.read_medicines()
     if not medicines:
-        return ()
+        return KeywordSearchResult(evidence=())
 
     catalog = MedicineCatalog(medicines)
     requested_codes = product_yj_codes
@@ -70,11 +82,30 @@ async def _search_evidence_by_keywords(
         targets = tuple(catalog.match_yj_codes(all_yj_codes))
 
     if not targets:
-        return ()
+        return KeywordSearchResult(evidence=())
 
-    criteria = build_keyword_search_criteria(query)
+    expanded_terms: tuple[str, ...] = ()
+    if expand and keyword_expander is not None:
+        try:
+            expanded = await keyword_expander.expand_keywords(query)
+            original_terms = {
+                t.lower() for raw in re.split(r"[\s　]+", query) if (t := raw.strip())
+            }
+            expanded_terms = tuple(
+                dict.fromkeys(
+                    term
+                    for raw in expanded
+                    if len(term := raw.strip()) >= 2
+                    and term.lower() not in original_terms
+                )
+            )
+        except Exception:
+            expanded_terms = ()
+
+    criteria = build_keyword_search_criteria(query, additional_keywords=expanded_terms)
     if criteria is None:
-        return ()
+        return KeywordSearchResult(evidence=(), expanded_keywords=expanded_terms)
 
     raw_evidence = await evidence_reader.search(criteria, targets)
-    return merge_evidence([(raw_evidence, DetectionSource.KEYWORD)])
+    merged = merge_evidence([(raw_evidence, DetectionSource.KEYWORD)])
+    return KeywordSearchResult(evidence=merged, expanded_keywords=expanded_terms)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncGenerator, Awaitable, Callable, Sequence
 from contextlib import aclosing as closing_stream
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 from uuid import UUID
 
@@ -34,6 +34,12 @@ from .chat_models import (
     ChatResponse as ApiChatResponse,
 )
 from .evidence_models import ChatSource
+
+
+@dataclass(frozen=True, slots=True)
+class AppKeywordSearchResult:
+    items: list[ChatSource]
+    expanded_keywords: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True, slots=True)
@@ -87,9 +93,16 @@ class AppChatService:
         self,
         query: str,
         product_yj_codes: Sequence[str] = (),
-    ) -> list[ChatSource]:
-        results = await self._app_service.search_keywords(query, product_yj_codes)
-        return self.sources_to_api(results)
+        *,
+        expand: bool = False,
+    ) -> AppKeywordSearchResult:
+        result = await self._app_service.search_keywords(
+            query, product_yj_codes, expand=expand
+        )
+        return AppKeywordSearchResult(
+            items=self.sources_to_api(result.evidence),
+            expanded_keywords=list(result.expanded_keywords),
+        )
 
     @traceable(name="medi_chat.prepare_reply", run_type="chain")
     async def prepare_reply(

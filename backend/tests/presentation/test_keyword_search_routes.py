@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import unittest
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from backend.application.retrieval.queries.models import IntentRequest, IntentResult
@@ -66,6 +66,32 @@ class KeywordSearchApiRouteTests(unittest.TestCase):
         self.assertIn("excerpt", first)
         self.assertIn("retrieved_by", first)
         self.assertIn("keyword", first["retrieved_by"])
+        self.assertEqual(data["expanded_keywords"], [])
+
+    def test_search_with_expand_true_uses_keyword_expander(self) -> None:
+        app: Any = self.client.app
+        chat_service = app.state.chat_service
+        expander = chat_service._app_service.keyword_expander
+        with patch.object(
+            expander,
+            "expand_keywords",
+            AsyncMock(return_value=("有害事象",)),
+        ):
+            response = self.client.get(
+                "/api/search", params={"q": "副作用", "expand": "true"}
+            )
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertEqual(data["expanded_keywords"], ["有害事象"])
+            self.assertGreater(data["total_count"], 0)
+
+        # When expand is false, expander is not used
+        response_off = self.client.get(
+            "/api/search", params={"q": "副作用", "expand": "false"}
+        )
+        self.assertEqual(response_off.status_code, 200)
+        data_off = response_off.json()
+        self.assertEqual(data_off["expanded_keywords"], [])
 
     def test_search_with_yj_codes_filters_to_specified_medicine(self) -> None:
         # Xarelto YJ code: 3339003F5020

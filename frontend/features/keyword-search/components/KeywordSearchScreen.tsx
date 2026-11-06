@@ -3,6 +3,7 @@
 import { Button as S2Button } from "@react-spectrum/s2/Button";
 import { Content, Heading, InlineAlert } from "@react-spectrum/s2/InlineAlert";
 import { SearchField } from "@react-spectrum/s2/SearchField";
+import { Switch } from "@react-spectrum/s2/Switch";
 import * as stylex from "@stylexjs/stylex";
 import { useRef, useState } from "react";
 import { AppHeader } from "../../../shared/ui/AppHeader";
@@ -29,6 +30,8 @@ export function KeywordSearchScreen() {
   const [selectedSection, setSelectedSection] = useState<string>("all");
   const [error, setError] = useState<string | null>(null);
   const [showMedicineFilter, setShowMedicineFilter] = useState(false);
+  const [isExpandEnabled, setIsExpandEnabled] = useState(false);
+  const [searchedExpandedKeywords, setSearchedExpandedKeywords] = useState<string[]>([]);
 
   const searchBusy = useRef(false);
   const activeMedicines = useActiveMedicines();
@@ -48,20 +51,24 @@ export function KeywordSearchScreen() {
     setIsSearching(true);
     setError(null);
     try {
-      const data = await searchPackageInserts(trimmed, selectedYjCodes);
+      const data = await searchPackageInserts(trimmed, selectedYjCodes, isExpandEnabled);
       setResults(data.items);
       setSearchedQuery(data.query);
+      setSearchedExpandedKeywords(data.expanded_keywords ?? []);
       setSelectedSection("all");
     } catch (err) {
       setError(err instanceof Error ? err.message : "検索に失敗しました");
       setResults(null);
+      setSearchedExpandedKeywords([]);
     } finally {
       searchBusy.current = false;
       setIsSearching(false);
     }
   };
 
-  const searchWords = extractHighlightWords(searchedQuery);
+  const searchWords = extractHighlightWords(
+    [searchedQuery, ...searchedExpandedKeywords].join(" "),
+  );
 
   const sources = results ?? [];
   const sectionGroups = extractSectionGroups(sources);
@@ -105,6 +112,21 @@ export function KeywordSearchScreen() {
           >
             {isSearching ? "検索中…" : "検索"}
           </S2Button>
+          <div {...stylex.props(styles.optionsRow)}>
+            <Switch
+              isSelected={isExpandEnabled}
+              onChange={setIsExpandEnabled}
+              isDisabled={isSearching}
+              size="L"
+              isEmphasized
+            >
+              類似語も検索 (AI拡張)
+            </Switch>
+            <span {...stylex.props(styles.expansionNote)}>
+              ※ 入力した症状や単語の医学的類義語（例: 吐き気 →
+              悪心・嘔吐）も同時に検索します
+            </span>
+          </div>
         </form>
 
         <div {...stylex.props(styles.filterSection)}>
@@ -174,6 +196,19 @@ export function KeywordSearchScreen() {
                 📄 「{searchedQuery}」の検索結果（合計：{sources.length}件）
               </span>
             </div>
+
+            {searchedExpandedKeywords.length > 0 && (
+              <div {...stylex.props(styles.expandedKeywordsBadge)}>
+                <span {...stylex.props(styles.expandedLabel)}>
+                  🔍 検索に含めた類似語:
+                </span>
+                {searchedExpandedKeywords.map((word) => (
+                  <span key={word} {...stylex.props(styles.keywordTag)}>
+                    {word}
+                  </span>
+                ))}
+              </div>
+            )}
 
             <SourceEvidenceSectionFilters
               sectionGroups={sectionGroups}

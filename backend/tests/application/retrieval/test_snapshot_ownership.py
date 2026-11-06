@@ -22,10 +22,8 @@ async def test_keyword_search_acquires_and_releases_one_snapshot(fails):
                 "副作用", ["1234567A0000"], snapshot_provider=provider
             )
     else:
-        assert (
-            await search_evidence_by_keywords(
-                "副作用", ["1234567A0000"], snapshot_provider=provider
-            )
-            == ()
+        result = await search_evidence_by_keywords(
+            "副作用", ["1234567A0000"], snapshot_provider=provider
         )
+        assert result.evidence == ()
     assert provider.entered == provider.exited == 1

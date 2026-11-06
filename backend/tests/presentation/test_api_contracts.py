@@ -80,6 +80,14 @@ def test_openapi_contracts_match_baseline() -> None:
     for name in ("ImportListResponse", "ImportSummaryResponse"):
         assert name in actual_openapi["components"]["schemas"]
         del actual_openapi["components"]["schemas"][name]
+    # Keyword search expansion is an additive contract.
+    search_op = actual_openapi["paths"]["/api/search"]["get"]
+    expand_param = next(p for p in search_op["parameters"] if p["name"] == "expand")
+    assert expand_param["schema"]["type"] == "boolean"
+    search_op["parameters"] = [
+        p for p in search_op["parameters"] if p["name"] != "expand"
+    ]
+    del schemas["KeywordSearchResponse"]["properties"]["expanded_keywords"]
     assert actual_openapi == expected_openapi
 
 

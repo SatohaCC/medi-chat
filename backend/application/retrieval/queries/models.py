@@ -195,6 +195,14 @@ class Evidence:
     retrieved_by: frozenset[DetectionSource] = frozenset()
 
 
+@dataclass(frozen=True, slots=True)
+class KeywordSearchResult:
+    """キーワード検索の結果と拡張キーワード。"""
+
+    evidence: tuple[Evidence, ...]
+    expanded_keywords: tuple[str, ...] = ()
+
+
 @dataclass
 class RetrievalResult:
     """チャットやLLMに依存しない検索結果。"""
