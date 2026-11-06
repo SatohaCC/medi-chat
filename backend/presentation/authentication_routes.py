@@ -18,6 +18,7 @@ from .authentication_models import (
     LoginResponse,
     PrincipalResponse,
 )
+from .client_address import login_client_address
 
 router = APIRouter(prefix="/api/auth", tags=["authentication"])
 
@@ -65,7 +66,7 @@ async def login(request: Request, payload: LoginInput, response: Response):
         service(request).login.execute,
         payload.login_id,
         payload.password,
-        request.client.host if request.client else "unknown",
+        login_client_address(request),
         int(time.time()),
     )
     return login_response(request, result, response)

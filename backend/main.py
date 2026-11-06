@@ -10,6 +10,7 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .config.client_address_settings import read_client_address_settings
 from .config.database_settings import resolve_postgres_database_settings
 from .config.origin_settings import read_allowed_origins
 from .config.runtime_environment import load_runtime_environment
@@ -76,6 +77,7 @@ def create_app(
 
     # Next.js フロントエンド向けの CORS 設定
     allowed_origins = read_allowed_origins()
+    application.state.client_address_settings = read_client_address_settings()
     application.add_middleware(AccessControlMiddleware)
     register_authentication_errors(application)
     application.include_router(authentication_router)
