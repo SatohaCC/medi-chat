@@ -214,6 +214,7 @@ def run_gate(
                 sys.executable,
                 "-m",
                 "uvicorn",
+                "--no-proxy-headers",
                 "backend.infrastructure.cli.configured_probe:create_probe",
                 "--factory",
                 "--host",

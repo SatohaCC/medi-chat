@@ -95,6 +95,7 @@ export function createSupervisor({
     "run",
     "--locked",
     "uvicorn",
+    "--no-proxy-headers",
     "--app-dir",
     "..",
     "backend.main:app",

@@ -11,6 +11,7 @@ from backend.application.authentication.errors import (
     AuthenticationUnavailable,
 )
 from backend.application.authentication.queries.authenticate import Authenticate
+from backend.config.client_address_settings import ClientAddressSettings
 from backend.domain.identity.identifiers import UserId
 from backend.presentation import access_control
 from backend.presentation.access_control import AccessControlMiddleware
@@ -34,6 +35,7 @@ HEADERS = {"Origin": ORIGIN, "X-Medi-Chat-CSRF": "1"}
 def protected(tokens):
     app = FastAPI()
     app.state.allowed_origins = [ORIGIN]
+    app.state.client_address_settings = ClientAddressSettings()
     app.state.auth_secure_cookies = False
     app.state.authentication = SimpleNamespace(
         authenticate=Authenticate(tokens), login=Mock(), refresh=Mock(), logout=Mock()
@@ -234,6 +236,7 @@ def test_ws_expiry_cancels_running_generation(tokens):
 
     app = FastAPI()
     app.state.allowed_origins = [ORIGIN]
+    app.state.client_address_settings = ClientAddressSettings()
     verifier = Mock()
     verifier.execute.return_value = Principal("test-user", int(time.time()) + 1)
     app.state.authentication = SimpleNamespace(authenticate=verifier)
@@ -253,3 +256,39 @@ def test_ws_expiry_cancels_running_generation(tokens):
             ws.receive_text()
         assert failure.value.code == 4001
     assert cancelled == [True]
+
+
+@pytest.mark.parametrize("client_ip", ["198.51.100.2", "198.51.100.3"])
+def test_login_passes_resolved_client_to_attempt_limiter(protected, client_ip):
+    from ipaddress import ip_network
+
+    app, _, _ = protected
+    app.state.client_address_settings = ClientAddressSettings((ip_network("10.0.0.1"),))
+    now = int(time.time())
+    app.state.authentication.login.execute.return_value = LoginResult(
+        "test-user", now + 1800, now + 604800, "signed", "opaque"
+    )
+    client = TestClient(app, client=("10.0.0.1", 1234))
+    response = client.post(
+        "/api/auth/login",
+        headers={**HEADERS, "X-Forwarded-For": client_ip},
+        json={"login_id": "test", "password": "test password long enough"},
+    )
+    assert response.status_code == 200
+    assert app.state.authentication.login.execute.call_args.args[2] == client_ip
+
+
+def test_missing_trusted_forwarding_header_rejects_before_login(protected):
+    from ipaddress import ip_network
+
+    app, _, _ = protected
+    app.state.client_address_settings = ClientAddressSettings((ip_network("10.0.0.1"),))
+    client = TestClient(app, client=("10.0.0.1", 1234))
+    response = client.post(
+        "/api/auth/login",
+        headers=HEADERS,
+        json={"login_id": "test", "password": "test password long enough"},
+    )
+    assert response.status_code == 503
+    assert response.json() == {"detail": {"code": "authentication_unavailable"}}
+    app.state.authentication.login.execute.assert_not_called()

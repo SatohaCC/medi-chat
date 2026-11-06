@@ -117,3 +117,5 @@ DependabotのPRも扱うため`pull_request_target: closed`を使い、PRのコ�
 - [Python version](https://vercel.com/docs/functions/runtimes/python/python-version)
 - [Services](https://vercel.com/docs/services)
 - [Servicesの設定](https://vercel.com/docs/services/config-reference)
+
+認証の接続元IPはVercel管理の`x-vercel-forwarded-for`を使う。`AUTH_TRUSTED_PROXIES`は設定しない。Previewで異なる接続元の分離を確認する。
