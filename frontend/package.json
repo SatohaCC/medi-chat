@@ -7,6 +7,7 @@
     "node": "24.x"
   },
   "scripts": {
+    "test:e2e:headers": "playwright test --config=playwright.headers.config.ts",
     "test:e2e:access": "playwright test --config=playwright.access.config.ts",
     "test:e2e": "node scripts/test-e2e.mjs",
     "test:e2e:mock": "playwright test",

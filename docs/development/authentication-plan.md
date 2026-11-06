@@ -21,7 +21,7 @@
 
 ## 現状と変更点
 
-`vercel.json`は画面をNext.js、`/api/*`と`/ws/chat`をFastAPIへ直接振り分ける。この経路を維持する。現在の`frontend/proxy.ts`と`backend/presentation/access_control.py`は、個人識別のない秘密リンクCookieを検証している。
+`vercel.json`は画面をNext.js、`/api/*`と`/ws/chat`をFastAPIへ直接振り分ける。この経路を維持する。計画作成時は`frontend/proxy.ts`と`backend/presentation/access_control.py`で、個人識別のない秘密リンクCookieを検証していた。現在の`frontend/proxy.ts`はNext.js 16の正式なProxy規約を使い、表示層のキャッシュ・Referrerポリシーを設定する。認証・認可はFastAPIが所有する。production応答とNode.js Proxyの登録確認は[検証手順](validation.md#production画面のレスポンスヘッダー)を参照する。
 
 | 対象 | 変更する責務 |
 | --- | --- |
