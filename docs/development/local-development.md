@@ -12,6 +12,26 @@ uv sync --project backend --locked --group dev
 JavaScript依存はpnpm、Python依存はbackendのuvで管理します。pnpmによるPython環境管理は無効です。
 `.env.example`を参考に`.env.local`を作成し、PostgreSQLの接続先と利用するLLMのAPIキーを設定します。実際の接続情報はGitへ追加しません。
 
+## 別端末での準備とGit管理外のファイル
+
+clone後は上記の依存導入に続けて、次のものを準備します。作業中の変更がある場合は、別端末で使うブランチへcommit・pushしてからcloneまたはpullしてください。
+
+| 対象 | 別端末での準備 |
+| --- | --- |
+| `.env.local` | `.env.example`から作成し、利用するAPIキーと接続先を設定 |
+| `.env.postgres` | `.env.postgres.example`から作成し、ローカルDB用のパスワードを設定 |
+| `.auth/`とログインアカウント | [認証手順](authentication.md#初回の準備)に従い、開発端末ごとに鍵を生成し、DBへアカウントを作成 |
+| PostgreSQL | 次節に従い起動・migration・初期登録を実施。Dockerのvolumeはcloneでは移らない |
+| `data/pmda/originals/` | 利用権限のある原XMLと図を別途用意し、元の相対配置を維持して配置 |
+| `data/pmda/structured/` | 原本から[構造化CLI](../../data/pmda/README.md)で再生成。アプリの通常起動には不要 |
+| 原本依存のテストfixture・`yj/`・`docs/reference/` | 必要な作業時だけ別途準備。cloneには含まれない |
+
+環境ファイル・秘密鍵・原本・DB・作業ログはGitへ追加しません。秘密情報を渡す必要がある場合は秘密管理ツール等の安全な経路を使用し、PR・Issue・チャットの共有ログへ貼り付けません。依存、キャッシュ、検索投影、ビルド成果物は各端末で再生成します。
+
+`.agents/agents/`と`.agents/skills/`はGit管理されます。ローカルのエージェント作業記録は移しません。Hookの自動実行は[エージェント設定](../../.agents/README.md)に従い各端末で確認します。
+
+原本未準備の端末では、DB・原本不要の合成データ試験を`pnpm test:backend -m "not source_data"`で実行できます。これは原本照合・実DB・ブラウザ・外部LLMの検証を含みません。
+
 ## ローカルPostgreSQLの準備
 
 通常backendはPostgreSQLだけを使用します。原XML・図のbytes、完全な文書構造、検索投影、登録結果をDBで保持し、起動時に入力ディレクトリを読みません。

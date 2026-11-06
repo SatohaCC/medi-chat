@@ -48,7 +48,9 @@ yj
 /docs/reference/
 /.agents/*
 !/.agents/hooks.json
-skills-lock.json
+!/.agents/README.md
+!/.agents/agents/
+!/.agents/skills/
 .vscode/
 .vercel/
 /.codex/*
@@ -59,7 +61,7 @@ skills-lock.json
 .DS_Store
 Thumbs.db
 
-# Agent instructions, skills and task records under .agents/ stay local.
+# Shared agent instructions and skills are versioned; work records stay local.
 
 # Package insert source/body datasets are supplied locally, not redistributed.
 /data/pmda/originals/
