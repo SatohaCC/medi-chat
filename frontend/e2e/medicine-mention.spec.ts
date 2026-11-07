@@ -185,8 +185,8 @@ test.describe("Unit 3 & Unit 4: Medicine Mention E2E Tests", () => {
     const removeBtn = chat.tier2.getByRole("button", { name: /削除|Remove/ });
     await removeBtn.click();
 
-    // Tier 2 becomes empty
-    await expect(chat.tier2).toContainText("なし");
+    // Tier 2 disappears when no additional medicine remains.
+    await expect(chat.tier2).toBeHidden();
   });
 
   // TC-S01: 処方箋 A の状態で @B を含んだ質問を送信 -> payload=[A, B]、送信後も A は残る

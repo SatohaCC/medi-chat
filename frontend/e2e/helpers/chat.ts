@@ -97,9 +97,9 @@ export async function openChat(
       0,
     );
   } else await expect(page.getByText("接続済み", { exact: true })).toBeVisible();
-  await expect(page.getByRole("row", { name: /^テスト医薬品A/ })).toBeVisible();
   await page.getByRole("button", { name: "調べる薬を選ぶ", exact: true }).click();
   await page.getByRole("option", { name: /^テスト医薬品A/ }).click();
+  await expect(page.getByRole("row", { name: /^テスト医薬品A/ })).toBeVisible();
   return {
     requests,
     controls,

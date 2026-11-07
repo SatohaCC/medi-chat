@@ -41,7 +41,7 @@ test("original File multipart, metadata, warnings and separate selection", async
   });
   await page.goto("/imports");
   const input = page.locator('input[type="file"]');
-  const button = page.getByRole("button", { name: "取り込む", exact: true });
+  const button = page.getByRole("button", { name: "XMLを登録", exact: true });
   await expect(button).toBeDisabled();
   await input.setInputFiles({
     name: "<script>alert(1)</script>.xml",
@@ -49,7 +49,10 @@ test("original File multipart, metadata, warnings and separate selection", async
     buffer: bytes,
   });
   await button.click();
-  await expect(page.getByText("登録済み／検索に反映済み", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("登録しました（検索に適用されています）", { exact: true }),
+  ).toBeVisible();
+  await page.getByText("管理用の登録情報を表示", { exact: true }).click();
   await expect(page.getByText("test-document", { exact: true })).toBeVisible();
   await expect(page.getByText("figure1.gif", { exact: false })).toBeVisible();
   await expect(page.getByText("製品A", { exact: false })).toBeVisible();
@@ -82,8 +85,8 @@ test("sending disables selection and repeat requests; error allows retry", async
     mimeType: "text/xml",
     buffer: Buffer.from("<source/>"),
   });
-  await page.getByRole("button", { name: "取り込む", exact: true }).click();
-  await expect(page.getByRole("button", { name: "送信中…" })).toBeDisabled();
+  await page.getByRole("button", { name: "XMLを登録", exact: true }).click();
+  await expect(page.getByRole("button", { name: "登録中…" })).toBeDisabled();
   await expect(
     page.getByRole("button", { name: "XMLファイルを選択", exact: true }),
   ).toBeDisabled();
@@ -93,7 +96,7 @@ test("sending disables selection and repeat requests; error allows retry", async
   await expect(
     page.getByRole("region", { name: "取り込みエラー" }).getByRole("alert"),
   ).toContainText("XMLを確認してください。");
-  await page.getByRole("button", { name: "取り込む", exact: true }).click();
+  await page.getByRole("button", { name: "XMLを登録", exact: true }).click();
   await expect(
     page.getByText("同じ原本の登録情報です。新しい登録順は作成していません。", {
       exact: true,
@@ -122,18 +125,18 @@ for (const failure of ["server", "network"] as const) {
       mimeType: "text/xml",
       buffer: Buffer.from("<source/>"),
     });
-    const button = page.getByRole("button", { name: "取り込む", exact: true });
+    const button = page.getByRole("button", { name: "XMLを登録", exact: true });
     await button.click();
     await expect(
       page.getByRole("region", { name: "取り込みエラー" }).getByRole("alert"),
     ).toBeVisible();
     await expect(
-      page.getByText("登録済み／検索に反映済み", { exact: true }),
+      page.getByText("登録しました（検索に適用されています）", { exact: true }),
     ).not.toBeVisible();
     await expect(button).toBeEnabled();
     await button.click();
     await expect(
-      page.getByText("登録済み／検索に反映済み", { exact: true }),
+      page.getByText("登録しました（検索に適用されています）", { exact: true }),
     ).toBeVisible();
     expect(count).toBe(2);
   });
@@ -156,11 +159,12 @@ for (const fixture of [
       reused: true,
       active_yj_codes: ["222222222222"],
       products: [
-        { yj_code: "111111111111", brand_name: "A" },
-        { yj_code: "222222222222", brand_name: "B" },
+        { yj_code: "111111111111", brand_name: "製品A" },
+        { yj_code: "222222222222", brand_name: "製品B" },
       ],
     },
-    text: "現在適用中のYJ: 222222222222",
+    text: "製品B",
+    adminText: "現在適用中のYJコード: 222222222222",
   },
   {
     name: "superseded deleted",
@@ -172,7 +176,7 @@ for (const fixture of [
       search_index_updated: false,
       artifacts_deleted: true,
     },
-    text: "旧版／現在の検索には適用されていません",
+    text: "登録しました（現在の検索には適用されていません）",
   },
 ]) {
   test(`TC109 ${fixture.name} registration outcome`, async ({ page }) => {
@@ -185,13 +189,26 @@ for (const fixture of [
       mimeType: "text/xml",
       buffer: Buffer.from("<source/>"),
     });
-    await page.getByRole("button", { name: "取り込む", exact: true }).click();
+    await page.getByRole("button", { name: "XMLを登録", exact: true }).click();
     await expect(page.getByText(fixture.text, { exact: false })).toBeVisible();
     await expect(
-      page.getByText("改訂年月ではなく、最初に登録成功した順で採用されます。", {
-        exact: true,
+      page.getByRole("heading", { name: "登録した製品", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "改訂年月", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("改訂年月ではなく登録に成功した順で検索に使う版が決まります。", {
+        exact: false,
       }),
     ).toBeVisible();
+    if ("adminText" in fixture) {
+      await page.getByText("管理用の登録情報を表示", { exact: true }).click();
+      const adminText = fixture.adminText;
+      if (adminText) {
+        await expect(page.getByText(adminText, { exact: true })).toBeVisible();
+      }
+    }
     if (fixture.name === "pending") {
       await expect(
         page.getByText("old-version: lease_active", { exact: true }),

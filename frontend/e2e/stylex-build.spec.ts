@@ -66,7 +66,7 @@ test("SX-02/04: 初回HTMLとhydrationでSendの外観を保持する", async ({
   await expect(
     page.getByRole("button", { name: "XMLファイルを選択", exact: true }),
   ).toBeVisible();
-  const importButton = page.getByRole("button", { name: "取り込む", exact: true });
+  const importButton = page.getByRole("button", { name: "XMLを登録", exact: true });
   await expect(importButton).toBeDisabled();
   await expect(importButton).not.toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
   expect(errors).toEqual([]);

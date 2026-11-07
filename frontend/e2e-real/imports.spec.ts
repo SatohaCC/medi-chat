@@ -136,7 +136,7 @@ test("real browser upload, resend, process restart GET and active registration",
         response.url().endsWith("/api/package-insert-imports") &&
         response.request().method() === "POST",
     );
-    await page.getByRole("button", { name: "取り込む", exact: true }).click();
+    await page.getByRole("button", { name: "XMLを登録", exact: true }).click();
     const response = await uploaded;
     expect(response.status(), await response.text()).toBe(201);
     const result = await response.json();
@@ -147,7 +147,7 @@ test("real browser upload, resend, process restart GET and active registration",
       reference: "630004_3339003F5020_1_08_fig01.gif",
     });
     await expect(
-      page.getByText("登録済み／検索に反映済み", { exact: true }),
+      page.getByText("登録しました（検索に適用されています）", { exact: true }),
     ).toBeVisible();
     await expect(
       page.getByText("630004_3339003F5020_1_08_fig01.gif", { exact: false }),
@@ -191,7 +191,7 @@ test("real browser upload, resend, process restart GET and active registration",
         response.url().endsWith("/api/package-insert-imports") &&
         response.request().method() === "POST",
     );
-    await page.getByRole("button", { name: "取り込む", exact: true }).click();
+    await page.getByRole("button", { name: "XMLを登録", exact: true }).click();
     const repeat = await repeated;
     expect(repeat.status()).toBe(200);
     expect(repeat.headers().location).toBe(location);
@@ -233,7 +233,7 @@ test("real browser upload, resend, process restart GET and active registration",
           response.url().endsWith("/api/package-insert-imports") &&
           response.request().method() === "POST",
       );
-      await page.getByRole("button", { name: "取り込む", exact: true }).click();
+      await page.getByRole("button", { name: "XMLを登録", exact: true }).click();
       const response = await pending;
       expect([200, 201]).toContain(response.status());
       return {
@@ -324,13 +324,13 @@ test("real browser upload, resend, process restart GET and active registration",
     const largePending = page.waitForResponse((outgoing) =>
       outgoing.url().endsWith("/complete"),
     );
-    await page.getByRole("button", { name: "取り込む", exact: true }).click();
+    await page.getByRole("button", { name: "XMLを登録", exact: true }).click();
     const largeResponse = await largePending;
     expect(largeResponse.status(), await largeResponse.text()).toBe(201);
     expect((await largeResponse.json()).source_sha256).toBe(hash(large));
     expect(deliveredParts).toEqual([0, 1, 2, 3]);
     await expect(
-      page.getByText("登録済み／検索に反映済み", { exact: true }),
+      page.getByText("登録しました（検索に適用されています）", { exact: true }),
     ).toBeVisible();
     const largeSearch = await (
       await request.get(

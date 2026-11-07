@@ -80,13 +80,15 @@ test("XML選択は自動送信せず、失敗後も選択ファイルを保持�
     page.getByText("選択したファイル: テスト.xml", { exact: true }),
   ).toBeVisible();
   expect(requests).toBe(0);
-  await page.getByRole("button", { name: "取り込む", exact: true }).click();
+  await page.getByRole("button", { name: "XMLを登録", exact: true }).click();
   await expect(
     page.getByRole("region", { name: "取り込みエラー" }).getByRole("alert"),
   ).toBeVisible();
   await expect(
     page.getByText("選択したファイル: テスト.xml", { exact: true }),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: "取り込む", exact: true })).toBeEnabled();
+  await expect(
+    page.getByRole("button", { name: "XMLを登録", exact: true }),
+  ).toBeEnabled();
   expect(requests).toBe(1);
 });

@@ -204,9 +204,9 @@ for (const width of [1280, 390]) {
         mimeType: "text/xml",
         buffer: Buffer.from("<source/>"),
       });
-      await page.getByRole("button", { name: "取り込む", exact: true }).click();
+      await page.getByRole("button", { name: "XMLを登録", exact: true }).click();
       if (state === "busy")
-        await expect(page.getByRole("button", { name: "送信中…" })).toBeDisabled();
+        await expect(page.getByRole("button", { name: "登録中…" })).toBeDisabled();
       else await expect(page.getByRole("region", { name: "取り込み結果" })).toBeVisible();
       await visualSnapshot(page, testInfo, `imports-${state}-${width}.png`);
     });

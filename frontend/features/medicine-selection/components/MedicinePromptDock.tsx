@@ -52,7 +52,9 @@ export function MedicinePromptDock({
     <div {...stylex.props(styles.container)} data-testid="medicine-prompt-dock">
       <div {...stylex.props(styles.inner)}>
         {showSetupHint && (
-          <p>検索対象の薬は上で選択。質問文に追加する薬は「@」から選べます。</p>
+          <p>
+            薬名を書くだけでは検索対象は変わりません。対象薬は上から、質問に追加する薬は「@」から選べます。
+          </p>
         )}
 
         {/* 送信する質問の検索対象 */}
@@ -114,10 +116,10 @@ export function MedicinePromptDock({
         </div>
 
         {/* 質問文の @ から追加した薬 */}
-        <div {...stylex.props(styles.tier)} data-testid="tier-2-additional">
-          <span {...stylex.props(styles.tierLabel)}>質問文から追加した薬:</span>
-          <div {...stylex.props(styles.chipList)}>
-            {additional.length > 0 ? (
+        {additional.length > 0 && (
+          <div {...stylex.props(styles.tier)} data-testid="tier-2-additional">
+            <span {...stylex.props(styles.tierLabel)}>質問文から追加した薬:</span>
+            <div {...stylex.props(styles.chipList)}>
               <TagGroup
                 aria-label="質問文から追加した薬"
                 onRemove={(keys) => {
@@ -150,11 +152,7 @@ export function MedicinePromptDock({
                   ))}
                 </TagList>
               </TagGroup>
-            ) : (
-              <span {...stylex.props(styles.emptyNotice)}>なし</span>
-            )}
-          </div>
-          {additional.length > 0 && (
+            </div>
             <button
               type="button"
               {...stylex.props(styles.actionBtn)}
@@ -162,8 +160,8 @@ export function MedicinePromptDock({
             >
               全解除
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Tier 3: PromptField */}
         <div {...stylex.props(styles.promptContainer)}>
