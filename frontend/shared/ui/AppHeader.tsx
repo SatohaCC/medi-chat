@@ -79,7 +79,7 @@ export function AppHeader({
         )}
         aria-current={isImports ? "page" : undefined}
       >
-        XML取り込み
+        添付文書登録
       </Link>
       <Link
         onNavigate={close}

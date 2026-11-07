@@ -23,6 +23,7 @@ export interface MedicinePromptDockProps {
   medicineEntries: MedicineEntry[];
   isStreaming?: boolean;
   isStopping?: boolean;
+  showSetupHint?: boolean;
   onAbort?: () => void;
   disabled?: boolean;
   canSend?: boolean;
@@ -42,6 +43,7 @@ export function MedicinePromptDock({
   medicineEntries,
   isStreaming = false,
   isStopping = false,
+  showSetupHint = true,
   onAbort,
   disabled = false,
   canSend = true,
@@ -49,13 +51,17 @@ export function MedicinePromptDock({
   return (
     <div {...stylex.props(styles.container)} data-testid="medicine-prompt-dock">
       <div {...stylex.props(styles.inner)}>
-        {/* Tier 1: 対象処方箋（ベース処方薬） */}
+        {showSetupHint && (
+          <p>検索対象の薬は上で選択。質問文に追加する薬は「@」から選べます。</p>
+        )}
+
+        {/* 送信する質問の検索対象 */}
         <div {...stylex.props(styles.tier)} data-testid="tier-1-prescription">
-          <span {...stylex.props(styles.tierLabel)}>対象処方箋:</span>
+          <span {...stylex.props(styles.tierLabel)}>対象薬:</span>
           <div {...stylex.props(styles.chipList)}>
             {baseline.length > 0 ? (
               <TagGroup
-                aria-label="対象処方箋の薬"
+                aria-label="この質問で調べる薬"
                 onRemove={(keys) => {
                   for (const key of keys) onRemoveBaseline(String(key));
                 }}
@@ -71,7 +77,7 @@ export function MedicinePromptDock({
                           .className ?? ""
                       }
                     >
-                      <span>{med.name}</span>
+                      <span title={med.name}>{med.name}</span>
                       <AriaButton
                         slot="remove"
                         aria-label={`削除 ${med.name}`}
@@ -84,7 +90,7 @@ export function MedicinePromptDock({
                 </TagList>
               </TagGroup>
             ) : (
-              <span {...stylex.props(styles.emptyNotice)}>なし</span>
+              <span {...stylex.props(styles.emptyNotice)}>未選択</span>
             )}
           </div>
           {onAddBaseline && (
@@ -92,6 +98,7 @@ export function MedicinePromptDock({
               entries={medicineEntries}
               selected={baseline}
               onSelect={onAddBaseline}
+              buttonLabel={baseline.length === 0 ? "調べる薬を選ぶ" : "薬を追加"}
             />
           )}
 
@@ -106,13 +113,13 @@ export function MedicinePromptDock({
           )}
         </div>
 
-        {/* Tier 2: チャットでの追加薬 */}
+        {/* 質問文の @ から追加した薬 */}
         <div {...stylex.props(styles.tier)} data-testid="tier-2-additional">
-          <span {...stylex.props(styles.tierLabel)}>チャットでの追加薬:</span>
+          <span {...stylex.props(styles.tierLabel)}>質問文から追加した薬:</span>
           <div {...stylex.props(styles.chipList)}>
             {additional.length > 0 ? (
               <TagGroup
-                aria-label="チャットでの追加薬"
+                aria-label="質問文から追加した薬"
                 onRemove={(keys) => {
                   for (const key of keys) onRemoveAdditional(String(key));
                 }}
@@ -131,7 +138,7 @@ export function MedicinePromptDock({
                         ).className ?? ""
                       }
                     >
-                      <span>{med.name}</span>
+                      <span title={med.name}>{med.name}</span>
                       <AriaButton
                         slot="remove"
                         aria-label={`削除 ${med.name}`}

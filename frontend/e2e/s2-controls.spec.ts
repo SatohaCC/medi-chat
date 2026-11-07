@@ -6,7 +6,7 @@ for (const width of [390, 1280]) {
     await page.setViewportSize({ width, height: 844 });
     const chat = await openChat(page);
     await chat.input.fill("保持するテスト質問");
-    const trigger = page.getByRole("button", { name: "処方薬を追加", exact: true });
+    const trigger = page.getByRole("button", { name: "薬を追加", exact: true });
     await trigger.click();
     const search = page.getByRole("searchbox", { name: "処方薬検索", exact: true });
     await expect(search).toBeFocused();

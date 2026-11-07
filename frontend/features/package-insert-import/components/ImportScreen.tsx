@@ -20,12 +20,24 @@ export function ImportScreen() {
       <main {...stylex.props(styles.main)}>
         <div {...stylex.props(styles.headerRow)}>
           <div>
-            <h1 {...stylex.props(styles.title)}>添付文書XMLの取り込み</h1>
+            <h1 {...stylex.props(styles.title)}>添付文書XMLを登録</h1>
             <p {...stylex.props(styles.description)}>
-              原本XMLを登録し、対象製品の検索と候補に反映します。
+              対象製品の電子添文XMLを登録すると、その製品の検索に利用できます。
             </p>
           </div>
         </div>
+
+        <section aria-labelledby="import-steps-title">
+          <h2 id="import-steps-title">登録方法</h2>
+          <ol>
+            <li>対象製品の電子添文XMLを用意します。</li>
+            <li>「XMLファイルを選択」からファイルを選び、「XMLを登録」を押します。</li>
+            <li>登録結果で、検索に適用されている製品と改訂年月を確認します。</li>
+          </ol>
+          <p>
+            同じ製品の複数の改訂版がある場合、改訂年月ではなく登録に成功した順で検索に使う版が決まります。登録後は、画面の適用状況を確認してください。
+          </p>
+        </section>
 
         <form {...stylex.props(styles.form)} onSubmit={submit}>
           <FileTrigger
@@ -48,7 +60,7 @@ export function ImportScreen() {
             </Button>
           </FileTrigger>
           <Button type="submit" isDisabled={!file} isPending={sending}>
-            {sending ? "送信中…" : "取り込む"}
+            {sending ? "登録中…" : "XMLを登録"}
           </Button>
         </form>
 
@@ -71,18 +83,30 @@ export function ImportScreen() {
           >
             <h2 {...stylex.props(styles.resultTitle)}>
               {result.status === "superseded"
-                ? "旧版／現在の検索には適用されていません"
-                : "登録済み／検索に反映済み"}
+                ? "登録しました（現在の検索には適用されていません）"
+                : "登録しました（検索に適用されています）"}
             </h2>
             <p {...stylex.props(styles.resultMutedText)}>
-              改訂年月ではなく、最初に登録成功した順で採用されます。
+              登録した製品と改訂年月を確認してください。
             </p>
-            <p {...stylex.props(styles.resultText)}>
-              現在適用中のYJ: {result.active_yj_codes.join(", ") || "なし"}
-            </p>
-            <p {...stylex.props(styles.resultText)}>
-              公開世代: {result.generation_id} / 登録順: {result.registration_sequence}
-            </p>
+            <h3 {...stylex.props(styles.resultSectionTitle)}>登録した製品</h3>
+            <ul>
+              {result.products.map((product, index) => (
+                <li key={`${product.yj_code}-${index}`}>
+                  {product.brand_name || "製品名不明"}
+                </li>
+              ))}
+            </ul>
+            <h3 {...stylex.props(styles.resultSectionTitle)}>改訂年月</h3>
+            <ul {...stylex.props(styles.resultList)}>
+              {result.revisions.map((revision, index) => (
+                <li key={`${revision.source_label}-${index}`}>
+                  {revision.year_month || "不明"}
+                  {revision.version ? `（${revision.version}）` : ""}
+                  {revision.source_label ? ` · ${revision.source_label}` : ""}
+                </li>
+              ))}
+            </ul>
             {result.artifacts_deleted && (
               <p {...stylex.props(styles.resultMutedText)}>
                 この旧版の所有ファイルは削除済みです。同原本の再送でも復活しません。
@@ -115,27 +139,30 @@ export function ImportScreen() {
                 同じ原本の登録情報です。新しい登録順は作成していません。
               </p>
             )}
-            <p {...stylex.props(styles.resultText)}>{result.document_id}</p>
-            <p {...stylex.props(styles.resultMutedText)}>
-              原本SHA256: {result.source_sha256}
-            </p>
-            <p {...stylex.props(styles.resultText)}>
-              項目数: {result.section_count} / 検索用項目数: {result.search_unit_count}
-            </p>
-            <ul {...stylex.props(styles.resultList)}>
-              {result.products.map((product, index) => (
-                <li key={`${product.yj_code}-${index}`}>
-                  {product.brand_name} {product.yj_code}
-                </li>
-              ))}
-            </ul>
-            <ul {...stylex.props(styles.resultList)}>
-              {result.revisions.map((revision, index) => (
-                <li key={`${revision.source_label}-${index}`}>
-                  {revision.source_label} {revision.year_month} {revision.version}
-                </li>
-              ))}
-            </ul>
+            <details>
+              <summary>管理用の登録情報を表示</summary>
+              <p {...stylex.props(styles.resultText)}>
+                現在適用中のYJコード: {result.active_yj_codes.join(", ") || "なし"}
+              </p>
+              <p {...stylex.props(styles.resultText)}>
+                公開世代: {result.generation_id || "なし"} / 登録順:{" "}
+                {result.registration_sequence ?? "なし"}
+              </p>
+              <p {...stylex.props(styles.resultText)}>
+                項目数: {result.section_count} / 検索用項目数: {result.search_unit_count}
+              </p>
+              <p {...stylex.props(styles.resultText)}>登録ID: {result.document_id}</p>
+              <p {...stylex.props(styles.resultMutedText)}>
+                原本SHA256: {result.source_sha256}
+              </p>
+              <ul {...stylex.props(styles.resultList)}>
+                {result.products.map((product, index) => (
+                  <li key={`${product.yj_code}-${index}`}>
+                    {product.yj_code || "YJコードなし"}
+                  </li>
+                ))}
+              </ul>
+            </details>
             {result.warnings.length > 0 && (
               <div {...stylex.props(styles.warningCard)}>
                 <h3 {...stylex.props(styles.warningTitle)}>確認が必要な警告</h3>

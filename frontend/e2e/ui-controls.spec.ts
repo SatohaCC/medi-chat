@@ -19,7 +19,7 @@ test("SX-20/22: keyboard medicine selection and model agree with WS payload", as
   page,
 }) => {
   const chat = await openChat(page);
-  await page.getByRole("button", { name: "処方薬を追加", exact: true }).click();
+  await page.getByRole("button", { name: "薬を追加", exact: true }).click();
   const search = page.getByRole("searchbox", { name: "処方薬検索", exact: true });
   await expect(search).toBeFocused();
   await search.press("ArrowDown");

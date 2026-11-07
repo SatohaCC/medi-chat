@@ -20,10 +20,12 @@ export function MedicinePicker({
   entries,
   selected,
   onSelect,
+  buttonLabel,
 }: {
   entries: MedicineEntry[];
   selected: SelectedMedicineItem[];
   onSelect: (medicine: SelectedMedicineItem) => void;
+  buttonLabel: string;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -51,8 +53,8 @@ export function MedicinePicker({
         setQuery("");
       }}
     >
-      <Button variant="secondary" aria-label="処方薬を追加">
-        処方薬を追加
+      <Button variant="secondary" aria-label={buttonLabel}>
+        {buttonLabel}
       </Button>
       <Popover placement="top start" {...stylex.props(styles.popoverMenu)}>
         <Dialog aria-label="処方薬を選択" {...stylex.props(styles.pickerDialog)}>
@@ -60,8 +62,9 @@ export function MedicinePicker({
             <div {...stylex.props(styles.popoverHeader)}>
               <SearchField
                 autoFocus
+                label="薬名またはYJコード"
                 aria-label="処方薬検索"
-                placeholder="薬名・YJコードで検索"
+                placeholder="検索"
               />
               <Button
                 variant="secondary"

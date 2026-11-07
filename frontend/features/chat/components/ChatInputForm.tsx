@@ -20,6 +20,7 @@ export interface ChatInputFormProps {
   status: ConnectionStatus;
   isStreaming: boolean;
   canSend: boolean;
+  showSetupHint?: boolean;
   isStopping?: boolean;
   onAbort?: () => void;
 }
@@ -38,6 +39,7 @@ export function ChatInputForm({
   medicineEntries,
   isStreaming,
   canSend,
+  showSetupHint,
   isStopping = false,
   onAbort,
 }: ChatInputFormProps) {
@@ -57,6 +59,7 @@ export function ChatInputForm({
       disabled={false}
       isStreaming={isStreaming}
       isStopping={isStopping}
+      showSetupHint={showSetupHint}
       onAbort={onAbort}
       canSend={canSend}
     />

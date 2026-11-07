@@ -35,7 +35,7 @@ test("plain text does not select a medicine; Escape dismisses token completion",
   await expect(page.getByRole("menuitem")).toHaveCount(2);
   await chat.input.press("Escape");
   await expect(page.getByRole("menuitem")).toHaveCount(0);
-  await expect(page.getByTestId("tier-2-additional")).toContainText("なし");
+  await expect(page.getByTestId("tier-2-additional")).toBeHidden();
   expect(chat.requests).toHaveLength(0);
 });
 

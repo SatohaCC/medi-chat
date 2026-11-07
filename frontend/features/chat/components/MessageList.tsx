@@ -1,6 +1,5 @@
 import * as stylex from "@stylexjs/stylex";
-import { AlertTriangle, FileText, Lightbulb, Pill, Users, Zap } from "lucide-react";
-import type { SelectedMedicineItem } from "../../medicine-selection";
+import { AlertTriangle, FileText, Pill, Users, Zap } from "lucide-react";
 import type { Message } from "../model/chat";
 import { MessageItem } from "./MessageItem";
 import { styles } from "./MessageList.styles";
@@ -12,7 +11,6 @@ interface MessageListProps {
   openEvidenceIndex?: number | null;
   evidencePaneTab?: "sources" | "jev";
   onToggleEvidence?: (index: number, tab: "sources" | "jev") => void;
-  baseline?: SelectedMedicineItem[];
   onSelectSuggestion?: (query: string) => void;
 }
 
@@ -23,11 +21,8 @@ export function MessageList({
   openEvidenceIndex = null,
   evidencePaneTab = "sources",
   onToggleEvidence,
-  baseline = [],
   onSelectSuggestion,
 }: MessageListProps) {
-  const currentDrugName = baseline[0]?.name ?? "対象薬";
-
   return (
     <main ref={containerRef} {...stylex.props(styles.root)}>
       <div {...stylex.props(styles.inner)}>
@@ -39,8 +34,13 @@ export function MessageList({
               </div>
               <h2 {...stylex.props(styles.welcomeTitle)}>添付文書 AI アシスタント</h2>
               <p {...stylex.props(styles.welcomeSubtitle)}>
-                PMDA公式の最新電子添文データをもとに、相互作用・禁忌・用法用量・副作用を迅速に確認できます。
+                調べる薬を選び、質問を入力すると、登録済みの電子添文を根拠に回答します。
               </p>
+            </div>
+
+            <div>
+              <h3>質問例</h3>
+              <p>例を選ぶと質問欄に入ります。対象薬を確認して送信してください。</p>
             </div>
 
             <div {...stylex.props(styles.suggestionGrid)}>
@@ -49,7 +49,7 @@ export function MessageList({
                 {...stylex.props(styles.suggestionCard)}
                 onClick={() =>
                   onSelectSuggestion?.(
-                    `${currentDrugName}と併用禁忌および併用注意の薬剤について教えてください`,
+                    "選択した医薬品について、併用禁忌・併用注意の相手となる薬剤と注意点を教えてください",
                   )
                 }
               >
@@ -62,7 +62,7 @@ export function MessageList({
                   </span>
                 </div>
                 <p {...stylex.props(styles.suggestionCardDesc)}>
-                  {currentDrugName}との併用禁忌・注意薬および機序・危険因子
+                  併用を避ける薬や注意が必要な薬を確認
                 </p>
               </button>
 
@@ -71,7 +71,7 @@ export function MessageList({
                 {...stylex.props(styles.suggestionCard)}
                 onClick={() =>
                   onSelectSuggestion?.(
-                    `${currentDrugName}の腎機能・肝機能障害患者への投与基準や用量調節について教えてください`,
+                    "選択した医薬品について、腎機能・肝機能が低下した患者や高齢者への投与量の注意を教えてください",
                   )
                 }
               >
@@ -93,7 +93,7 @@ export function MessageList({
                 {...stylex.props(styles.suggestionCard)}
                 onClick={() =>
                   onSelectSuggestion?.(
-                    `${currentDrugName}の重大な副作用とその初期症状、発現時の処置について教えてください`,
+                    "選択した医薬品の重大な副作用、その初期症状、発現時の対応を教えてください",
                   )
                 }
               >
@@ -113,7 +113,7 @@ export function MessageList({
                 {...stylex.props(styles.suggestionCard)}
                 onClick={() =>
                   onSelectSuggestion?.(
-                    `${currentDrugName}の用法及び用量と、服用タイミング・休薬に関する注意を教えてください`,
+                    "選択した医薬品の用法・用量、服用するタイミング、飲み忘れたときの対応を教えてください",
                   )
                 }
               >
@@ -130,15 +130,6 @@ export function MessageList({
                 </p>
               </button>
             </div>
-
-            <p {...stylex.props(styles.welcomeSubtitle)}>
-              <Lightbulb
-                size={13}
-                color="var(--user-bg)"
-                style={{ display: "inline", verticalAlign: "middle", marginRight: 6 }}
-              />
-              下の入力欄で <strong>@</strong> を入力すると、薬品名を選択して質問できます
-            </p>
           </div>
         ) : (
           messages.map((msg, i) => (

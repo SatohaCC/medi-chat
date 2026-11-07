@@ -10,10 +10,10 @@ export function ImportHistory() {
       <div {...stylex.props(styles.header)}>
         <div>
           <h2 id="import-history-title" {...stylex.props(styles.title)}>
-            取り込み済みXML
+            登録履歴
           </h2>
           <p {...stylex.props(styles.description)}>
-            新しく登録した順に表示します。旧版の登録履歴も含みます。
+            登録した順に表示します。上の登録順と改訂年月は異なるため、検索への適用状況も確認してください。
           </p>
         </div>
         <Button variant="text" onActivate={refresh} disabled={loading}>
@@ -25,7 +25,7 @@ export function ImportHistory() {
         {error && <p role="alert">{error}「一覧を更新」で再試行できます。</p>}
         {!loading && !error && page?.total_count === 0 && (
           <p {...stylex.props(styles.description)}>
-            取り込み済みのXMLはありません。上のフォームからXMLを登録してください。
+            登録履歴はありません。上の手順に沿って電子添文XMLを登録してください。
           </p>
         )}
         {!error && page && page.items.length > 0 && (
@@ -35,48 +35,59 @@ export function ImportHistory() {
               件
             </p>
             <ul {...stylex.props(styles.list)}>
-              {page.items.map((item) => (
-                <li
-                  key={`${item.document_id}:${item.source_sha256}`}
-                  {...stylex.props(styles.item)}
-                >
-                  <div {...stylex.props(styles.row)}>
-                    <h3 {...stylex.props(styles.filename)}>
-                      {item.filename ?? item.document_id}
-                    </h3>
-                    <span
-                      {...stylex.props(
-                        styles.badge,
-                        item.active_yj_codes.length > 0 && styles.active,
-                      )}
-                    >
-                      {item.active_yj_codes.length > 0
-                        ? "検索に適用中"
-                        : "旧版・適用なし"}
-                    </span>
-                  </div>
-                  <p {...stylex.props(styles.products)}>
-                    {item.products
-                      .map((p) => p.brand_name || p.yj_code)
-                      .filter(Boolean)
-                      .join(" / ") || "製品名なし"}
-                  </p>
-                  <p {...stylex.props(styles.description)}>
-                    改訂年月 {item.revised_at} · 登録順 {item.registration_sequence}
-                  </p>
-                  <p {...stylex.props(styles.description)}>
-                    現在適用中のYJ: {item.active_yj_codes.join(", ") || "なし"}
-                  </p>
-                  {item.artifacts_deleted && (
+              {page.items.map((item) => {
+                const productNames = item.products
+                  .map((product) => product.brand_name)
+                  .filter((name): name is string => Boolean(name));
+                return (
+                  <li
+                    key={`${item.document_id}:${item.source_sha256}`}
+                    {...stylex.props(styles.item)}
+                  >
+                    <div {...stylex.props(styles.row)}>
+                      <h3 {...stylex.props(styles.products)}>
+                        {productNames.join(" / ") || "製品名不明"}
+                      </h3>
+                      <span
+                        {...stylex.props(
+                          styles.badge,
+                          item.active_yj_codes.length > 0 && styles.active,
+                        )}
+                      >
+                        {item.active_yj_codes.length > 0
+                          ? "検索に適用中"
+                          : "現在は適用されていません"}
+                      </span>
+                    </div>
                     <p {...stylex.props(styles.description)}>
-                      この旧版の保存データは削除済みです。登録履歴のみ表示しています。
+                      改訂年月: {item.revised_at}
                     </p>
-                  )}
-                  <p {...stylex.props(styles.fingerprint)}>
-                    原本SHA256: {item.source_sha256}
-                  </p>
-                </li>
-              ))}
+                    {item.artifacts_deleted && (
+                      <p>
+                        この旧版の保存データは削除済みです。登録履歴のみ表示しています。
+                      </p>
+                    )}
+                    <details>
+                      <summary>管理用の詳細を表示</summary>
+                      <p {...stylex.props(styles.description)}>
+                        ファイル名: {item.filename ?? "記録なし"}
+                      </p>
+                      <p {...stylex.props(styles.description)}>
+                        登録順: {item.registration_sequence}
+                      </p>
+                      <p {...stylex.props(styles.description)}>
+                        現在適用中のYJコード: {item.active_yj_codes.join(", ") || "なし"}
+                      </p>
+                      <p {...stylex.props(styles.description)}>
+                        登録ID: {item.document_id}
+                      </p>
+                      <p {...stylex.props(styles.fingerprint)}>
+                        原本SHA256: {item.source_sha256}
+                      </p>
+                    </details>
+                  </li>
+                );
+              })}
             </ul>
             <div {...stylex.props(styles.pagination)}>
               <Button

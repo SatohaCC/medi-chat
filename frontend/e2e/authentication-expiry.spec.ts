@@ -17,7 +17,7 @@ for (const completed of [true, false]) {
     const answer = page.locator('[data-message-role="assistant"]');
     await expect(answer).toContainText("テスト回答本文");
     await chat.disconnect(4001);
-    await expect(page.getByText("connected", { exact: true })).toBeVisible();
+    await expect(page.getByText("接続済み", { exact: true })).toBeVisible();
     await expect(chat.input).toBeEnabled();
     if (completed) await expect(answer).not.toContainText("回答を中断しました");
     else await expect(answer).toContainText("回答を中断しました");

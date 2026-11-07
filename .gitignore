@@ -45,6 +45,8 @@ temp/
 graphify-out/
 *.log
 yj
+.corepack.env
+.corepack-cache/
 /docs/reference/
 /.agents/*
 !/.agents/hooks.json

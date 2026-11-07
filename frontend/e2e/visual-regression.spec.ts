@@ -158,7 +158,7 @@ for (const width of [1280, 390]) {
   test(`V: chat states ${width}`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
     const chat = await openChat(page);
-    await page.getByRole("button", { name: "処方薬を追加" }).click();
+    await page.getByRole("button", { name: "薬を追加" }).click();
     await page.getByRole("option", { name: "テスト医薬品B" }).click();
     await visualSnapshot(page, testInfo, `chat-selected-${width}.png`);
     await chat.input.focus();
@@ -227,7 +227,7 @@ for (const width of [1280, 390]) {
     chat.respond({ type: "text_delta", content: "固定された回答" });
     chat.respond({ type: "text_done" });
     await expect(page.getByText("固定された回答")).toBeVisible();
-    await page.getByRole("button", { name: /Jevレスポンス確認/ }).click();
+    await page.getByRole("button", { name: /質問意図の判定を見る/ }).click();
     await visualSnapshot(page, testInfo, `chat-jev-summary-${width}.png`);
     await page.getByRole("button", { name: "全9件を表示" }).click();
     await visualSnapshot(page, testInfo, `chat-jev-all-${width}.png`);

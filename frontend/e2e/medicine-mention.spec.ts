@@ -33,6 +33,7 @@ async function setupMedicineChat(
     staticMedicines?: unknown[];
     activeMedicines?: unknown[];
     autocompleteItems?: unknown[];
+    selectInitialTarget?: boolean;
   },
 ) {
   const requests: ChatRequest[] = [];
@@ -88,7 +89,12 @@ async function setupMedicineChat(
   });
 
   await page.goto("/");
-  await expect(page.getByText("connected", { exact: true })).toBeVisible();
+  await expect(page.getByText("接続済み", { exact: true })).toBeVisible();
+
+  if (options?.selectInitialTarget !== false) {
+    await page.getByRole("button", { name: "調べる薬を選ぶ", exact: true }).click();
+    await page.getByRole("option", { name: /^イグザレルト錠15mg/ }).click();
+  }
 
   const dock = page.getByTestId("medicine-prompt-dock");
   const tier1 = page.getByTestId("tier-1-prescription");
@@ -120,15 +126,19 @@ async function setupMedicineChat(
 }
 
 test.describe("Unit 3 & Unit 4: Medicine Mention E2E Tests", () => {
-  // TC-U01: 初期表示で直上1段目に対象処方箋、2段目は「なし」
-  test("TC-U01: initial view shows prescription in tier 1, and tier 2 is empty", async ({
-    page,
-  }) => {
-    const chat = await setupMedicineChat(page);
-    await expect(chat.tier1).toContainText("対象処方箋:");
-    await expect(chat.tier1).toContainText("イグザレルト錠15mg");
-    await expect(chat.tier2).toContainText("チャットでの追加薬:");
-    await expect(chat.tier2).toContainText("なし");
+  // 初期状態では薬を選択せず、対象薬を利用者が明示して選ぶ。
+  test("TC-U01: 初期表示では対象薬が未選択で、選択方法が表示される", async ({ page }) => {
+    const chat = await setupMedicineChat(page, { selectInitialTarget: false });
+    await expect(chat.tier1).toContainText("対象薬:");
+    await expect(chat.tier1).toContainText("未選択");
+    await expect(chat.tier2).toBeHidden();
+    await expect(page.getByTestId("medicine-prompt-dock")).toContainText(
+      "薬名を書くだけでは検索対象は変わりません",
+    );
+    await expect(chat.send).toBeDisabled();
+    await expect(
+      page.getByRole("button", { name: "調べる薬を選ぶ", exact: true }),
+    ).toBeVisible();
   });
 
   // TC-U02: @ロキ で候補メニューが展開し、ロキソニンがサジェストされる
@@ -286,6 +296,7 @@ test.describe("Unit 3 & Unit 4: Medicine Mention E2E Tests", () => {
     page,
   }) => {
     const chat = await setupMedicineChat(page, {
+      staticMedicines: [igzEntry],
       activeMedicines: [
         {
           generic_name: "ロキソプロフェンナトリウム水和物錠",
@@ -316,7 +327,7 @@ test.describe("Unit 3 & Unit 4: Medicine Mention E2E Tests", () => {
     await expect(chat.tier1).not.toContainText("ロキソニン錠60mg");
 
     // Click ＋ 処方薬を追加
-    await page.getByRole("button", { name: "処方薬を追加" }).click();
+    await page.getByRole("button", { name: "薬を追加" }).click();
 
     const dialog = page.getByRole("dialog", { name: "処方薬を選択" });
     await expect(dialog).toBeVisible();
@@ -407,7 +418,7 @@ test("50 targets are sent intact; 51 targets are blocked with an explanation", a
   }));
   const chat = await setupMedicineChat(page, { autocompleteItems: [igzEntry, ...added] });
   async function add(index: number) {
-    await page.getByRole("button", { name: "処方薬を追加", exact: true }).click();
+    await page.getByRole("button", { name: "薬を追加", exact: true }).click();
     await page.getByRole("searchbox", { name: "処方薬検索" }).fill(added[index].n);
     await page.getByRole("option", { name: new RegExp(`^${added[index].n}`) }).click();
   }
@@ -451,7 +462,7 @@ test("WR-044 token-bearing unsent question restores PromptFieldValue and targets
   await page.clock.install();
   await page.clock.pauseAt(new Date(Date.now() + 1000));
   await chat.disconnect();
-  await expect(page.getByText("disconnected", { exact: true })).toBeVisible();
+  await expect(page.getByText("未接続", { exact: true })).toBeVisible();
   await chat.send.click();
   await expect(page.getByRole("region", { name: "未送信の保留" })).toContainText(
     "@ロキソニン錠60mg",

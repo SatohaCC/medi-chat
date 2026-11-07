@@ -181,8 +181,8 @@ test("always retrieved evidence keeps both the safety and question-based reasons
     section: { code: "8", title: "重要な基本的注意" },
     retrieved_by: ["always", "logic"],
   });
-  assert.ok(html.includes("常時取得"));
-  assert.ok(html.includes("ロジック取得"));
+  assert.ok(html.includes("毎回確認"));
+  assert.ok(html.includes("質問の言葉に一致"));
   assert.ok(html.includes("重要な基本的注意"));
 });
 
@@ -193,12 +193,12 @@ test("progressive panel distinguishes always retrieved evidence from logic hits"
       retrievalStatus: "retrieving",
     }),
   );
-  assert.ok(retrievingHtml.includes("常時取得：1件"));
-  assert.ok(retrievingHtml.includes("ロジック：1件"));
-  assert.ok(retrievingHtml.includes("合計：1件"));
+  assert.ok(retrievingHtml.includes("毎回確認：1件"));
+  assert.ok(retrievingHtml.includes("質問の言葉：1件"));
+  assert.ok(retrievingHtml.includes("全体：1件"));
   assert.ok(retrievingHtml.includes("根拠を取得中..."));
   assert.ok(retrievingHtml.includes("質問内容にかかわらず"));
-  assert.ok(retrievingHtml.includes("取得理由別の件数には重複"));
+  assert.ok(retrievingHtml.includes("理由別の件数には同じ根拠が重複"));
   assert.ok(!retrievingHtml.includes("ロジック検索根拠"));
 
   const completeHtml = renderToStaticMarkup(

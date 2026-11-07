@@ -21,6 +21,8 @@ import { useActiveMedicines } from "../../medicine-selection/hooks/useActiveMedi
 import { searchPackageInserts } from "../api/searchApi";
 import { styles } from "./KeywordSearchScreen.styles";
 
+const queryExamples = ["悪心", "併用禁忌", "腎機能障害"];
+
 export function KeywordSearchScreen() {
   const [query, setQuery] = useState("");
   const [selectedYjCodes, setSelectedYjCodes] = useState<string[]>([]);
@@ -102,8 +104,17 @@ export function KeywordSearchScreen() {
               onChange={setQuery}
               onSubmit={() => void handleSearch()}
               isDisabled={isSearching}
-              placeholder="例: 悪心、併用禁忌、腎機能"
+              aria-describedby="keyword-search-help"
+              placeholder="キーワードを入力"
             />
+            <div id="keyword-search-help">
+              <span>例を選ぶと検索欄に入力されます。例:</span>
+              {queryExamples.map((example) => (
+                <button key={example} type="button" onClick={() => setQuery(example)}>
+                  {example}
+                </button>
+              ))}
+            </div>
           </div>
           <S2Button
             onPress={() => void handleSearch()}
@@ -120,11 +131,10 @@ export function KeywordSearchScreen() {
               size="L"
               isEmphasized
             >
-              類似語も検索 (AI拡張)
+              関連する表現も検索
             </Switch>
             <span {...stylex.props(styles.expansionNote)}>
-              ※ 入力した症状や単語の医学的類義語（例: 吐き気 →
-              悪心・嘔吐）も同時に検索します
+              例：「吐き気」と入力すると「悪心」「嘔吐」も検索します。
             </span>
           </div>
         </form>
@@ -132,18 +142,19 @@ export function KeywordSearchScreen() {
         <div {...stylex.props(styles.filterSection)}>
           <div {...stylex.props(styles.headerRow)}>
             <span {...stylex.props(styles.filterHeading)}>
-              対象医薬品:{" "}
+              検索する医薬品:{" "}
               {selectedYjCodes.length === 0
-                ? "すべての医薬品（絞り込みなし）"
+                ? "登録済みの全製品"
                 : `${selectedYjCodes.length}製品を選択中`}
             </span>
             <Button
               variant="text"
               onActivate={() => setShowMedicineFilter((prev) => !prev)}
             >
-              {showMedicineFilter ? "▲ 医薬品選択を閉じる" : "▼ 医薬品で絞り込む"}
+              {showMedicineFilter ? "医薬品の選択を閉じる" : "医薬品を選んで絞り込む"}
             </Button>
           </div>
+          <p>絞り込みを指定しない場合は、取り込み済みの全製品から検索します。</p>
 
           {showMedicineFilter && (
             <div
@@ -219,7 +230,12 @@ export function KeywordSearchScreen() {
 
             {displayedSources.length === 0 ? (
               <div {...stylex.props(styles.empty)}>
-                該当する添付文書の根拠記載は見つかりませんでした（0件）
+                <strong>該当する記載は見つかりませんでした（0件）</strong>
+                <span>
+                  検索語を短くするか、別の表現を試してください。
+                  {selectedYjCodes.length > 0 &&
+                    " 医薬品を絞り込んでいる場合は、選択を解除して検索範囲を広げられます。"}
+                </span>
               </div>
             ) : (
               <div {...stylex.props(styles.resultsList)}>

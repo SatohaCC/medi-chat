@@ -165,8 +165,8 @@ export function MessageItem({
                 <Zap size={13} strokeWidth={2} />
                 <span>
                   {isEvidenceOpen && activeEvidenceTab === "jev"
-                    ? "Jevレスポンスを閉じる"
-                    : "Jevレスポンス確認"}
+                    ? "質問意図の判定を閉じる"
+                    : "質問意図の判定を見る"}
                 </span>
                 {message.jevResponse.answers?.intent?.choice && (
                   <span {...stylex.props(styles.jevBadge)}>

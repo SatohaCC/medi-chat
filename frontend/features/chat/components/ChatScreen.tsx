@@ -3,7 +3,7 @@
 import { PromptFieldValue } from "@react-spectrum/ai";
 import { Button } from "@react-spectrum/s2/Button";
 import * as stylex from "@stylexjs/stylex";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useMobileLayout } from "../../../shared/hooks/useMobileLayout";
 import { styles as layout } from "../../../shared/ui/PageLayout.styles";
 import {
@@ -30,39 +30,13 @@ export function ChatScreen() {
 
   const { entries, activeMedicines } = useMedicineEntries();
 
-  // Baseline prescription: default 3339003F5020 (イグザレルト錠15mg)
-  const defaultBaseline = useMemo<SelectedMedicineItem>(() => {
-    const match = entries.find((item) => item.y === "3339003F5020");
-    return {
-      yj_code: "3339003F5020",
-      name: match ? match.n : "イグザレルト錠15mg",
-    };
-  }, [entries]);
-
-  const [baseline, setBaseline] = useState<SelectedMedicineItem[]>([defaultBaseline]);
+  const [baseline, setBaseline] = useState<SelectedMedicineItem[]>([]);
   const [persistentAdditional, setPersistentAdditional] = useState<
     SelectedMedicineItem[]
   >([]);
   const [prompt, setPrompt] = useState<PromptFieldValue>(() => new PromptFieldValue([]));
   const [inputKey, setInputKey] = useState(0);
   const [restoreChoice, setRestoreChoice] = useState<UnsentRequest | null>(null);
-
-  // Sync default baseline name once catalog loads
-  useEffect(() => {
-    if (entries.length > 0) {
-      setBaseline((prev) =>
-        prev.map((item) => {
-          if (item.yj_code === "3339003F5020" && item.name === "イグザレルト錠15mg") {
-            const match = entries.find((m) => m.y === item.yj_code);
-            if (match && match.n !== item.name) {
-              return { ...item, name: match.n };
-            }
-          }
-          return item;
-        }),
-      );
-    }
-  }, [entries]);
 
   const availableActiveYjCodes = useMemo(() => {
     return new Set(activeMedicines.items.map((entry) => entry.y));
@@ -251,7 +225,6 @@ export function ChatScreen() {
             openEvidenceIndex={openEvidenceIndex}
             evidencePaneTab={evidencePaneTab}
             onToggleEvidence={handleToggleEvidence}
-            baseline={baseline}
             onSelectSuggestion={handleSelectSuggestion}
           />
 
@@ -334,6 +307,7 @@ export function ChatScreen() {
             status={status}
             isStreaming={isStreaming}
             isStopping={isStopping}
+            showSetupHint={messages.length === 0}
             onAbort={abortRequest}
             canSend={targetState.canSend && !pending}
           />

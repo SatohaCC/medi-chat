@@ -101,9 +101,14 @@ test("TC137 real browser three confirmations and normal single/pair without API 
       )
       .toBe(200);
     await page.goto("/");
-    await expect(page.getByText("connected", { exact: true })).toBeVisible({
+    await expect(page.getByText("接続済み", { exact: true })).toBeVisible({
       timeout: 30000,
     });
+    await page.getByRole("button", { name: "調べる薬を選ぶ", exact: true }).click();
+    await page
+      .getByRole("option", { name: /^イグザレルト錠/ })
+      .first()
+      .click();
     const cases = [
       [
         "アマリールの効能は？",
@@ -139,7 +144,7 @@ test("TC137 real browser three confirmations and normal single/pair without API 
     expect(Array.isArray(singleSources)).toBe(true);
     expect(singleSources).toHaveLength(2);
     for (const name of [/^イトリゾールカプセル/, /^イトラコナゾールカプセル/]) {
-      await page.getByRole("button", { name: "処方薬を追加", exact: true }).click();
+      await page.getByRole("button", { name: "薬を追加", exact: true }).click();
       await page.getByRole("option", { name }).first().click();
     }
     const pair = await ask("イグザレルトとイトラコナゾールの飲み合わせ");

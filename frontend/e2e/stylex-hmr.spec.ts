@@ -6,7 +6,7 @@ import { expect, test } from "./helpers/test";
 test("SX-03: StyleXの色編集と復元が入力・選択を保持してHMRされる", async ({ page }) => {
   const chat = await openChat(page);
   await chat.input.fill("HMRで保持する質問");
-  await page.getByRole("button", { name: "処方薬を追加", exact: true }).click();
+  await page.getByRole("button", { name: "薬を追加", exact: true }).click();
   await page.getByRole("option", { name: /^テスト医薬品B/ }).click();
   const medicine = page.getByTestId("tier-1-prescription");
   const styles = resolve(
