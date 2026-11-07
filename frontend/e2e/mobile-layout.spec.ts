@@ -10,7 +10,7 @@ for (const width of [320, 390]) {
     const chat = await openChat(page);
     await expect(chat.input).toBeInViewport();
     await expect(chat.send).toBeInViewport();
-    await page.getByRole("button", { name: "処方薬を追加", exact: true }).click();
+    await page.getByRole("button", { name: "薬を追加", exact: true }).click();
     const option = page.getByRole("option", { name: /^テスト医薬品B/ });
     await expect(option).toBeInViewport();
     await option.click();
@@ -33,9 +33,7 @@ for (const width of [320, 390]) {
     const sources = dialog.getByRole("tab", { name: "添付文書の根拠", exact: true });
     await sources.focus();
     await sources.press("ArrowRight");
-    await expect(
-      dialog.getByRole("tab", { name: "Jev判定インスペクター" }),
-    ).toBeFocused();
+    await expect(dialog.getByRole("tab", { name: "質問意図の判定" })).toBeFocused();
     await page.keyboard.press("Escape");
     await expect(dialog).toHaveCount(0);
     await expect(trigger).toBeFocused();

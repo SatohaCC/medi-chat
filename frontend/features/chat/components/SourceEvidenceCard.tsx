@@ -40,13 +40,13 @@ export function SourceEvidenceCard({
           {source.retrieved_by?.map((method) => {
             const label =
               method === "always"
-                ? "常時取得"
+                ? "毎回確認"
                 : method === "logic"
-                  ? "ロジック取得"
+                  ? "質問の言葉に一致"
                   : method === "jev"
-                    ? "Jev判定取得"
+                    ? "質問意図から追加"
                     : method === "keyword"
-                      ? "形態素キーワード"
+                      ? "本文の語句から検索"
                       : method;
             return (
               <span key={method} {...stylex.props(styles.retrievalBadge)}>

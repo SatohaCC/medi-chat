@@ -68,7 +68,7 @@ test("WR-035 WR-038 real form queues one unsent question then sends once", async
   await page.clock.install();
   await page.clock.pauseAt(new Date(Date.now() + 1000));
   await chat.disconnect();
-  await expect(page.getByText("disconnected", { exact: true })).toBeVisible();
+  await expect(page.getByText("未接続", { exact: true })).toBeVisible();
   await expect(chat.input).toBeEnabled({ timeout: 1000 });
   await chat.input.fill("保留するテスト質問");
   await expect(chat.send).toBeEnabled({ timeout: 1000 });
@@ -93,7 +93,7 @@ test("WR-041 WR-044 WR-045 cancel restores context only by explicit choice", asy
   await page.clock.install();
   await page.clock.pauseAt(new Date(Date.now() + 1000));
   await chat.disconnect();
-  await expect(page.getByText("disconnected", { exact: true })).toBeVisible();
+  await expect(page.getByText("未接続", { exact: true })).toBeVisible();
   await expect(chat.input).toBeEnabled({ timeout: 1000 });
   await chat.input.fill("復元するテスト質問");
   await expect(chat.send).toBeEnabled({ timeout: 1000 });
@@ -140,7 +140,7 @@ test("WR-040 WR-044 expiry is checked after delayed timer and restores empty dra
   await page.clock.install();
   await page.clock.pauseAt(new Date(Date.now() + 1000));
   await chat.disconnect();
-  await expect(page.getByText("disconnected", { exact: true })).toBeVisible();
+  await expect(page.getByText("未接続", { exact: true })).toBeVisible();
   await chat.input.fill("期限切れのテスト質問");
   await chat.send.click();
   await expect(page.getByRole("region", { name: "未送信の保留" })).toBeVisible();
@@ -163,14 +163,14 @@ test("WR-042 authentication rejection invalidates unsent queue and blocks new ac
   await page.clock.install();
   await page.clock.pauseAt(new Date(Date.now() + 1000));
   await chat.disconnect();
-  await expect(page.getByText("disconnected", { exact: true })).toBeVisible();
+  await expect(page.getByText("未接続", { exact: true })).toBeVisible();
   await chat.input.fill("認証前のテスト保留");
   await chat.send.click();
   await page.evaluate(() =>
     Object.defineProperty(document, "hidden", { configurable: true, value: true }),
   );
   await page.clock.fastForward(6000);
-  await expect(page.getByText("connected", { exact: true })).toBeVisible();
+  await expect(page.getByText("接続済み", { exact: true })).toBeVisible();
   expect(chat.requests).toHaveLength(0);
   await chat.disconnect(1008);
   await expect(page.getByRole("region", { name: "未送信の質問" })).toContainText("認証");
@@ -189,7 +189,7 @@ test("WR-048 invalid question is retained without pending in both connection sta
   for (const offline of [false, true]) {
     if (offline) {
       await chat.disconnect();
-      await expect(page.getByText("disconnected", { exact: true })).toBeVisible();
+      await expect(page.getByText("未接続", { exact: true })).toBeVisible();
     }
     await chat.input.fill("テ".repeat(4001));
     await expect(chat.send).toBeDisabled();
@@ -205,7 +205,7 @@ test("WR-043 pending does not survive unmount and remount", async ({ page }) => 
   await page.clock.install();
   await page.clock.pauseAt(new Date(Date.now() + 1000));
   await chat.disconnect();
-  await expect(page.getByText("disconnected", { exact: true })).toBeVisible();
+  await expect(page.getByText("未接続", { exact: true })).toBeVisible();
   await chat.input.fill("破棄するテスト保留");
   await chat.send.click();
   await expect(page.getByRole("region", { name: "未送信の保留" })).toBeVisible();
@@ -213,7 +213,7 @@ test("WR-043 pending does not survive unmount and remount", async ({ page }) => 
   await page.clock.fastForward(60000);
   expect(chat.requests).toHaveLength(0);
   await page.goto("/");
-  await expect(page.getByText("connected", { exact: true })).toBeVisible();
+  await expect(page.getByText("接続済み", { exact: true })).toBeVisible();
   await expect(page.getByRole("region", { name: "未送信の保留" })).toHaveCount(0);
   expect(chat.requests).toHaveLength(0);
 });
@@ -247,7 +247,7 @@ test("WR-047 real hook marks attempted send uncertain and requires explicit new-
       "回答は中断されました。未完了の回答です。送信後の到達状況は不明です。",
     ),
   ).toBeVisible();
-  await expect(page.getByText("connected", { exact: true })).toBeVisible();
+  await expect(page.getByText("接続済み", { exact: true })).toBeVisible();
   expect(chat.requests).toHaveLength(0);
   await expect(chat.input).toContainText("到達不明のテスト質問");
   const oldId = await page.evaluate(() => {
@@ -292,7 +292,7 @@ async function savedRestoreQuestion(
   await page.clock.install();
   await page.clock.pauseAt(new Date(Date.now() + 1000));
   await chat.disconnect();
-  await expect(page.getByText("disconnected", { exact: true })).toBeVisible();
+  await expect(page.getByText("未接続", { exact: true })).toBeVisible();
   await page.evaluate(() => {
     const original = crypto.randomUUID.bind(crypto);
     const observed: string[] = [];
@@ -315,7 +315,7 @@ async function savedRestoreQuestion(
     await page.clock.setSystemTime(new Date(time + 60000));
   }
   await page.clock.fastForward(6000);
-  await expect(page.getByText("connected", { exact: true })).toBeVisible();
+  await expect(page.getByText("接続済み", { exact: true })).toBeVisible();
   const card = page.getByRole("region", { name: "未送信の質問" });
   const assertSaved = async () => {
     await expect(card).toContainText(reason === "cancelled" ? "取消" : "期限切れ");
@@ -391,7 +391,7 @@ for (const reason of ["cancelled", "expired"] as const) {
       const state = await savedRestoreQuestion(page, reason);
       const tier = page.getByTestId("tier-1-prescription");
       await tier.getByRole("button", { name: "全解除", exact: true }).click();
-      await page.getByRole("button", { name: "処方薬を追加", exact: true }).click();
+      await page.getByRole("button", { name: "調べる薬を選ぶ", exact: true }).click();
       await page.getByRole("option", { name: /^テスト医薬品B/ }).click();
       await state.chat.input.fill("現在の別テストdraft");
       const assertCurrent = async () => {

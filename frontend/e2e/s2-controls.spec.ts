@@ -6,7 +6,7 @@ for (const width of [390, 1280]) {
     await page.setViewportSize({ width, height: 844 });
     const chat = await openChat(page);
     await chat.input.fill("保持するテスト質問");
-    const trigger = page.getByRole("button", { name: "処方薬を追加", exact: true });
+    const trigger = page.getByRole("button", { name: "薬を追加", exact: true });
     await trigger.click();
     const search = page.getByRole("searchbox", { name: "処方薬検索", exact: true });
     await expect(search).toBeFocused();
@@ -80,13 +80,15 @@ test("XML選択は自動送信せず、失敗後も選択ファイルを保持�
     page.getByText("選択したファイル: テスト.xml", { exact: true }),
   ).toBeVisible();
   expect(requests).toBe(0);
-  await page.getByRole("button", { name: "取り込む", exact: true }).click();
+  await page.getByRole("button", { name: "XMLを登録", exact: true }).click();
   await expect(
     page.getByRole("region", { name: "取り込みエラー" }).getByRole("alert"),
   ).toBeVisible();
   await expect(
     page.getByText("選択したファイル: テスト.xml", { exact: true }),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: "取り込む", exact: true })).toBeEnabled();
+  await expect(
+    page.getByRole("button", { name: "XMLを登録", exact: true }),
+  ).toBeEnabled();
   expect(requests).toBe(1);
 });

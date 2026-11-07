@@ -9,9 +9,9 @@ import { styles } from "./SearchGuideScreen.styles";
 const methods = [
   {
     number: "01",
-    title: "項目をルールで選ぶ",
-    badge: "ロジック取得",
-    lead: "決められた言葉から、調べる項目を選ぶ",
+    title: "質問の言葉から項目を探す",
+    badge: "質問の言葉に一致",
+    lead: "質問に含まれる言葉に関連する項目を探します。",
     description:
       "質問に含まれる言葉を、あらかじめ定義したルールと照合します。一致した言葉に対応する添付文書の項目を検索します。",
     example:
@@ -20,9 +20,9 @@ const methods = [
   },
   {
     number: "02",
-    title: "本文の言葉を探す",
-    badge: "形態素キーワード",
-    lead: "質問から検索語を取り出して、本文を探す",
+    title: "添付文書の本文を探す",
+    badge: "本文の語句から検索",
+    lead: "質問から言葉を取り出し、本文にある記載を探します。",
     description:
       "日本語の解析器Janomeで質問を単語に分け、検索に使う語を取り出します。不要な語を除き、一部の表現を検索向けの語に変換して、添付文書の本文を検索します。",
     example:
@@ -31,9 +31,9 @@ const methods = [
   },
   {
     number: "03",
-    title: "質問の意図から選ぶ",
-    badge: "Jev判定取得",
-    lead: "Jevが質問を分類し、対応する項目を探す",
+    title: "質問の意図から項目を探す",
+    badge: "質問意図から追加",
+    lead: "質問の意味を読み取り、関連する項目を探します。",
     description:
       "エイリアス変換で対応できるのは、あらかじめ登録した表現に限られます。さまざまな言い回しや、単語だけでは捉えにくい質問の意図を補うためにJevを使います。Jevで質問の意図を判定し、採用条件を満たした判定を添付文書の項目に対応付けて、登録済みの添付文書から根拠を取得します。",
     example:
@@ -73,12 +73,24 @@ export function SearchGuideScreen() {
       <main {...stylex.props(styles.main)}>
         <article {...stylex.props(styles.article)}>
           <div {...stylex.props(styles.intro)}>
-            <p {...stylex.props(styles.eyebrow)}>検索の仕組み</p>
-            <h1 {...stylex.props(styles.title)}>回答の根拠は、どう集まる？</h1>
+            <p {...stylex.props(styles.eyebrow)}>使い方と検索の仕組み</p>
+            <h1 {...stylex.props(styles.title)}>薬を選んで質問する</h1>
             <p>
-              選んだ医薬品の添付文書から、毎回取得する3項目と、質問に関係する記載を集めます。回答モデルは、集まった根拠を使って回答を作ります。
+              対象薬を選んで質問すると、その薬の電子添文から関連する記載を集めて回答します。
             </p>
           </div>
+          <section aria-labelledby="quickstart-title">
+            <h2 id="quickstart-title">まずはこの3ステップ</h2>
+            <ol>
+              <li>チャット画面下の「調べる薬を選ぶ」で対象薬を選びます。</li>
+              <li>質問を入力するか、質問例を選びます。</li>
+              <li>「送信」を押し、回答の「添付文書の根拠」を確認します。</li>
+            </ol>
+            <p>
+              質問文に薬名を書くだけでは対象薬は変わりません。別の薬を追加する場合は、質問欄で「@」を入力して候補から選びます。
+            </p>
+            <Link href="/">チャットを開く →</Link>
+          </section>
           <ol {...stylex.props(styles.flow)} aria-label="質問から回答までの流れ">
             {[
               "質問・対象医薬品",
@@ -102,12 +114,12 @@ export function SearchGuideScreen() {
           <section {...stylex.props(styles.detail)}>
             <h2 {...stylex.props(styles.heading)}>まず、対象の医薬品を選びます</h2>
             <p>
-              チャットの「@医薬品」で選択した製品が対象です。質問文に薬名を書くだけでは、検索対象は追加・変更されません。登録済みの添付文書を検索します。
+              チャット画面下の「この質問で調べる薬」で選択した製品が対象です。入力欄で「@」を使って追加することもできます。薬名を文章で入力するだけでは、検索対象は追加・変更されません。
             </p>
           </section>
           <section {...stylex.props(styles.card)}>
             <h2 {...stylex.props(styles.heading)}>毎回取得する3項目</h2>
-            <span {...stylex.props(styles.badge)}>常時取得</span>
+            <span {...stylex.props(styles.badge)}>毎回確認</span>
             <p>質問の内容にかかわらず、選んだ各製品から次の本文を取得します。</p>
             <ul {...stylex.props(styles.alwaysSections)}>
               {alwaysSections.map((section) => (
@@ -166,10 +178,10 @@ export function SearchGuideScreen() {
           <section {...stylex.props(styles.detail)}>
             <h2 {...stylex.props(styles.heading)}>根拠カードのラベルの見方</h2>
             <p>
-              カードのラベルは「なぜ、この根拠が表示されているか」を示します。例えば「常時取得」と「ロジック取得」が付いていれば、毎回取得する項目であり、質問の言葉にも一致した根拠です。
+              カードのラベルは「なぜ、この根拠が表示されているか」を示します。例えば「毎回確認」と「質問の言葉に一致」が付いていれば、質問内容にかかわらず確認する項目であり、質問の言葉にも関連した根拠です。
             </p>
             <p>
-              常時取得の根拠を先に表示し、ロジック検索と形態素解析で見つかった根拠を順次追加します。Jevの判定を含む検索が終わると、根拠が追加・更新されます。
+              毎回確認する根拠を先に表示し、質問の言葉・本文の語句・質問の意図から見つかった根拠を順次追加します。
             </p>
             <p>
               同じ根拠のカードは一つにまとめ、取得理由を併記します。そのため、理由別の件数を足しても、カードの合計件数とは一致しない場合があります。ラベルは正しさや安全性の評価ではありません。
@@ -178,7 +190,7 @@ export function SearchGuideScreen() {
           <section {...stylex.props(styles.detail)}>
             <h2 {...stylex.props(styles.heading)}>集めた根拠を使って、回答を作ります</h2>
             <p>
-              ヘッダーの「回答モデル」で選んだモデルが、取得した根拠を使って回答文を作ります。Jevは根拠を探すための意図判定を担当します。
+              ヘッダーの「回答モデル」で選んだAIが、取得した根拠を使って回答文を作ります。質問の意味を読み取って検索範囲を補う仕組みも使います。
             </p>
             <p>
               このページはチャットの仕組みの説明です。別の「キーワード検索」ページでは、入力した語から本文を直接探せます。

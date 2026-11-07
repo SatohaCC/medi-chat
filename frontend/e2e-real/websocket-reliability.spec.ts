@@ -90,7 +90,12 @@ test("WR-034 WR-050 real route heartbeat during preparation and silence, stop an
       };
     });
     await page.goto("/");
-    await expect(page.getByText("connected", { exact: true })).toBeVisible();
+    await expect(page.getByText("接続済み", { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "調べる薬を選ぶ", exact: true }).click();
+    await page
+      .getByRole("option", { name: /^イグザレルト錠/ })
+      .first()
+      .click();
     await page.clock.install();
     await page.clock.pauseAt(new Date(Date.now() + 1000));
     const input = page.getByRole("textbox", { name: "質問を入力" });
@@ -131,7 +136,7 @@ test("WR-034 WR-050 real route heartbeat during preparation and silence, stop an
       const state = window as unknown as { reliabilitySockets: WebSocket[] };
       state.reliabilitySockets.at(-1)?.close();
     });
-    await expect(page.getByText("disconnected", { exact: true })).toBeVisible();
+    await expect(page.getByText("未接続", { exact: true })).toBeVisible();
     await input.fill("イグザレルトのテスト保留質問");
     await send.click();
     await expect(page.getByRole("region", { name: "未送信の保留" })).toBeVisible();
@@ -151,7 +156,7 @@ test("WR-034 WR-050 real route heartbeat during preparation and silence, stop an
       const state = window as unknown as { reliabilitySockets: WebSocket[] };
       state.reliabilitySockets.at(-1)?.close();
     });
-    await expect(page.getByText("disconnected", { exact: true })).toBeVisible();
+    await expect(page.getByText("未接続", { exact: true })).toBeVisible();
     await input.fill("取消するテスト質問");
     await send.click();
     await page.getByRole("button", { name: "保留を取消", exact: true }).click();

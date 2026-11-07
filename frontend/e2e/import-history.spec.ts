@@ -81,7 +81,7 @@ test("history loads, paginates, refreshes after import, and fits mobile", async 
     mimeType: "text/xml",
     buffer: Buffer.from("<test/>"),
   });
-  await page.getByRole("button", { name: "取り込む", exact: true }).click();
+  await page.getByRole("button", { name: "XMLを登録", exact: true }).click();
   await expect(
     history.getByRole("heading", { name: "追加テスト.xml", exact: true }),
   ).toBeVisible();

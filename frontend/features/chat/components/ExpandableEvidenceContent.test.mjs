@@ -79,7 +79,7 @@ test("always retrieved safety cards allow folding while other warning cards stay
       }),
     );
     assert.match(expandable, /<div id="/);
-    assert.ok(expandable.includes("常時取得"));
+    assert.ok(expandable.includes("毎回確認"));
     assert.ok(expandable.includes(warningSource.excerpt));
   }
 });

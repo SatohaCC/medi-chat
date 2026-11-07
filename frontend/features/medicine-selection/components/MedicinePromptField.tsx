@@ -201,7 +201,7 @@ export function MedicinePromptField({
           <PromptTokenField
             completionTrigger={/[@＠]/}
             renderCompletions={renderCompletions}
-            placeholder="確認したい内容を入力 (例: この処方に @ロキソニン を追加してもよい？)..."
+            placeholder="質問を入力してください"
           />
         </TokenFieldContext.Provider>
         <div {...stylex.props(styles.submit)}>

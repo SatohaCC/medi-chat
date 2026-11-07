@@ -57,7 +57,7 @@ test("SX-R07 / SX-06: 実formとhookで薬剤0の送信禁止と復帰を観測�
   await expect(chat.send).toBeDisabled();
   await chat.input.press("Enter");
   expect(chat.requests).toHaveLength(0);
-  await page.getByRole("button", { name: "処方薬を追加", exact: true }).click();
+  await page.getByRole("button", { name: "調べる薬を選ぶ", exact: true }).click();
   await page.getByRole("option", { name: /^テスト医薬品A/ }).click();
   await expect(chat.send).toBeEnabled();
   await chat.input.press("Enter");
@@ -72,7 +72,7 @@ test("SX-06 / WR-035: 切断中の入力を保持し、復帰後に送信する"
   await expect(chat.input).toBeEnabled();
   await expect(chat.send).toBeEnabled();
   expect(chat.requests).toHaveLength(0);
-  await expect(page.getByText("connected", { exact: true })).toBeVisible();
+  await expect(page.getByText("接続済み", { exact: true })).toBeVisible();
   await expect(chat.input).toBeEnabled();
   await chat.send.click();
   await expect.poll(() => chat.requests.length).toBe(1);
@@ -109,7 +109,7 @@ test("WR-049-M1: 薬剤・モデルを指定して質問し、回答と根拠を
   page,
 }) => {
   const chat = await openChat(page);
-  await page.getByRole("button", { name: "処方薬を追加", exact: true }).click();
+  await page.getByRole("button", { name: "薬を追加", exact: true }).click();
   await page.getByRole("option", { name: /^テスト医薬品B/ }).click();
   await page.getByRole("button", { name: "回答モデル" }).click();
   await page.getByRole("option", { name: "OpenAI (GPT-5.6 Luna)" }).click();
@@ -197,7 +197,7 @@ test("切断された回答を中断と表示し、再接続後の履歴から�
       "回答は中断されました。未完了の回答です。送信後の到達状況は不明です。",
     ),
   ).toBeVisible();
-  await expect(page.getByText("connected", { exact: true })).toBeVisible();
+  await expect(page.getByText("接続済み", { exact: true })).toBeVisible();
   await expect(chat.input).toBeEnabled();
   await chat.input.fill("再接続後の質問");
   await chat.send.click();

@@ -84,7 +84,7 @@ export async function openChat(
   if ((page.viewportSize()?.width ?? 1280) <= 900) {
     await expect(menu).toBeVisible();
     await menu.click();
-    await expect(page.getByText("connected", { exact: true })).toBeVisible();
+    await expect(page.getByText("接続済み", { exact: true })).toBeVisible();
     await expect
       .poll(() =>
         page
@@ -96,7 +96,9 @@ export async function openChat(
     await expect(page.getByRole("dialog", { name: "メニュー", exact: true })).toHaveCount(
       0,
     );
-  } else await expect(page.getByText("connected", { exact: true })).toBeVisible();
+  } else await expect(page.getByText("接続済み", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "調べる薬を選ぶ", exact: true }).click();
+  await page.getByRole("option", { name: /^テスト医薬品A/ }).click();
   await expect(page.getByRole("row", { name: /^テスト医薬品A/ })).toBeVisible();
   return {
     requests,

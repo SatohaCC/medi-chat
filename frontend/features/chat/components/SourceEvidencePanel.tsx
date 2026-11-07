@@ -41,16 +41,12 @@ export function SourceEvidencePanel({
   const [selectedMedicine, setSelectedMedicine] = useState<string>("all");
 
   const alwaysCount = sources.filter((s) => s.retrieved_by?.includes("always")).length;
-  const alwaysSummary = alwaysCount > 0 ? `常時取得：${alwaysCount}件、` : "";
   const logicCount = sources.filter((s) => s.retrieved_by?.includes("logic")).length;
   const jevCount = sources.filter((s) => s.retrieved_by?.includes("jev")).length;
   const keywordCount = sources.filter((s) => s.retrieved_by?.includes("keyword")).length;
   const totalCount = sources.length;
 
-  const countSummary =
-    keywordCount > 0
-      ? `${alwaysSummary}ロジック：${logicCount}件、Jev：${jevCount}件、キーワード：${keywordCount}件、合計：${totalCount}件`
-      : `${alwaysSummary}ロジック：${logicCount}件、Jev：${jevCount}件、合計：${totalCount}件`;
+  const countSummary = `毎回確認：${alwaysCount}件、質問の言葉：${logicCount}件、質問の意図：${jevCount}件、本文の語句：${keywordCount}件、全体：${totalCount}件`;
 
   const sectionGroups = extractSectionGroups(sources);
   const medicineGroups = extractMedicineGroups(sources);
@@ -69,8 +65,8 @@ export function SourceEvidencePanel({
     <div {...stylex.props(styles.sourceList)}>
       {alwaysCount > 0 && (
         <div {...stylex.props(styles.multipleNotice)}>
-          警告・禁忌・重要な基本的注意は、質問内容にかかわらず、記載がある場合に取得します。
-          取得理由別の件数には重複が含まれ、合計は重複を除いた件数です。
+          警告・禁忌・重要な基本的注意は、質問内容にかかわらず記載がある場合に取得します。
+          理由別の件数には同じ根拠が重複して含まれることがあります。
         </div>
       )}
       {jevResponse?.qualifying_intents && jevResponse.qualifying_intents.length > 1 && (
@@ -78,11 +74,11 @@ export function SourceEvidencePanel({
           <div {...stylex.props(styles.multipleTitle)}>
             <span {...stylex.props(styles.multipleTitleGroup)}>
               <Zap size={13} color="var(--user-bg)" strokeWidth={2} />
-              マルチセクション取得（閾値20%以上）
+              複数の観点から検索
             </span>
           </div>
           <div>
-            確率20%以上の全候補項目（
+            質問の意図として次の観点を読み取り、それぞれに対応する項目を検索しました。 （
             {jevResponse.qualifying_intents
               .map((k) => JEV_INTENT_META[k]?.label || k)
               .join("・")}
@@ -102,7 +98,7 @@ export function SourceEvidencePanel({
       />
       {displayedSources.length === 0 && (
         <div {...stylex.props(styles.empty)}>
-          該当する添付文書の根拠記載は見つかりませんでした（0件）
+          該当する記載は見つかりませんでした（0件）。質問を言い換えて再検索できます。
         </div>
       )}
       {displayedSources.map((s) => (
@@ -173,9 +169,14 @@ export function SourceEvidencePanel({
                 { id: "sources", title: "添付文書の根拠", content: sourceContent },
                 {
                   id: "jev",
-                  title: "Jev判定インスペクター",
+                  title: "質問意図の判定",
                   content: jevResponse ? (
-                    <JevResponseInspector response={jevResponse} standalone />
+                    <>
+                      <p>
+                        質問をどう読み取ったかを示します。回答の正しさや安全性を評価する表示ではありません。
+                      </p>
+                      <JevResponseInspector response={jevResponse} standalone />
+                    </>
                   ) : null,
                 },
               ]}

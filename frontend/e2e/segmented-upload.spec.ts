@@ -50,7 +50,7 @@ test("10MiB XML is sent in bounded bodies without changing original bytes", asyn
     mimeType: "application/xml",
     buffer: original,
   });
-  await page.getByRole("button", { name: "取り込む", exact: true }).click();
+  await page.getByRole("button", { name: "XMLを登録", exact: true }).click();
   await expect(page.getByText("テストXML検証エラー", { exact: true })).toBeVisible();
   expect(completed).toBe(true);
 });
@@ -82,7 +82,7 @@ test("failed part stops upload and displays server error", async ({ page }) => {
     mimeType: "application/xml",
     buffer: Buffer.alloc(4 * 1024 * 1024),
   });
-  await page.getByRole("button", { name: "取り込む", exact: true }).click();
+  await page.getByRole("button", { name: "XMLを登録", exact: true }).click();
   await expect(
     page.getByText("取り込みを最初からやり直してください。", { exact: true }),
   ).toBeVisible();

@@ -197,7 +197,7 @@ export function JevResponseInspector({
 
   const headerBadges = (
     <div {...stylex.props(styles.titleRow)}>
-      <span>⚡ Jev レスポンス確認</span>
+      <span>質問の意図判定</span>
       {choice && (
         <span {...stylex.props(styles.intentBadge)}>
           {meta ? `${meta.label} (${choice})` : choice}
@@ -205,7 +205,7 @@ export function JevResponseInspector({
       )}
       {response.qualifying_intents && response.qualifying_intents.length > 1 && (
         <span {...stylex.props(styles.multipleIntents)}>
-          マルチ取得:{" "}
+          複数の観点:{" "}
           {response.qualifying_intents
             .map((k) => JEV_INTENT_META[k]?.label || k)
             .join(" ＋ ")}
@@ -227,16 +227,18 @@ export function JevResponseInspector({
     <Tabs
       value={activeTab}
       onValueChange={(value) => setActiveTab(value as "summary" | "raw")}
-      label="Jevインスペクター表示切替"
+      label="質問意図の判定内容を切り替え"
       items={[
         {
           id: "summary",
-          title: "📊 判定サマリー & 確率分布",
+          title: "判定内容",
           content: (
             <div {...stylex.props(styles.summaryPanel)}>
               {choice && (
                 <div {...stylex.props(styles.chosenIntent)}>
-                  <div {...stylex.props(styles.intentHeading)}>判定項目 (Intent):</div>
+                  <div {...stylex.props(styles.intentHeading)}>
+                    質問から読み取った内容:
+                  </div>
                   <div {...stylex.props(styles.choiceRow)}>
                     <span {...stylex.props(styles.choiceLabel)}>
                       {meta?.label || choice}
@@ -435,11 +437,11 @@ export function JevResponseInspector({
         },
         {
           id: "raw",
-          title: "📄 生レスポンス (JSON)",
+          title: "詳細データ (JSON)",
           content: (
             <div {...stylex.props(styles.rawContainer)}>
               <div {...stylex.props(styles.rawHeader)}>
-                <span>Jev API 生レスポンス (JSON)</span>
+                <span>判定APIの詳細データ (JSON)</span>
                 <CopyJsonButton data={response} />
               </div>
               <pre {...stylex.props(styles.rawCode)}>
@@ -458,7 +460,9 @@ export function JevResponseInspector({
         <div {...stylex.props(styles.standaloneHeader)}>{headerBadges}</div>
         <div {...stylex.props(styles.body, styles.standaloneBody)}>
           {response.error && (
-            <div {...stylex.props(styles.errorBody)}>Jevエラー: {response.error}</div>
+            <div {...stylex.props(styles.errorBody)}>
+              質問意図の判定を取得できませんでした: {response.error}
+            </div>
           )}
           {tabsContent}
         </div>
@@ -478,7 +482,9 @@ export function JevResponseInspector({
     >
       <div {...stylex.props(styles.body)}>
         {response.error && (
-          <div {...stylex.props(styles.errorBody)}>Jevエラー: {response.error}</div>
+          <div {...stylex.props(styles.errorBody)}>
+            質問意図の判定を取得できませんでした: {response.error}
+          </div>
         )}
         {tabsContent}
       </div>

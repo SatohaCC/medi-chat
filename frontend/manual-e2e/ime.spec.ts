@@ -50,7 +50,7 @@ for (const candidates of [false, true])
           window.__mediImeDone = false;
           const snapshot = () => {
             const input = document.querySelector<HTMLInputElement>(
-              'input[placeholder^="確認したい内容"]',
+              'input[placeholder="質問を入力してください"]',
             );
             const active = document.activeElement;
             return {
@@ -231,6 +231,6 @@ for (const candidates of [false, true])
         body: JSON.stringify(record),
         contentType: "application/json",
       });
-      await expect(page.getByText("connected", { exact: true })).toBeVisible();
+      await expect(page.getByText("接続済み", { exact: true })).toBeVisible();
     });
   }

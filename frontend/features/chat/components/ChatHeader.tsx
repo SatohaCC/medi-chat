@@ -12,6 +12,8 @@ interface ChatHeaderProps {
 }
 
 export function ChatHeader({ selectedModel, onModelChange, status }: ChatHeaderProps) {
+  const statusLabel =
+    status === "connected" ? "接続済み" : status === "connecting" ? "接続中" : "未接続";
   const connectionStatus = (
     <StatusLight
       variant={
@@ -22,7 +24,7 @@ export function ChatHeader({ selectedModel, onModelChange, status }: ChatHeaderP
             : "negative"
       }
     >
-      {status}
+      {statusLabel}
     </StatusLight>
   );
   return (
@@ -31,6 +33,7 @@ export function ChatHeader({ selectedModel, onModelChange, status }: ChatHeaderP
       connectionNotice={status !== "connected" ? connectionStatus : undefined}
     >
       <div {...stylex.props(styles.controls)}>
+        <span>回答モデル</span>
         <Picker
           aria-label="回答モデル"
           value={selectedModel}
