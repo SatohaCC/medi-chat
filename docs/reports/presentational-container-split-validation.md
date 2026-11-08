@@ -39,3 +39,7 @@
 共通quickとfullを実行し、結果は`tmp/quality/result.json`に記録する。共通fullは既存のbackend起動確認に必要なPostgreSQLへ接続できず、backendテストもタイムアウトしたため、全体成功として扱わない。toolingのOSシグナル検査2件のskipも成功に含めない。
 
 全E2E、実backend・実DB・外部LLMとの統合は今回の成功範囲ではない。既知の候補重複キー`TC-K01`は修正しておらず、今回の29件から除外している。作業specは`tmp/quality/task.json`、画像・比較結果・分割前ソースは`tmp/presentation-split/`に保存した。
+
+## 追記（2026-11-08）
+
+`TC-K01`を修正した。処方薬ピッカーの選択肢IDがYJコードだけで、YJコードを共有する製品があると候補一覧のキーが衝突し、候補が描画されなかった。IDをYJコード・製品名・位置から作るよう変更し、E2Eの初期セットアップも既定の対象薬を含むフィクスチャへ修正した。修正前の実装で同テストが失敗し、修正後に`e2e/medicine-mention.spec.ts`の14件が成功することを確認している。回帰は`features/medicine-selection/model/medicinePickerOptions.test.mjs`が確認する。
