@@ -1,6 +1,5 @@
 export { ChatScreen } from "./components/ChatScreen";
 export { ExpandableEvidenceContent } from "./components/ExpandableEvidenceContent";
-export { HighlightText } from "./components/HighlightText";
 export { SourceEvidenceCard } from "./components/SourceEvidenceCard";
 export { SourceEvidenceContent } from "./components/SourceEvidenceContent";
 export {

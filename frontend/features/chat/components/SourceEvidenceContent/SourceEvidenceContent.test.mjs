@@ -1,0 +1,112 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+import { fileURLToPath } from "node:url";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { loadTestComponent } from "../../../../scripts/load-test-component.mjs";
+
+const { SourceEvidenceContent } = await loadTestComponent(
+  fileURLToPath(new URL("./SourceEvidenceContent.tsx", import.meta.url)),
+);
+const render = (content, highlightWords) =>
+  renderToStaticMarkup(createElement(SourceEvidenceContent, { content, highlightWords }));
+
+const fallbackUnitsUrl = new URL(
+  "./fixtures/sample-evidence-units.json",
+  import.meta.url,
+);
+
+const loadUnits = () => JSON.parse(readFileSync(fallbackUnitsUrl, "utf8"));
+
+test("renders headings, table relationships, notes and escaped medical text", () => {
+  const html = render(
+    '### 対象製品\n\n<table><tr><td colspan="2">分類・頻度</td></tr>' +
+      '<tr><td rowspan="2">消化器</td><td>悪心\n腹痛</td></tr>' +
+      "<tr><td>頻度不明</td></tr></table>\n\n注）原文の注記。 CrCl &lt;30。",
+  );
+  assert.match(html, /<h3>対象製品<\/h3>/);
+  assert.match(html, /colSpan="2"/);
+  assert.match(html, /rowSpan="2"/);
+  assert.match(html, /悪心\n腹痛/);
+  assert.match(html, /注）原文の注記。 CrCl &lt;30/);
+  assert.match(html, /aria-label="添付文書の表（横スクロール）"/);
+  assert.match(html, /tabindex="0"/);
+  assert.doesNotMatch(html, /&lt;table/);
+});
+
+test("removes scripts, event handlers, source styles and unsafe links", () => {
+  const html = render(
+    '<script>alert("x")</script><table onclick="alert(1)"><tr>' +
+      '<td style="position:fixed" onmouseover="alert(2)">安全な本文</td></tr></table>' +
+      '\n\n<a href="javascript:alert(3)">参照</a>',
+  );
+  assert.match(html, /安全な本文/);
+  assert.doesNotMatch(html, /<script|alert\(|onclick|onmouseover|style=|javascript:/i);
+});
+
+test("PMDA contraindication table retains all three column headers in thead", () => {
+  const units = loadUnits();
+  const original = units.find((unit) => unit.section.code === "10.1");
+  assert.ok(original);
+  const html = render(original.text);
+  assert.match(
+    html,
+    /<thead><tr><th>薬剤名等<\/th><th>臨床症状・措置方法<\/th><th>機序・危険因子<\/th><\/tr><\/thead>/,
+  );
+  assert.match(html, /イトラコナゾール/);
+});
+
+test("renders the real 11.2 section as one table with category and frequency labels", () => {
+  const rows = loadUnits();
+  const row = rows.find((item) => item.section.code === "11.2");
+  assert.ok(row);
+  const html = render(row.text);
+  assert.equal((html.match(/<table>/g) || []).length, 1);
+  assert.equal((html.match(/<tr>/g) || []).length, 14);
+  assert.match(html, /精神神経系/);
+  assert.match(html, /頻度不明/);
+});
+
+test("SX-25/26: safe links and header scope survive while executable attributes do not", () => {
+  const html = render(
+    '<table><tr><th scope="col" colspan="2" onclick="alert(1)" style="position:fixed">分類</th></tr><tr><td>正文</td></tr></table>\n\n<a href="https://example.invalid/safe">安全な参照</a><a href="javascript:alert(1)" onmouseover="alert(2)">不正な参照</a>',
+  );
+  assert.match(html, /scope="col"/);
+  assert.match(html, /colSpan="2"/);
+  assert.match(html, /href="https:\/\/example.invalid\/safe"/);
+  assert.match(html, /target="_blank"/);
+  assert.match(html, /rel="noopener noreferrer"/);
+  assert.doesNotMatch(html, /onclick|onmouseover|javascript:|style=|alert\(/i);
+});
+
+test("highlights specified words in text and tables with mark.search-highlight", () => {
+  const html = render(
+    "### 効能又は効果\n\n頭痛及び発熱の解熱・鎮痛。\n\n| 症状 | 用法 |\n| --- | --- |\n| 発熱 | 1回1錠 |",
+    ["頭痛", "発熱"],
+  );
+  assert.match(html, /<mark class="search-highlight">頭痛<\/mark>/);
+  assert.match(html, /<mark class="search-highlight">発熱<\/mark>/);
+});
+
+test("strips data-product-scope and product scope paragraphs when applicability is uniform", () => {
+  const html = render(
+    '<p data-product-scope="true">対象製品: メトグルコ錠250mg [YJ: 3962002F2027]</p><h3 data-section-code="1">1 警告</h3><p>重篤な乳酸アシドーシスを起こすことがある。</p>',
+  );
+  assert.doesNotMatch(html, /data-product-scope|対象製品/);
+  assert.match(html, /1 警告/);
+  assert.match(html, /重篤な乳酸アシドーシスを起こすことがある。/);
+});
+
+test("preserves product-scope labels when applicability changes within a card", () => {
+  const html = render(
+    '<p data-product-scope="true">対象製品: 製品A錠10mg [YJ: 111111111111]</p>' +
+      "<p>製品Aのみの禁忌</p>" +
+      '<p data-product-scope="true">対象製品: 製品B細粒20% [YJ: 222222222222]</p>' +
+      "<p>製品Bのみの禁忌</p>",
+  );
+  assert.match(html, /対象製品: 製品A錠10mg/);
+  assert.match(html, /対象製品: 製品B細粒20%/);
+  assert.match(html, /製品Aのみの禁忌/);
+  assert.match(html, /製品Bのみの禁忌/);
+});

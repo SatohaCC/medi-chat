@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { ChatRequestLifecycle } from "./chatRequestLifecycle.ts";
+
 const A = "a871f25a-1eb7-4c5e-8c6e-4511dce60280";
 const B = "b871f25a-1eb7-4c5e-8c6e-4511dce60280";
 function setup() {

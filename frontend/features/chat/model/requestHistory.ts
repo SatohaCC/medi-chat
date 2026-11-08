@@ -1,5 +1,5 @@
-import { MAX_MESSAGE_LENGTH } from "../../../shared/api/chatLimits";
 import type { Message } from "./chat";
+import { MAX_MESSAGE_LENGTH } from "./chatLimits";
 
 const MAX_HISTORY_TURNS = 24;
 
