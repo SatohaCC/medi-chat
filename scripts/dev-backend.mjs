@@ -12,6 +12,27 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 export const PROJECT_ROOT = resolve(__dirname, "..");
 export const BACKEND_DIR = resolve(PROJECT_ROOT, "backend");
 
+// uvicornの--reloadはcwd配下の*.pyを監視する。backend/.venvを監視対象に含めると、
+// 依存の同期や型検査でsite-packagesが書き換わるたびに再起動するため除外する。
+// uvicornは--reload-excludeをディレクトリとして解決するため絶対パスで渡す。
+export const RELOAD_EXCLUDED_DIRS = [resolve(BACKEND_DIR, ".venv")];
+
+export const DEFAULT_UVICORN_ARGS = [
+  "run",
+  "--locked",
+  "uvicorn",
+  "--no-proxy-headers",
+  "--app-dir",
+  "..",
+  "backend.main:app",
+  "--port",
+  "8000",
+  "--reload",
+  ...RELOAD_EXCLUDED_DIRS.flatMap((directory) => ["--reload-exclude", directory]),
+  "--log-config",
+  "../scripts/uvicorn-dev-logging.json",
+];
+
 function redactRuntimeLogLine(line) {
   return line
     .replace(/(["']?\b(?:proxy-)?authorization\b["']?\s*[:=]\s*)[^\r\n]*/gi, "$1[REDACTED]")
@@ -91,20 +112,7 @@ function waitForOutputClose(stream) {
 
 export function createSupervisor({
   command = "uv",
-  args = [
-    "run",
-    "--locked",
-    "uvicorn",
-    "--no-proxy-headers",
-    "--app-dir",
-    "..",
-    "backend.main:app",
-    "--port",
-    "8000",
-    "--reload",
-    "--log-config",
-    "../scripts/uvicorn-dev-logging.json",
-  ],
+  args = DEFAULT_UVICORN_ARGS,
   cwd = BACKEND_DIR,
   healthUrl = "http://127.0.0.1:8000/api?__medi_chat_dev_monitor=1",
   healthCheckIntervalMs = 1500,
