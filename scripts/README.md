@@ -7,26 +7,15 @@
 | `checks/` | 品質検査の実行とApplication・Domainの構造検査 |
 | `hooks/` | Codexイベントの解析、編集ファイル判定、整形、検査結果の返却と重複実行防止 |
 | `postgres/` | PostgreSQLの初期化 |
-| 直下のスクリプト | 開発サーバー起動、環境解決、生成データの出力 |
+| 直下のスクリプト | 環境解決、生成データの出力、開発ログ設定 |
 
-## 開発バックエンドの実行ログ
+## 開発バックエンドのログ
 
-`pnpm dev:backend`はsupervisorが起動するbackendのstdout/stderrをコンソールへ表示し、同じ出力を起動ごとの`tmp/logs/dev-backend-*.log`へ保存する。自動再起動後も同じセッションログへ追記する。`pnpm dev`で別起動するfrontendのログは対象外。
+`pnpm dev:backend`は`uvicorn --reload`を直接起動し、stdout/stderrをコンソールへ表示する。アクセスログのクエリは`uvicorn-dev-logging.json`のフィルタで`?[REDACTED]`へ伏せる。ログ本文や例外の内容を共有する前に確認し、患者情報を含む原文を外部へ貼り付けない。
 
-ログへ保存・表示する前に、Uvicornアクセスログのクエリ全体、Authorization/Bearer値、`token`・`api_key`・`secret`等の値を伏せる。ログ本文や例外の内容を共有する前に確認し、患者情報を含む原文を外部へ貼り付けない。
+ログはコンソールへ出力し、セッションログのファイル保存・自動再起動・稼働ログ検査は持たない。`pnpm dev`で別起動するfrontendのログは対象外。共通品質検査は開発サーバーの稼働ログに依存しない。
 
-セッションを確認する場合は起動時に表示されたファイルを明示する。
-
-```sh
-pnpm logs:check -- tmp/logs/dev-backend-<session>.log
-pnpm logs:check -- tmp/logs/dev-backend-<session>.log --since 2026-11-03T10:00:00Z
-```
-
-`--since`はtimezone付きISO日時で、指定時刻を含む。検査対象は`tmp/logs`直下の生成済みbackendセッションログに限る。Uvicornの`ERROR`/`CRITICAL`とアクセスログのHTTP 5xxを行番号・分類だけで報告し、4xxや一般文中の`Exception`は異常として扱わない。ログ本文・stack traceは出力しない。該当行があれば終了コード1、対象外のパス・不正形式・引数は2、該当なしは0。
-
-ログは起動ごとに分かれ、過去ファイルを自動削除しない。共通品質検査はこれらの稼働ログに依存しない。
-
-`logs:check`は指定された開発backendセッションの事後確認です。`agent:check`はその過去ログを読みませんが、full検査でbackend差分を検出した場合は、通常設定のDBを使う専用health probeを起動して起動失敗とOS healthを自動確認します。quickと`quality:backend`はこのprobeを実行しません。古いセッションログのエラーを新しい作業へ混ぜないため、稼働ログを調べる場合は引き続き対象セッションを明示してください。
+backendの通常起動確認は、`agent:check`・`quality:changed`のfullでbackend scopeがある場合に自動選択する。quickや`quality:backend`など個別計画では、通常設定の起動確認を下の仕様JSONで明示選択できる。必要な前提は[検証手順](../docs/development/validation.md)を参照する。CIは共通のbackend・frontend・scripts検査に加え、実PostgreSQL契約を実行する。
 
 ## 共通コマンド
 
