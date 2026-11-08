@@ -132,6 +132,26 @@ jobs:
       - name: Install Chromium for browser E2E
         run: pnpm --filter frontend exec playwright install --with-deps chromium
       - name: Browser E2E on the mock API
-        run: pnpm --filter frontend test:e2e:ci
+        env:
+          MEDI_CHAT_NEXT_DIST_DIR: .next-e2e-mock
+          NEXT_PUBLIC_API_URL: http://127.0.0.1:3100
+          NEXT_PUBLIC_WS_URL: ws://127.0.0.1:3100/api/ws
+          NEXT_TELEMETRY_DISABLED: "1"
+          MEDI_CHAT_TEST_UI: "1"
+        run: |
+          cd frontend
+          # 開発サーバーはワークフロー側で起動する。出力をファイルへ逃がし、
+          # 子プロセスがステップのパイプを保持して終了しなくなるのを避ける。
+          pnpm exec next dev --hostname 127.0.0.1 --port 3100 > /tmp/next-e2e.log 2>&1 &
+          for _ in $(seq 1 120); do
+            curl -sf -o /dev/null http://127.0.0.1:3100 && break
+            sleep 1
+          done
+          status=0
+          pnpm exec playwright test --config=playwright.ci.config.ts || status=$?
+          if [ "$status" -ne 0 ]; then
+            tail -n 100 /tmp/next-e2e.log
+          fi
+          exit "$status"
       - name: Production Next.js build verification
         run: pnpm --filter frontend build
