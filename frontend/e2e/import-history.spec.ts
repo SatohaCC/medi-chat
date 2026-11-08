@@ -72,7 +72,9 @@ test("history loads, paginates, refreshes after import, and fits mobile", async 
   ).toBeVisible();
   await expect(history.getByText("検索に適用中", { exact: true })).toBeVisible();
   await history.getByRole("button", { name: "次の20件" }).click();
-  await expect(history.getByText("現在は適用されていません", { exact: true })).toBeVisible();
+  await expect(
+    history.getByText("現在は適用されていません", { exact: true }),
+  ).toBeVisible();
   await expect(
     history.getByText("登録履歴のみ表示しています。", { exact: false }),
   ).toBeVisible();

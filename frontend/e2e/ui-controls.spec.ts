@@ -67,9 +67,10 @@ test("SX-21: switches the shared evidence pane between answers and preserves acc
     (await raw.getAttribute("id")) ?? "",
   );
   await toggles.last().click();
-  await expect(
-    pane.getByRole("tab", { name: /判定内容/ }),
-  ).toHaveAttribute("aria-selected", "true");
+  await expect(pane.getByRole("tab", { name: /判定内容/ })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
   await expect(toggles.first()).toHaveAttribute("aria-pressed", "false");
   await expect(toggles.last()).toHaveAttribute("aria-pressed", "true");
 });
