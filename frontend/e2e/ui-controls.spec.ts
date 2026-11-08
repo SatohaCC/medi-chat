@@ -20,7 +20,7 @@ test("SX-20/22: keyboard medicine selection and model agree with WS payload", as
 }) => {
   const chat = await openChat(page);
   await page.getByRole("button", { name: "薬を追加", exact: true }).click();
-  const search = page.getByRole("searchbox", { name: "処方薬検索", exact: true });
+  const search = page.getByRole("searchbox", { name: /処方薬検索/ });
   await expect(search).toBeFocused();
   await search.press("ArrowDown");
   await search.press("Enter");
@@ -54,10 +54,10 @@ test("SX-21: switches the shared evidence pane between answers and preserves acc
   await toggles.first().press("Enter");
   const pane = page.getByRole("complementary", { name: "添付文書の根拠引用" });
   await expect(pane).toHaveCount(1);
-  const raw = pane.getByRole("tab", { name: "生レスポンス", exact: false });
+  const raw = pane.getByRole("tab", { name: /詳細データ/ });
   await raw.focus();
   await raw.press("Space");
-  await expect(pane.getByRole("tabpanel", { name: /生レスポンス/ })).toContainText(
+  await expect(pane.getByRole("tabpanel", { name: /詳細データ/ })).toContainText(
     '"visual-request"',
   );
   const controls = await raw.getAttribute("aria-controls");
@@ -67,9 +67,10 @@ test("SX-21: switches the shared evidence pane between answers and preserves acc
     (await raw.getAttribute("id")) ?? "",
   );
   await toggles.last().click();
-  await expect(
-    pane.getByRole("tab", { name: "判定サマリー", exact: false }),
-  ).toHaveAttribute("aria-selected", "true");
+  await expect(pane.getByRole("tab", { name: /判定内容/ })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
   await expect(toggles.first()).toHaveAttribute("aria-pressed", "false");
   await expect(toggles.last()).toHaveAttribute("aria-pressed", "true");
 });
@@ -94,7 +95,7 @@ test("SX-24: all probabilities and raw JSON retain exact values", async ({ page 
     if (!bar || !container) throw new Error("Missing probability bar");
     expect(Math.abs(bar.width - container.width * value)).toBeLessThanOrEqual(2);
   }
-  await inspector.getByRole("tab", { name: "生レスポンス", exact: false }).click();
+  await inspector.getByRole("tab", { name: /詳細データ/ }).click();
   await expect(inspector.getByRole("tabpanel").locator("code")).toHaveText(
     JSON.stringify(visualJev, null, 2),
   );
@@ -118,12 +119,16 @@ for (const confidence of [0, 1]) {
     const inspector = page.getByRole("complementary", { name: "添付文書の根拠引用" });
     await expect(inspector).toContainText(`確信度: ${confidence * 100}%`);
     await expect(inspector).toContainText("unknown-intent");
-    await expect(inspector).toContainText("Jevエラー: 固定Jevエラー");
+    await expect(inspector).toContainText("固定Jevエラー");
     await expect(inspector.getByText("トークン:", { exact: false })).toHaveCount(0);
     const bar = inspector.locator("[data-confidence-meter]");
     const box = await bar.boundingBox();
     const container = await bar.locator("..").boundingBox();
     if (!box || !container) throw new Error("Missing confidence meter");
-    expect(Math.abs(box.width - container.width * confidence)).toBeLessThanOrEqual(2);
+    // 端数幅の丸めとスクロールバーで数pxずれるため、幅に対する比率で許容する。
+    const tolerance = Math.max(2, container.width * 0.02);
+    expect(Math.abs(box.width - container.width * confidence)).toBeLessThanOrEqual(
+      tolerance,
+    );
   });
 }

@@ -212,7 +212,7 @@ test("切断された回答を中断と表示し、再接続後の履歴から�
   );
 });
 
-test("SX-26/27: section/all/zero selection, references and safe Markdown remain", async ({
+test("SX-26/27: section/all/zero selection, 参照先行を表示せず安全なMarkdownを保持する", async ({
   page,
 }) => {
   const chat = await openChat(page);
@@ -238,15 +238,12 @@ test("SX-26/27: section/all/zero selection, references and safe Markdown remain"
   chat.respond({ type: "text_done" });
   const evidence = page.getByRole("complementary");
   await expect(evidence).toBeVisible();
-  await expect(evidence).toContainText("合計：2件");
+  await expect(evidence).toContainText("全体：2件");
   await evidence.getByRole("button", { name: "[2] 禁忌 (1)", exact: true }).click();
   await expect(evidence.getByText("禁忌の正文", { exact: true })).toBeVisible();
   await expect(evidence.getByRole("heading", { name: "原文の見出し" })).not.toBeVisible();
   await evidence.getByRole("button", { name: "すべて (2)", exact: true }).click();
   await expect(evidence.getByRole("heading", { name: "原文の見出し" })).toBeVisible();
-  await expect(
-    evidence.locator('a[href="https://example.invalid/reference#2.12"]'),
-  ).toHaveCount(2);
   const safe = page.getByRole("link", { name: "安全なURL", exact: true });
   await expect(safe).toHaveAttribute("href", "https://example.invalid/safe");
   await expect(safe).toHaveAttribute("target", "_blank");
@@ -263,7 +260,7 @@ test("SX-26/27: section/all/zero selection, references and safe Markdown remain"
   chat.respond({ type: "retrieval_status", stage: "complete" });
   chat.respond({ type: "text_delta", content: "根拠0の回答" });
   chat.respond({ type: "text_done" });
-  await expect(page.getByRole("complementary")).toContainText("合計：0件");
+  await expect(page.getByRole("complementary")).toContainText("全体：0件");
 });
 
 test("チャット送信時に、送信したユーザー質問が画面上部にスクロールする", async ({

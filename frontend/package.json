@@ -11,6 +11,7 @@
     "test:e2e:access": "playwright test --config=playwright.access.config.ts",
     "test:e2e": "node scripts/test-e2e.mjs",
     "test:e2e:mock": "playwright test",
+    "test:e2e:ci": "playwright test --config=playwright.ci.config.ts",
     "test:e2e:shared": "playwright test --config=playwright.shared.config.ts",
     "test:e2e:real": "playwright test --config=playwright.import-integration.config.ts",
     "dev": "next dev",

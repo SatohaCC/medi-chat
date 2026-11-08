@@ -66,13 +66,15 @@ test("history loads, paginates, refreshes after import, and fits mobile", async 
     });
   });
   await page.goto("/imports");
-  const history = page.getByRole("region", { name: "取り込み済みXML" });
+  const history = page.getByRole("region", { name: "登録履歴" });
   await expect(
-    history.getByRole("heading", { name: "テスト.xml", exact: true }),
+    history.getByRole("heading", { name: "テスト医薬品", exact: true }),
   ).toBeVisible();
   await expect(history.getByText("検索に適用中", { exact: true })).toBeVisible();
   await history.getByRole("button", { name: "次の20件" }).click();
-  await expect(history.getByText("旧版・適用なし", { exact: true })).toBeVisible();
+  await expect(
+    history.getByText("現在は適用されていません", { exact: true }),
+  ).toBeVisible();
   await expect(
     history.getByText("登録履歴のみ表示しています。", { exact: false }),
   ).toBeVisible();
@@ -82,8 +84,9 @@ test("history loads, paginates, refreshes after import, and fits mobile", async 
     buffer: Buffer.from("<test/>"),
   });
   await page.getByRole("button", { name: "XMLを登録", exact: true }).click();
+  await history.getByText("管理用の詳細を表示").click();
   await expect(
-    history.getByRole("heading", { name: "追加テスト.xml", exact: true }),
+    history.getByText("ファイル名: 追加テスト.xml", { exact: true }),
   ).toBeVisible();
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
@@ -100,11 +103,11 @@ test("history provides empty, error and retry states", async ({ page }) => {
     ),
   );
   await page.goto("/imports");
-  const history = page.getByRole("region", { name: "取り込み済みXML" });
+  const history = page.getByRole("region", { name: "登録履歴" });
   await expect(history.getByRole("alert")).toBeVisible();
   failed = false;
   await history.getByRole("button", { name: "一覧を更新" }).click();
   await expect(
-    history.getByText("取り込み済みのXMLはありません。", { exact: false }),
+    history.getByText("登録履歴はありません。", { exact: false }),
   ).toBeVisible();
 });

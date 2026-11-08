@@ -34,7 +34,7 @@ async function visualSnapshot(page: Page, testInfo: TestInfo, name: string) {
     );
   if (name.startsWith("imports-")) {
     await expect(
-      page.getByText("取り込み済みのXMLはありません。", { exact: false }),
+      page.getByText("登録履歴はありません。", { exact: false }),
     ).toBeVisible();
   }
   await page.evaluate(() => document.fonts.ready);
@@ -231,7 +231,7 @@ for (const width of [1280, 390]) {
     await visualSnapshot(page, testInfo, `chat-jev-summary-${width}.png`);
     await page.getByRole("button", { name: "全9件を表示" }).click();
     await visualSnapshot(page, testInfo, `chat-jev-all-${width}.png`);
-    await page.getByRole("tab", { name: "生レスポンス", exact: false }).click();
+    await page.getByRole("tab", { name: /詳細データ/ }).click();
     await visualSnapshot(page, testInfo, `chat-jev-raw-${width}.png`);
     await page.getByRole("tab", { name: /添付文書の根拠/ }).click();
     const table = page.getByRole("region", { name: "添付文書の表（横スクロール）" });

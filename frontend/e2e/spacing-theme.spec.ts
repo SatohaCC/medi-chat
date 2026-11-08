@@ -19,7 +19,7 @@ for (const width of [390, 1280]) {
       .locator("form")
       .filter({ has: page.getByRole("searchbox", { name: "検索キーワード" }) });
     await expect(form).toHaveCSS("padding-left", "12px");
-    await expect(form).toHaveCSS("column-gap", "8px");
+    await expect(form).toHaveCSS("column-gap", "12px");
     await page.screenshot({ path: `../tmp/search-real-${width}.png` });
     await page.reload();
     await expect(page.getByRole("main")).toHaveCSS(
@@ -41,7 +41,7 @@ test("余白トークンへの変更と復元を実CSSへHMRし、入力を保�
   await expect(main).toHaveCSS("padding-left", "24px");
   const documentTime = await page.evaluate(() => performance.timeOrigin);
   const source = resolve(
-    "features/keyword-search/components/KeywordSearchScreen.styles.ts",
+    "features/keyword-search/components/KeywordSearchScreen/KeywordSearchScreen.styles.ts",
   );
   const original = readFileSync(source, "utf8");
   const changed = original.replace(
@@ -70,7 +70,7 @@ test("新しい余白トークンの定義と参照を同時更新しても余�
   const main = page.getByRole("main");
   await expect(main).toHaveCSS("padding-left", "24px");
   const source = resolve(
-    "features/keyword-search/components/KeywordSearchScreen.styles.ts",
+    "features/keyword-search/components/KeywordSearchScreen/KeywordSearchScreen.styles.ts",
   );
   const tokens = resolve("styles/tokens.css");
   const original = readFileSync(source, "utf8"),
