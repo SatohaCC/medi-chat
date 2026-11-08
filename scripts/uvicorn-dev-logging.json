@@ -2,15 +2,15 @@
   "version": 1,
   "disable_existing_loggers": false,
   "filters": {
-    "development_probe": { "()": "backend.config.dev_logging.DevelopmentProbeFilter" }
+    "development_access": { "()": "backend.config.dev_logging.DevelopmentAccessLogFilter" }
   },
   "formatters": {
     "default": { "()": "uvicorn.logging.DefaultFormatter", "fmt": "%(levelprefix)s %(message)s" },
     "access": { "()": "uvicorn.logging.AccessFormatter", "fmt": "%(levelprefix)s %(client_addr)s - \"%(request_line)s\" %(status_code)s" }
   },
   "handlers": {
-    "default": { "class": "logging.StreamHandler", "formatter": "default", "stream": "ext://sys.stderr" },
-    "access": { "class": "logging.StreamHandler", "formatter": "access", "stream": "ext://sys.stdout", "filters": ["development_probe"] }
+    "default": { "class": "logging.StreamHandler", "formatter": "default", "stream": "ext://sys.stderr", "filters": ["development_access"] },
+    "access": { "class": "logging.StreamHandler", "formatter": "access", "stream": "ext://sys.stdout", "filters": ["development_access"] }
   },
   "loggers": {
     "uvicorn": { "handlers": ["default"], "level": "INFO", "propagate": false },
