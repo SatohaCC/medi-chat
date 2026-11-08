@@ -53,7 +53,7 @@ RACは `shared/ui` のButton/ToggleButton/Select/Tabs/Disclosureで内包し、�
 StyleXは表示TSX・隣接 `*.styles.ts` と `styles/tokens.stylex.ts` に限定します。
 `styles/tokens.css` が共通値の正典です。交換対象は表示層とBabel/PostCSS/lint設定で、
 model/hooks/apiと意味的Propsは維持します。`app/globals.css` は単一`@stylex`入口です。
-CSSはtokens、`styles/base.css` のreset/body、`features/chat/components/markdown-content.css`
+CSSはtokens、`styles/base.css` のreset/body、`features/chat/styles/markdown-content.css`
 の生成Markdown子孫だけです。原文HTMLへ入力styleを許可せず、表示枠のdynamic StyleXと分けます。
 
 Tailwindは未使用確認後に依存/PostCSSを除去しました。`babel.config.js` のnext/babelと
