@@ -33,7 +33,7 @@ const SUITES = {
       "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON",
       "--experimental-strip-types",
       "--test",
-      "frontend/features/chat/components/SourceEvidenceContent.source-data.mjs",
+      "frontend/features/chat/components/SourceEvidenceContent/SourceEvidenceContent.source-data.mjs",
     ],
     testRunner: "node",
   },

@@ -12,6 +12,6 @@ body {
   height: 100dvh;
 }
 
-[data-testid="medicine-prompt-field"] p {
+[data-testid="medicine-prompt-field"] p:not([role="alert"]) {
   display: none;
 }

@@ -51,7 +51,7 @@ test("integration layers require an explicit specification and use only register
     ["test:postgres"],
     ["test:e2e"],
     ["run", "--project", "backend", "--locked", "python", "-m", "backend.infrastructure.cli.configured_e2e_gate"],
-    ["--disable-warning=ExperimentalWarning", "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", "--experimental-strip-types", "--test", "frontend/features/chat/components/SourceEvidenceContent.source-data.mjs"],
+    ["--disable-warning=ExperimentalWarning", "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", "--experimental-strip-types", "--test", "frontend/features/chat/components/SourceEvidenceContent/SourceEvidenceContent.source-data.mjs"],
   ]);
   assert.equal(plan.tasks[3].command, process.execPath);
   assert.deepEqual(plan.tasks.map((task) => task.testRunner), ["pytest", "playwright", "configured-backend", "node"]);

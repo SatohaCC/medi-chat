@@ -52,7 +52,7 @@ async function visualSnapshot(page: Page, testInfo: TestInfo, name: string) {
     send: "form button",
     assistant: '[data-message-role="assistant"] [data-message-bubble]',
     evidence: 'aside[aria-label="添付文書の根拠引用"]',
-    jev: '[data-disclosure="jev"]',
+    jev: '[data-disclosure="accent"]',
     tabs: "[role=tablist]",
     table: '[aria-label="添付文書の表（横スクロール）"]',
     importResult: '[aria-label="取り込み結果"]',

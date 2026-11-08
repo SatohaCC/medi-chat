@@ -10,6 +10,7 @@
     "includes": [
       "app/**",
       "e2e/**",
+      "e2e-headers/**",
       "e2e-real/**",
       "manual-e2e/**",
       "scripts/**",
