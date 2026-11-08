@@ -10,7 +10,7 @@ test("SX-03: StyleXの色編集と復元が入力・選択を保持してHMRさ�
   await page.getByRole("option", { name: /^テスト医薬品B/ }).click();
   const medicine = page.getByTestId("tier-1-prescription");
   const styles = resolve(
-    "features/medicine-selection/components/MedicinePromptDock.styles.ts",
+    "features/medicine-selection/components/MedicinePromptDock/MedicinePromptDock.styles.ts",
   );
   const original = readFileSync(styles, "utf8");
   const changed = original.replace(
