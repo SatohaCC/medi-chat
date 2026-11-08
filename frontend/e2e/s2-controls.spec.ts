@@ -8,7 +8,7 @@ for (const width of [390, 1280]) {
     await chat.input.fill("保持するテスト質問");
     const trigger = page.getByRole("button", { name: "薬を追加", exact: true });
     await trigger.click();
-    const search = page.getByRole("searchbox", { name: "処方薬検索", exact: true });
+    const search = page.getByRole("searchbox", { name: /処方薬検索/ });
     await expect(search).toBeFocused();
     await page.screenshot({ path: `../tmp/s2-medicine-picker-${width}.png` });
     await search.press("Escape");

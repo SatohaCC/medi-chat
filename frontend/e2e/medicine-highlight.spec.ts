@@ -20,7 +20,9 @@ test("medicine names stay unmarked in evidence while clinical query terms highli
   });
   chat.respond({ type: "text_delta", content: "テスト回答" });
   chat.respond({ type: "text_done" });
-  await page.getByRole("button", { name: /添付文書の根拠を表示/ }).click();
+  await expect(
+    page.getByRole("complementary", { name: "添付文書の根拠引用" }),
+  ).toBeVisible();
   const evidence = page.getByRole("complementary");
   await expect(evidence.locator("mark", { hasText: "出血" }).first()).toBeVisible();
   await expect(evidence.locator("mark", { hasText: "併用禁忌" }).first()).toBeVisible();

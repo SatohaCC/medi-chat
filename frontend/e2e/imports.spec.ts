@@ -53,7 +53,7 @@ test("original File multipart, metadata, warnings and separate selection", async
     page.getByText("登録しました（検索に適用されています）", { exact: true }),
   ).toBeVisible();
   await page.getByText("管理用の登録情報を表示", { exact: true }).click();
-  await expect(page.getByText("test-document", { exact: true })).toBeVisible();
+  await expect(page.getByText("登録ID: test-document", { exact: true })).toBeVisible();
   await expect(page.getByText("figure1.gif", { exact: false })).toBeVisible();
   await expect(page.getByText("製品A", { exact: false })).toBeVisible();
   expect(count).toBe(1);

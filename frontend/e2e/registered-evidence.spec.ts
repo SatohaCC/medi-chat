@@ -33,7 +33,12 @@ for (const width of [1280, 390]) {
     chat.respond({ type: "sources", sources });
     chat.respond({ type: "text_delta", content: "根拠を確認してください。" });
     chat.respond({ type: "text_done" });
-    await page.getByRole("button", { name: /添付文書の根拠を表示/ }).click();
+    if (width <= 900) {
+      await page.getByRole("button", { name: /添付文書の根拠を表示/ }).click();
+    }
+    await expect(
+      page.getByRole("complementary", { name: "添付文書の根拠引用" }),
+    ).toBeVisible();
     const evidence = page.getByRole("complementary");
     const cards = evidence.locator('[data-evidence-design="InteractionEvidence"]');
     await expect(cards).toHaveCount(2);

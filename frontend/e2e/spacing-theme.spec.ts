@@ -19,7 +19,7 @@ for (const width of [390, 1280]) {
       .locator("form")
       .filter({ has: page.getByRole("searchbox", { name: "検索キーワード" }) });
     await expect(form).toHaveCSS("padding-left", "12px");
-    await expect(form).toHaveCSS("column-gap", "8px");
+    await expect(form).toHaveCSS("column-gap", "12px");
     await page.screenshot({ path: `../tmp/search-real-${width}.png` });
     await page.reload();
     await expect(page.getByRole("main")).toHaveCSS(
