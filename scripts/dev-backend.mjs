@@ -110,6 +110,16 @@ function waitForOutputClose(stream) {
   });
 }
 
+export function defaultSpawnEnvironment(environment = process.env) {
+  return {
+    ...environment,
+    // pnpm経由の子プロセスはユーザーのuvキャッシュへ書き込めない環境があるため、
+    // リポジトリ内のキャッシュを使い、他プロセスとのlock競合も避ける。
+    UV_CACHE_DIR:
+      environment.UV_CACHE_DIR ?? resolve(PROJECT_ROOT, ".uv-cache"),
+  };
+}
+
 export function createSupervisor({
   command = "uv",
   args = DEFAULT_UVICORN_ARGS,
@@ -223,6 +233,7 @@ export function createSupervisor({
               stdio: ["inherit", "pipe", "pipe"],
               shell: false,
               detached: process.platform === "win32",
+              env: defaultSpawnEnvironment(),
             });
           } catch (err) {
             finish({ code: 1, signal: null, error: err });
