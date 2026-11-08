@@ -34,7 +34,7 @@ async function visualSnapshot(page: Page, testInfo: TestInfo, name: string) {
     );
   if (name.startsWith("imports-")) {
     await expect(
-      page.getByText("取り込み済みのXMLはありません。", { exact: false }),
+      page.getByText("登録履歴はありません。", { exact: false }),
     ).toBeVisible();
   }
   await page.evaluate(() => document.fonts.ready);
