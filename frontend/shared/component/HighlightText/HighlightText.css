@@ -1,0 +1,10 @@
+@layer markdown {
+  mark.search-highlight,
+  .search-highlight {
+    background-color: rgba(234, 179, 8, 0.2);
+    color: #854d0e;
+    border-radius: 4px;
+    padding: 1px 4px;
+    font-weight: 600;
+  }
+}

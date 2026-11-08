@@ -1,0 +1,4 @@
+interface:
+  display_name: "React Presentational / Container"
+  short_description: "Reactの表示とロジックの境界を設計し、ContainerとHookを選ぶ"
+  default_prompt: "$react-presentational-container を使い、対象のReactコンポーネントの責務を確認して、表示・Container・custom Hookの適切な境界を提案してください。"

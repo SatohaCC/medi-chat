@@ -1,10 +1,10 @@
-import type { WsClientMessage, WsServerMessage } from "./chat";
-import type { TransportSendResult } from "../api/chatWebSocket";
-import type { PromptFieldValue } from "@react-spectrum/ai";
+import type { PromptDocument } from "../../../shared/component/TokenPromptInput/PromptDocument";
 import type { SelectedMedicineItem } from "../../medicine-selection/model/promptSnapshot";
+import type { TransportSendResult } from "../api/chatWebSocket";
+import type { WsClientMessage, WsServerMessage } from "./chat";
 
 export interface RequestContext {
-  promptSegments: PromptFieldValue["segments"];
+  promptSegments: PromptDocument["segments"];
   targets: readonly SelectedMedicineItem[];
   model: string;
 }

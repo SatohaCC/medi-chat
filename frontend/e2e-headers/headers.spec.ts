@@ -2,7 +2,9 @@ import { expect, test } from "@playwright/test";
 
 for (const path of ["/", "/login", "/imports", "/search", "/guide"]) {
   for (const cookie of ["", "medi_chat_access_token=test-token"]) {
-    test(`${path} keeps production response policy with ${cookie ? "a cookie" : "no cookie"}`, async ({ request }) => {
+    test(`${path} keeps production response policy with ${cookie ? "a cookie" : "no cookie"}`, async ({
+      request,
+    }) => {
       for (const method of ["GET", "HEAD"]) {
         const response = await request.fetch(path, { method, headers: { cookie } });
         expect(response.status()).toBe(200);
@@ -30,25 +32,31 @@ test("static assets remain outside the display response policy", async ({ reques
   expect(response.headers()["x-content-type-options"]).toBe("nosniff");
 });
 
-
-test("security headers preserve the login UI and deny browser features", async ({ page }) => {
+test("security headers preserve the login UI and deny browser features", async ({
+  page,
+}) => {
   await page.goto("/login");
   await expect(page.getByRole("heading", { name: "medi-chat にログイン" })).toBeVisible();
   const input = page.getByLabel("ログインID");
   await input.fill("header-smoke-user");
   await expect(input).toHaveValue("header-smoke-user");
   const allowed = await page.evaluate(() => {
-    const policy = (document as Document & {
-      featurePolicy: { allowsFeature(name: string): boolean };
-    }).featurePolicy;
-    return ["camera", "microphone", "geolocation", "payment"].map((feature) => policy.allowsFeature(feature));
+    const policy = (
+      document as Document & {
+        featurePolicy: { allowsFeature(name: string): boolean };
+      }
+    ).featurePolicy;
+    return ["camera", "microphone", "geolocation", "payment"].map((feature) =>
+      policy.allowsFeature(feature),
+    );
   });
   expect(allowed).toEqual([false, false, false, false]);
 });
 
 test("browser refuses to render the app inside an iframe", async ({ page, baseURL }) => {
   const blocked = page.waitForEvent("console", {
-    predicate: (message) => message.type() === "error" && /X-Frame-Options/i.test(message.text()),
+    predicate: (message) =>
+      message.type() === "error" && /X-Frame-Options/i.test(message.text()),
   });
   await page.setContent(`<iframe src="${baseURL}/login"></iframe>`);
   await blocked;

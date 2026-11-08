@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
-import { ensureAuthenticated } from "../../../shared/api/authentication";
-import { MAX_MESSAGE_LENGTH } from "../../../shared/api/chatLimits";
-import { wsBaseUrl } from "../../../shared/api/endpoints";
+import { ensureAuthenticated } from "../../authentication/api";
 import { MAX_TARGET_MEDICINES } from "../../medicine-selection/model/promptSnapshot";
 import { type ChatWebSocketConnection, connectChatWebSocket } from "../api/chatWebSocket";
+import { wsBaseUrl } from "../api/endpoints";
 import {
   type ConnectionStatus,
+  parseModelOption,
   type WsClientMessage,
   type WsServerMessage,
-  parseModelOption,
 } from "../model/chat";
+import { MAX_MESSAGE_LENGTH } from "../model/chatLimits";
 import {
   chatReducer,
   initialChatState,
@@ -25,7 +25,7 @@ import {
 import { buildRequestHistory } from "../model/requestHistory";
 
 export { assertNever } from "../model/chat";
-export { patchLastAssistant, markLatestExchangeInterrupted };
+export { markLatestExchangeInterrupted, patchLastAssistant };
 
 export interface SendRequest {
   content: string;

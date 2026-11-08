@@ -1,0 +1,41 @@
+@layer markdown {
+  .source-evidence-content > :first-child {
+    margin-top: 0;
+  }
+  .source-evidence-content h3 {
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+    color: #0265dc;
+  }
+  .source-evidence-content table {
+    display: table;
+    width: 100%;
+    min-width: 520px;
+    max-width: none;
+    font-size: 13px;
+  }
+  .source-evidence-content th,
+  .source-evidence-content td {
+    min-width: 100px;
+    padding: 10px 12px;
+    border-color: var(--border);
+    white-space: pre-wrap;
+    line-height: 1.7;
+  }
+  .source-evidence-content tbody th,
+  .source-evidence-content tbody td {
+    background: transparent;
+    color: inherit;
+    font-weight: normal;
+  }
+  .source-evidence-content thead th,
+  .source-evidence-content thead td,
+  .source-evidence-content table:not(:has(thead)) > tr:first-child > th,
+  .source-evidence-content table:not(:has(thead)) > tr:first-child > td,
+  .source-evidence-content table:not(:has(thead)) > tbody > tr:first-child > th,
+  .source-evidence-content table:not(:has(thead)) > tbody > tr:first-child > td {
+    background: rgba(0, 0, 0, 0.03);
+    color: var(--fg);
+    font-weight: 600;
+  }
+}

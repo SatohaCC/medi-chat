@@ -9,6 +9,7 @@ const frontendRoot = resolve(currentDir, "..");
 const config: StorybookConfig = {
   stories: [
     "../features/**/*.stories.@(js|jsx|mjs|ts|tsx)",
+    "../shared/**/*.stories.@(js|jsx|mjs|ts|tsx)",
   ],
   framework: {
     name: "@storybook/nextjs-vite",

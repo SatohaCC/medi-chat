@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useSyncExternalStore } from "react";
-import { authenticatedFetch } from "../../../shared/api/authentication";
 import { backendBaseUrl } from "../../../shared/api/endpoints";
+import { authenticatedFetch } from "../../authentication/api";
 import { ActiveMedicineCatalog } from "../api/activeMedicineCatalog";
 
 const catalog = new ActiveMedicineCatalog(authenticatedFetch, backendBaseUrl());

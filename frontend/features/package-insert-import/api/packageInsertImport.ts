@@ -1,5 +1,5 @@
-import { authenticatedFetch } from "../../../shared/api/authentication";
 import { backendBaseUrl } from "../../../shared/api/endpoints";
+import { authenticatedFetch } from "../../authentication/api";
 import type {
   PackageInsertImportPage,
   PackageInsertImportResult,

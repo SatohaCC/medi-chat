@@ -384,8 +384,9 @@ test.describe("Unit 3 & Unit 4: Medicine Mention E2E Tests", () => {
     };
 
     const chat = await setupMedicineChat(page, {
-      autocompleteItems: [isoniaEntry1, isoniaEntry2],
-      staticMedicines: [isoniaEntry1, isoniaEntry2],
+      // 初期対象薬の選択と候補一覧の展開を通すため、既定の対象薬も同じカタログへ含める。
+      autocompleteItems: [igzEntry, isoniaEntry1, isoniaEntry2],
+      staticMedicines: [igzEntry, isoniaEntry1, isoniaEntry2],
     });
 
     await chat.input.focus();

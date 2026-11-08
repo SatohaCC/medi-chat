@@ -1,0 +1,4 @@
+interface:
+  display_name: "React Hooks Pattern"
+  short_description: "Reactの状態・Effect・custom Hookの設計とレビューを支援する"
+  default_prompt: "$react-hooks-pattern を使い、対象コードの状態・Effect・custom Hookの責務と依存関係を確認し、必要な改善を提案してください。"

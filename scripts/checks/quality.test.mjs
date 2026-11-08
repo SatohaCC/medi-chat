@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mkdtempSync, readFileSync, writeFileSync, mkdirSync, renameSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync, mkdirSync, renameSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
@@ -75,9 +75,9 @@ test("real Git changes retain both sides of renames and shared settings select a
 });
 
 test("every existing frontend and tooling Node test is included in the full plan", () => {
-  const tracked = execFileSync("git", ["ls-files", "-z"], { encoding: "utf8" }).split("\0");
+  const tracked = execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard", "-z"], { encoding: "utf8" }).split("\0");
   const planned = new Set(planFor(["frontend", "scripts"]).flatMap((task) => task.args));
-  for (const path of tracked.filter((path) => /^(frontend|scripts)\/.*\.test\.mjs$/.test(path))) {
+  for (const path of tracked.filter((path) => /^(frontend|scripts)\/.*\.test\.mjs$/.test(path) && existsSync(path))) {
     assert.ok(planned.has(path), `Node test is outside the quality plan: ${path}`);
   }
 });
@@ -123,7 +123,7 @@ test("Python-backed frontend tests are grouped separately with explicit runtime 
     tasks: [{
       label: "Acceptance: source-data",
       command: process.execPath,
-      args: ["--test", "frontend/features/chat/components/SourceEvidenceContent.source-data.mjs"],
+      args: ["--test", "frontend/features/chat/components/SourceEvidenceContent/SourceEvidenceContent.source-data.mjs"],
       layer: "source-data",
       testRunner: "node",
     }],

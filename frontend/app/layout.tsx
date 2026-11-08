@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "../styles/tokens.css";
 import "../styles/base.css";
-import "../features/chat/components/markdown-content.css";
+import "../shared/component/MarkdownContent/MarkdownContent.css";
+import "../shared/component/HighlightText/HighlightText.css";
+import "../features/chat/styles/markdown-content.css";
 import { S2ClientProvider } from "@/shared/providers/S2ClientProvider";
-import { AuthBoundary } from "../features/authentication/AuthBoundary";
+import { AuthBoundary } from "../features/authentication/components/AuthBoundary";
 
 export const metadata: Metadata = {
   title: "薬剤師向け 添付文書検索",

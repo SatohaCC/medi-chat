@@ -138,7 +138,7 @@ def main() -> None:
     )
     for name, (annotation, value) in exports.items():
         content += f"export const {name}: {annotation} = {json.dumps(value, ensure_ascii=False, indent=2)};\n\n"
-    target = ROOT / "frontend/features/chat/stories/packageInsertData.ts"
+    target = ROOT / "frontend/features/chat/fixtures/packageInsertData.ts"
     target.write_text(content, encoding="utf-8")
     print(
         f"Exported {len(examples)} section examples and {sum(map(len, groups.values()))} document units"
