@@ -10,25 +10,25 @@
       "x": 0,
       "y": 0,
       "width": 1280,
-      "height": 57
+      "height": 65
     },
     "messages": {
       "x": 0,
-      "y": 57,
+      "y": 65,
       "width": 1280,
-      "height": 642
+      "height": 618
     },
     "form": null,
     "model": {
-      "x": 883.15625,
-      "y": 12,
-      "width": 163.734375,
+      "x": 850.421875,
+      "y": 16,
+      "width": 208,
       "height": 32
     },
     "input": {
       "x": 280,
-      "y": 780,
-      "width": 555.4375,
+      "y": 778,
+      "width": 190.078125,
       "height": 56
     },
     "send": null,
@@ -50,51 +50,51 @@
       "x": 0,
       "y": 0,
       "width": 1280,
-      "height": 57
+      "height": 65
     },
     "messages": {
       "x": 0,
-      "y": 57,
+      "y": 65,
       "width": 665.609375,
-      "height": 642
+      "height": 650
     },
     "form": null,
     "model": {
-      "x": 883.15625,
-      "y": 12,
-      "width": 163.734375,
+      "x": 850.421875,
+      "y": 16,
+      "width": 208,
       "height": 32
     },
     "input": {
-      "x": 80,
-      "y": 780,
-      "width": 555.4375,
+      "x": 84,
+      "y": 778,
+      "width": 190.078125,
       "height": 56
     },
     "send": null,
     "assistant": {
-      "x": 20,
-      "y": 137.390625,
-      "width": 625.609375,
-      "height": 258.90625
+      "x": 24,
+      "y": 147.390625,
+      "width": 617.609375,
+      "height": 270.90625
     },
     "evidence": {
       "x": 665.609375,
-      "y": 57,
+      "y": 65,
       "width": 614.390625,
-      "height": 843
+      "height": 835
     },
     "jev": null,
     "tabs": {
-      "x": 682.609375,
-      "y": 135,
-      "width": 581.390625,
-      "height": 33
+      "x": 690.609375,
+      "y": 223.375,
+      "width": 565.390625,
+      "height": 47
     },
     "table": {
-      "x": 710.609375,
-      "y": 350.84375,
-      "width": 525.390625,
+      "x": 724.609375,
+      "y": 562.046875,
+      "width": 497.390625,
       "height": 132.28125
     },
     "importResult": null
@@ -110,32 +110,27 @@
       "x": 0,
       "y": 0,
       "width": 1280,
-      "height": 57
+      "height": 65
     },
     "messages": {
       "x": 0,
-      "y": 57,
+      "y": 65,
       "width": 1280,
-      "height": 843
+      "height": 835
     },
     "form": {
-      "x": 20,
-      "y": 151,
-      "width": 1240,
-      "height": 65
+      "x": 24,
+      "y": 312,
+      "width": 1232,
+      "height": 58
     },
     "model": null,
-    "input": {
-      "x": 33,
-      "y": 164,
-      "width": 1122,
-      "height": 39
-    },
+    "input": null,
     "send": {
-      "x": 1163,
-      "y": 165.5,
-      "width": 84,
-      "height": 36
+      "x": 37,
+      "y": 325,
+      "width": 159.609375,
+      "height": 32
     },
     "assistant": null,
     "evidence": null,
@@ -161,15 +156,15 @@
       "x": 0,
       "y": 69,
       "width": 390,
-      "height": 480
+      "height": 498
     },
     "form": null,
     "model": null,
     "input": {
-      "x": 72,
-      "y": 700,
-      "width": 300,
-      "height": 80
+      "x": 76,
+      "y": 722,
+      "width": 190.078125,
+      "height": 56
     },
     "send": null,
     "assistant": null,
@@ -196,22 +191,22 @@
       "x": 0,
       "y": 69,
       "width": 390,
-      "height": 480
+      "height": 578
     },
     "form": null,
     "model": null,
     "input": {
-      "x": 72,
-      "y": 700,
-      "width": 300,
-      "height": 80
+      "x": 76,
+      "y": 722,
+      "width": 190.078125,
+      "height": 56
     },
     "send": null,
     "assistant": {
-      "x": 20,
-      "y": 149.390625,
-      "width": 350,
-      "height": 325.90625
+      "x": 16,
+      "y": 151.390625,
+      "width": 358,
+      "height": 331.90625
     },
     "evidence": {
       "x": 0,
@@ -222,14 +217,14 @@
     "jev": null,
     "tabs": {
       "x": 16,
-      "y": 99,
+      "y": 159.375,
       "width": 358,
-      "height": 44
+      "height": 52
     },
     "table": {
-      "x": 44,
-      "y": 367.84375,
-      "width": 302,
+      "x": 50,
+      "y": 522.84375,
+      "width": 290,
       "height": 132.28125
     },
     "importResult": null
@@ -254,23 +249,18 @@
       "height": 775
     },
     "form": {
-      "x": 12,
-      "y": 155,
-      "width": 366,
-      "height": 109
+      "x": 16,
+      "y": 449,
+      "width": 358,
+      "height": 98
     },
     "model": null,
-    "input": {
-      "x": 25,
-      "y": 168,
-      "width": 340,
-      "height": 39
-    },
+    "input": null,
     "send": {
-      "x": 25,
-      "y": 215,
-      "width": 340,
-      "height": 36
+      "x": 29,
+      "y": 462,
+      "width": 159.609375,
+      "height": 32
     },
     "assistant": null,
     "evidence": null,
@@ -296,14 +286,14 @@
       "x": 0,
       "y": 69,
       "width": 899,
-      "height": 630
+      "height": 614
     },
     "form": null,
     "model": null,
     "input": {
       "x": 89.5,
-      "y": 780,
-      "width": 555.4375,
+      "y": 778,
+      "width": 190.078125,
       "height": 56
     },
     "send": null,
@@ -331,22 +321,22 @@
       "x": 0,
       "y": 69,
       "width": 899,
-      "height": 630
+      "height": 646
     },
     "form": null,
     "model": null,
     "input": {
       "x": 89.5,
-      "y": 780,
-      "width": 555.4375,
+      "y": 778,
+      "width": 190.078125,
       "height": 56
     },
     "send": null,
     "assistant": {
       "x": 29.5,
-      "y": 149.390625,
+      "y": 151.390625,
       "width": 840,
-      "height": 258.90625
+      "height": 270.90625
     },
     "evidence": {
       "x": 0,
@@ -356,15 +346,15 @@
     },
     "jev": null,
     "tabs": {
-      "x": 16,
-      "y": 78,
-      "width": 867,
-      "height": 33
+      "x": 24,
+      "y": 136.1875,
+      "width": 851,
+      "height": 47
     },
     "table": {
-      "x": 44,
-      "y": 293.84375,
-      "width": 811,
+      "x": 58,
+      "y": 438.71875,
+      "width": 783,
       "height": 132.28125
     },
     "importResult": null
@@ -389,23 +379,18 @@
       "height": 831
     },
     "form": {
-      "x": 20,
-      "y": 163,
-      "width": 859,
-      "height": 65
+      "x": 24,
+      "y": 340,
+      "width": 851,
+      "height": 58
     },
     "model": null,
-    "input": {
-      "x": 33,
-      "y": 176,
-      "width": 741,
-      "height": 39
-    },
+    "input": null,
     "send": {
-      "x": 782,
-      "y": 177.5,
-      "width": 84,
-      "height": 36
+      "x": 37,
+      "y": 353,
+      "width": 159.609375,
+      "height": 32
     },
     "assistant": null,
     "evidence": null,
@@ -425,20 +410,20 @@
       "x": 0,
       "y": 0,
       "width": 900,
-      "height": 69
+      "height": 64
     },
     "messages": {
       "x": 0,
-      "y": 69,
+      "y": 64,
       "width": 900,
-      "height": 630
+      "height": 619
     },
     "form": null,
     "model": null,
     "input": {
       "x": 90,
-      "y": 780,
-      "width": 555.4375,
+      "y": 778,
+      "width": 190.078125,
       "height": 56
     },
     "send": null,
@@ -460,28 +445,28 @@
       "x": 0,
       "y": 0,
       "width": 900,
-      "height": 69
+      "height": 64
     },
     "messages": {
       "x": 0,
-      "y": 69,
+      "y": 64,
       "width": 900,
-      "height": 630
+      "height": 651
     },
     "form": null,
     "model": null,
     "input": {
       "x": 90,
-      "y": 780,
-      "width": 555.4375,
+      "y": 778,
+      "width": 190.078125,
       "height": 56
     },
     "send": null,
     "assistant": {
       "x": 30,
-      "y": 149.390625,
+      "y": 146.390625,
       "width": 840,
-      "height": 258.90625
+      "height": 270.90625
     },
     "evidence": {
       "x": 0,
@@ -491,15 +476,15 @@
     },
     "jev": null,
     "tabs": {
-      "x": 16,
-      "y": 78,
-      "width": 868,
-      "height": 33
+      "x": 24,
+      "y": 136.1875,
+      "width": 852,
+      "height": 47
     },
     "table": {
-      "x": 44,
-      "y": 293.84375,
-      "width": 812,
+      "x": 58,
+      "y": 438.71875,
+      "width": 784,
       "height": 132.28125
     },
     "importResult": null
@@ -515,32 +500,27 @@
       "x": 0,
       "y": 0,
       "width": 900,
-      "height": 69
+      "height": 64
     },
     "messages": {
       "x": 0,
-      "y": 69,
+      "y": 64,
       "width": 900,
-      "height": 831
+      "height": 836
     },
     "form": {
-      "x": 20,
-      "y": 163,
-      "width": 860,
-      "height": 65
+      "x": 24,
+      "y": 335,
+      "width": 852,
+      "height": 58
     },
     "model": null,
-    "input": {
-      "x": 33,
-      "y": 176,
-      "width": 742,
-      "height": 39
-    },
+    "input": null,
     "send": {
-      "x": 783,
-      "y": 177.5,
-      "width": 84,
-      "height": 36
+      "x": 37,
+      "y": 348,
+      "width": 159.609375,
+      "height": 32
     },
     "assistant": null,
     "evidence": null,
@@ -560,25 +540,25 @@
       "x": 0,
       "y": 0,
       "width": 901,
-      "height": 103
+      "height": 97
     },
     "messages": {
       "x": 0,
-      "y": 103,
+      "y": 97,
       "width": 901,
-      "height": 596
+      "height": 586
     },
     "form": null,
     "model": {
-      "x": 504.15625,
-      "y": 58,
-      "width": 163.734375,
+      "x": 471.421875,
+      "y": 8,
+      "width": 208,
       "height": 32
     },
     "input": {
       "x": 90.5,
-      "y": 780,
-      "width": 555.4375,
+      "y": 778,
+      "width": 190.078125,
       "height": 56
     },
     "send": null,
@@ -600,51 +580,51 @@
       "x": 0,
       "y": 0,
       "width": 901,
-      "height": 103
+      "height": 97
     },
     "messages": {
       "x": 0,
-      "y": 103,
+      "y": 97,
       "width": 468.53125,
-      "height": 572
+      "height": 618
     },
     "form": null,
     "model": {
-      "x": 504.15625,
-      "y": 58,
-      "width": 163.734375,
+      "x": 471.421875,
+      "y": 8,
+      "width": 208,
       "height": 32
     },
     "input": {
-      "x": 80,
-      "y": 756,
-      "width": 362.53125,
-      "height": 80
+      "x": 84,
+      "y": 778,
+      "width": 190.078125,
+      "height": 56
     },
     "send": null,
     "assistant": {
-      "x": 20,
-      "y": 183.390625,
-      "width": 428.53125,
-      "height": 295.90625
+      "x": 24,
+      "y": 179.390625,
+      "width": 420.53125,
+      "height": 313.90625
     },
     "evidence": {
       "x": 468.53125,
-      "y": 103,
+      "y": 97,
       "width": 432.46875,
-      "height": 797
+      "height": 803
     },
     "jev": null,
     "tabs": {
-      "x": 485.53125,
-      "y": 201,
-      "width": 399.46875,
-      "height": 33
+      "x": 493.53125,
+      "y": 255.375,
+      "width": 383.46875,
+      "height": 47
     },
     "table": {
-      "x": 513.53125,
-      "y": 458.84375,
-      "width": 343.46875,
+      "x": 527.53125,
+      "y": 613.84375,
+      "width": 315.46875,
       "height": 132.28125
     },
     "importResult": null
@@ -660,32 +640,27 @@
       "x": 0,
       "y": 0,
       "width": 901,
-      "height": 57
+      "height": 97
     },
     "messages": {
       "x": 0,
-      "y": 57,
+      "y": 97,
       "width": 901,
-      "height": 843
+      "height": 803
     },
     "form": {
-      "x": 20,
-      "y": 151,
-      "width": 861,
-      "height": 65
+      "x": 24,
+      "y": 368,
+      "width": 853,
+      "height": 58
     },
     "model": null,
-    "input": {
-      "x": 33,
-      "y": 164,
-      "width": 743,
-      "height": 39
-    },
+    "input": null,
     "send": {
-      "x": 784,
-      "y": 165.5,
-      "width": 84,
-      "height": 36
+      "x": 37,
+      "y": 381,
+      "width": 159.609375,
+      "height": 32
     },
     "assistant": null,
     "evidence": null,
@@ -705,25 +680,25 @@
       "x": 0,
       "y": 0,
       "width": 1280,
-      "height": 57
+      "height": 65
     },
     "messages": {
       "x": 0,
-      "y": 57,
+      "y": 65,
       "width": 1280,
-      "height": 642
+      "height": 618
     },
     "form": null,
     "model": {
-      "x": 883.15625,
-      "y": 12,
-      "width": 163.734375,
+      "x": 850.421875,
+      "y": 16,
+      "width": 208,
       "height": 32
     },
     "input": {
       "x": 280,
-      "y": 780,
-      "width": 555.4375,
+      "y": 778,
+      "width": 190.078125,
       "height": 56
     },
     "send": null,
@@ -745,24 +720,24 @@
       "x": 0,
       "y": 0,
       "width": 1280,
-      "height": 57
+      "height": 65
     },
     "messages": {
       "x": 0,
-      "y": 57,
+      "y": 65,
       "width": 1280,
-      "height": 642
+      "height": 618
     },
     "form": null,
     "model": {
-      "x": 883.15625,
-      "y": 12,
-      "width": 163.734375,
+      "x": 850.421875,
+      "y": 16,
+      "width": 208,
       "height": 32
     },
     "input": {
       "x": 280,
-      "y": 780,
+      "y": 778,
       "width": 61.828125,
       "height": 56
     },
@@ -785,33 +760,33 @@
       "x": 0,
       "y": 0,
       "width": 1280,
-      "height": 57
+      "height": 65
     },
     "messages": {
       "x": 0,
-      "y": 57,
+      "y": 65,
       "width": 1280,
-      "height": 642
+      "height": 650
     },
     "form": null,
     "model": {
-      "x": 883.15625,
-      "y": 12,
-      "width": 163.734375,
+      "x": 850.421875,
+      "y": 16,
+      "width": 208,
       "height": 32
     },
     "input": {
       "x": 280,
-      "y": 780,
-      "width": 555.4375,
+      "y": 778,
+      "width": 190.078125,
       "height": 56
     },
     "send": null,
     "assistant": {
       "x": 220,
-      "y": 137.390625,
-      "width": 234,
-      "height": 107.984375
+      "y": 147.390625,
+      "width": 230,
+      "height": 111.984375
     },
     "evidence": null,
     "jev": null,
@@ -830,33 +805,33 @@
       "x": 0,
       "y": 0,
       "width": 1280,
-      "height": 57
+      "height": 65
     },
     "messages": {
       "x": 0,
-      "y": 57,
+      "y": 65,
       "width": 1280,
-      "height": 642
+      "height": 650
     },
     "form": null,
     "model": {
-      "x": 883.15625,
-      "y": 12,
-      "width": 163.734375,
+      "x": 850.421875,
+      "y": 16,
+      "width": 208,
       "height": 32
     },
     "input": {
       "x": 280,
-      "y": 780,
-      "width": 555.4375,
+      "y": 778,
+      "width": 190.078125,
       "height": 56
     },
     "send": null,
     "assistant": {
       "x": 220,
-      "y": 137.390625,
-      "width": 150,
-      "height": 81.09375
+      "y": 147.390625,
+      "width": 146,
+      "height": 85.09375
     },
     "evidence": null,
     "jev": null,
@@ -875,32 +850,27 @@
       "x": 0,
       "y": 0,
       "width": 1280,
-      "height": 57
+      "height": 65
     },
     "messages": {
       "x": 0,
-      "y": 57,
+      "y": 65,
       "width": 1280,
-      "height": 843
+      "height": 835
     },
     "form": {
-      "x": 20,
-      "y": 151,
-      "width": 1240,
-      "height": 66
+      "x": 24,
+      "y": 312,
+      "width": 1232,
+      "height": 58
     },
     "model": null,
-    "input": {
-      "x": 33,
-      "y": 164,
-      "width": 1122,
-      "height": 40
-    },
+    "input": null,
     "send": {
-      "x": 1163,
-      "y": 166,
-      "width": 84,
-      "height": 36
+      "x": 37,
+      "y": 325,
+      "width": 159.609375,
+      "height": 32
     },
     "assistant": null,
     "evidence": null,
@@ -920,32 +890,27 @@
       "x": 0,
       "y": 0,
       "width": 1280,
-      "height": 57
+      "height": 65
     },
     "messages": {
       "x": 0,
-      "y": 57,
+      "y": 65,
       "width": 1280,
-      "height": 843
+      "height": 835
     },
     "form": {
-      "x": 20,
-      "y": 151,
-      "width": 1240,
-      "height": 66
+      "x": 24,
+      "y": 312,
+      "width": 1232,
+      "height": 58
     },
     "model": null,
-    "input": {
-      "x": 33,
-      "y": 164,
-      "width": 1122,
-      "height": 40
-    },
+    "input": null,
     "send": {
-      "x": 1163,
-      "y": 166,
-      "width": 84,
-      "height": 36
+      "x": 37,
+      "y": 325,
+      "width": 159.609375,
+      "height": 32
     },
     "assistant": null,
     "evidence": null,
@@ -953,10 +918,10 @@
     "tabs": null,
     "table": null,
     "importResult": {
-      "x": 20,
-      "y": 269,
-      "width": 1240,
-      "height": 381
+      "x": 24,
+      "y": 422,
+      "width": 1232,
+      "height": 349.5
     }
   },
   "imports-pending-1280.png": {
@@ -970,32 +935,27 @@
       "x": 0,
       "y": 0,
       "width": 1280,
-      "height": 57
+      "height": 65
     },
     "messages": {
       "x": 0,
-      "y": 57,
+      "y": 65,
       "width": 1280,
-      "height": 843
+      "height": 835
     },
     "form": {
-      "x": 20,
-      "y": 151,
-      "width": 1240,
-      "height": 66
+      "x": 24,
+      "y": 312,
+      "width": 1232,
+      "height": 58
     },
     "model": null,
-    "input": {
-      "x": 33,
-      "y": 164,
-      "width": 1122,
-      "height": 40
-    },
+    "input": null,
     "send": {
-      "x": 1163,
-      "y": 166,
-      "width": 84,
-      "height": 36
+      "x": 37,
+      "y": 325,
+      "width": 159.609375,
+      "height": 32
     },
     "assistant": null,
     "evidence": null,
@@ -1003,10 +963,10 @@
     "tabs": null,
     "table": null,
     "importResult": {
-      "x": 20,
-      "y": 269,
-      "width": 1240,
-      "height": 433
+      "x": 24,
+      "y": 422,
+      "width": 1232,
+      "height": 403.5
     }
   },
   "imports-superseded-1280.png": {
@@ -1020,32 +980,27 @@
       "x": 0,
       "y": 0,
       "width": 1280,
-      "height": 57
+      "height": 65
     },
     "messages": {
       "x": 0,
-      "y": 57,
+      "y": 65,
       "width": 1280,
-      "height": 843
+      "height": 835
     },
     "form": {
-      "x": 20,
-      "y": 151,
-      "width": 1240,
-      "height": 66
+      "x": 24,
+      "y": 312,
+      "width": 1232,
+      "height": 58
     },
     "model": null,
-    "input": {
-      "x": 33,
-      "y": 164,
-      "width": 1122,
-      "height": 40
-    },
+    "input": null,
     "send": {
-      "x": 1163,
-      "y": 166,
-      "width": 84,
-      "height": 36
+      "x": 37,
+      "y": 325,
+      "width": 159.609375,
+      "height": 32
     },
     "assistant": null,
     "evidence": null,
@@ -1053,10 +1008,10 @@
     "tabs": null,
     "table": null,
     "importResult": {
-      "x": 20,
-      "y": 269,
-      "width": 1240,
-      "height": 410.5
+      "x": 24,
+      "y": 422,
+      "width": 1232,
+      "height": 381
     }
   },
   "chat-selected-390.png": {
@@ -1076,15 +1031,15 @@
       "x": 0,
       "y": 69,
       "width": 390,
-      "height": 480
+      "height": 446
     },
     "form": null,
     "model": null,
     "input": {
-      "x": 72,
-      "y": 700,
-      "width": 300,
-      "height": 80
+      "x": 76,
+      "y": 722,
+      "width": 190.078125,
+      "height": 56
     },
     "send": null,
     "assistant": null,
@@ -1111,13 +1066,13 @@
       "x": 0,
       "y": 69,
       "width": 390,
-      "height": 504
+      "height": 446
     },
     "form": null,
     "model": null,
     "input": {
-      "x": 72,
-      "y": 724,
+      "x": 76,
+      "y": 722,
       "width": 61.828125,
       "height": 56
     },
@@ -1146,22 +1101,22 @@
       "x": 0,
       "y": 69,
       "width": 390,
-      "height": 480
+      "height": 526
     },
     "form": null,
     "model": null,
     "input": {
-      "x": 72,
-      "y": 700,
-      "width": 300,
-      "height": 80
+      "x": 76,
+      "y": 722,
+      "width": 190.078125,
+      "height": 56
     },
     "send": null,
     "assistant": {
-      "x": 20,
-      "y": 149.390625,
-      "width": 234,
-      "height": 107.984375
+      "x": 16,
+      "y": 151.390625,
+      "width": 230,
+      "height": 111.984375
     },
     "evidence": null,
     "jev": null,
@@ -1186,22 +1141,22 @@
       "x": 0,
       "y": 69,
       "width": 390,
-      "height": 480
+      "height": 526
     },
     "form": null,
     "model": null,
     "input": {
-      "x": 72,
-      "y": 700,
-      "width": 300,
-      "height": 80
+      "x": 76,
+      "y": 722,
+      "width": 190.078125,
+      "height": 56
     },
     "send": null,
     "assistant": {
-      "x": 20,
-      "y": 149.390625,
-      "width": 150,
-      "height": 81.09375
+      "x": 16,
+      "y": 151.390625,
+      "width": 146,
+      "height": 85.09375
     },
     "evidence": null,
     "jev": null,
@@ -1229,23 +1184,18 @@
       "height": 775
     },
     "form": {
-      "x": 12,
-      "y": 155,
-      "width": 366,
-      "height": 110
+      "x": 16,
+      "y": 449,
+      "width": 358,
+      "height": 98
     },
     "model": null,
-    "input": {
-      "x": 25,
-      "y": 168,
-      "width": 340,
-      "height": 40
-    },
+    "input": null,
     "send": {
-      "x": 25,
-      "y": 216,
-      "width": 340,
-      "height": 36
+      "x": 29,
+      "y": 462,
+      "width": 159.609375,
+      "height": 32
     },
     "assistant": null,
     "evidence": null,
@@ -1274,23 +1224,18 @@
       "height": 775
     },
     "form": {
-      "x": 12,
-      "y": 155,
-      "width": 366,
-      "height": 110
+      "x": 16,
+      "y": 449,
+      "width": 358,
+      "height": 98
     },
     "model": null,
-    "input": {
-      "x": 25,
-      "y": 168,
-      "width": 340,
-      "height": 40
-    },
+    "input": null,
     "send": {
-      "x": 25,
-      "y": 216,
-      "width": 340,
-      "height": 36
+      "x": 29,
+      "y": 462,
+      "width": 159.609375,
+      "height": 32
     },
     "assistant": null,
     "evidence": null,
@@ -1298,10 +1243,10 @@
     "tabs": null,
     "table": null,
     "importResult": {
-      "x": 12,
-      "y": 317,
-      "width": 366,
-      "height": 491.5
+      "x": 16,
+      "y": 599,
+      "width": 358,
+      "height": 403.5
     }
   },
   "imports-superseded-390.png": {
@@ -1324,23 +1269,18 @@
       "height": 775
     },
     "form": {
-      "x": 12,
-      "y": 155,
-      "width": 366,
-      "height": 110
+      "x": 16,
+      "y": 449,
+      "width": 358,
+      "height": 98
     },
     "model": null,
-    "input": {
-      "x": 25,
-      "y": 168,
-      "width": 340,
-      "height": 40
-    },
+    "input": null,
     "send": {
-      "x": 25,
-      "y": 216,
-      "width": 340,
-      "height": 36
+      "x": 29,
+      "y": 462,
+      "width": 159.609375,
+      "height": 32
     },
     "assistant": null,
     "evidence": null,
@@ -1348,10 +1288,10 @@
     "tabs": null,
     "table": null,
     "importResult": {
-      "x": 12,
-      "y": 317,
-      "width": 366,
-      "height": 488.5
+      "x": 16,
+      "y": 599,
+      "width": 358,
+      "height": 424.5
     }
   },
   "chat-jev-summary-1280.png": {
@@ -1365,46 +1305,46 @@
       "x": 0,
       "y": 0,
       "width": 1280,
-      "height": 57
+      "height": 65
     },
     "messages": {
       "x": 0,
-      "y": 57,
+      "y": 65,
       "width": 665.609375,
-      "height": 642
+      "height": 650
     },
     "form": null,
     "model": {
-      "x": 883.15625,
-      "y": 12,
-      "width": 163.734375,
+      "x": 850.421875,
+      "y": 16,
+      "width": 208,
       "height": 32
     },
     "input": {
-      "x": 80,
-      "y": 780,
-      "width": 555.4375,
+      "x": 84,
+      "y": 778,
+      "width": 190.078125,
       "height": 56
     },
     "send": null,
     "assistant": {
-      "x": 20,
-      "y": 141.390625,
-      "width": 625.609375,
-      "height": 120.09375
+      "x": 24,
+      "y": 151.390625,
+      "width": 617.609375,
+      "height": 132.09375
     },
     "evidence": {
       "x": 665.609375,
-      "y": 57,
+      "y": 65,
       "width": 614.390625,
-      "height": 843
+      "height": 835
     },
     "jev": null,
     "tabs": {
-      "x": 682.609375,
-      "y": 135,
-      "width": 581.390625,
-      "height": 33
+      "x": 690.609375,
+      "y": 223.375,
+      "width": 565.390625,
+      "height": 47
     },
     "table": null,
     "importResult": null
@@ -1420,46 +1360,46 @@
       "x": 0,
       "y": 0,
       "width": 1280,
-      "height": 57
+      "height": 65
     },
     "messages": {
       "x": 0,
-      "y": 57,
+      "y": 65,
       "width": 665.609375,
-      "height": 642
+      "height": 650
     },
     "form": null,
     "model": {
-      "x": 883.15625,
-      "y": 12,
-      "width": 163.734375,
+      "x": 850.421875,
+      "y": 16,
+      "width": 208,
       "height": 32
     },
     "input": {
-      "x": 80,
-      "y": 780,
-      "width": 555.4375,
+      "x": 84,
+      "y": 778,
+      "width": 190.078125,
       "height": 56
     },
     "send": null,
     "assistant": {
-      "x": 20,
-      "y": 141.390625,
-      "width": 625.609375,
-      "height": 120.09375
+      "x": 24,
+      "y": 151.390625,
+      "width": 617.609375,
+      "height": 132.09375
     },
     "evidence": {
       "x": 665.609375,
-      "y": 57,
+      "y": 65,
       "width": 614.390625,
-      "height": 843
+      "height": 835
     },
     "jev": null,
     "tabs": {
-      "x": 682.609375,
-      "y": 135,
-      "width": 581.390625,
-      "height": 33
+      "x": 690.609375,
+      "y": 223.375,
+      "width": 565.390625,
+      "height": 47
     },
     "table": null,
     "importResult": null
@@ -1475,46 +1415,46 @@
       "x": 0,
       "y": 0,
       "width": 1280,
-      "height": 57
+      "height": 65
     },
     "messages": {
       "x": 0,
-      "y": 57,
+      "y": 65,
       "width": 665.609375,
-      "height": 642
+      "height": 650
     },
     "form": null,
     "model": {
-      "x": 883.15625,
-      "y": 12,
-      "width": 163.734375,
+      "x": 850.421875,
+      "y": 16,
+      "width": 208,
       "height": 32
     },
     "input": {
-      "x": 80,
-      "y": 780,
-      "width": 555.4375,
+      "x": 84,
+      "y": 778,
+      "width": 190.078125,
       "height": 56
     },
     "send": null,
     "assistant": {
-      "x": 20,
-      "y": 141.390625,
-      "width": 625.609375,
-      "height": 120.09375
+      "x": 24,
+      "y": 151.390625,
+      "width": 617.609375,
+      "height": 132.09375
     },
     "evidence": {
       "x": 665.609375,
-      "y": 57,
+      "y": 65,
       "width": 614.390625,
-      "height": 843
+      "height": 835
     },
     "jev": null,
     "tabs": {
-      "x": 682.609375,
-      "y": 135,
-      "width": 581.390625,
-      "height": 33
+      "x": 690.609375,
+      "y": 223.375,
+      "width": 565.390625,
+      "height": 47
     },
     "table": null,
     "importResult": null
@@ -1530,51 +1470,51 @@
       "x": 0,
       "y": 0,
       "width": 1280,
-      "height": 57
+      "height": 65
     },
     "messages": {
       "x": 0,
-      "y": 57,
+      "y": 65,
       "width": 665.609375,
-      "height": 642
+      "height": 650
     },
     "form": null,
     "model": {
-      "x": 883.15625,
-      "y": 12,
-      "width": 163.734375,
+      "x": 850.421875,
+      "y": 16,
+      "width": 208,
       "height": 32
     },
     "input": {
-      "x": 80,
-      "y": 780,
-      "width": 555.4375,
+      "x": 84,
+      "y": 778,
+      "width": 190.078125,
       "height": 56
     },
     "send": null,
     "assistant": {
-      "x": 20,
-      "y": 141.390625,
-      "width": 625.609375,
-      "height": 120.09375
+      "x": 24,
+      "y": 151.390625,
+      "width": 617.609375,
+      "height": 132.09375
     },
     "evidence": {
       "x": 665.609375,
-      "y": 57,
+      "y": 65,
       "width": 614.390625,
-      "height": 843
+      "height": 835
     },
     "jev": null,
     "tabs": {
-      "x": 682.609375,
-      "y": 135,
-      "width": 581.390625,
-      "height": 33
+      "x": 690.609375,
+      "y": 223.375,
+      "width": 565.390625,
+      "height": 47
     },
     "table": {
-      "x": 710.609375,
-      "y": 350.84375,
-      "width": 525.390625,
+      "x": 724.609375,
+      "y": 562.046875,
+      "width": 497.390625,
       "height": 132.28125
     },
     "importResult": null
@@ -1596,22 +1536,22 @@
       "x": 0,
       "y": 69,
       "width": 390,
-      "height": 480
+      "height": 578
     },
     "form": null,
     "model": null,
     "input": {
-      "x": 72,
-      "y": 700,
-      "width": 300,
-      "height": 80
+      "x": 76,
+      "y": 722,
+      "width": 190.078125,
+      "height": 56
     },
     "send": null,
     "assistant": {
-      "x": 20,
-      "y": 149.390625,
-      "width": 350,
-      "height": 187.09375
+      "x": 16,
+      "y": 151.390625,
+      "width": 358,
+      "height": 193.09375
     },
     "evidence": {
       "x": 0,
@@ -1622,9 +1562,9 @@
     "jev": null,
     "tabs": {
       "x": 16,
-      "y": 99,
+      "y": 159.375,
       "width": 358,
-      "height": 44
+      "height": 52
     },
     "table": null,
     "importResult": null
@@ -1646,22 +1586,22 @@
       "x": 0,
       "y": 69,
       "width": 390,
-      "height": 480
+      "height": 578
     },
     "form": null,
     "model": null,
     "input": {
-      "x": 72,
-      "y": 700,
-      "width": 300,
-      "height": 80
+      "x": 76,
+      "y": 722,
+      "width": 190.078125,
+      "height": 56
     },
     "send": null,
     "assistant": {
-      "x": 20,
-      "y": 149.390625,
-      "width": 350,
-      "height": 187.09375
+      "x": 16,
+      "y": 151.390625,
+      "width": 358,
+      "height": 193.09375
     },
     "evidence": {
       "x": 0,
@@ -1672,9 +1612,9 @@
     "jev": null,
     "tabs": {
       "x": 16,
-      "y": 99,
+      "y": 159.375,
       "width": 358,
-      "height": 44
+      "height": 52
     },
     "table": null,
     "importResult": null
@@ -1696,22 +1636,22 @@
       "x": 0,
       "y": 69,
       "width": 390,
-      "height": 480
+      "height": 578
     },
     "form": null,
     "model": null,
     "input": {
-      "x": 72,
-      "y": 700,
-      "width": 300,
-      "height": 80
+      "x": 76,
+      "y": 722,
+      "width": 190.078125,
+      "height": 56
     },
     "send": null,
     "assistant": {
-      "x": 20,
-      "y": 149.390625,
-      "width": 350,
-      "height": 187.09375
+      "x": 16,
+      "y": 151.390625,
+      "width": 358,
+      "height": 193.09375
     },
     "evidence": {
       "x": 0,
@@ -1722,9 +1662,9 @@
     "jev": null,
     "tabs": {
       "x": 16,
-      "y": 99,
+      "y": 159.375,
       "width": 358,
-      "height": 44
+      "height": 52
     },
     "table": null,
     "importResult": null
@@ -1746,22 +1686,22 @@
       "x": 0,
       "y": 69,
       "width": 390,
-      "height": 480
+      "height": 578
     },
     "form": null,
     "model": null,
     "input": {
-      "x": 72,
-      "y": 700,
-      "width": 300,
-      "height": 80
+      "x": 76,
+      "y": 722,
+      "width": 190.078125,
+      "height": 56
     },
     "send": null,
     "assistant": {
-      "x": 20,
-      "y": 149.390625,
-      "width": 350,
-      "height": 187.09375
+      "x": 16,
+      "y": 151.390625,
+      "width": 358,
+      "height": 193.09375
     },
     "evidence": {
       "x": 0,
@@ -1772,14 +1712,14 @@
     "jev": null,
     "tabs": {
       "x": 16,
-      "y": 99,
+      "y": 159.375,
       "width": 358,
-      "height": 44
+      "height": 52
     },
     "table": {
-      "x": 44,
-      "y": 367.84375,
-      "width": 302,
+      "x": 50,
+      "y": 522.84375,
+      "width": 290,
       "height": 132.28125
     },
     "importResult": null
@@ -1804,23 +1744,18 @@
       "height": 775
     },
     "form": {
-      "x": 12,
-      "y": 155,
-      "width": 366,
-      "height": 110
+      "x": 16,
+      "y": 449,
+      "width": 358,
+      "height": 98
     },
     "model": null,
-    "input": {
-      "x": 25,
-      "y": 168,
-      "width": 340,
-      "height": 40
-    },
+    "input": null,
     "send": {
-      "x": 25,
-      "y": 216,
-      "width": 340,
-      "height": 36
+      "x": 29,
+      "y": 462,
+      "width": 159.609375,
+      "height": 32
     },
     "assistant": null,
     "evidence": null,
@@ -1828,10 +1763,10 @@
     "tabs": null,
     "table": null,
     "importResult": {
-      "x": 12,
-      "y": 317,
-      "width": 366,
-      "height": 439.5
+      "x": 16,
+      "y": 599,
+      "width": 358,
+      "height": 349.5
     }
   }
 }
