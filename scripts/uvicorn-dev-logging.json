@@ -9,7 +9,7 @@
     "access": { "()": "uvicorn.logging.AccessFormatter", "fmt": "%(levelprefix)s %(client_addr)s - \"%(request_line)s\" %(status_code)s" }
   },
   "handlers": {
-    "default": { "class": "logging.StreamHandler", "formatter": "default", "stream": "ext://sys.stderr" },
+    "default": { "class": "logging.StreamHandler", "formatter": "default", "stream": "ext://sys.stderr", "filters": ["development_access"] },
     "access": { "class": "logging.StreamHandler", "formatter": "access", "stream": "ext://sys.stdout", "filters": ["development_access"] }
   },
   "loggers": {

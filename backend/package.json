@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "private": true,
   "scripts": {
-    "dev": "uv run --cache-dir ../.uv-cache --locked uvicorn --no-proxy-headers --app-dir .. backend.main:app --port 8000 --reload --log-config ../scripts/uvicorn-dev-logging.json",
+    "dev": "uv run --cache-dir ../.uv-cache --locked uvicorn --no-proxy-headers --app-dir .. backend.main:app --port 8000 --reload --reload-exclude .venv --log-config ../scripts/uvicorn-dev-logging.json",
     "dev:backend": "pnpm run dev",
     "test": "uv run --locked pytest",
     "test:postgres": "uv run --locked pytest --postgres -m \"postgres and not source_data\"",
