@@ -109,7 +109,7 @@ jobs:
   frontend-quality:
     name: Frontend quality and Next.js build
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
         with:
@@ -129,5 +129,9 @@ jobs:
       - run: uv sync --project backend --locked
       - name: Frontend format, lint, StyleX, types and unit tests
         run: pnpm quality:frontend
+      - name: Install Chromium for browser E2E
+        run: pnpm --filter frontend exec playwright install --with-deps chromium
+      - name: Browser E2E on the mock API
+        run: pnpm --filter frontend test:e2e:ci
       - name: Production Next.js build verification
         run: pnpm --filter frontend build
