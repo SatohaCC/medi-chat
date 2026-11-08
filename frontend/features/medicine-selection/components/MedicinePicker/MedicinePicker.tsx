@@ -2,6 +2,7 @@
 import { useMemo, useState } from "react";
 import { SearchablePicker } from "../../../../shared/component/SearchablePicker";
 import type { MedicineEntry } from "../../model/medicineAutocomplete";
+import { toMedicinePickerOptions } from "../../model/medicinePickerOptions";
 import type { SelectedMedicineItem } from "../../model/promptSnapshot";
 export function MedicinePicker({
   entries,
@@ -31,14 +32,15 @@ export function MedicinePicker({
       )
       .slice(0, q ? 20 : 15);
   }, [entries, selected, query]);
+  const options = useMemo(() => toMedicinePickerOptions(candidates), [candidates]);
   return (
     <SearchablePicker
-      items={candidates.map((m) => ({ id: m.y, label: m.n, description: m.g }))}
+      items={options}
       query={query}
       onQueryChange={setQuery}
       onSelect={(id) => {
-        const medicine = candidates.find((m) => m.y === id);
-        if (medicine) onSelect({ yj_code: medicine.y, name: medicine.n });
+        const option = options.find((candidate) => candidate.id === id);
+        if (option) onSelect({ yj_code: option.entry.y, name: option.entry.n });
       }}
       buttonLabel={buttonLabel}
       dialogLabel="処方薬を選択"
