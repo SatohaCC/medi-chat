@@ -125,6 +125,10 @@ for (const confidence of [0, 1]) {
     const box = await bar.boundingBox();
     const container = await bar.locator("..").boundingBox();
     if (!box || !container) throw new Error("Missing confidence meter");
-    expect(Math.abs(box.width - container.width * confidence)).toBeLessThanOrEqual(2);
+    // 端数幅の丸めとスクロールバーで数pxずれるため、幅に対する比率で許容する。
+    const tolerance = Math.max(2, container.width * 0.02);
+    expect(Math.abs(box.width - container.width * confidence)).toBeLessThanOrEqual(
+      tolerance,
+    );
   });
 }
