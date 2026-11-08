@@ -97,32 +97,47 @@ export function KeywordSearchScreen() {
           {...stylex.props(styles.searchForm)}
           onSubmit={(event) => event.preventDefault()}
         >
-          <div {...stylex.props(styles.searchFieldSlot)}>
-            <SearchField
-              label="検索キーワード"
-              value={query}
-              onChange={setQuery}
-              onSubmit={() => void handleSearch()}
-              isDisabled={isSearching}
-              aria-describedby="keyword-search-help"
-              placeholder="キーワードを入力"
-            />
-            <div id="keyword-search-help">
-              <span>例を選ぶと検索欄に入力されます。例:</span>
+          <div {...stylex.props(styles.searchBarRow)}>
+            <div {...stylex.props(styles.searchFieldSlot)}>
+              <SearchField
+                label="検索キーワード"
+                value={query}
+                onChange={setQuery}
+                onSubmit={() => void handleSearch()}
+                isDisabled={isSearching}
+                aria-describedby="keyword-search-help"
+                placeholder="キーワードを入力"
+              />
+            </div>
+            <S2Button
+              onPress={() => void handleSearch()}
+              isDisabled={!query.trim()}
+              isPending={isSearching}
+            >
+              {isSearching ? "検索中…" : "検索"}
+            </S2Button>
+          </div>
+          <div id="keyword-search-help" {...stylex.props(styles.exampleRow)}>
+            <span {...stylex.props(styles.exampleText)}>
+              例を選ぶと検索欄に入力されます。例:
+            </span>
+            <div {...stylex.props(styles.exampleChips)}>
               {queryExamples.map((example) => (
-                <button key={example} type="button" onClick={() => setQuery(example)}>
+                <button
+                  key={example}
+                  type="button"
+                  disabled={isSearching}
+                  {...stylex.props(
+                    styles.exampleChip,
+                    isSearching && styles.exampleChipDisabled,
+                  )}
+                  onClick={() => setQuery(example)}
+                >
                   {example}
                 </button>
               ))}
             </div>
           </div>
-          <S2Button
-            onPress={() => void handleSearch()}
-            isDisabled={!query.trim()}
-            isPending={isSearching}
-          >
-            {isSearching ? "検索中…" : "検索"}
-          </S2Button>
           <div {...stylex.props(styles.optionsRow)}>
             <Switch
               isSelected={isExpandEnabled}
