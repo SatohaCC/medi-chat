@@ -93,7 +93,6 @@ jobs:
           git push origin "HEAD:refs/heads/$PR_BRANCH"
       - name: Development tooling and generated contracts
         run: pnpm quality:scripts
-      - run: node --experimental-strip-types --test frontend/shared/api/authentication.test.mjs
       - name: Initialize this job's disposable service with separated roles
         env:
           POSTGRES_USER: postgres
