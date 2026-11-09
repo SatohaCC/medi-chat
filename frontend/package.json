@@ -28,7 +28,7 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
-    "@json-render/core": "^0.21.4",
+    "@json-render/core": "^0.22.0",
     "@json-render/react": "^0.21.4",
     "@react-spectrum/ai": "0.5.2",
     "@react-spectrum/s2": "1.8.2",
