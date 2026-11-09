@@ -27,6 +27,7 @@ certifi==2026.10.23
     # via
     #   httpcore
     #   httpx
+    #   langchain-core
     #   langchain-openai
     #   medi-chat-backend
     #   requests
@@ -119,7 +120,7 @@ jsonpatch==1.37
     # via langchain-core
 jsonpointer==3.5
     # via jsonpatch
-langchain-core==1.7.0
+langchain-core==1.7.6
     # via
     #   langchain-google-genai
     #   langchain-openai
@@ -129,7 +130,7 @@ langchain-core==1.7.0
     #   langgraph-sdk
 langchain-google-genai==4.4.2
     # via medi-chat-backend
-langchain-openai==1.7.3
+langchain-openai==1.7.4
     # via medi-chat-backend
 langchain-protocol==0.0.20
     # via
