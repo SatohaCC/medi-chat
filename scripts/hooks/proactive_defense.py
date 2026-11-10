@@ -260,6 +260,25 @@ def _extract_candidate_paths(tool_name: str, args: dict) -> list[str]:
     return paths
 
 
+_INERT_HERESTRING_RE = re.compile(r"@'(?:[\s\S]*?)'@|@\"(?:[\s\S]*?)\"@")
+_INERT_PROSE_FLAG_RE = re.compile(
+    r"(?i)(\b(?:git\s+commit\b[^\r\n;|]*?\s(?:-m|--message)|"
+    r"gh\s+(?:pr|issue|release)\s+(?:create|edit|comment)\b[^\r\n;|]*?\s(?:--body|-b|--title|-t|--notes))\s+)"
+    r"(?:\"(?:\\.|[^\"\\])*\"|'(?:''|[^'])*')"
+)
+_SHELL_EVAL_RE = re.compile(
+    r"(?i)\b(?:Invoke-Expression|iex|eval|psql|mysql|sqlite3)\b"
+)
+
+
+def _strip_inert_prose_arguments(cmd: str) -> str:
+    """Strip non-executed prose arguments (PR bodies, commit messages, here-strings) before command blacklist scan."""
+    cleaned = _INERT_PROSE_FLAG_RE.sub(r"\1\"\"", cmd)
+    if not _SHELL_EVAL_RE.search(cleaned):
+        cleaned = _INERT_HERESTRING_RE.sub("''", cleaned)
+    return cleaned
+
+
 def _is_within_allowed_roots(target: Path, allowed_roots: list[Path]) -> bool:
     resolved = target.resolve()
     return any(
@@ -281,9 +300,10 @@ def check_pre_tool_use(payload: dict, root: Path = ROOT) -> dict:
 
     # 2.1 Check command execution tools
     if tool_name in {"run_command", "Bash", "exec_command"}:
-        cmd = str(
+        raw_cmd = str(
             args.get("CommandLine") or args.get("command") or args.get("cmd") or ""
         )
+        cmd = _strip_inert_prose_arguments(raw_cmd)
         for rule_name, pattern in DESTRUCTIVE_COMMAND_PATTERNS:
             if pattern.search(cmd):
                 return {

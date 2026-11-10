@@ -166,6 +166,7 @@ def test_registered_hook_commands_resolve_from_workspace_root():
 
     assert commands
     assert all("../" not in command for command in commands)
+    assert all(command.startswith("cd .. && ") for command in commands)
     for command in commands:
         tokens = shlex.split(command)
         project_path = Path(tokens[tokens.index("--project") + 1])
@@ -467,6 +468,8 @@ def test_pre_tool_use_blocks_destructive_commands_and_allows_safe_ones(
         "git status --short",
         "git push --force-with-lease",
         "cat .env.example",
+        'git commit -m "feat: block rm -rf / and DROP DATABASE in PreToolUse"',
+        "$body = @'\nBlocks rm -rf /, git reset --hard, DROP DATABASE, chmod 777\n'@\ngh pr create --body $body",
     ]
     for cmd in safe_commands:
         res = adapter.handle_defense_pre_tool(
