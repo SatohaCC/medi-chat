@@ -136,7 +136,7 @@ langchain-protocol==0.0.20
     # via
     #   langchain-core
     #   langgraph-sdk
-langgraph==1.2.19
+langgraph==1.2.20
     # via medi-chat-backend
 langgraph-checkpoint==4.3.0
     # via
