@@ -208,9 +208,19 @@ test("specification selecting browser suite suppresses automatic backend-startup
   assert.equal(plan.some((task) => task.layer === "backend-startup"), false);
 });
 
-test("quick checks include cached Backend Mypy but omit test suites", () => {
+test("quick checks include cached Backend Mypy and static boundaries but omit test suites", () => {
   const labels = planFor(["backend", "frontend"], "quick").map((task) => task.label);
-  assert.deepEqual(labels, ["Python lint", "Backend Mypy", "Frontend lint"]);
+  assert.deepEqual(labels, [
+    "Python lint",
+    "Backend Mypy",
+    "Layer boundaries",
+    "Domain architecture",
+    "Application architecture",
+    "Infrastructure architecture",
+    "Frontend lint",
+    "Frontend boundaries",
+  ]);
+  assert.ok(!labels.some((label) => /test|suite/i.test(label)));
   const mypy = planFor(["backend"], "quick").find((task) => task.label === "Backend Mypy");
   assert.ok(!mypy.args.includes("--no-incremental"));
   assert.deepEqual(mypy.args.slice(-2), ["-p", "backend"]);
@@ -298,6 +308,107 @@ test("runPlan serializes tasks that share a probe port resource", async () => {
     assert.equal(report.status, "passed");
     assert.equal(report.tasks.length, 3);
     assert.equal(report.tasks.every((t) => t.status === "passed"), true);
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+});
+
+test("agents path changes select both scripts and backend scopes", () => {
+  const scopes = scopesFor([".agents/hooks.json"]);
+  assert.deepEqual(scopes, ["backend", "scripts"]);
+});
+
+test("scripts hook regression tests include antigravity adapter test", () => {
+  const plan = planFor(["scripts"], "full");
+  const hookTask = plan.find((task) => task.label === "Hook regression tests");
+  assert.ok(hookTask, "Hook regression tests task must exist");
+  assert.ok(hookTask.args.includes("scripts/hooks/test_antigravity_adapter.py"));
+});
+
+test("quality runner sets report status to failed immediately when a task fails even if pending tasks exist", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "quality-early-fail-"));
+  try {
+    const reportPath = join(folder, "report.json");
+    const plan = [
+      { label: "failing-task", command: "test", args: ["fail"] },
+      { label: "pending-task", command: "test", args: ["pending"] },
+    ];
+    let midRunReport = null;
+    const mockExecute = async (cmd, args) => {
+      if (args[0] === "fail") {
+        return { status: 1, stdout: "", stderr: "AssertionError: expected true\n" };
+      }
+      midRunReport = JSON.parse(readFileSync(reportPath, "utf8"));
+      return { status: 0, stdout: "ok\n" };
+    };
+    const exitCode = await runPlan(plan, mockExecute, reportPath, { concurrency: 1 });
+    assert.equal(exitCode, 1);
+    assert.ok(midRunReport, "Second task must have inspected mid-run report");
+    assert.equal(midRunReport.tasks[0].status, "failed");
+    assert.equal(midRunReport.tasks[1].status, "not_run");
+    assert.equal(midRunReport.status, "failed");
+    const report = JSON.parse(readFileSync(reportPath, "utf8"));
+    assert.equal(report.status, "failed");
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+});
+
+test("taskResource serializes uv and python-backed tasks while allowing node tasks in parallel", async () => {
+  assert.equal(taskResource({ label: "Python lint", command: "uv", args: [] }), "uv-python-env");
+  assert.equal(taskResource({ label: "Frontend Node tests requiring Python", command: "node", args: [], runtimes: ["node", "python"] }), "uv-python-env");
+  assert.equal(taskResource({ label: "Frontend boundaries", command: "node", args: [] }), null);
+  const folder = mkdtempSync(join(tmpdir(), "quality-uv-resource-"));
+  try {
+    const reportPath = join(folder, "report.json");
+    let activeUv = 0;
+    let maxActiveUv = 0;
+    const plan = [
+      { label: "uv-1", command: "uv", args: ["1"] },
+      { label: "uv-2", command: "uv", args: ["2"] },
+      { label: "node-1", command: "node", args: ["3"] },
+    ];
+    const mockExecute = async (cmd) => {
+      if (cmd === "uv") {
+        activeUv++;
+        maxActiveUv = Math.max(maxActiveUv, activeUv);
+      }
+      await new Promise((r) => setTimeout(r, 30));
+      if (cmd === "uv") activeUv--;
+      return { status: 0, stdout: "ok\n" };
+    };
+    const exitCode = await runPlan(plan, mockExecute, reportPath, { concurrency: 3 });
+    assert.equal(exitCode, 0);
+    assert.equal(maxActiveUv, 1, "uv tasks must be serialized via uv-python-env resource");
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+});
+
+test("specification error task records structured feedback in report and continues running remaining plan tasks", () => {
+  const folder = mkdtempSync(join(tmpdir(), "quality-spec-error-"));
+  try {
+    const reportPath = join(folder, "report.json");
+    const plan = [
+      { label: "Quality specification", command: process.execPath, args: [], specError: "A quality specification is required but tmp/quality/task.json is missing" },
+      { label: "Python lint", command: "uv", args: ["run", "ruff", "check"] },
+    ];
+    let lintRan = false;
+    const exitCode = runPlan(plan, () => {
+      lintRan = true;
+      return { status: 0, stdout: "All checks passed!\n", stderr: "" };
+    }, reportPath);
+    assert.equal(exitCode, 1);
+    assert.equal(lintRan, true, "Remaining checks must still run even when Quality specification fails");
+    const report = JSON.parse(readFileSync(reportPath, "utf8"));
+    assert.equal(report.status, "failed");
+    assert.equal(report.tasks[0].label, "Quality specification");
+    assert.equal(report.tasks[0].status, "failed");
+    assert.ok(report.tasks[0].feedback.identity);
+    assert.deepEqual(report.tasks[0].feedback.diagnostics, ["A quality specification is required but tmp/quality/task.json is missing"]);
+    assert.equal(report.tasks[0].feedback.docs, "scripts/README.md");
+    assert.match(report.tasks[0].feedback.suggestion, /tmp\/quality\/task\.json/);
+    assert.equal(report.tasks[1].status, "passed");
   } finally {
     rmSync(folder, { recursive: true, force: true });
   }

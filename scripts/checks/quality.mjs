@@ -21,8 +21,8 @@ export function scopesFor(paths) {
       scopes.add("scripts");
     }
     if (path.startsWith("frontend/")) scopes.add("frontend");
-    if (path.startsWith("scripts/") || path.startsWith(".codex/")) scopes.add("scripts");
-    if (path.startsWith("scripts/checks/") || path.startsWith("scripts/hooks/")) scopes.add("backend");
+    if (path.startsWith("scripts/") || path.startsWith(".codex/") || path.startsWith(".agents/")) scopes.add("scripts");
+    if (path.startsWith("scripts/checks/") || path.startsWith("scripts/hooks/") || path.startsWith(".agents/")) scopes.add("backend");
   }
   return [...scopes].sort();
 }
@@ -87,6 +87,10 @@ export function planFor(scopes, phase = "full", { includeBackendStartup = false 
     if (phase === "quick") {
       uv("Python lint", "ruff", "check", "backend", "scripts/checks", "scripts/hooks");
       uv("Backend Mypy", "mypy", "--config-file", "backend/pyproject.toml", "-p", "backend");
+      uv("Layer boundaries", "python", "scripts/checks/layer_architecture.py");
+      uv("Domain architecture", "python", "scripts/checks/domain_architecture.py");
+      uv("Application architecture", "python", "scripts/checks/application_architecture.py");
+      uv("Infrastructure architecture", "python", "scripts/checks/infrastructure_architecture.py");
     } else {
       if (includeBackendStartup) {
         const suite = registeredSuite("backend-startup");
@@ -107,6 +111,7 @@ export function planFor(scopes, phase = "full", { includeBackendStartup = false 
   }
   if (scopes.includes("frontend")) {
     pnpm("Frontend lint", "--filter", "frontend", "lint");
+    node("Frontend boundaries", ["frontend/scripts/shared-boundaries.mjs"]);
     if (phase === "full") {
       pnpm("Frontend format", "--filter", "frontend", "exec", "biome", "format", ".");
       pnpm("StyleX lint", "--filter", "frontend", "lint:stylex");
@@ -128,7 +133,7 @@ export function planFor(scopes, phase = "full", { includeBackendStartup = false 
     if (phase === "full") {
       uv("Tooling format", "ruff", "format", "--check", "scripts/checks", "scripts/hooks");
       pnpm("Tooling types (Pyright and mypy)", "typecheck:scripts");
-      uv("Hook regression tests", "python", "-m", "pytest", "scripts/hooks/test_quality_gate.py", "scripts/hooks/test_privacy_gate.py", "scripts/hooks/test_quality_ci_contract.py", "-q");
+      uv("Hook regression tests", "python", "-m", "pytest", "scripts/hooks/test_quality_gate.py", "scripts/hooks/test_privacy_gate.py", "scripts/hooks/test_quality_ci_contract.py", "scripts/hooks/test_antigravity_adapter.py", "-q");
       pnpm("Generated requirements", "vercel:requirements:check");
       uv("Generated search guide", "python", "-m", "backend.infrastructure.cli.export_search_guide", "--check");
     }
@@ -154,6 +159,7 @@ export function buildQualityPlan(scopes, specification, phase = "full", changed 
 export function taskResource(task) {
   if (task.resource) return task.resource;
   if (task.layer === "backend-startup" || task.layer === "browser") return "configured-backend-probe";
+  if (task.command === "uv" || task.runtimes?.includes("python")) return "uv-python-env";
   return null;
 }
 
@@ -235,7 +241,7 @@ function recordTaskResult(report, index, task, result, started, save) {
     report.tasks[index].evidence = evidence;
     if (!evidence.passed || evidence.incomplete) report.tasks[index].status = "incomplete";
   }
-  const feedback = failureFeedback(task, report.tasks[index].status, output);
+  const feedback = failureFeedback(task, report.tasks[index].status, output, report.tasks[index].exitCode);
   report.tasks[index].feedback = feedback;
 
   console.log(`\n[quality] ${task.label}`);
@@ -246,8 +252,9 @@ function recordTaskResult(report, index, task, result, started, save) {
     console.error(`[quality] FAILED: ${task.label}${result.error ? `: ${result.error.message}` : ""}`);
   }
 
-  report.status = report.tasks.some((entry) => entry.status === "not_run") ? "not_run"
-    : report.tasks.every((entry) => entry.status === "passed") ? "passed" : "failed";
+  const hasFailed = report.tasks.some((entry) => ["failed", "incomplete", "timeout", "start_error"].includes(entry.status));
+  const hasPending = report.tasks.some((entry) => entry.status === "not_run");
+  report.status = hasFailed ? "failed" : hasPending ? "not_run" : "passed";
   save();
 
   return report.tasks[index].status !== "passed";
@@ -310,12 +317,17 @@ export function runPlan(plan, execute = spawnSync, reportPath = null, { concurre
             continue;
           }
           const task = plan[index];
-          const invocation = invocationFor(task);
           const started = Date.now();
-          const result = await execute(invocation.command, invocation.args, {
-            ...execOptions,
-            shell: invocation.shell,
-          });
+          let result;
+          if (task.specError) {
+            result = { status: 1, error: null, stdout: "", stderr: `${task.specError}\n` };
+          } else {
+            const invocation = invocationFor(task);
+            result = await execute(invocation.command, invocation.args, {
+              ...execOptions,
+              shell: invocation.shell,
+            });
+          }
           if (recordTaskResult(report, index, task, result, started, save)) failed = true;
           const resource = taskResource(task);
           if (resource) activeResources.delete(resource);
@@ -334,12 +346,17 @@ export function runPlan(plan, execute = spawnSync, reportPath = null, { concurre
   }
 
   for (const [index, task] of plan.entries()) {
-    const invocation = invocationFor(task);
     const started = Date.now();
-    const result = execute(invocation.command, invocation.args, {
-      ...execOptions,
-      shell: invocation.shell,
-    });
+    let result;
+    if (task.specError) {
+      result = { status: 1, error: null, stdout: "", stderr: `${task.specError}\n` };
+    } else {
+      const invocation = invocationFor(task);
+      result = execute(invocation.command, invocation.args, {
+        ...execOptions,
+        shell: invocation.shell,
+      });
+    }
     if (recordTaskResult(report, index, task, result, started, save)) failed = true;
   }
   return Number(failed);
@@ -372,20 +389,29 @@ export async function main(args) {
     : scope === "all" ? ["backend", "frontend", "scripts"] : [scope];
   const specIndex = args.indexOf("--spec");
   if (specIndex >= 0 && (!args[specIndex + 1] || args[specIndex + 1].startsWith("--"))) throw new Error("--spec requires a JSON path");
-  const specification = loadSpecification(
-    ROOT,
-    specIndex < 0 ? undefined : args[specIndex + 1],
-    phase,
-    requireSpecificationForScope(args.includes("--require-spec"), scopes),
-  );
+  const reportIndex = args.indexOf("--report");
+  if (reportIndex >= 0 && (!args[reportIndex + 1] || args[reportIndex + 1].startsWith("--"))) throw new Error("--report requires a path");
+  let specification;
+  try {
+    specification = loadSpecification(
+      ROOT,
+      specIndex < 0 ? undefined : args[specIndex + 1],
+      phase,
+      requireSpecificationForScope(args.includes("--require-spec"), scopes),
+    );
+  } catch (error) {
+    if (args.includes("--list")) throw error;
+    specification = {
+      scopes: [],
+      tasks: [{ label: "Quality specification", command: process.execPath, args: [], specError: error.message }],
+    };
+  }
   const plan = buildQualityPlan(scopes, specification, phase, args.includes("--changed"));
   if (args.includes("--list")) {
     console.log(JSON.stringify(plan, null, 2));
     return 0;
   }
   if (!plan.length) console.log("[quality] No code or tooling changes to check.");
-  const reportIndex = args.indexOf("--report");
-  if (reportIndex >= 0 && !args[reportIndex + 1]) throw new Error("--report requires a path");
 
   const concurrencyIndex = args.indexOf("--concurrency");
   const concurrency = args.includes("--serial")

@@ -68,6 +68,7 @@ export function specificationPlan(spec, root, phase = "full") {
     for (const check of requirement.checks) {
       fields(check, ["kind", "path", "test", "name"]);
       let command, args, layer, testRunner;
+      let python = false;
       if (check.kind === "suite") {
         const suite = registeredSuite(check.name);
         if (check.path !== undefined || check.test !== undefined || !suite) throw new Error("Unknown integration suite");
@@ -80,7 +81,7 @@ export function specificationPlan(spec, root, phase = "full") {
           || !/^[a-zA-Z0-9_./-]+$/.test(check.path) || check.path.split("/").some((part) => !part || part === ".." || part === ".")) throw new Error("Unsafe test path");
         const target = resolve(root, check.path);
         if (!existsSync(target) || !statSync(target).isFile() || !realpathSync(target).startsWith(realpathSync(root) + sep)) throw new Error("Test must be an existing file inside the repository");
-        const python = check.kind === "python" && /^(backend\/tests|scripts\/hooks)\/.*test[^/]*\.py$/.test(check.path);
+        python = check.kind === "python" && /^(backend\/tests|scripts\/hooks)\/.*test[^/]*\.py$/.test(check.path);
         const node = check.kind === "node" && /^(frontend\/(features|shared|scripts)|scripts)\/.*\.test\.mjs$/.test(check.path);
         if (!python && !node) throw new Error("Unsupported test kind or location");
         if (check.test !== undefined && (!python || typeof check.test !== "string" || !/^(test_\w+|Test\w+)(::test_\w+)?$/.test(check.test))) throw new Error("Invalid pytest test selector");
@@ -92,13 +93,42 @@ export function specificationPlan(spec, root, phase = "full") {
           ? ["run", "--project", "backend", "--locked", "python", "-m", "pytest", check.path + (check.test ? `::${check.test}` : ""), "-m", "not postgres and not source_data", "-q"]
           : ["--disable-warning=ExperimentalWarning", "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", "--experimental-strip-types", "--test", "--test-timeout=60000", check.path];
       }
-      const key = JSON.stringify([command, args]);
-      if (!tasks.has(key)) tasks.set(key, { label: `Acceptance: ${check.path ?? check.name}${check.test ? `::${check.test}` : ""}`, command, args, layer, testRunner, requireEvidence: true, specification: spec.task, requirements: [], reasons: [] });
-      tasks.get(key).requirements.push(requirement.id);
-      tasks.get(key).reasons.push(requirement.acceptance);
+      const key = python ? "python-unit-batch" : JSON.stringify([command, args]);
+      if (python) {
+        const selector = check.path + (check.test ? `::${check.test}` : "");
+        if (!tasks.has(key)) {
+          tasks.set(key, {
+            label: `Acceptance: ${selector}`,
+            command,
+            args: ["run", "--project", "backend", "--locked", "python", "-m", "pytest", selector, "-m", "not postgres and not source_data", "-q"],
+            layer,
+            testRunner,
+            requireEvidence: true,
+            specification: spec.task,
+            requirements: [],
+            reasons: [],
+            _selectors: [selector],
+          });
+        } else {
+          const entry = tasks.get(key);
+          if (!entry._selectors.includes(selector)) {
+            entry._selectors.push(selector);
+            entry.label = `Acceptance: ${entry._selectors.join(", ")}`;
+            entry.args = ["run", "--project", "backend", "--locked", "python", "-m", "pytest", ...entry._selectors, "-m", "not postgres and not source_data", "-q"];
+          }
+        }
+      } else if (!tasks.has(key)) {
+        tasks.set(key, { label: `Acceptance: ${check.path ?? check.name}${check.test ? `::${check.test}` : ""}`, command, args, layer, testRunner, requireEvidence: true, specification: spec.task, requirements: [], reasons: [] });
+      }
+      const taskEntry = tasks.get(key);
+      if (!taskEntry.requirements.includes(requirement.id)) {
+        taskEntry.requirements.push(requirement.id);
+        taskEntry.reasons.push(requirement.acceptance);
+      }
     }
   }
-  return { task: spec.task, scopes: [...scopes].sort(), tasks: [...tasks.values()] };
+  const finalTasks = [...tasks.values()].map(({ _selectors, ...rest }) => rest);
+  return { task: spec.task, scopes: [...scopes].sort(), tasks: finalTasks };
 }
 
 export function loadSpecification(root, path, phase, required = false) {
