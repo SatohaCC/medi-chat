@@ -606,3 +606,55 @@ def test_edited_frontend_files_and_formatter(tmp_path, monkeypatch):
     assert len(recorded_cmds) == 1
     assert "biome" in recorded_cmds[0]
     assert "features/chat/index.tsx" in recorded_cmds[0]
+
+
+def test_stop_appends_execution_history_across_failures_and_success(
+    tmp_path, monkeypatch, stop_context
+):
+    from scripts.hooks import quality_gate as gate
+
+    source = tmp_path / "changed.py"
+    monkeypatch.setattr(gate, "ROOT", tmp_path)
+    monkeypatch.setattr(gate, "changed_paths", lambda root: ["changed.py"])
+    outcomes = iter([1, 1, 0])
+
+    def execute(command, **kwargs):
+        exit_code = next(outcomes)
+        report_path = command[command.index("--report") + 1]
+        Path(report_path).write_text(
+            json.dumps(
+                {
+                    "version": 1,
+                    "status": "passed" if exit_code == 0 else "failed",
+                    "tasks": [
+                        {
+                            "label": "Backend Mypy",
+                            "status": "passed" if exit_code == 0 else "failed",
+                            "durationMs": 1200 if exit_code else 800,
+                        }
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        return SimpleNamespace(returncode=exit_code)
+
+    monkeypatch.setattr(gate.subprocess, "run", execute)
+    for attempt in range(3):
+        source.write_text(f"# attempt {attempt}", encoding="utf-8")
+        decision = gate.main({"hook_event_name": "Stop", "turn_id": "history-turn"})
+        if attempt < 2:
+            assert decision["decision"] == "block"
+        else:
+            assert decision == {}
+
+    history_path = tmp_path / ".agents/work/.hooks/stop-history.jsonl"
+    assert history_path.is_file()
+    entries = [
+        json.loads(line)
+        for line in history_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert [entry["status"] for entry in entries] == ["failed", "failed", "passed"]
+    assert [entry["attempts"] for entry in entries] == [1, 2, 0]
+    assert [entry["tasks"][0]["durationMs"] for entry in entries] == [1200, 1200, 800]

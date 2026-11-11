@@ -76,7 +76,7 @@ test("compareHarnessRuns computes deltas between base and head arms", () => {
   assert.match(text, /Stop blockRate: 50\.0% -> 0\.0% \(-50\.0%\)/);
 });
 
-test("runAbEvaluation runs isolated worktrees for base and head, collects metrics, and cleans up", () => {
+test("runAbEvaluation runs isolated worktrees for base and head, collects metrics, and cleans up", async () => {
   const { root, git, baseCommit, headCommit } = createHarnessHistoryRepo();
   try {
     const runnerScript = [
@@ -89,7 +89,7 @@ test("runAbEvaluation runs isolated worktrees for base and head, collects metric
     ].join(" ");
     const reportPath = join(root, "tmp/ab-report.json");
 
-    const report = runAbEvaluation({
+    const report = await runAbEvaluation({
       root,
       baseRef: baseCommit,
       headRef: headCommit,
@@ -115,6 +115,34 @@ test("runAbEvaluation runs isolated worktrees for base and head, collects metric
 
     // Prompt measurement directly on root matches head commit
     assert.equal(measurePromptBundleChars(root).totalChars, saved.head.prompt.totalChars);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("runAbEvaluation streams large (>2MiB) command output without ENOBUFS and retains bounded tail", async () => {
+  const { root, baseCommit, headCommit } = createHarnessHistoryRepo();
+  try {
+    const noisyScript = [
+      "process.stdout.write('A'.repeat(2 * 1024 * 1024));",
+      "process.stdout.write('TAIL_MARKER');",
+      "process.stderr.write('B'.repeat(512 * 1024));",
+      "process.stderr.write('ERR_TAIL');",
+    ].join(" ");
+    const report = await runAbEvaluation({
+      root,
+      baseRef: baseCommit,
+      headRef: headCommit,
+      command: `${JSON.stringify(process.execPath)} -e ${JSON.stringify(noisyScript)}`,
+    });
+    for (const arm of [report.base, report.head]) {
+      assert.equal(arm.exitCode, 0, arm.error || arm.stderrTail);
+      assert.equal(arm.error, null);
+      assert.ok(arm.stdoutTail.length <= 4000);
+      assert.ok(arm.stdoutTail.endsWith("TAIL_MARKER"));
+      assert.ok(arm.stderrTail.length <= 4000);
+      assert.ok(arm.stderrTail.endsWith("ERR_TAIL"));
+    }
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

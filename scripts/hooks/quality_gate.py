@@ -6,6 +6,7 @@ import hashlib
 import json
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -136,6 +137,49 @@ def clear_edit_state(directory: Path, turn: str) -> None:
         print(f"Could not clear edit-loop state: {error}", file=sys.stderr)
 
 
+def append_stop_history(
+    directory: Path,
+    *,
+    turn_key: str,
+    status: str,
+    exit_code: int,
+    duration_ms: int,
+    attempts: int,
+    repeated_failures: int,
+    structured: dict | None,
+) -> None:
+    """Persist per-execution Stop telemetry so multi-attempt repairs are not overwritten."""
+    tasks = []
+    if isinstance(structured, dict) and isinstance(structured.get("tasks"), list):
+        for task in structured["tasks"]:
+            if not isinstance(task, dict):
+                continue
+            tasks.append(
+                {
+                    "label": task.get("label") or "unknown",
+                    "status": task.get("status") or "unknown",
+                    "durationMs": task.get("durationMs") or 0,
+                }
+            )
+    entry = {
+        "version": 1,
+        "timestamp": int(time.time() * 1000),
+        "turnKey": turn_key,
+        "status": status,
+        "result": exit_code,
+        "durationMs": duration_ms,
+        "attempts": attempts,
+        "repeatedFailures": repeated_failures,
+        "tasks": tasks,
+    }
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+        with (directory / "stop-history.jsonl").open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    except OSError as error:
+        print(f"Could not record stop history: {error}", file=sys.stderr)
+
+
 def edit_warning_context(paths: list[str]) -> str:
     return "\n".join(
         f"Repeated editing reminder: `{path}` has reached {EDIT_WARNING_THRESHOLD} edits this turn. "
@@ -263,6 +307,7 @@ def main(event: dict) -> dict:
     log = directory / f"{key}.log"
     report = directory / f"{key}.report.json"
     report.unlink(missing_ok=True)
+    started_at = time.monotonic()
     with log.open("w", encoding="utf-8") as output:
         try:
             exit_code = subprocess.run(
@@ -289,6 +334,7 @@ def main(event: dict) -> dict:
                 if isinstance(error, subprocess.TimeoutExpired)
                 else "start_error"
             )
+    duration_ms = int((time.monotonic() - started_at) * 1000)
     # A check must not certify files changed during execution (including generated output).
     if signature_for_current_inputs() != signature:
         exit_code = 1
@@ -327,6 +373,16 @@ def main(event: dict) -> dict:
     receipt.write_text(
         json.dumps(current),
         encoding="utf-8",
+    )
+    append_stop_history(
+        directory,
+        turn_key=key,
+        status=status,
+        exit_code=exit_code,
+        duration_ms=duration_ms,
+        attempts=int(state.get("attempts", 0)),
+        repeated_failures=int(state.get("repeated_failures", 0)),
+        structured=structured,
     )
     if state.get("terminal"):
         return finish_stop(stop_decision(event, signature, current, exit_code))

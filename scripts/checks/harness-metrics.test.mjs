@@ -144,3 +144,80 @@ test("analyzeTranscriptOverhead returns zeros when transcript path is absent", (
     harnessOverheadRatio: 0,
   });
 });
+
+test("summarizeHarnessMetrics preserves multi-attempt Stop failures followed by final success via stop-history.jsonl", () => {
+  const root = mkdtempSync(join(tmpdir(), "harness-metrics-history-"));
+  try {
+    const hooksDir = join(root, "hooks");
+    const qualityDir = join(root, "quality");
+    mkdirSync(hooksDir, { recursive: true });
+    mkdirSync(qualityDir, { recursive: true });
+
+    // Final overwritten receipt/report shows only passed (which previously hid prior failures)
+    writeFileSync(
+      join(hooksDir, "abc123.json"),
+      JSON.stringify({
+        signature: "sig-final",
+        result: 0,
+        status: "passed",
+        attempts: 0,
+        repeated_failures: 0,
+      }),
+    );
+    writeFileSync(
+      join(hooksDir, "abc123.report.json"),
+      JSON.stringify({
+        version: 1,
+        status: "passed",
+        tasks: [{ label: "Backend Mypy", status: "passed", durationMs: 800 }],
+      }),
+    );
+
+    // Per-execution history captures 2 failures then 1 success for the same turn
+    writeFileSync(
+      join(hooksDir, "stop-history.jsonl"),
+      [
+        JSON.stringify({
+          turnKey: "abc123",
+          status: "failed",
+          result: 1,
+          durationMs: 1300,
+          attempts: 1,
+          repeatedFailures: 1,
+          tasks: [{ label: "Backend Mypy", status: "failed", durationMs: 1200 }],
+        }),
+        JSON.stringify({
+          turnKey: "abc123",
+          status: "failed",
+          result: 1,
+          durationMs: 1400,
+          attempts: 2,
+          repeatedFailures: 2,
+          tasks: [{ label: "Backend Mypy", status: "failed", durationMs: 1300 }],
+        }),
+        JSON.stringify({
+          turnKey: "abc123",
+          status: "passed",
+          result: 0,
+          durationMs: 900,
+          attempts: 0,
+          repeatedFailures: 0,
+          tasks: [{ label: "Backend Mypy", status: "passed", durationMs: 800 }],
+        }),
+      ].join("\n") + "\n",
+    );
+
+    const summary = summarizeHarnessMetrics({ hooksDir, qualityDir });
+    assert.equal(summary.stop.totalRuns, 3);
+    assert.equal(summary.stop.passed, 1);
+    assert.equal(summary.stop.failed, 2);
+    assert.equal(summary.stop.blockRate, 0.6667);
+    assert.equal(summary.stop.totalRepairAttempts, 2);
+    assert.equal(summary.stop.maxRepeatedFailures, 2);
+    assert.equal(summary.reports.reportCount, 3);
+    assert.equal(summary.reports.totalCheckDurationMs, 3300);
+    assert.equal(summary.reports.slowestTasks[0].failures, 2);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});

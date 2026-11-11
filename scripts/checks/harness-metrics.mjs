@@ -124,11 +124,69 @@ export function summarizeHarnessMetrics({
     }
   }
 
+  function ingestStopRecord(data, { fromHistory = false } = {}) {
+    stopStats.totalRuns += 1;
+    if (data.status === "passed") stopStats.passed += 1;
+    else if (data.status === "stagnated") stopStats.stagnated += 1;
+    else if (data.status === "attempt_limit") stopStats.attemptLimit += 1;
+    else if (data.status === "timeout") stopStats.timeout += 1;
+    else if (data.status === "start_error") stopStats.startError += 1;
+    else stopStats.failed += 1;
+
+    if (fromHistory) {
+      if (data.status !== "passed") {
+        stopStats.totalRepairAttempts += 1;
+      }
+      const repeated = data.repeatedFailures ?? data.repeated_failures;
+      if (typeof repeated === "number" && repeated > 0) {
+        stopStats.maxRepeatedFailures = Math.max(stopStats.maxRepeatedFailures, repeated);
+      }
+      return;
+    }
+
+    if (typeof data.attempts === "number" && data.attempts > 0) {
+      stopStats.totalRepairAttempts += data.attempts;
+    }
+    if (typeof data.repeated_failures === "number" && data.repeated_failures > 0) {
+      stopStats.maxRepeatedFailures = Math.max(
+        stopStats.maxRepeatedFailures,
+        data.repeated_failures,
+      );
+    }
+  }
+
+  const recordedHistoryTurns = new Set();
+  const stopHistoryPath = resolve(hooksDir, "stop-history.jsonl");
+  if (existsSync(stopHistoryPath)) {
+    const historyLines = readFileSync(stopHistoryPath, "utf8").split(/\r?\n/).filter(Boolean);
+    for (const line of historyLines) {
+      let entry;
+      try {
+        entry = JSON.parse(line);
+      } catch {
+        continue;
+      }
+      if (!entry || typeof entry.status !== "string") continue;
+      if (typeof entry.turnKey === "string" && entry.turnKey) {
+        recordedHistoryTurns.add(entry.turnKey);
+      }
+      ingestStopRecord(entry, { fromHistory: true });
+      if (Array.isArray(entry.tasks) && entry.tasks.length > 0) {
+        ingestReport({ version: 1, tasks: entry.tasks });
+      } else if (typeof entry.durationMs === "number" && entry.durationMs > 0) {
+        reportCount++;
+        totalCheckDurationMs += entry.durationMs;
+      }
+    }
+  }
+
   if (existsSync(hooksDir)) {
     for (const entry of readdirSync(hooksDir, { withFileTypes: true })) {
       if (!entry.isFile()) continue;
       const fullPath = resolve(hooksDir, entry.name);
       if (entry.name.endsWith(".report.json")) {
+        const turnKey = entry.name.slice(0, -".report.json".length);
+        if (recordedHistoryTurns.has(turnKey)) continue;
         ingestReport(readJsonSafe(fullPath));
       } else if (entry.name.endsWith(".edits.json")) {
         const data = readJsonSafe(fullPath);
@@ -149,25 +207,11 @@ export function summarizeHarnessMetrics({
           defenseStats.maxConsecutiveErrors = Math.max(defenseStats.maxConsecutiveErrors, consecutive);
         }
       } else if (isReceiptFile(entry.name)) {
+        const turnKey = entry.name.slice(0, -".json".length);
+        if (recordedHistoryTurns.has(turnKey)) continue;
         const data = readJsonSafe(fullPath);
         if (data && typeof data.signature === "string" && typeof data.status === "string") {
-          stopStats.totalRuns += 1;
-          if (data.status === "passed") stopStats.passed += 1;
-          else if (data.status === "stagnated") stopStats.stagnated += 1;
-          else if (data.status === "attempt_limit") stopStats.attemptLimit += 1;
-          else if (data.status === "timeout") stopStats.timeout += 1;
-          else if (data.status === "start_error") stopStats.startError += 1;
-          else stopStats.failed += 1;
-
-          if (typeof data.attempts === "number" && data.attempts > 0) {
-            stopStats.totalRepairAttempts += data.attempts;
-          }
-          if (typeof data.repeated_failures === "number" && data.repeated_failures > 0) {
-            stopStats.maxRepeatedFailures = Math.max(
-              stopStats.maxRepeatedFailures,
-              data.repeated_failures,
-            );
-          }
+          ingestStopRecord(data, { fromHistory: false });
         }
       }
     }

@@ -1,6 +1,6 @@
 // Run isolated A/B evaluations comparing two Git commits/refs of the agent harness.
 // Reuses clean-checkout worktree isolation and harness-metrics telemetry.
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -69,26 +69,78 @@ export function compareHarnessRuns(baseArm, headArm) {
   };
 }
 
-function runCommandInWorktree(command, worktreePath, { env = {}, timeoutMs = 1_800_000 } = {}) {
-  const started = Date.now();
-  const result = spawnSync(command, {
-    cwd: worktreePath,
-    shell: true,
-    encoding: "utf8",
-    timeout: timeoutMs,
-    windowsHide: true,
-    env: { ...process.env, ...env },
-  });
-  return {
-    durationMs: Date.now() - started,
-    exitCode: result.status ?? (result.error ? 1 : 0),
-    error: result.error ? result.error.message : null,
-    stdoutTail: (result.stdout ?? "").slice(-4000),
-    stderrTail: (result.stderr ?? "").slice(-4000),
-  };
+function appendRollingTail(current, chunk, maxChars = 4000) {
+  const combined = current + chunk;
+  return combined.length > maxChars ? combined.slice(-maxChars) : combined;
 }
 
-export function evaluateArm({
+function runCommandInWorktree(command, worktreePath, { env = {}, timeoutMs = 1_800_000 } = {}) {
+  return new Promise((resolvePromise) => {
+    const started = Date.now();
+    let stdoutTail = "";
+    let stderrTail = "";
+    let timedOut = false;
+    let settled = false;
+
+    const finish = (exitCode, error) => {
+      if (settled) return;
+      settled = true;
+      resolvePromise({
+        durationMs: Date.now() - started,
+        exitCode,
+        error,
+        stdoutTail,
+        stderrTail,
+      });
+    };
+
+    let child;
+    try {
+      child = spawn(command, {
+        cwd: worktreePath,
+        shell: true,
+        windowsHide: true,
+        stdio: ["ignore", "pipe", "pipe"],
+        env: { ...process.env, ...env },
+      });
+    } catch (error) {
+      finish(1, error instanceof Error ? error.message : String(error));
+      return;
+    }
+
+    child.stdout?.setEncoding("utf8");
+    child.stderr?.setEncoding("utf8");
+    child.stdout?.on("data", (chunk) => {
+      stdoutTail = appendRollingTail(stdoutTail, chunk);
+    });
+    child.stderr?.on("data", (chunk) => {
+      stderrTail = appendRollingTail(stderrTail, chunk);
+    });
+
+    const timer = timeoutMs > 0
+      ? setTimeout(() => {
+          timedOut = true;
+          child.kill();
+        }, timeoutMs)
+      : null;
+
+    child.on("error", (error) => {
+      if (timer) clearTimeout(timer);
+      finish(1, error.message);
+    });
+
+    child.on("close", (code) => {
+      if (timer) clearTimeout(timer);
+      if (timedOut) {
+        finish(1, `Command timed out after ${timeoutMs}ms`);
+      } else {
+        finish(code ?? 1, null);
+      }
+    });
+  });
+}
+
+export async function evaluateArm({
   root = ROOT,
   label,
   ref,
@@ -103,7 +155,7 @@ export function evaluateArm({
   try {
     const prompt = measurePromptBundleChars(worktree.path);
     const execResult = command
-      ? runCommandInWorktree(command, worktree.path, {
+      ? await runCommandInWorktree(command, worktree.path, {
           timeoutMs,
           env: {
             HARNESS_AB_ARM: label,
@@ -141,7 +193,7 @@ export function evaluateArm({
   return armResult;
 }
 
-export function runAbEvaluation({
+export async function runAbEvaluation({
   root = ROOT,
   baseRef,
   headRef = "HEAD",
@@ -153,7 +205,7 @@ export function runAbEvaluation({
   reportPath = null,
 }) {
   if (!baseRef) throw new Error("--base <ref> is required");
-  const base = evaluateArm({
+  const base = await evaluateArm({
     root,
     label: "base",
     ref: baseRef,
@@ -163,7 +215,7 @@ export function runAbEvaluation({
     keepWorktree,
     timeoutMs,
   });
-  const head = evaluateArm({
+  const head = await evaluateArm({
     root,
     label: "head",
     ref: headRef,
@@ -244,7 +296,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   try {
     const opts = parseArgs(process.argv.slice(2));
     const defaultReport = opts.reportPath ?? `tmp/quality/harness-ab-${Date.now()}.json`;
-    const report = runAbEvaluation({ ...opts, reportPath: defaultReport });
+    const report = await runAbEvaluation({ ...opts, reportPath: defaultReport });
     if (opts.json) {
       console.log(JSON.stringify(report, null, 2));
     } else {
