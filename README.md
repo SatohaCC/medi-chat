@@ -12,7 +12,7 @@ Next.js、FastAPI、PostgreSQLを使用しています。
 
 ## 開発を始める
 
-Node.js・pnpm、Python 3.14以上・uv、Docker Desktopが必要です。コマンドはリポジトリルートで実行します。
+Node.js 24.x・pnpm、Python 3.14以上・uv、Docker Desktopが必要です。コマンドはリポジトリルートで実行します。
 
 ```bash
 pnpm install --frozen-lockfile
@@ -45,6 +45,7 @@ pnpm dev
 | `pnpm typecheck` | TypeScript・Pythonの型検査 |
 | `pnpm test:backend` | backendのテスト（実DBテストには接続設定が必要） |
 | `pnpm test:e2e` | ブラウザテスト（DB・原本データの準備が必要） |
+| `pnpm quality` | 全体の品質検査（backend・frontend・scripts） |
 | `pnpm build` | frontendのビルド |
 
 ## ドキュメント
@@ -56,5 +57,6 @@ pnpm dev
 - [PMDAデータの作業案内](data/pmda/README.md)
 - [共通定義の編集方法](backend/infrastructure/package_insert_definitions/README.md)
 - [デプロイ手順](docs/development/vercel-deployment.md)
+- [品質検証手順](docs/development/validation.md)
 - [機能一覧](docs/feature-list.md)
 - [エージェント向け資料](.agents/README.md)
