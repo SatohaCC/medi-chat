@@ -32,6 +32,7 @@ pnpm quality:scripts --report tmp/quality-scripts.json # 機械可読な結果�
 pnpm agent:check --phase quick # エージェント共通の変更範囲検査
 pnpm agent:check --report tmp/quality/result.json # 完了前の検査と構造化レポート
 node scripts/checks/harness-metrics.mjs # Hook実行時間・差し戻し率・ループ警告・管理オーバーヘッドの集計
+node scripts/checks/harness-ab.mjs --base <ref> --head HEAD --cmd "<agent-cmd>" # 2コミット間の隔離worktree A/B比較評価
 node scripts/checks/verify-clean-checkout.mjs --ref <commit> # 指定commitを隔離worktreeで再検証
 ```
 
