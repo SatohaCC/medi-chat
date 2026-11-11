@@ -178,43 +178,11 @@ def main(event: dict) -> dict:
             return {}
         edit_warnings = edit_loop_warnings(ROOT, event, files)
         formatting = format_python(event)
-        scopes = set()
-        for path in files:
-            name = path.relative_to(ROOT).as_posix()
-            if path.suffix == ".py":
-                scopes.add("backend")
-            if name.startswith("frontend/"):
-                scopes.add("frontend")
-            if name.startswith("scripts/"):
-                scopes.add("scripts")
-        failures = ["Formatting edited files failed."] if formatting else []
-        for scope in sorted(scopes):
-            quick_process = subprocess.run(
-                [
-                    "node",
-                    str(ROOT / "scripts/checks/quality.mjs"),
-                    "--scope",
-                    scope,
-                    "--phase",
-                    "quick",
-                    "--require-spec",
-                ],
-                cwd=ROOT,
-                capture_output=True,
-                timeout=180,
-                check=False,
-            )
-            if quick_process.returncode:
-                failures.append(
-                    (quick_process.stdout + quick_process.stderr).decode(
-                        "utf-8", errors="replace"
-                    )
-                )
         contexts = []
         if edit_warnings:
             contexts.append(edit_warning_context(edit_warnings))
-        if failures:
-            contexts.append("Quick checks failed:\n" + "\n".join(failures)[-12000:])
+        if formatting:
+            contexts.append("Formatting edited files failed.")
         if contexts:
             return {
                 "hookSpecificOutput": {

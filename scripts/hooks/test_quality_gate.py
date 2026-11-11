@@ -323,7 +323,7 @@ def test_checks_cannot_certify_files_changed_during_validation(
     )
 
 
-def test_post_edit_formats_before_quick_checks(tmp_path, monkeypatch):
+def test_post_edit_formats_without_running_quick_checks(tmp_path, monkeypatch):
     from scripts.hooks import quality_gate as gate
 
     order = []
@@ -347,11 +347,11 @@ def test_post_edit_formats_before_quick_checks(tmp_path, monkeypatch):
 
     monkeypatch.setattr(gate.subprocess, "run", execute)
     assert gate.main({"hook_event_name": "PostToolUse"}) == {}
-    assert order == ["format", "check"]
-    assert "--require-spec" in calls[0][0]
+    assert order == ["format"]
+    assert calls == []
 
 
-def test_post_edit_returns_type_failure_and_stop_blocks(
+def test_post_edit_reports_formatting_failure_and_stop_blocks_on_quality_checks(
     tmp_path, monkeypatch, stop_context
 ):
     from scripts.hooks import quality_gate as gate
@@ -361,7 +361,7 @@ def test_post_edit_returns_type_failure_and_stop_blocks(
     source.write_text("# test fixture", encoding="utf-8")
     monkeypatch.setattr(gate, "ROOT", tmp_path)
     monkeypatch.setattr(gate, "edited_paths", lambda event: [source])
-    monkeypatch.setattr(gate, "format_python", lambda event: 0)
+    monkeypatch.setattr(gate, "format_python", lambda event: 1)
     monkeypatch.setattr(gate, "changed_paths", lambda root: ["backend/main.py"])
 
     def execute(*args, **kwargs):
@@ -373,7 +373,10 @@ def test_post_edit_returns_type_failure_and_stop_blocks(
 
     monkeypatch.setattr(gate.subprocess, "run", execute)
     result = gate.main({"hook_event_name": "PostToolUse"})
-    assert "[arg-type]" in result["hookSpecificOutput"]["additionalContext"]
+    assert (
+        "Formatting edited files failed."
+        in result["hookSpecificOutput"]["additionalContext"]
+    )
     assert gate.main({"hook_event_name": "Stop"})["decision"] == "block"
 
 
