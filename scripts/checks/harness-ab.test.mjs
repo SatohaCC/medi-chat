@@ -147,3 +147,32 @@ test("runAbEvaluation streams large (>2MiB) command output without ENOBUFS and r
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("runAbEvaluation terminates timed-out command process trees promptly", async () => {
+  const { root, baseCommit, headCommit } = createHarnessHistoryRepo();
+  try {
+    const sleepScript = [
+      "const { spawn } = require('node:child_process');",
+      "const child = spawn(process.execPath, ['-e', 'setTimeout(() => console.log(\"LATE\"), 2000)'], { stdio: 'inherit' });",
+      "setTimeout(() => {}, 2000);",
+    ].join(" ");
+    const started = Date.now();
+    const report = await runAbEvaluation({
+      root,
+      baseRef: baseCommit,
+      headRef: headCommit,
+      command: `${JSON.stringify(process.execPath)} -e ${JSON.stringify(sleepScript)}`,
+      timeoutMs: 100,
+    });
+    const elapsedMs = Date.now() - started;
+    const maxAllowedMs = process.platform === "win32" ? 6000 : 3500;
+    assert.ok(elapsedMs < maxAllowedMs, `Expected prompt timeout termination, took ${elapsedMs}ms`);
+    for (const arm of [report.base, report.head]) {
+      assert.notEqual(arm.exitCode, 0);
+      assert.match(String(arm.error || ""), /ETIMEDOUT|timed out/i);
+      assert.equal(arm.stdoutTail.includes("LATE"), false);
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});

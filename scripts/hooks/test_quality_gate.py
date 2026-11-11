@@ -658,3 +658,41 @@ def test_stop_appends_execution_history_across_failures_and_success(
     assert [entry["status"] for entry in entries] == ["failed", "failed", "passed"]
     assert [entry["attempts"] for entry in entries] == [1, 2, 0]
     assert [entry["tasks"][0]["durationMs"] for entry in entries] == [1200, 1200, 800]
+
+
+def test_stop_archives_edit_metrics_before_clearing_turn_state(
+    tmp_path, monkeypatch, stop_context
+):
+    from scripts.hooks import quality_gate as gate
+
+    source = tmp_path / "backend/main.py"
+    source.parent.mkdir()
+    source.write_text("# fixture", encoding="utf-8")
+    monkeypatch.setattr(gate, "ROOT", tmp_path)
+    monkeypatch.setattr(gate, "edited_paths", lambda event: [source])
+    monkeypatch.setattr(gate, "format_python", lambda event: 0)
+    monkeypatch.setattr(gate, "changed_paths", lambda root: ["backend/main.py"])
+    monkeypatch.setattr(
+        gate.subprocess, "run", lambda *args, **kwargs: SimpleNamespace(returncode=0)
+    )
+
+    edit_event = {"hook_event_name": "PostToolUse", "turn_id": "archive-turn"}
+    for _ in range(5):
+        gate.main(edit_event)
+
+    stop_event = {"hook_event_name": "Stop", "turn_id": "archive-turn"}
+    assert gate.main(stop_event) == {}
+    # Subsequent cached Stop must not double-archive
+    assert gate.main(stop_event) == {}
+
+    assert list((tmp_path / ".agents/work/.hooks").glob("*.edits.json")) == []
+    edit_history = tmp_path / ".agents/work/.hooks/edit-history.jsonl"
+    assert edit_history.is_file()
+    entries = [
+        json.loads(line)
+        for line in edit_history.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert len(entries) == 1
+    assert entries[0]["totalEdits"] == 5
+    assert entries[0]["editLoopWarnings"] == 1

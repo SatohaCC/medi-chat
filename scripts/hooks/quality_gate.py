@@ -130,9 +130,53 @@ def edit_loop_warnings(root: Path, event: dict, files: list[Path]) -> list[str]:
     return crossed_threshold
 
 
-def clear_edit_state(directory: Path, turn: str) -> None:
+def archive_edit_state(directory: Path, turn: str, state_path: Path) -> None:
+    """Persist cumulative edit counts and loop warnings before deleting active turn state."""
     try:
-        edit_state_path(directory, turn).unlink(missing_ok=True)
+        stored = json.loads(state_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return
+    if not isinstance(stored, dict) or stored.get("version") != 1:
+        return
+    counts = stored.get("counts")
+    if not isinstance(counts, dict):
+        counts = {}
+    total_edits = sum(
+        count for count in counts.values() if type(count) is int and count > 0
+    )
+    warned = stored.get("warned")
+    warnings_count = (
+        len([name for name in warned if isinstance(name, str)])
+        if isinstance(warned, list)
+        else 0
+    )
+    if total_edits <= 0 and warnings_count <= 0:
+        return
+    turn_key = hashlib.sha256(turn.encode("utf-8")).hexdigest()[:24]
+    entry = {
+        "version": 1,
+        "timestamp": int(time.time() * 1000),
+        "turnKey": turn_key,
+        "totalEdits": total_edits,
+        "editLoopWarnings": warnings_count,
+        "filesCount": sum(
+            1 for count in counts.values() if type(count) is int and count > 0
+        ),
+    }
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+        with (directory / "edit-history.jsonl").open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    except OSError as error:
+        print(f"Could not record edit history: {error}", file=sys.stderr)
+
+
+def clear_edit_state(directory: Path, turn: str) -> None:
+    state_path = edit_state_path(directory, turn)
+    if state_path.is_file():
+        archive_edit_state(directory, turn, state_path)
+    try:
+        state_path.unlink(missing_ok=True)
     except OSError as error:
         print(f"Could not clear edit-loop state: {error}", file=sys.stderr)
 

@@ -221,3 +221,39 @@ test("summarizeHarnessMetrics preserves multi-attempt Stop failures followed by 
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("summarizeHarnessMetrics preserves archived edit counts and warnings after Stop clears .edits.json", () => {
+  const root = mkdtempSync(join(tmpdir(), "harness-metrics-edits-"));
+  try {
+    const hooksDir = join(root, "hooks");
+    const qualityDir = join(root, "quality");
+    mkdirSync(hooksDir, { recursive: true });
+    mkdirSync(qualityDir, { recursive: true });
+
+    writeFileSync(
+      join(hooksDir, "edit-history.jsonl"),
+      JSON.stringify({
+        turnKey: "completed-turn-1",
+        totalEdits: 5,
+        editLoopWarnings: 1,
+        filesCount: 1,
+      }) + "\n",
+    );
+    // Active in-progress turn still has an .edits.json file
+    writeFileSync(
+      join(hooksDir, "active-turn-2.edits.json"),
+      JSON.stringify({
+        version: 1,
+        counts: { "scripts/checks/harness-ab.mjs": 2 },
+        warned: [],
+      }),
+    );
+
+    const summary = summarizeHarnessMetrics({ hooksDir, qualityDir });
+    assert.equal(summary.edits.turnsWithEdits, 2);
+    assert.equal(summary.edits.totalTrackedEdits, 7);
+    assert.equal(summary.edits.editLoopWarnings, 1);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});

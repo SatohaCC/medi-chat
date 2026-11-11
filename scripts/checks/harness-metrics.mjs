@@ -180,6 +180,31 @@ export function summarizeHarnessMetrics({
     }
   }
 
+  const archivedEditTurns = new Set();
+  const editHistoryPath = resolve(hooksDir, "edit-history.jsonl");
+  if (existsSync(editHistoryPath)) {
+    const editLines = readFileSync(editHistoryPath, "utf8").split(/\r?\n/).filter(Boolean);
+    for (const line of editLines) {
+      let entry;
+      try {
+        entry = JSON.parse(line);
+      } catch {
+        continue;
+      }
+      if (!entry || typeof entry !== "object") continue;
+      if (typeof entry.turnKey === "string" && entry.turnKey) {
+        archivedEditTurns.add(entry.turnKey);
+      }
+      if (typeof entry.totalEdits === "number" && entry.totalEdits > 0) {
+        editStats.totalTrackedEdits += entry.totalEdits;
+      }
+      if (typeof entry.editLoopWarnings === "number" && entry.editLoopWarnings > 0) {
+        editStats.editLoopWarnings += entry.editLoopWarnings;
+      }
+    }
+    editStats.turnsWithEdits += archivedEditTurns.size;
+  }
+
   if (existsSync(hooksDir)) {
     for (const entry of readdirSync(hooksDir, { withFileTypes: true })) {
       if (!entry.isFile()) continue;
@@ -189,9 +214,12 @@ export function summarizeHarnessMetrics({
         if (recordedHistoryTurns.has(turnKey)) continue;
         ingestReport(readJsonSafe(fullPath));
       } else if (entry.name.endsWith(".edits.json")) {
+        const turnKey = entry.name.slice(0, -".edits.json".length);
         const data = readJsonSafe(fullPath);
         if (data && data.version === 1 && data.counts && typeof data.counts === "object") {
-          editStats.turnsWithEdits += 1;
+          if (!archivedEditTurns.has(turnKey)) {
+            editStats.turnsWithEdits += 1;
+          }
           for (const count of Object.values(data.counts)) {
             if (typeof count === "number" && count > 0) editStats.totalTrackedEdits += count;
           }

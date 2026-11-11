@@ -74,6 +74,45 @@ function appendRollingTail(current, chunk, maxChars = 4000) {
   return combined.length > maxChars ? combined.slice(-maxChars) : combined;
 }
 
+function terminateProcessTree(child) {
+  if (!child?.pid) return;
+  if (process.platform === "win32") {
+    const res = spawnSync("taskkill", ["/PID", String(child.pid), "/T", "/F"], {
+      stdio: "ignore",
+      windowsHide: true,
+    });
+    if (res.error || res.status !== 0) {
+      try {
+        child.kill();
+      } catch {
+        // Ignore already exited process
+      }
+    }
+    return;
+  }
+  try {
+    process.kill(-child.pid, "SIGTERM");
+  } catch {
+    try {
+      child.kill("SIGTERM");
+    } catch {
+      // Ignore already exited process
+    }
+  }
+  const killTimer = setTimeout(() => {
+    try {
+      process.kill(-child.pid, "SIGKILL");
+    } catch {
+      try {
+        child.kill("SIGKILL");
+      } catch {
+        // Ignore already exited process
+      }
+    }
+  }, 150);
+  killTimer.unref?.();
+}
+
 function runCommandInWorktree(command, worktreePath, { env = {}, timeoutMs = 1_800_000 } = {}) {
   return new Promise((resolvePromise) => {
     const started = Date.now();
@@ -81,10 +120,12 @@ function runCommandInWorktree(command, worktreePath, { env = {}, timeoutMs = 1_8
     let stderrTail = "";
     let timedOut = false;
     let settled = false;
+    let forceCloseTimer = null;
 
     const finish = (exitCode, error) => {
       if (settled) return;
       settled = true;
+      if (forceCloseTimer) clearTimeout(forceCloseTimer);
       resolvePromise({
         durationMs: Date.now() - started,
         exitCode,
@@ -99,6 +140,7 @@ function runCommandInWorktree(command, worktreePath, { env = {}, timeoutMs = 1_8
       child = spawn(command, {
         cwd: worktreePath,
         shell: true,
+        detached: process.platform !== "win32",
         windowsHide: true,
         stdio: ["ignore", "pipe", "pipe"],
         env: { ...process.env, ...env },
@@ -120,7 +162,13 @@ function runCommandInWorktree(command, worktreePath, { env = {}, timeoutMs = 1_8
     const timer = timeoutMs > 0
       ? setTimeout(() => {
           timedOut = true;
-          child.kill();
+          terminateProcessTree(child);
+          forceCloseTimer = setTimeout(() => {
+            child.stdout?.destroy();
+            child.stderr?.destroy();
+            finish(1, `Command timed out after ${timeoutMs}ms`);
+          }, 250);
+          forceCloseTimer.unref?.();
         }, timeoutMs)
       : null;
 
