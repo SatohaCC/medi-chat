@@ -106,7 +106,7 @@ test("agent prompts and harness guides omit legacy transition rules and stay con
     }
   }
   const totalPromptChars = ["AGENTS.md", ...PIPELINE_FILES]
-    .map((file) => readFileSync(resolve(ROOT, file), "utf8").length)
+    .map((file) => readFileSync(resolve(ROOT, file), "utf8").replaceAll("\r\n", "\n").length)
     .reduce((sum, len) => sum + len, 0);
   assert.ok(
     totalPromptChars < 9000,
