@@ -153,6 +153,17 @@ def test_quality_post_tool_feedback_is_delivered_once_on_pre_invocation(
     )
 
 
+def _simulate_hook_cwd_prefix(command: str, start_cwd: Path) -> Path:
+    prefix = "(cd backend && cd .. || cd ..) && "
+    assert command.startswith(prefix)
+    cwd = start_cwd
+    if (cwd / "backend").is_dir():
+        cwd = (cwd / "backend" / "..").resolve()
+    else:
+        cwd = (cwd / "..").resolve()
+    return cwd
+
+
 def test_registered_hook_commands_resolve_from_workspace_root():
     hooks_path = ROOT / ".agents/hooks.json"
     data = json.loads(hooks_path.read_text(encoding="utf-8"))
@@ -166,15 +177,20 @@ def test_registered_hook_commands_resolve_from_workspace_root():
 
     assert commands
     assert all("../" not in command for command in commands)
-    assert all(command.startswith("cd .. && ") for command in commands)
+    assert all(not command.startswith("cd .. && ") for command in commands)
     for command in commands:
         tokens = shlex.split(command)
         project_path = Path(tokens[tokens.index("--project") + 1])
         adapter_path = Path(tokens[tokens.index("python") + 1])
-        assert (ROOT / project_path).resolve() == (ROOT / "backend").resolve()
-        assert (ROOT / adapter_path).resolve() == (
-            ROOT / "scripts/hooks/antigravity_adapter.py"
-        ).resolve()
+        for start_cwd in (ROOT, ROOT / ".agents"):
+            resolved_cwd = _simulate_hook_cwd_prefix(command, start_cwd)
+            assert resolved_cwd == ROOT.resolve()
+            assert (resolved_cwd / project_path).resolve() == (
+                ROOT / "backend"
+            ).resolve()
+            assert (resolved_cwd / adapter_path).resolve() == (
+                ROOT / "scripts/hooks/antigravity_adapter.py"
+            ).resolve()
 
 
 def test_privacy_post_tool_handles_run_command(monkeypatch):
@@ -520,6 +536,20 @@ def test_pre_tool_use_enforces_directory_scope_and_blocks_path_traversal(
     assert res_env["decision"] == "deny"
     assert "機密ファイル保護" in res_env["reason"]
 
+    # File containing a concrete credential literal is blocked at PreToolUse before entering model context
+    secret_file = tmp_path / "config_with_secret.txt"
+    secret_file.write_text("API_KEY=" + "AIzaSy" + ("A" * 33), encoding="utf-8")
+    res_secret_read = adapter.handle_defense_pre_tool(
+        {
+            "toolCall": {
+                "name": "read_file",
+                "args": {"Path": str(secret_file)},
+            }
+        }
+    )
+    assert res_secret_read["decision"] == "deny"
+    assert "クレデンシャル露出遮断" in res_secret_read["reason"]
+
     # Allowed workspace file
     res_ok = adapter.handle_defense_pre_tool(
         {
@@ -535,6 +565,8 @@ def test_pre_tool_use_enforces_directory_scope_and_blocks_path_traversal(
 def test_consecutive_errors_trigger_cognitive_reset_at_three_and_hard_stop_at_six(
     tmp_path, monkeypatch
 ):
+    from scripts.hooks import quality_gate
+
     monkeypatch.setattr(adapter, "ROOT", tmp_path)
     turn_id = "loop-intervention-turn"
 
@@ -577,6 +609,47 @@ def test_consecutive_errors_trigger_cognitive_reset_at_three_and_hard_stop_at_si
     adapter.handle_defense_post_tool({"conversationId": turn_id, "stepIdx": 7})
     assert adapter.handle_quality_pre_invocation({"conversationId": turn_id}) == {}
 
+    # Edit tools running both defense-post-tool and quality-post-tool record outcome once per step:
+    # 1) Failing edit tool with error is counted once (not twice)
+    edit_turn = "edit-single-count-turn"
+    monkeypatch.setattr(quality_gate, "main", lambda event: {})
+    failing_edit = {
+        "conversationId": edit_turn,
+        "stepIdx": 10,
+        "toolCall": {"name": "edit_file", "args": {"Path": "backend/main.py"}},
+        "error": "Edit failed to match target",
+    }
+    adapter.handle_defense_post_tool(failing_edit)
+    adapter.handle_quality_post_tool(failing_edit)
+    state_after_one_edit = adapter.load_error_state(
+        tmp_path / ".agents/work/.hooks", edit_turn
+    )
+    assert state_after_one_edit["consecutive_errors"] == 1
+
+    # 2) Succeeding edit tool followed by failing quick checks accumulates across steps
+    quick_fail_turn = "edit-quick-fail-turn"
+    monkeypatch.setattr(
+        quality_gate,
+        "main",
+        lambda event: {
+            "hookSpecificOutput": {
+                "additionalContext": "Quick checks failed: Backend Mypy"
+            }
+        },
+    )
+    for step in (21, 22, 23):
+        payload = {
+            "conversationId": quick_fail_turn,
+            "stepIdx": step,
+            "toolCall": {"name": "edit_file", "args": {"Path": "backend/main.py"}},
+        }
+        adapter.handle_defense_post_tool(payload)
+        adapter.handle_quality_post_tool(payload)
+    state_after_three_quick_fails = adapter.load_error_state(
+        tmp_path / ".agents/work/.hooks", quick_fail_turn
+    )
+    assert state_after_three_quick_fails["consecutive_errors"] == 3
+
 
 def test_credentials_are_dynamically_redacted_from_feedback_and_tool_outputs(
     tmp_path, monkeypatch
@@ -587,9 +660,26 @@ def test_credentials_are_dynamically_redacted_from_feedback_and_tool_outputs(
     fake_openai_key = "sk-proj-" + ("B" * 24)
     fake_db_url = "postgresql://admin:MySuperSecretPass123@db.internal:5432/medichat"
 
+    # In-place redaction on post-tool payload without false masking notification when PostToolUse returns {}
+    post_payload = {
+        "conversationId": turn_id,
+        "stepIdx": 1,
+        "output": f"Loaded key {fake_google_key}",
+        "error": f"Failed connecting to {fake_db_url}",
+    }
+    assert adapter.handle_defense_post_tool(post_payload) == {}
+    assert isinstance(post_payload["output"], str)
+    assert isinstance(post_payload["error"], str)
+    assert fake_google_key not in post_payload["output"]
+    assert "[REDACTED_GOOGLE_API_KEY]" in post_payload["output"]
+    assert "MySuperSecretPass123" not in post_payload["error"]
+    assert "[REDACTED_PASSWORD]" in post_payload["error"]
+    assert adapter.take_quality_feedback(turn_id) == []
+
+    # Redaction at the feedback delivery boundary replaces secrets and reports masking
     adapter.queue_quality_feedback(
         turn_id,
-        1,
+        2,
         f"Error with key {fake_google_key} and {fake_openai_key} on {fake_db_url}",
     )
     res = adapter.handle_quality_pre_invocation({"conversationId": turn_id})
@@ -600,6 +690,7 @@ def test_credentials_are_dynamically_redacted_from_feedback_and_tool_outputs(
     assert "[REDACTED_GOOGLE_API_KEY]" in msg
     assert "[REDACTED_API_KEY]" in msg
     assert "[REDACTED_PASSWORD]" in msg
+    assert "機密情報マスキング適用" in msg
 
 
 def test_cli_launcher_granular_actions():

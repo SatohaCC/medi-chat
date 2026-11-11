@@ -237,7 +237,7 @@ function recordTaskResult(report, index, task, result, started, save) {
   });
   const output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
   if (task.requireEvidence && report.tasks[index].status === "passed") {
-    const evidence = acceptanceEvidence(output, task.testRunner);
+    const evidence = acceptanceEvidence(output, task.testRunner, task.selectors);
     report.tasks[index].evidence = evidence;
     if (!evidence.passed || evidence.incomplete) report.tasks[index].status = "incomplete";
   }

@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd .. && uv run --cache-dir .uv-cache --project backend --locked python scripts/hooks/antigravity_adapter.py defense-pre-tool",
+            "command": "(cd backend && cd .. || cd ..) && uv run --cache-dir .uv-cache --project backend --locked python scripts/hooks/antigravity_adapter.py defense-pre-tool",
             "timeout": 30
           }
         ]
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd .. && uv run --cache-dir .uv-cache --project backend --locked python scripts/hooks/antigravity_adapter.py defense-post-tool",
+            "command": "(cd backend && cd .. || cd ..) && uv run --cache-dir .uv-cache --project backend --locked python scripts/hooks/antigravity_adapter.py defense-post-tool",
             "timeout": 30
           }
         ]
@@ -28,11 +28,11 @@
   "quality-gate": {
     "PostToolUse": [
       {
-        "matcher": "edit_file|write_file|replace_file_content|write_to_file|multi_replace_file_content",
+        "matcher": "edit_file|write_file|replace_file_content|write_to_file|multi_replace_file_content|apply_patch",
         "hooks": [
           {
             "type": "command",
-            "command": "cd .. && uv run --cache-dir .uv-cache --project backend --locked python scripts/hooks/antigravity_adapter.py quality-post-tool",
+            "command": "(cd backend && cd .. || cd ..) && uv run --cache-dir .uv-cache --project backend --locked python scripts/hooks/antigravity_adapter.py quality-post-tool",
             "timeout": 600
           }
         ]
@@ -41,14 +41,14 @@
     "Stop": [
       {
         "type": "command",
-        "command": "cd .. && uv run --cache-dir .uv-cache --project backend --locked python scripts/hooks/antigravity_adapter.py quality-stop",
+        "command": "(cd backend && cd .. || cd ..) && uv run --cache-dir .uv-cache --project backend --locked python scripts/hooks/antigravity_adapter.py quality-stop",
         "timeout": 600
       }
     ],
     "PreInvocation": [
       {
         "type": "command",
-        "command": "cd .. && uv run --cache-dir .uv-cache --project backend --locked python scripts/hooks/antigravity_adapter.py quality-pre-invocation",
+        "command": "(cd backend && cd .. || cd ..) && uv run --cache-dir .uv-cache --project backend --locked python scripts/hooks/antigravity_adapter.py quality-pre-invocation",
         "timeout": 30
       }
     ]
@@ -56,11 +56,11 @@
   "privacy-gate": {
     "PostToolUse": [
       {
-        "matcher": "edit_file|write_file|replace_file_content|write_to_file|multi_replace_file_content|run_command",
+        "matcher": "edit_file|write_file|replace_file_content|write_to_file|multi_replace_file_content|apply_patch|run_command",
         "hooks": [
           {
             "type": "command",
-            "command": "cd .. && uv run --cache-dir .uv-cache --project backend --locked python scripts/hooks/antigravity_adapter.py privacy-post-tool",
+            "command": "(cd backend && cd .. || cd ..) && uv run --cache-dir .uv-cache --project backend --locked python scripts/hooks/antigravity_adapter.py privacy-post-tool",
             "timeout": 60
           }
         ]
@@ -69,7 +69,7 @@
     "Stop": [
       {
         "type": "command",
-        "command": "cd .. && uv run --cache-dir .uv-cache --project backend --locked python scripts/hooks/antigravity_adapter.py privacy-stop",
+        "command": "(cd backend && cd .. || cd ..) && uv run --cache-dir .uv-cache --project backend --locked python scripts/hooks/antigravity_adapter.py privacy-stop",
         "timeout": 60
       }
     ]

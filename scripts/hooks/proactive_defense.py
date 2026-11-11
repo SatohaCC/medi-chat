@@ -100,6 +100,15 @@ PROTECTED_FILE_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"(?i)^privacy-config\.json$"),
 )
 
+# High-confidence concrete credential literals blocked at PreToolUse before entering model context
+CONCRETE_CREDENTIAL_RE = re.compile(
+    r"(?:\bAIzaSy[A-Za-z0-9_-]{33}\b|"
+    r"\bsk-(?:proj-|ant-|live-|test-)?[A-Za-z0-9_-]{20,}\b|"
+    r"\b(?:(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{22,})\b|"
+    r"\bAKIA[0-9A-Z]{16}\b|"
+    r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----)"
+)
+
 # Layer 4: Secret and credential redaction patterns
 SECRET_PATTERNS: tuple[tuple[str, re.Pattern[str], str], ...] = (
     (
@@ -207,21 +216,55 @@ def clear_error_state(directory: Path, turn: str) -> None:
 
 
 def record_tool_outcome(
-    root: Path, turn: str, *, failed: bool, error_summary: str = ""
+    root: Path,
+    turn: str,
+    *,
+    failed: bool,
+    error_summary: str = "",
+    step_idx: object = None,
 ) -> dict:
     """Record tool execution success or failure for Layer 3 loop intervention."""
     directory = root / ".agents/work/.hooks"
-    if not failed:
-        clear_error_state(directory, turn)
-        return {"consecutive_errors": 0, "last_error": "", "reset_injected": False}
-
     state = load_error_state(directory, turn)
-    count = int(state.get("consecutive_errors", 0)) + 1
+    same_step = step_idx is not None and state.get("last_step_idx") == step_idx
+
+    if same_step:
+        if bool(state.get("last_step_failed")):
+            if failed and error_summary and not state.get("last_error"):
+                sanitized_summary, _ = sanitize_secrets(error_summary[:500])
+                state["last_error"] = sanitized_summary
+                save_error_state(directory, turn, state)
+            return state
+        if not failed:
+            return state
+        base_count = int(state.get("prev_consecutive_errors", 0))
+    else:
+        base_count = int(state.get("consecutive_errors", 0))
+
+    if not failed:
+        if step_idx is None:
+            clear_error_state(directory, turn)
+            return {"consecutive_errors": 0, "last_error": "", "reset_injected": False}
+        cleared = {
+            "consecutive_errors": 0,
+            "prev_consecutive_errors": base_count,
+            "last_error": "",
+            "reset_injected": False,
+            "last_step_idx": step_idx,
+            "last_step_failed": False,
+        }
+        save_error_state(directory, turn, cleared)
+        return cleared
+
+    count = base_count + 1
     sanitized_summary, _ = sanitize_secrets(error_summary[:500])
     updated = {
         "consecutive_errors": count,
+        "prev_consecutive_errors": base_count,
         "last_error": sanitized_summary,
         "reset_injected": bool(state.get("reset_injected", False)),
+        "last_step_idx": step_idx,
+        "last_step_failed": True,
     }
     save_error_state(directory, turn, updated)
     return updated
@@ -368,6 +411,21 @@ def check_pre_tool_use(payload: dict, root: Path = ROOT) -> dict:
                     "decision": "deny",
                     "reason": "【事前防御: Git内部ディレクトリ保護】`.git` 配下の直接変更は遮断されました。",
                 }
+            if is_read_only and resolved.is_file() and not resolved.is_symlink():
+                try:
+                    sample = resolved.read_bytes()[: 256 * 1024].decode(
+                        "utf-8", errors="ignore"
+                    )
+                except OSError:
+                    sample = ""
+                if sample and CONCRETE_CREDENTIAL_RE.search(sample):
+                    return {
+                        "decision": "deny",
+                        "reason": (
+                            f"【事前防御: クレデンシャル露出遮断】`{basename}` 内に生のAPIキーまたは秘密鍵が含まれているため、"
+                            "モデルコンテキストへの混入を防ぐため読み込みを遮断しました。"
+                        ),
+                    }
 
     return {"decision": "allow"}
 

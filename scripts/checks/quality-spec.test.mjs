@@ -27,7 +27,7 @@ test("acceptance criteria select tests even without matching changed paths and p
   assert.ok(plan.tasks[0].args.includes("backend/tests/test_contract.py::test_contract"));
 }));
 
-test("multiple Python unit test targets in specification are batched into a single pytest invocation", () => fixture((root, spec) => {
+test("multiple Python unit test targets in specification are batched into a single pytest invocation and require per-selector execution evidence", () => fixture((root, spec) => {
   mkdirSync(join(root, "scripts/hooks"), { recursive: true });
   writeFileSync(join(root, "scripts/hooks/test_adapter.py"), "# fixture");
   spec.requirements.push({
@@ -38,11 +38,40 @@ test("multiple Python unit test targets in specification are batched into a sing
   const plan = specificationPlan(spec, root);
   assert.deepEqual(plan.scopes, ["backend", "scripts"]);
   assert.equal(plan.tasks.length, 1);
-  assert.equal(plan.tasks[0].label, "Acceptance: backend/tests/test_contract.py::test_contract, scripts/hooks/test_adapter.py::test_stop");
-  assert.deepEqual(plan.tasks[0].requirements, ["R1", "R2"]);
-  assert.deepEqual(plan.tasks[0].reasons, ["reject unauthorized access", "verify hook adapter"]);
-  assert.ok(plan.tasks[0].args.includes("backend/tests/test_contract.py::test_contract"));
-  assert.ok(plan.tasks[0].args.includes("scripts/hooks/test_adapter.py::test_stop"));
+  const batchedTask = plan.tasks[0];
+  assert.equal(batchedTask.label, "Acceptance: backend/tests/test_contract.py::test_contract, scripts/hooks/test_adapter.py::test_stop");
+  assert.deepEqual(batchedTask.requirements, ["R1", "R2"]);
+  assert.deepEqual(batchedTask.reasons, ["reject unauthorized access", "verify hook adapter"]);
+  assert.deepEqual(batchedTask.selectors, [
+    "backend/tests/test_contract.py::test_contract",
+    "scripts/hooks/test_adapter.py::test_stop",
+  ]);
+  assert.ok(batchedTask.args.includes("backend/tests/test_contract.py::test_contract"));
+  assert.ok(batchedTask.args.includes("scripts/hooks/test_adapter.py::test_stop"));
+  assert.ok(batchedTask.args.includes("-rap"));
+
+  // If the second selector is deselected by markers (1 passed, 1 deselected), the batched task must fail as incomplete
+  assert.equal(
+    runPlan([batchedTask], () => ({
+      status: 0,
+      stdout: "PASSED backend/tests/test_contract.py::test_contract\n1 passed, 1 deselected in 0.12s\n",
+      stderr: "",
+    })),
+    1,
+  );
+  // Only when every batched selector has PASSED evidence does the task succeed
+  assert.equal(
+    runPlan([batchedTask], () => ({
+      status: 0,
+      stdout: [
+        "PASSED backend/tests/test_contract.py::test_contract",
+        "PASSED scripts/hooks/test_adapter.py::test_stop",
+        "2 passed in 0.15s",
+      ].join("\n"),
+      stderr: "",
+    })),
+    0,
+  );
 }));
 
 test("missing requirements, unknown commands, unsafe paths and nonexistent tests fail closed", () => fixture((root, spec, check) => {

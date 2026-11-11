@@ -1,7 +1,17 @@
 import { createHash } from "node:crypto";
 
-export function acceptanceEvidence(output, runner = "auto") {
+function selectorMatchedByNodeIds(selector, passedNodeIds) {
+  const normalized = selector.replaceAll("\\", "/");
+  return passedNodeIds.some((nodeId) => (
+    normalized.includes("::")
+      ? (nodeId === normalized || nodeId.startsWith(`${normalized}::`) || nodeId.startsWith(`${normalized}[`))
+      : nodeId.startsWith(`${normalized}::`)
+  ));
+}
+
+export function acceptanceEvidence(output, runner = "auto", selectors = []) {
   output = output.replace(/\u001b\[[0-9;]*m/g, "");
+  const fullOutput = output;
   if (runner === "configured-backend") {
     const receipts = output.split(/\r?\n/).flatMap((line) => {
       try {
@@ -26,8 +36,19 @@ export function acceptanceEvidence(output, runner = "auto") {
   const passedPattern = runner === "playwright" ? /\b(\d+) passed\b/g : /(?:\b(\d+) passed\b|(?:#|ℹ)\s*pass\s+(\d+))/g;
   const passed = [...output.matchAll(passedPattern)]
     .reduce((total, match) => total + Number(match[1] ?? match[2]), 0);
-  const incomplete = [...output.matchAll(/(?:\b(\d+) (?:skipped|xfailed|xpassed|todo)\b|(?:#|ℹ)\s*(?:skipped|todo)\s+(\d+))/g)]
+  let incomplete = [...output.matchAll(/(?:\b(\d+) (?:skipped|xfailed|xpassed|todo)\b|(?:#|ℹ)\s*(?:skipped|todo)\s+(\d+))/g)]
     .some((match) => Number(match[1] ?? match[2]) > 0);
+  if (runner === "pytest" && Array.isArray(selectors) && selectors.length > 0) {
+    const passedNodeIds = [...fullOutput.matchAll(/^PASSED\s+(\S+)/gm)]
+      .map((match) => match[1].replaceAll("\\", "/"));
+    if (selectors.length > 1 || passedNodeIds.length > 0) {
+      const missingSelectors = selectors.filter((selector) => !selectorMatchedByNodeIds(selector, passedNodeIds));
+      if (missingSelectors.length > 0) {
+        incomplete = true;
+        return { passed, incomplete, missingSelectors };
+      }
+    }
+  }
   return { passed, incomplete };
 }
 

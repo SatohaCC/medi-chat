@@ -61,30 +61,39 @@ def handle_defense_pre_tool(payload: dict) -> dict:
 
 def handle_defense_post_tool(payload: dict) -> dict:
     turn_id = str(payload.get("conversationId") or "current")
+    step_idx = payload.get("stepIdx")
     raw_error = str(payload.get("error") or "")
-    raw_output = str(payload.get("output") or payload.get("result") or "")
-    combined = f"{raw_error}\n{raw_output}".strip()
-    _, matched_secrets = sanitize_secrets(combined)
-    if matched_secrets:
-        queue_quality_feedback(
-            turn_id,
-            payload.get("stepIdx"),
-            (
-                "【事前防御: 機密情報マスキング通知】直前のツール実行結果またはエラー出力に"
-                f"機密情報パターン ({', '.join(matched_secrets)}) が検出されたため、"
-                "コンテキスト汚染・漏洩防止のため動的マスキングを適用しました。"
-                "生のAPIキーやパスワードをコード・ログ・応答に出力しないでください。"
-            ),
-        )
-    if raw_error:
-        record_tool_outcome(ROOT, turn_id, failed=True, error_summary=raw_error)
-    else:
-        record_tool_outcome(ROOT, turn_id, failed=False)
+    sanitized_error, _ = sanitize_secrets(raw_error)
+    if "error" in payload and isinstance(payload["error"], str):
+        payload["error"] = sanitized_error
+    for field in ("output", "result"):
+        if field in payload and isinstance(payload[field], str):
+            payload[field], _ = sanitize_secrets(payload[field])
+
+    raw_tool_name = str(payload.get("toolCall", {}).get("name") or "")
+    codex_tool = normalize_tool_name(raw_tool_name)
+    if codex_tool not in {"Edit", "Write", "apply_patch"}:
+        if sanitized_error:
+            record_tool_outcome(
+                ROOT,
+                turn_id,
+                failed=True,
+                error_summary=sanitized_error,
+                step_idx=step_idx,
+            )
+        else:
+            record_tool_outcome(
+                ROOT,
+                turn_id,
+                failed=False,
+                step_idx=step_idx,
+            )
     return {}
 
 
 def handle_quality_post_tool(payload: dict) -> dict:
     turn_id = str(payload.get("conversationId") or "current")
+    step_idx = payload.get("stepIdx")
     tool_call = payload.get("toolCall", {})
     raw_tool_name = tool_call.get("name", "")
     args = tool_call.get("args", {})
@@ -103,7 +112,12 @@ def handle_quality_post_tool(payload: dict) -> dict:
     additional_context = quality_decision.get("hookSpecificOutput", {}).get(
         "additionalContext"
     )
-    has_tool_error = bool(payload.get("error"))
+    raw_error = str(payload.get("error") or "")
+    sanitized_error, _ = sanitize_secrets(raw_error)
+    if "error" in payload and isinstance(payload["error"], str):
+        payload["error"] = sanitized_error
+
+    has_tool_error = bool(sanitized_error)
     has_quick_failure = isinstance(additional_context, str) and (
         "Quick checks failed:" in additional_context
     )
@@ -112,15 +126,21 @@ def handle_quality_post_tool(payload: dict) -> dict:
             ROOT,
             turn_id,
             failed=True,
-            error_summary=str(payload.get("error") or additional_context or ""),
+            error_summary=str(sanitized_error or additional_context or ""),
+            step_idx=step_idx,
         )
     elif codex_tool in {"Edit", "Write", "apply_patch"}:
-        record_tool_outcome(ROOT, turn_id, failed=False)
+        record_tool_outcome(
+            ROOT,
+            turn_id,
+            failed=False,
+            step_idx=step_idx,
+        )
 
     if isinstance(additional_context, str) and additional_context.strip():
         queue_quality_feedback(
             turn_id,
-            payload.get("stepIdx"),
+            step_idx,
             additional_context,
         )
     return {}
@@ -157,7 +177,13 @@ def quality_feedback_path(
 
 
 def queue_quality_feedback(turn: str, step_idx: object, context: str) -> None:
-    sanitized_context, _ = sanitize_secrets(context)
+    sanitized_context, matched_secrets = sanitize_secrets(context)
+    if matched_secrets and sanitized_context != context:
+        sanitized_context += (
+            "\n\n【事前防御: 機密情報マスキング適用】"
+            f"フィードバック内の機密情報パターン ({', '.join(matched_secrets)}) を"
+            "モデルコンテキスト投入前に動的マスキングしました。"
+        )
     directory = ROOT / ".agents/work/.hooks"
     directory.mkdir(parents=True, exist_ok=True)
     path = quality_feedback_path(directory, turn, step_idx, sanitized_context)
@@ -175,7 +201,13 @@ def take_quality_feedback(turn: str) -> list[str]:
         try:
             context = json.loads(path.read_text(encoding="utf-8"))
             if isinstance(context, str) and context.strip():
-                sanitized, _ = sanitize_secrets(context)
+                sanitized, matched_secrets = sanitize_secrets(context)
+                if matched_secrets and sanitized != context:
+                    sanitized += (
+                        "\n\n【事前防御: 機密情報マスキング適用】"
+                        f"フィードバック内の機密情報パターン ({', '.join(matched_secrets)}) を"
+                        "モデルコンテキスト投入前に動的マスキングしました。"
+                    )
                 messages.append(sanitized)
         except (ValueError, OSError):
             print("Invalid quality feedback receipt; discarding it.", file=sys.stderr)

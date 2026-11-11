@@ -90,7 +90,7 @@ export function specificationPlan(spec, root, phase = "full") {
         command = python ? "uv" : process.execPath;
         testRunner = python ? "pytest" : "node";
         args = python
-          ? ["run", "--project", "backend", "--locked", "python", "-m", "pytest", check.path + (check.test ? `::${check.test}` : ""), "-m", "not postgres and not source_data", "-q"]
+          ? ["run", "--project", "backend", "--locked", "python", "-m", "pytest", check.path + (check.test ? `::${check.test}` : ""), "-m", "not postgres and not source_data", "-rap", "-q"]
           : ["--disable-warning=ExperimentalWarning", "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", "--experimental-strip-types", "--test", "--test-timeout=60000", check.path];
       }
       const key = python ? "python-unit-batch" : JSON.stringify([command, args]);
@@ -100,21 +100,21 @@ export function specificationPlan(spec, root, phase = "full") {
           tasks.set(key, {
             label: `Acceptance: ${selector}`,
             command,
-            args: ["run", "--project", "backend", "--locked", "python", "-m", "pytest", selector, "-m", "not postgres and not source_data", "-q"],
+            args: ["run", "--project", "backend", "--locked", "python", "-m", "pytest", selector, "-m", "not postgres and not source_data", "-rap", "-q"],
             layer,
             testRunner,
             requireEvidence: true,
             specification: spec.task,
             requirements: [],
             reasons: [],
-            _selectors: [selector],
+            selectors: [selector],
           });
         } else {
           const entry = tasks.get(key);
-          if (!entry._selectors.includes(selector)) {
-            entry._selectors.push(selector);
-            entry.label = `Acceptance: ${entry._selectors.join(", ")}`;
-            entry.args = ["run", "--project", "backend", "--locked", "python", "-m", "pytest", ...entry._selectors, "-m", "not postgres and not source_data", "-q"];
+          if (!entry.selectors.includes(selector)) {
+            entry.selectors.push(selector);
+            entry.label = `Acceptance: ${entry.selectors.join(", ")}`;
+            entry.args = ["run", "--project", "backend", "--locked", "python", "-m", "pytest", ...entry.selectors, "-m", "not postgres and not source_data", "-rap", "-q"];
           }
         }
       } else if (!tasks.has(key)) {
@@ -127,8 +127,7 @@ export function specificationPlan(spec, root, phase = "full") {
       }
     }
   }
-  const finalTasks = [...tasks.values()].map(({ _selectors, ...rest }) => rest);
-  return { task: spec.task, scopes: [...scopes].sort(), tasks: finalTasks };
+  return { task: spec.task, scopes: [...scopes].sort(), tasks: [...tasks.values()] };
 }
 
 export function loadSpecification(root, path, phase, required = false) {
