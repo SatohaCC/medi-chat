@@ -27,6 +27,53 @@ test("acceptance criteria select tests even without matching changed paths and p
   assert.ok(plan.tasks[0].args.includes("backend/tests/test_contract.py::test_contract"));
 }));
 
+test("multiple Python unit test targets in specification are batched into a single pytest invocation and require per-selector execution evidence", () => fixture((root, spec) => {
+  mkdirSync(join(root, "scripts/hooks"), { recursive: true });
+  writeFileSync(join(root, "scripts/hooks/test_adapter.py"), "# fixture");
+  spec.requirements.push({
+    id: "R2",
+    acceptance: "verify hook adapter",
+    checks: [{ kind: "python", path: "scripts/hooks/test_adapter.py", test: "test_stop" }],
+  });
+  const plan = specificationPlan(spec, root);
+  assert.deepEqual(plan.scopes, ["backend", "scripts"]);
+  assert.equal(plan.tasks.length, 1);
+  const batchedTask = plan.tasks[0];
+  assert.equal(batchedTask.label, "Acceptance: backend/tests/test_contract.py::test_contract, scripts/hooks/test_adapter.py::test_stop");
+  assert.deepEqual(batchedTask.requirements, ["R1", "R2"]);
+  assert.deepEqual(batchedTask.reasons, ["reject unauthorized access", "verify hook adapter"]);
+  assert.deepEqual(batchedTask.selectors, [
+    "backend/tests/test_contract.py::test_contract",
+    "scripts/hooks/test_adapter.py::test_stop",
+  ]);
+  assert.ok(batchedTask.args.includes("backend/tests/test_contract.py::test_contract"));
+  assert.ok(batchedTask.args.includes("scripts/hooks/test_adapter.py::test_stop"));
+  assert.ok(batchedTask.args.includes("-rap"));
+
+  // If the second selector is deselected by markers (1 passed, 1 deselected), the batched task must fail as incomplete
+  assert.equal(
+    runPlan([batchedTask], () => ({
+      status: 0,
+      stdout: "PASSED backend/tests/test_contract.py::test_contract\n1 passed, 1 deselected in 0.12s\n",
+      stderr: "",
+    })),
+    1,
+  );
+  // Only when every batched selector has PASSED evidence does the task succeed
+  assert.equal(
+    runPlan([batchedTask], () => ({
+      status: 0,
+      stdout: [
+        "PASSED backend/tests/test_contract.py::test_contract",
+        "PASSED scripts/hooks/test_adapter.py::test_stop",
+        "2 passed in 0.15s",
+      ].join("\n"),
+      stderr: "",
+    })),
+    0,
+  );
+}));
+
 test("missing requirements, unknown commands, unsafe paths and nonexistent tests fail closed", () => fixture((root, spec, check) => {
   for (const mutation of [
     () => ({ ...spec, requirements: [] }),
@@ -140,6 +187,83 @@ test("feedback retains stable failure identity across line shifts and distinguis
     "Configured gate failed: schema_not_ready",
   );
   assert.match(dbGeneric.suggestion, /schema revision・登録状態/);
+
+  const ruffFmt = failureFeedback({ label: "Tooling format" }, "failed", "Would reformat: scripts/checks/sample.py\n1 file would be reformatted");
+  assert.ok(ruffFmt.identity);
+  assert.deepEqual(ruffFmt.diagnostics, ["Would reformat: scripts/checks/sample.py"]);
+
+  const importLint = failureFeedback(
+    { label: "Backend lint and architecture" },
+    "failed",
+    "BROKEN CONTRACT: Domain does not depend on outer layers\nModule 'backend.domain' is not allowed to import 'backend.application'",
+  );
+  assert.ok(importLint.identity);
+  assert.match(importLint.suggestion, /レイヤー・コンテキスト境界/);
+
+  const boundary = failureFeedback(
+    { label: "Frontend boundaries" },
+    "failed",
+    "features/chat/index.tsx:10: Features must use shared/component, not shared/ui (@/shared/ui/Button)",
+  );
+  assert.ok(boundary.identity);
+  assert.equal(boundary.docs, "docs/architecture/frontend-shared.md");
+  assert.match(boundary.suggestion, /レイヤー・コンテキスト境界/);
+
+  const domArch = failureFeedback(
+    { label: "Domain architecture" },
+    "failed",
+    "backend/domain/bad_pkg:1: DOM001 Disallowed domain package 'bad_pkg'",
+  );
+  assert.ok(domArch.identity);
+  assert.equal(domArch.docs, "docs/architecture/domain-architecture.md");
+  assert.deepEqual(domArch.diagnostics, ["backend/domain/bad_pkg: DOM001 Disallowed domain package 'bad_pkg'"]);
+
+  const winCrash = failureFeedback(
+    { label: "Hook regression tests" },
+    "failed",
+    "Antigravity hook error: Command '['git', 'diff', 'HEAD']' returned non-zero exit status 3221225794.\n",
+  );
+  assert.ok(winCrash.identity);
+  assert.match(winCrash.suggestion, /Windowsプロセス初期化異常/);
+  assert.ok(winCrash.diagnostics.some((d) => d.includes("Windows process initialization failure")));
+
+  const winSilentExitCodeCrash = failureFeedback(
+    { label: "Python lint" },
+    "failed",
+    "",
+    -1073741502,
+  );
+  assert.ok(winSilentExitCodeCrash.identity);
+  assert.deepEqual(winSilentExitCodeCrash.diagnostics, ["Windows process initialization failure: exit code -1073741502"]);
+  assert.match(winSilentExitCodeCrash.suggestion, /Windowsプロセス初期化異常/);
+
+  const pytestZero = failureFeedback(
+    { label: "Backend tests", testRunner: "pytest" },
+    "failed",
+    "",
+    5,
+  );
+  assert.ok(pytestZero.identity);
+  assert.deepEqual(pytestZero.diagnostics, ["pytest exit code 5: no tests collected"]);
+  assert.match(pytestZero.suggestion, /deselected/);
+
+  const pytestCollectErr = failureFeedback(
+    { label: "Backend tests", testRunner: "pytest" },
+    "failed",
+    "ERROR collecting backend/tests/test_sample.py\nImportError: cannot import name 'missing' from 'backend.domain'",
+    2,
+  );
+  assert.ok(pytestCollectErr.identity);
+  assert.match(pytestCollectErr.suggestion, /ImportError/);
+
+  const pytestUsageErr = failureFeedback(
+    { label: "Backend tests", testRunner: "pytest" },
+    "failed",
+    "ERROR: file or directory not found: backend/tests/nonexistent.py",
+    4,
+  );
+  assert.ok(pytestUsageErr.identity);
+  assert.match(pytestUsageErr.suggestion, /終了コード4/);
 });
 
 test("a real failing Node test yields a diagnostic and repair advice in the report", () => {

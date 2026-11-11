@@ -543,3 +543,63 @@ def test_registered_windows_launcher_resolves_root_from_subdirectory():
     )
     assert result.returncode == 0, result.stderr
     assert json.loads(result.stdout) == {}
+
+
+def test_stop_reuses_passed_receipt_across_subagent_turns_when_signature_matches(
+    tmp_path, monkeypatch, stop_context
+):
+    from scripts.hooks import quality_gate as gate
+
+    source = tmp_path / "changed.py"
+    source.write_text("implementation", encoding="utf-8")
+    monkeypatch.setattr(gate, "ROOT", tmp_path)
+    monkeypatch.setattr(gate, "changed_paths", lambda root: ["changed.py"])
+    calls = []
+
+    def execute(*args, **kwargs):
+        calls.append(args)
+        return SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr(gate.subprocess, "run", execute)
+
+    # Generator turn runs full check and passes
+    assert gate.main({"hook_event_name": "Stop", "turn_id": "generator-turn"}) == {}
+    assert len(calls) == 1
+
+    # Evaluator turn with identical workspace signature reuses passed receipt
+    assert gate.main({"hook_event_name": "Stop", "turn_id": "evaluator-turn"}) == {}
+    assert len(calls) == 1
+
+    # If file changes, Evaluator turn runs checks again
+    source.write_text("modified implementation", encoding="utf-8")
+    assert gate.main({"hook_event_name": "Stop", "turn_id": "evaluator-turn"}) == {}
+    assert len(calls) == 2
+
+
+def test_edited_frontend_files_and_formatter(tmp_path, monkeypatch):
+    from scripts.hooks import format_edited_python as fmt
+
+    fe_file = tmp_path / "frontend/features/chat/index.tsx"
+    fe_file.parent.mkdir(parents=True)
+    fe_file.write_text("export const x = 1;\n", encoding="utf-8")
+    monkeypatch.setattr(fmt, "ROOT", tmp_path)
+
+    event = {
+        "tool_name": "Edit",
+        "tool_input": {"file_path": str(fe_file)},
+        "cwd": str(tmp_path),
+    }
+    assert fmt.edited_frontend_files(event) == [fe_file]
+    assert fmt.edited_files(event) == []
+
+    recorded_cmds = []
+
+    def mock_run(cmd, **kwargs):
+        recorded_cmds.append(cmd)
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(fmt.subprocess, "run", mock_run)
+    assert fmt.main(event) == 0
+    assert len(recorded_cmds) == 1
+    assert "biome" in recorded_cmds[0]
+    assert "features/chat/index.tsx" in recorded_cmds[0]

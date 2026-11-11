@@ -13,6 +13,14 @@ sys.path.insert(0, str(ROOT))
 from scripts.hooks.quality_gate import changed_paths
 
 HOME = re.compile(r"(?i)C:[\\/]+Users[\\/]+([^\\/\s\"'<>`]+)")
+CREDENTIAL_LITERAL = re.compile(
+    r"(?:\bAIzaSy[A-Za-z0-9_-]{33}\b|"
+    r"\bsk-(?:proj-|ant-|live-|test-)?[A-Za-z0-9_-]{20,}\b|"
+    r"\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{36,}\b|"
+    r"\bgithub_pat_[A-Za-z0-9_]{22,}\b|"
+    r"\bAKIA[0-9A-Z]{16}\b|"
+    r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----)"
+)
 DEFAULT_ALLOWED = {"username", "user", "public", "default"}
 
 
@@ -39,8 +47,13 @@ def scan(root: Path, paths: list[str], config: dict) -> list[str]:
                 and not match.group(1).startswith(("$", "%", "{"))
                 for match in HOME.finditer(line)
             )
-            if personal or any(
-                token and token.casefold() in line.casefold() for token in tokens
+            credential = bool(CREDENTIAL_LITERAL.search(line))
+            if (
+                personal
+                or credential
+                or any(
+                    token and token.casefold() in line.casefold() for token in tokens
+                )
             ):
                 results.append(f"{name}:{number}")
     return results

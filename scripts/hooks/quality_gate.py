@@ -24,18 +24,22 @@ def changed_paths(root: Path) -> list[str]:
         ["diff", "HEAD", "--name-only", "-z", "--no-renames"],
         ["ls-files", "--others", "--exclude-standard", "-z"],
     ):
-        result = subprocess.run(
+        output = subprocess.run(
             ["git", *args], cwd=root, capture_output=True, check=True
-        )
-        paths.update(result.stdout.decode("utf-8").split("\0"))
+        ).stdout.decode("utf-8")
+        paths.update(output.split("\0"))
     return sorted(path for path in paths if path)
 
 
 def validation_context(root: Path) -> str:
     """Bind receipts to HEAD and the tracked validation configuration."""
-    head = subprocess.run(
-        ["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, check=True
-    ).stdout
+    head = (
+        subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, check=True
+        )
+        .stdout.decode("utf-8")
+        .strip()
+    )
     tracked = subprocess.run(
         ["git", "ls-files", "-z"], cwd=root, capture_output=True, check=True
     ).stdout.decode("utf-8")
@@ -51,7 +55,7 @@ def validation_context(root: Path) -> str:
             )
         )
     ]
-    return head.decode("utf-8").strip() + ":" + fingerprint(root, inputs)
+    return head + ":" + fingerprint(root, inputs)
 
 
 def fingerprint(root: Path, paths: list[str]) -> str:
@@ -183,7 +187,7 @@ def main(event: dict) -> dict:
                 scopes.add("frontend")
             if name.startswith("scripts/"):
                 scopes.add("scripts")
-        failures = ["Formatting edited Python files failed."] if formatting else []
+        failures = ["Formatting edited files failed."] if formatting else []
         for scope in sorted(scopes):
             quick_process = subprocess.run(
                 [
@@ -245,11 +249,34 @@ def main(event: dict) -> dict:
 
     receipt = directory / f"{key}.json"
     try:
-        previous = (
-            json.loads(receipt.read_text(encoding="utf-8"))
-            if receipt.exists()
-            else None
-        )
+        if receipt.exists():
+            previous = json.loads(receipt.read_text(encoding="utf-8"))
+        else:
+            previous = None
+            for candidate_path in sorted(directory.glob("*.json")):
+                if any(
+                    candidate_path.name.endswith(suffix)
+                    for suffix in (
+                        ".report.json",
+                        ".edits.json",
+                        ".quality-feedback.json",
+                        ".quality-stop.json",
+                        ".privacy.json",
+                    )
+                ):
+                    continue
+                try:
+                    candidate = json.loads(candidate_path.read_text(encoding="utf-8"))
+                except (ValueError, OSError):
+                    continue
+                if (
+                    isinstance(candidate, dict)
+                    and candidate.get("signature") == signature
+                    and candidate.get("result") == 0
+                    and candidate.get("status") == "passed"
+                ):
+                    previous = candidate
+                    break
         if not isinstance(previous, dict):
             previous = None
     except (ValueError, OSError):

@@ -44,3 +44,13 @@ def test_hook_feedback_and_stop_do_not_loop(tmp_path, monkeypatch):
     assert "systemMessage" in privacy_gate.main(
         {"hook_event_name": "Stop", "stop_hook_active": True}
     )
+
+
+def test_scan_detects_credential_literals_without_echoing_secret(tmp_path):
+    fake_google_key = "AIzaSy" + ("Z" * 33)
+    (tmp_path / "leaked.py").write_text(
+        f'API_KEY = "{fake_google_key}"\n', encoding="utf-8"
+    )
+    result = privacy_gate.scan(tmp_path, ["leaked.py"], {})
+    assert result == ["leaked.py:1"]
+    assert fake_google_key not in str(result)
