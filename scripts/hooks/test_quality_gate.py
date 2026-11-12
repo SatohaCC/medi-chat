@@ -323,7 +323,7 @@ def test_checks_cannot_certify_files_changed_during_validation(
     )
 
 
-def test_post_edit_formats_before_quick_checks(tmp_path, monkeypatch):
+def test_post_edit_formats_without_running_quick_checks(tmp_path, monkeypatch):
     from scripts.hooks import quality_gate as gate
 
     order = []
@@ -347,11 +347,11 @@ def test_post_edit_formats_before_quick_checks(tmp_path, monkeypatch):
 
     monkeypatch.setattr(gate.subprocess, "run", execute)
     assert gate.main({"hook_event_name": "PostToolUse"}) == {}
-    assert order == ["format", "check"]
-    assert "--require-spec" in calls[0][0]
+    assert order == ["format"]
+    assert calls == []
 
 
-def test_post_edit_returns_type_failure_and_stop_blocks(
+def test_post_edit_reports_formatting_failure_and_stop_blocks_on_quality_checks(
     tmp_path, monkeypatch, stop_context
 ):
     from scripts.hooks import quality_gate as gate
@@ -361,7 +361,7 @@ def test_post_edit_returns_type_failure_and_stop_blocks(
     source.write_text("# test fixture", encoding="utf-8")
     monkeypatch.setattr(gate, "ROOT", tmp_path)
     monkeypatch.setattr(gate, "edited_paths", lambda event: [source])
-    monkeypatch.setattr(gate, "format_python", lambda event: 0)
+    monkeypatch.setattr(gate, "format_python", lambda event: 1)
     monkeypatch.setattr(gate, "changed_paths", lambda root: ["backend/main.py"])
 
     def execute(*args, **kwargs):
@@ -373,7 +373,10 @@ def test_post_edit_returns_type_failure_and_stop_blocks(
 
     monkeypatch.setattr(gate.subprocess, "run", execute)
     result = gate.main({"hook_event_name": "PostToolUse"})
-    assert "[arg-type]" in result["hookSpecificOutput"]["additionalContext"]
+    assert (
+        "Formatting edited files failed."
+        in result["hookSpecificOutput"]["additionalContext"]
+    )
     assert gate.main({"hook_event_name": "Stop"})["decision"] == "block"
 
 
@@ -603,3 +606,93 @@ def test_edited_frontend_files_and_formatter(tmp_path, monkeypatch):
     assert len(recorded_cmds) == 1
     assert "biome" in recorded_cmds[0]
     assert "features/chat/index.tsx" in recorded_cmds[0]
+
+
+def test_stop_appends_execution_history_across_failures_and_success(
+    tmp_path, monkeypatch, stop_context
+):
+    from scripts.hooks import quality_gate as gate
+
+    source = tmp_path / "changed.py"
+    monkeypatch.setattr(gate, "ROOT", tmp_path)
+    monkeypatch.setattr(gate, "changed_paths", lambda root: ["changed.py"])
+    outcomes = iter([1, 1, 0])
+
+    def execute(command, **kwargs):
+        exit_code = next(outcomes)
+        report_path = command[command.index("--report") + 1]
+        Path(report_path).write_text(
+            json.dumps(
+                {
+                    "version": 1,
+                    "status": "passed" if exit_code == 0 else "failed",
+                    "tasks": [
+                        {
+                            "label": "Backend Mypy",
+                            "status": "passed" if exit_code == 0 else "failed",
+                            "durationMs": 1200 if exit_code else 800,
+                        }
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        return SimpleNamespace(returncode=exit_code)
+
+    monkeypatch.setattr(gate.subprocess, "run", execute)
+    for attempt in range(3):
+        source.write_text(f"# attempt {attempt}", encoding="utf-8")
+        decision = gate.main({"hook_event_name": "Stop", "turn_id": "history-turn"})
+        if attempt < 2:
+            assert decision["decision"] == "block"
+        else:
+            assert decision == {}
+
+    history_path = tmp_path / ".agents/work/.hooks/stop-history.jsonl"
+    assert history_path.is_file()
+    entries = [
+        json.loads(line)
+        for line in history_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert [entry["status"] for entry in entries] == ["failed", "failed", "passed"]
+    assert [entry["attempts"] for entry in entries] == [1, 2, 0]
+    assert [entry["tasks"][0]["durationMs"] for entry in entries] == [1200, 1200, 800]
+
+
+def test_stop_archives_edit_metrics_before_clearing_turn_state(
+    tmp_path, monkeypatch, stop_context
+):
+    from scripts.hooks import quality_gate as gate
+
+    source = tmp_path / "backend/main.py"
+    source.parent.mkdir()
+    source.write_text("# fixture", encoding="utf-8")
+    monkeypatch.setattr(gate, "ROOT", tmp_path)
+    monkeypatch.setattr(gate, "edited_paths", lambda event: [source])
+    monkeypatch.setattr(gate, "format_python", lambda event: 0)
+    monkeypatch.setattr(gate, "changed_paths", lambda root: ["backend/main.py"])
+    monkeypatch.setattr(
+        gate.subprocess, "run", lambda *args, **kwargs: SimpleNamespace(returncode=0)
+    )
+
+    edit_event = {"hook_event_name": "PostToolUse", "turn_id": "archive-turn"}
+    for _ in range(5):
+        gate.main(edit_event)
+
+    stop_event = {"hook_event_name": "Stop", "turn_id": "archive-turn"}
+    assert gate.main(stop_event) == {}
+    # Subsequent cached Stop must not double-archive
+    assert gate.main(stop_event) == {}
+
+    assert list((tmp_path / ".agents/work/.hooks").glob("*.edits.json")) == []
+    edit_history = tmp_path / ".agents/work/.hooks/edit-history.jsonl"
+    assert edit_history.is_file()
+    entries = [
+        json.loads(line)
+        for line in edit_history.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert len(entries) == 1
+    assert entries[0]["totalEdits"] == 5
+    assert entries[0]["editLoopWarnings"] == 1

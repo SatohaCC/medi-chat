@@ -2,11 +2,11 @@
 
 ## 共通の実行入口
 
-エージェント共通の変更範囲検査は`pnpm agent:check`、全体手動検査は`pnpm quality`を入口にする。側別は`pnpm quality:backend`・`pnpm quality:frontend`・`pnpm quality:scripts`。実行前に`--list`で対象コマンドを確認できる。`agent:check`とCodex Hookはコード変更scopeで作業用specを必須とし、文書だけの変更では要求しない。specの条件・登録済み検査・Hook adapterは[scripts/README](../../scripts/README.md)を参照する。
+エージェント共通の変更範囲検査は`pnpm agent:check`、全体手動検査は`pnpm quality`を入口にする。側別は`pnpm quality:backend`・`pnpm quality:frontend`・`pnpm quality:scripts`。実行前に`--list`で対象コマンドを確認できる。`agent:check`とStop Hookはコード変更scopeで作業用specを必須とし、文書だけの変更では要求しない。specの条件・登録済み検査・Hook adapterは[scripts/README](../../scripts/README.md)を参照する。
 
 この入口はソースを自動修正しない。通常のbackendテストから実DB・非公開原本を必要とするテストを除き、frontendはNodeの単体テストを実行する。`agent:check`・`quality:changed`のfull検査はbackend scopeを含む場合に、通常設定のbackend起動とread-only health probeを自動実行する。quickと側別の`quality:backend`では実行しない。実PostgreSQL契約・ブラウザ・外部APIの検証は別に選択し、共通コマンドの成功で代替しない。
 
-開発中のquick検査は早期フィードバック、完了時のfull検査は受入判断に使う。モデルへの信頼で最終検査を省略しない。quickの頻度や範囲を変える場合は、同じ受入条件と検証範囲を保った代表的な作業で、変更前後の反復数・総所要時間・修正前に検出した不具合・最終結果を比較する。単一実行の時間やモデル名だけから検査を削らない。fullの最終ゲートと受入条件は頻度変更後も維持し、テスト結果だけで仕様網羅を証明したとは扱わない。[検査頻度とコストの背景](harness-strengthening-plan.md#調査文書を適用する際の留保)
+開発中のquick検査（`pnpm agent:check --phase quick`）は作業の区切りでの早期フィードバック、完了時のfull検査（およびStop Hook）は受入判断に使う。`PostToolUse` Hookは編集ファイルの自動整形と編集ループ警告に限定し、編集ごとの全体quick検査やspec強制は行わない。モデルへの信頼で最終検査を省略しない。quickの頻度や範囲を変える場合は、同じ受入条件と検証範囲を保った代表的な作業で、変更前後の反復数・総所要時間・修正前に検出した不具合・最終結果を比較する。単一実行の時間やモデル名だけから検査を削らない。fullの最終ゲートと受入条件は頻度変更後も維持し、テスト結果だけで仕様網羅を証明したとは扱わない。[検査頻度とコストの背景](harness-strengthening-plan.md#調査文書を適用する際の留保)
 
 受入条件がある作業では、[仕様JSONの例](quality-task.example.json)に従って要件ID・受入条件・対応テストを定義し、`--spec <JSON>`で選択する。作業用`tmp/quality/task.json`は手動・hooks共通で自動読込する。`pnpm agent:check`またはHookを使うコード作業は、quick・fullと完了前処理が済むまでspecを保持する。通常の回帰検査も維持する。登録可能なテスト、integrationの明示選択、受入検査の未実施判定、修正フィードバック・停滞停止は[scripts/README](../../scripts/README.md#仕様に基づくテスト選択)を正本とする。自然言語の仕様からテスト内容の妥当性まで自動判定するものではない。
 

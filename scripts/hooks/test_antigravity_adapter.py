@@ -626,14 +626,14 @@ def test_consecutive_errors_trigger_cognitive_reset_at_three_and_hard_stop_at_si
     )
     assert state_after_one_edit["consecutive_errors"] == 1
 
-    # 2) Succeeding edit tool followed by failing quick checks accumulates across steps
+    # 2) Succeeding edit tool followed by failing post-edit formatting accumulates across steps
     quick_fail_turn = "edit-quick-fail-turn"
     monkeypatch.setattr(
         quality_gate,
         "main",
         lambda event: {
             "hookSpecificOutput": {
-                "additionalContext": "Quick checks failed: Backend Mypy"
+                "additionalContext": "Formatting edited files failed."
             }
         },
     )

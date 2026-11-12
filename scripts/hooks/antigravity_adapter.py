@@ -118,10 +118,11 @@ def handle_quality_post_tool(payload: dict) -> dict:
         payload["error"] = sanitized_error
 
     has_tool_error = bool(sanitized_error)
-    has_quick_failure = isinstance(additional_context, str) and (
-        "Quick checks failed:" in additional_context
+    has_post_edit_failure = isinstance(additional_context, str) and (
+        "Formatting edited files failed." in additional_context
+        or "Quick checks failed:" in additional_context
     )
-    if has_tool_error or has_quick_failure:
+    if has_tool_error or has_post_edit_failure:
         record_tool_outcome(
             ROOT,
             turn_id,

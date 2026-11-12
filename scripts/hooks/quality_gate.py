@@ -6,6 +6,7 @@ import hashlib
 import json
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -129,11 +130,98 @@ def edit_loop_warnings(root: Path, event: dict, files: list[Path]) -> list[str]:
     return crossed_threshold
 
 
-def clear_edit_state(directory: Path, turn: str) -> None:
+def archive_edit_state(directory: Path, turn: str, state_path: Path) -> None:
+    """Persist cumulative edit counts and loop warnings before deleting active turn state."""
     try:
-        edit_state_path(directory, turn).unlink(missing_ok=True)
+        stored = json.loads(state_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return
+    if not isinstance(stored, dict) or stored.get("version") != 1:
+        return
+    counts = stored.get("counts")
+    if not isinstance(counts, dict):
+        counts = {}
+    total_edits = sum(
+        count for count in counts.values() if type(count) is int and count > 0
+    )
+    warned = stored.get("warned")
+    warnings_count = (
+        len([name for name in warned if isinstance(name, str)])
+        if isinstance(warned, list)
+        else 0
+    )
+    if total_edits <= 0 and warnings_count <= 0:
+        return
+    turn_key = hashlib.sha256(turn.encode("utf-8")).hexdigest()[:24]
+    entry = {
+        "version": 1,
+        "timestamp": int(time.time() * 1000),
+        "turnKey": turn_key,
+        "totalEdits": total_edits,
+        "editLoopWarnings": warnings_count,
+        "filesCount": sum(
+            1 for count in counts.values() if type(count) is int and count > 0
+        ),
+    }
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+        with (directory / "edit-history.jsonl").open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    except OSError as error:
+        print(f"Could not record edit history: {error}", file=sys.stderr)
+
+
+def clear_edit_state(directory: Path, turn: str) -> None:
+    state_path = edit_state_path(directory, turn)
+    if state_path.is_file():
+        archive_edit_state(directory, turn, state_path)
+    try:
+        state_path.unlink(missing_ok=True)
     except OSError as error:
         print(f"Could not clear edit-loop state: {error}", file=sys.stderr)
+
+
+def append_stop_history(
+    directory: Path,
+    *,
+    turn_key: str,
+    status: str,
+    exit_code: int,
+    duration_ms: int,
+    attempts: int,
+    repeated_failures: int,
+    structured: dict | None,
+) -> None:
+    """Persist per-execution Stop telemetry so multi-attempt repairs are not overwritten."""
+    tasks = []
+    if isinstance(structured, dict) and isinstance(structured.get("tasks"), list):
+        for task in structured["tasks"]:
+            if not isinstance(task, dict):
+                continue
+            tasks.append(
+                {
+                    "label": task.get("label") or "unknown",
+                    "status": task.get("status") or "unknown",
+                    "durationMs": task.get("durationMs") or 0,
+                }
+            )
+    entry = {
+        "version": 1,
+        "timestamp": int(time.time() * 1000),
+        "turnKey": turn_key,
+        "status": status,
+        "result": exit_code,
+        "durationMs": duration_ms,
+        "attempts": attempts,
+        "repeatedFailures": repeated_failures,
+        "tasks": tasks,
+    }
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+        with (directory / "stop-history.jsonl").open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    except OSError as error:
+        print(f"Could not record stop history: {error}", file=sys.stderr)
 
 
 def edit_warning_context(paths: list[str]) -> str:
@@ -178,43 +266,11 @@ def main(event: dict) -> dict:
             return {}
         edit_warnings = edit_loop_warnings(ROOT, event, files)
         formatting = format_python(event)
-        scopes = set()
-        for path in files:
-            name = path.relative_to(ROOT).as_posix()
-            if path.suffix == ".py":
-                scopes.add("backend")
-            if name.startswith("frontend/"):
-                scopes.add("frontend")
-            if name.startswith("scripts/"):
-                scopes.add("scripts")
-        failures = ["Formatting edited files failed."] if formatting else []
-        for scope in sorted(scopes):
-            quick_process = subprocess.run(
-                [
-                    "node",
-                    str(ROOT / "scripts/checks/quality.mjs"),
-                    "--scope",
-                    scope,
-                    "--phase",
-                    "quick",
-                    "--require-spec",
-                ],
-                cwd=ROOT,
-                capture_output=True,
-                timeout=180,
-                check=False,
-            )
-            if quick_process.returncode:
-                failures.append(
-                    (quick_process.stdout + quick_process.stderr).decode(
-                        "utf-8", errors="replace"
-                    )
-                )
         contexts = []
         if edit_warnings:
             contexts.append(edit_warning_context(edit_warnings))
-        if failures:
-            contexts.append("Quick checks failed:\n" + "\n".join(failures)[-12000:])
+        if formatting:
+            contexts.append("Formatting edited files failed.")
         if contexts:
             return {
                 "hookSpecificOutput": {
@@ -295,6 +351,7 @@ def main(event: dict) -> dict:
     log = directory / f"{key}.log"
     report = directory / f"{key}.report.json"
     report.unlink(missing_ok=True)
+    started_at = time.monotonic()
     with log.open("w", encoding="utf-8") as output:
         try:
             exit_code = subprocess.run(
@@ -321,6 +378,7 @@ def main(event: dict) -> dict:
                 if isinstance(error, subprocess.TimeoutExpired)
                 else "start_error"
             )
+    duration_ms = int((time.monotonic() - started_at) * 1000)
     # A check must not certify files changed during execution (including generated output).
     if signature_for_current_inputs() != signature:
         exit_code = 1
@@ -359,6 +417,16 @@ def main(event: dict) -> dict:
     receipt.write_text(
         json.dumps(current),
         encoding="utf-8",
+    )
+    append_stop_history(
+        directory,
+        turn_key=key,
+        status=status,
+        exit_code=exit_code,
+        duration_ms=duration_ms,
+        attempts=int(state.get("attempts", 0)),
+        repeated_failures=int(state.get("repeated_failures", 0)),
+        structured=structured,
     )
     if state.get("terminal"):
         return finish_stop(stop_decision(event, signature, current, exit_code))

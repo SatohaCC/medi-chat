@@ -15,8 +15,6 @@
 
 ログはコンソールへ出力し、セッションログのファイル保存・自動再起動・稼働ログ検査は持たない。`pnpm dev`で別起動するfrontendのログは対象外。共通品質検査は開発サーバーの稼働ログに依存しない。
 
-backendの通常起動確認は、`agent:check`・`quality:changed`のfullでbackend scopeがある場合に自動選択する。quickや`quality:backend`など個別計画では、通常設定の起動確認を下の仕様JSONで明示選択できる。必要な前提は[検証手順](../docs/development/validation.md)を参照する。CIは共通のbackend・frontend・scripts検査に加え、実PostgreSQL契約を実行する。
-
 ## 共通コマンド
 
 ルートから実行する。いずれも検査対象のソースを自動修正しない。
@@ -33,6 +31,8 @@ pnpm quality:changed --list   # 実行計画だけ表示
 pnpm quality:scripts --report tmp/quality-scripts.json # 機械可読な結果も保存（親ディレクトリは事前作成）
 pnpm agent:check --phase quick # エージェント共通の変更範囲検査
 pnpm agent:check --report tmp/quality/result.json # 完了前の検査と構造化レポート
+node scripts/checks/harness-metrics.mjs # Hook実行時間・差し戻し率・ループ警告・管理オーバーヘッドの集計
+node scripts/checks/harness-ab.mjs --base <ref> --head HEAD --cmd "<agent-cmd>" # 2コミット間の隔離worktree A/B比較評価
 node scripts/checks/verify-clean-checkout.mjs --ref <commit> # 指定commitを隔離worktreeで再検証
 ```
 
@@ -57,7 +57,7 @@ pnpm quality:changed --spec docs/development/quality-task.example.json --phase q
 pnpm quality:changed --spec docs/development/quality-task.example.json --report tmp/quality/results.json
 ```
 
-実際の作業用はGit管理外の`tmp/quality/task.json`に置くと、手動・PostToolUse・Stopが同じ仕様を読む。`pnpm agent:check`とCodex Hookはコードscopeでこの仕様を必須にする。quickからfullの完了検査とHookの完了判定が終わるまでspecを保持し、その後に削除する。例は開発ツール用なので、製品機能の作業ではその受入条件とテストに書き換える。spec必須を付けない`quality`・`quality:changed`は通常の回帰検査用で、受入specの完了証明ではない。`--scope`より仕様で必要な側を優先して追加し、通常の回帰検査は削らない。同じテストを複数要件が参照しても受入検査は1回にまとめ、要件ID・選択理由を計画とレポートへ残す。
+実際の作業用はGit管理外の`tmp/quality/task.json`に置くと、手動（`agent:check`等）とStopが同じ仕様を読む。`pnpm agent:check`とStop Hookはコードscopeでこの仕様を必須にする。quickからfullの完了検査とHookの完了判定が終わるまでspecを保持し、その後に削除する。例は開発ツール用なので、製品機能の作業ではその受入条件とテストに書き換える。spec必須を付けない`quality`・`quality:changed`は通常の回帰検査用で、受入specの完了証明ではない。`--scope`より仕様で必要な側を優先して追加し、通常の回帰検査は削らない。同じテストを複数要件が参照しても受入検査は1回にまとめ、要件ID・選択理由を計画とレポートへ残す。
 
 quickは指定unit受入検査と既存の軽量検査、fullは全指定受入検査と通常の回帰検査を行う。integrationはquickで実行しないため、quick成功は作業全体の完了根拠にならない。実行時間上限は既存のrunner各コマンド300秒・Stop全体540秒のまま。大きなintegrationが上限を超えた場合は未解決として報告し、独立実行の結果と区別する。
 
@@ -88,7 +88,7 @@ frontendのNodeテストは[scripts/checks/test-runtime-requirements.json](check
 
 ここに記載するPostToolUse/Stopイベント形式、receipt、停滞回数はCodex adapter固有。共通の品質計画・`--spec`・JSONレポートは`pnpm agent:check`で別のエージェントからも直接利用できる。編集後と完了前の自動実行には、各製品側でこのコマンドを呼ぶHookが必要。
 
-- `PostToolUse`: ファイル編集ツールの入力を解析し、編集されたPythonだけをRuff整形した後、`--require-spec`付きで対象側のquick検査を実行する。シェル経由の編集は終了時の差分検査で拾う。
+- `PostToolUse`: ファイル編集ツールの入力を解析し、編集されたPython（Ruff）およびFrontend（Biome）の自動整形と編集ループ検出のみを行う。型・構造・受入検査や`--require-spec`は編集ごとに実行せず、手動の`pnpm agent:check`および終了時の`Stop`差分検査へ集約する。
 - `PostToolUse`は対象ファイルの編集回数もターン単位で数える。`apply_patch`・`Edit`・`Write`イベント内の同じパスは1回として扱い、同じリポジトリ内ファイルへの5回目の編集で、受入条件と方針を見直す一度限りの非ブロッキング警告を返す。5回は使用状況で調整する初期ヒューリスティック。
 - 編集回数の状態は無視対象の`.agents/work/.hooks/`に、ハッシュ化したターン識別子とリポジトリ相対パス・回数・警告済みマーカーだけを保存する。ファイル本文やプロンプトは保存しない。`Stop`が完了をブロックした場合は状態を維持し、ブロックしない場合は削除する。この警告はシェル経由の編集を数えず、シェル経由の差分は引き続き`Stop`検査が扱う。
 - `Stop`: `--require-spec`付きでstaged・unstaged・削除・未追跡を含む変更範囲のfull検査を実行する。文書のみの変更ではcode scopeがなくspecを要求しない。
@@ -109,16 +109,16 @@ hooks定義の変更後はCodex側で定義を確認・信頼する操作が必�
 登録コマンドはカレントディレクトリがワークスペースルート・`.agents/`のいずれであってもリポジトリルートを解決し、`backend`と`scripts/hooks/antigravity_adapter.py`を参照する。編集後の品質ゲート通知はPostToolUseの戻り値には含めず、次のPreInvocationで一時メッセージとして渡す。
 
 - `quality-gate`:
-  - `PostToolUse` (`matcher: "edit_file|write_file|replace_file_content|write_to_file|multi_replace_file_content"`, timeout 600): ファイル編集後にPythonコードのRuff自動整形および編集ループ検出を行う。
-  - `PreInvocation` (timeout 30): 直前のPostToolUseで記録したquick検査結果・編集ループ警告を`injectSteps`の一時メッセージとしてエージェントへ渡す。PostToolUseの応答は仕様に従い空の`{}`を返す。
-  - `Stop` (timeout 600): 差分・未追跡ファイルに対する受入・回帰検査を実行し、失敗時は `{"decision": "continue", "reason": "..."}` を返して完了を差し戻す。
+  - `PostToolUse` (`matcher: "edit_file|write_file|replace_file_content|write_to_file|multi_replace_file_content"`, timeout 600): ファイル編集後にPython（Ruff）/ Frontend（Biome）の自動整形および編集ループ検出を行う。
+  - `PreInvocation` (timeout 30): 直前のPostToolUseで記録した整形失敗・編集ループ警告を`injectSteps`の一時メッセージとしてエージェントへ渡す。PostToolUseの応答は仕様に従い空の`{}`を返す。
+  - `Stop` (timeout 600): 差分・未追跡ファイルに対する受入・回帰検査（`--require-spec`付き）を実行し、失敗時は `{"decision": "continue", "reason": "..."}` を返して完了を差し戻す。
 - `privacy-gate`:
   - `PostToolUse` (`matcher: "edit_file|write_file|replace_file_content|write_to_file|multi_replace_file_content|run_command"`, timeout 60): 編集に加えシェルコマンド実行後にも個人パス・禁止語の漏洩を即座に検査する。
   - `Stop` (timeout 60): 終了直前に個人パス・禁止語の漏洩を検査し、検出時は完了を差し戻す。
 
 ### プライバシー検査
 
-実行用は[`hooks/privacy_gate.py`](hooks/privacy_gate.py)、回帰テストは[`hooks/test_privacy_gate.py`](hooks/test_privacy_gate.py)に集約する。legacyにあった旧グローバルhookのコピーと試験スクリプトはこの構成へ置き換え済み。個人環境を書き換える一回限りの更新スクリプトは廃止した。
+実行用は[`hooks/privacy_gate.py`](hooks/privacy_gate.py)、回帰テストは[`hooks/test_privacy_gate.py`](hooks/test_privacy_gate.py)に集約する。
 
 `privacy_gate.py`は編集・shell実行後（PostToolUse）と終了時（Stop）に、HEADとの差分およびGit管理対象になり得る未追跡テキストを検査する。削除・Git除外ファイル・バイナリ・symlinkは対象外。UTF-8とBOM付きUTF-16を扱い、検出結果は本文を含めずファイルと行番号のみ返す。
 
