@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { safeExecFileSync } from "./safe-process.mjs";
 
 const ROOT = fileURLToPath(new URL("../../", import.meta.url));
 const GUIDES = [
@@ -34,7 +35,7 @@ const PIPELINE_FILES = [
 ];
 const RETIRED_GUIDE_DIRECTORY = [".agents", "lessons"].join("/");
 const TRACKED_PATHS = new Set(
-  execFileSync("git", ["ls-files", "-z"], { cwd: ROOT, encoding: "utf8" }).split("\0").filter(Boolean),
+  safeExecFileSync("git", ["ls-files", "-z"], { cwd: ROOT, encoding: "utf8" }).split("\0").filter(Boolean),
 );
 
 function localMarkdownTargets(file) {

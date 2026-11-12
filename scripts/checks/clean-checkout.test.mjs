@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { createCleanWorktree, isContained, resolveCommit, verificationUvCacheDirectory } from "./verify-clean-checkout.mjs";
+import { safeExecFileSync, safeSpawnSync } from "./safe-process.mjs";
 
 test("offline clean checkout reuses the configured or default uv cache across its steps", () => {
   assert.equal(
@@ -32,12 +33,12 @@ test("offline clean checkout reuses the configured or default uv cache across it
 function runNodeTest(root, path) {
   const env = { ...process.env };
   delete env.NODE_TEST_CONTEXT;
-  return spawnSync(process.execPath, ["--test", path], { cwd: root, encoding: "utf8", env });
+  return safeSpawnSync(process.execPath, [path], { cwd: root, encoding: "utf8", env });
 }
 
 function createRepository() {
   const root = mkdtempSync(join(tmpdir(), "clean-checkout-git-"));
-  const git = (...args) => execFileSync("git", args, { cwd: root, stdio: "pipe" });
+  const git = (...args) => safeExecFileSync("git", args, { cwd: root, stdio: "pipe" });
   mkdirSync(root, { recursive: true });
   git("init", "--quiet");
   git("config", "user.name", "Quality Test");
@@ -114,6 +115,30 @@ test("invalid revisions fail before a verification worktree is created", () => {
     assert.throws(() => resolveCommit(root, "missing-revision"), /Cannot resolve commit/);
     assert.equal(git("worktree", "list", "--porcelain").toString().split("\nworktree ").length, 1);
   } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("cleanup propagates directory removal failure and remains retryable", () => {
+  const { root } = createRepository();
+  let failRemoval = true;
+  const failure = Object.assign(new Error("owned directory remains locked"), { code: "EBUSY" });
+  const worktree = createCleanWorktree(root, "HEAD", tmpdir(), {
+    removeDirectory(path, options) {
+      if (failRemoval) throw failure;
+      rmSync(path, options);
+    },
+  });
+  try {
+    assert.throws(() => worktree.cleanup(), (error) => error === failure);
+    assert.equal(existsSync(worktree.tempRoot), true);
+    failRemoval = false;
+    worktree.cleanup();
+    assert.equal(existsSync(worktree.tempRoot), false);
+    worktree.cleanup();
+  } finally {
+    failRemoval = false;
+    worktree.cleanup();
     rmSync(root, { recursive: true, force: true });
   }
 });

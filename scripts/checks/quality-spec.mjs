@@ -91,7 +91,7 @@ export function specificationPlan(spec, root, phase = "full") {
         testRunner = python ? "pytest" : "node";
         args = python
           ? ["run", "--project", "backend", "--locked", "python", "-m", "pytest", check.path + (check.test ? `::${check.test}` : ""), "-m", "not postgres and not source_data", "-rap", "-q"]
-          : ["--disable-warning=ExperimentalWarning", "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", "--experimental-strip-types", "--test", "--test-timeout=60000", check.path];
+          : ["scripts/checks/run-node-tests.mjs", check.path];
       }
       const key = python ? "python-unit-batch" : JSON.stringify([command, args]);
       if (python) {

@@ -1,10 +1,11 @@
 import { spawnSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { safeSpawnSync } from "./checks/safe-process.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
-const exported = spawnSync("uv", [
-  "export", "--project", "backend", "--locked", "--no-dev",
+const exported = safeSpawnSync("uv", [
+  "export", "--cache-dir", ".uv-cache", "--project", "backend", "--locked", "--no-dev",
   "--no-emit-project", "--no-hashes", "--no-header", "--format", "requirements-txt",
 ], { cwd: root, encoding: "utf8", shell: false });
 if (exported.status !== 0) {

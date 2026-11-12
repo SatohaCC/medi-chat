@@ -6,7 +6,7 @@
 
 この入口はソースを自動修正しない。通常のbackendテストから実DB・非公開原本を必要とするテストを除き、frontendはNodeの単体テストを実行する。`agent:check`・`quality:changed`のfull検査はbackend scopeを含む場合に、通常設定のbackend起動とread-only health probeを自動実行する。quickと側別の`quality:backend`では実行しない。実PostgreSQL契約・ブラウザ・外部APIの検証は別に選択し、共通コマンドの成功で代替しない。
 
-開発中のquick検査（`pnpm agent:check --phase quick`）は作業の区切りでの早期フィードバック、完了時のfull検査（およびStop Hook）は受入判断に使う。`PostToolUse` Hookは編集ファイルの自動整形と編集ループ警告に限定し、編集ごとの全体quick検査やspec強制は行わない。モデルへの信頼で最終検査を省略しない。quickの頻度や範囲を変える場合は、同じ受入条件と検証範囲を保った代表的な作業で、変更前後の反復数・総所要時間・修正前に検出した不具合・最終結果を比較する。単一実行の時間やモデル名だけから検査を削らない。fullの最終ゲートと受入条件は頻度変更後も維持し、テスト結果だけで仕様網羅を証明したとは扱わない。[検査頻度とコストの背景](harness-strengthening-plan.md#調査文書を適用する際の留保)
+開発中のquick検査（`pnpm agent:check --phase quick`）および`Stop` Hook（`--phase quick --parallel`）は早期フィードバック、完了時のfull検査（`pnpm agent:check --report tmp/quality/result.json`）は受入判断に使う。`PostToolUse` Hookは編集ファイルの自動整形と編集ループ警告に限定し、編集ごとの全体quick検査やspec強制は行わない。モデルへの信頼で最終検査を省略しない。quickの頻度や範囲を変える場合は、同じ受入条件と検証範囲を保った代表的な作業で、変更前後の反復数・総所要時間・修正前に検出した不具合・最終結果を比較する。単一実行の時間やモデル名だけから検査を削らない。fullの最終ゲートと受入条件は頻度変更後も維持し、テスト結果だけで仕様網羅を証明したとは扱わない。[検査頻度とコストの背景](harness-strengthening-plan.md#調査文書を適用する際の留保)
 
 受入条件がある作業では、[仕様JSONの例](quality-task.example.json)に従って要件ID・受入条件・対応テストを定義し、`--spec <JSON>`で選択する。作業用`tmp/quality/task.json`は手動・hooks共通で自動読込する。`pnpm agent:check`またはHookを使うコード作業は、quick・fullと完了前処理が済むまでspecを保持する。通常の回帰検査も維持する。登録可能なテスト、integrationの明示選択、受入検査の未実施判定、修正フィードバック・停滞停止は[scripts/README](../../scripts/README.md#仕様に基づくテスト選択)を正本とする。自然言語の仕様からテスト内容の妥当性まで自動判定するものではない。
 
@@ -15,6 +15,8 @@ frontendのNodeテストはNode単体とPython連携に分け、後者の追加r
 指定commitの再現確認は`node scripts/checks/verify-clean-checkout.mjs --ref <commit>`を使う。detached worktreeにlock済み依存を導入し、full品質ゲートを実行する。未commit変更はコピーされず、成功レポートは指定commitにだけ対応する。GitHub CI・実PostgreSQL・browser・外部APIは別の検証層として記録する。
 
 pytestの設定はルート`pytest.ini`で共有する。`pytest`と`python -m pytest`のどちらからもbackendとscriptsをimportできる。`testpaths`は`backend/tests`と`scripts/hooks`で、backend用のDB隔離・マーカー選別は既存の`backend/tests/conftest.py`が担当する。
+
+ルート`conftest.py`はWindows sandboxでのpytest一時領域を調整する。変更時はbackend・scripts両scopeを検査し、quick・fullでRuff・Mypy・Pyright、fullでformat確認も実行する。Node単体テストは`run-node-tests.mjs`からNode標準APIの`isolation: none`で実行し、テストごとの既定タイムアウトは60秒とする。
 
 frontendのソースは`.gitattributes`とBiomeでLFに統一する。`e2e/fixtures`・`e2e-real/fixtures`は原本のバイト列を保持するため、改行変換と整形を行わない。TypeScript 7のCLIは`@typescript/native`、StyleX ESLintが使うコンパイラーAPIは`typescript`名の`@typescript/typescript6`で供給する。`pnpm typecheck:frontend`の`tsc`は引き続き7系を実行する。
 

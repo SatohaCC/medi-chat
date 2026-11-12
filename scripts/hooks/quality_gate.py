@@ -19,6 +19,14 @@ from scripts.hooks.quality_feedback import repair_state, report_feedback
 EDIT_WARNING_THRESHOLD = 5
 
 
+def filter_changed_paths(paths: list[str] | set[str]) -> list[str]:
+    return sorted(
+        path
+        for path in paths
+        if path and not path.startswith(("pytest-of-", ".agents/work/"))
+    )
+
+
 def changed_paths(root: Path) -> list[str]:
     paths = set()
     for args in (
@@ -29,7 +37,7 @@ def changed_paths(root: Path) -> list[str]:
             ["git", *args], cwd=root, capture_output=True, check=True
         ).stdout.decode("utf-8")
         paths.update(output.split("\0"))
-    return sorted(path for path in paths if path)
+    return filter_changed_paths(paths)
 
 
 def validation_context(root: Path) -> str:
@@ -362,6 +370,9 @@ def main(event: dict) -> dict:
                     "--report",
                     str(report),
                     "--require-spec",
+                    "--phase",
+                    "quick",
+                    "--parallel",
                 ],
                 cwd=ROOT,
                 stdout=output,

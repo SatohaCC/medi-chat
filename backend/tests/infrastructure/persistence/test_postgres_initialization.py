@@ -37,7 +37,12 @@ def test_pg008_strict_inventory_refuses_symlink_asset(tmp_path):
     (original / "テスト.xml").write_bytes(graphic("fig.gif"))
     target = tmp_path / "sentinel.gif"
     target.write_bytes(b"sentinel")
-    (original / "fig.gif").symlink_to(target)
+    try:
+        (original / "fig.gif").symlink_to(target)
+    except OSError as err:
+        if getattr(err, "winerror", None) == 1314:
+            pytest.skip("Symlink creation requires elevated privilege on Windows")
+        raise
     with pytest.raises(ValueError):
         load_inputs(original)
     assert target.read_bytes() == b"sentinel"

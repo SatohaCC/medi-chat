@@ -7,6 +7,7 @@ import { spawnSync } from "node:child_process";
 import { specificationPlan, loadSpecification } from "./quality-spec.mjs";
 import { acceptanceEvidence, failureFeedback } from "./quality-feedback.mjs";
 import { runPlan } from "./quality.mjs";
+import { safeSpawnSync } from "./safe-process.mjs";
 
 function fixture(run) {
   const root = mkdtempSync(join(tmpdir(), "quality-spec-"));
@@ -275,9 +276,9 @@ test("a real failing Node test yields a diagnostic and repair advice in the repo
     const execute = (command, args, options) => {
       const env = { ...options.env };
       delete env.NODE_TEST_CONTEXT;
-      return spawnSync(command, args, { ...options, env });
+      return safeSpawnSync(command, args, { ...options, env });
     };
-    assert.equal(runPlan([{ label: "Acceptance fixture", command: process.execPath, args: ["--test", path], requirements: ["R1"] }], execute, report), 1);
+    assert.equal(runPlan([{ label: "Acceptance fixture", command: process.execPath, args: [path], requirements: ["R1"] }], execute, report), 1);
     const feedback = JSON.parse(readFileSync(report, "utf8")).tasks[0].feedback;
     assert.ok(feedback.identity);
     assert.ok(feedback.diagnostics.some((diagnostic) => diagnostic.includes("rejects invalid input")));
