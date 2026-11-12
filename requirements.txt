@@ -185,7 +185,7 @@ pyasn1-modules==0.4.2
     # via google-auth
 pycparser==3.0 ; implementation_name != 'PyPy'
     # via cffi
-pydantic==2.14.2
+pydantic==2.14.3
     # via
     #   fastapi
     #   fastapi-cloud-cli
@@ -199,7 +199,7 @@ pydantic==2.14.2
     #   pydantic-extra-types
     #   pydantic-settings
     #   typesafe-sdk
-pydantic-core==2.50.2
+pydantic-core==2.50.4
     # via
     #   pydantic
     #   typesafe-sdk
