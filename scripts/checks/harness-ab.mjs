@@ -123,6 +123,8 @@ async function runCommandInWorktree(command, worktreePath, { env = {}, timeoutMs
     env: { ...process.env, ...env },
     timeout: timeoutMs > 0 ? timeoutMs : undefined,
     tailMaxChars: 4000,
+    // Evaluations retain only the tail; cumulative log volume is not a failure.
+    maxBuffer: Infinity,
   });
   return {
     durationMs: Date.now() - started,

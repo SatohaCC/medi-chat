@@ -132,10 +132,10 @@ test("runAbEvaluation runs isolated worktrees for base and head, collects metric
   }
 });
 
-test("runAbEvaluation streams large (>2MiB) command output without ENOBUFS and retains bounded tail", async () => {
+test("runAbEvaluation streams output beyond 16MiB without ENOBUFS and retains bounded tail", async () => {
   const { root, baseCommit, headCommit } = sharedRepo;
   const noisyScript = [
-    "process.stdout.write('A'.repeat(2 * 1024 * 1024));",
+    "process.stdout.write('A'.repeat(17 * 1024 * 1024));",
     "process.stdout.write('TAIL_MARKER');",
     "process.stderr.write('B'.repeat(512 * 1024));",
     "process.stderr.write('ERR_TAIL');",
