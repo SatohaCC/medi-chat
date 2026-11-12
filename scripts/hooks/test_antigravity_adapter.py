@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shlex
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
@@ -173,10 +174,24 @@ def test_registered_hook_commands_resolve_from_workspace_root():
         )
         assert "python -X utf8" in command
         assert "cd " not in command
-        assert command.split()[command.split().index("-c") + 1].endswith(
-            "run_name='__main__')"
-        )
-        assert "-c __import__" in command
+        # Antigravity may split on whitespace, while POSIX shells remove quotes.
+        # Both representations must execute the adapter, not evaluate a string.
+        for arguments in (command.split(), shlex.split(command)):
+            result = subprocess.run(
+                [sys.executable, *arguments[arguments.index("python") + 1 :]],
+                cwd=ROOT,
+                input=json.dumps({"fullyIdle": False}),
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                timeout=8,
+                check=False,
+            )
+            assert result.returncode == 0, result.stderr
+            expected = (
+                {"decision": "allow"} if arguments[-1] == "defense-pre-tool" else {}
+            )
+            assert json.loads(result.stdout) == expected
 
     command = data["proactive-defense"]["PreToolUse"][0]["hooks"][0]["command"]
 

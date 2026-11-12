@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv --no-cache run --no-project --offline --no-python-downloads python -X utf8 -c __import__('runpy').run_path(str(next(filter(__import__('pathlib').Path.is_file,map(__import__('pathlib').Path('scripts/hooks/antigravity_adapter.py').__rtruediv__,(__import__('pathlib').Path.cwd(),*__import__('pathlib').Path.cwd().parents))))),run_name='__main__') defense-pre-tool",
+            "command": "uv --no-cache run --no-project --offline --no-python-downloads python -X utf8 -c f\"'{__import__('runpy').run_path(str(next(filter(__import__('pathlib').Path.is_file,map(__import__('pathlib').Path('scripts/hooks/antigravity_adapter.py').__rtruediv__,(__import__('pathlib').Path.cwd(),*__import__('pathlib').Path.cwd().parents))))),run_name='__main__')}'\" defense-pre-tool",
             "timeout": 30
           }
         ]
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv --no-cache run --no-project --offline --no-python-downloads python -X utf8 -c __import__('runpy').run_path(str(next(filter(__import__('pathlib').Path.is_file,map(__import__('pathlib').Path('scripts/hooks/antigravity_adapter.py').__rtruediv__,(__import__('pathlib').Path.cwd(),*__import__('pathlib').Path.cwd().parents))))),run_name='__main__') defense-post-tool",
+            "command": "uv --no-cache run --no-project --offline --no-python-downloads python -X utf8 -c f\"'{__import__('runpy').run_path(str(next(filter(__import__('pathlib').Path.is_file,map(__import__('pathlib').Path('scripts/hooks/antigravity_adapter.py').__rtruediv__,(__import__('pathlib').Path.cwd(),*__import__('pathlib').Path.cwd().parents))))),run_name='__main__')}'\" defense-post-tool",
             "timeout": 30
           }
         ]
@@ -32,7 +32,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv --no-cache run --no-project --offline --no-python-downloads python -X utf8 -c __import__('runpy').run_path(str(next(filter(__import__('pathlib').Path.is_file,map(__import__('pathlib').Path('scripts/hooks/antigravity_adapter.py').__rtruediv__,(__import__('pathlib').Path.cwd(),*__import__('pathlib').Path.cwd().parents))))),run_name='__main__') quality-post-tool",
+            "command": "uv --no-cache run --no-project --offline --no-python-downloads python -X utf8 -c f\"'{__import__('runpy').run_path(str(next(filter(__import__('pathlib').Path.is_file,map(__import__('pathlib').Path('scripts/hooks/antigravity_adapter.py').__rtruediv__,(__import__('pathlib').Path.cwd(),*__import__('pathlib').Path.cwd().parents))))),run_name='__main__')}'\" quality-post-tool",
             "timeout": 600
           }
         ]
@@ -41,14 +41,14 @@
     "Stop": [
       {
         "type": "command",
-        "command": "uv --no-cache run --no-project --offline --no-python-downloads python -X utf8 -c __import__('runpy').run_path(str(next(filter(__import__('pathlib').Path.is_file,map(__import__('pathlib').Path('scripts/hooks/antigravity_adapter.py').__rtruediv__,(__import__('pathlib').Path.cwd(),*__import__('pathlib').Path.cwd().parents))))),run_name='__main__') quality-stop",
+        "command": "uv --no-cache run --no-project --offline --no-python-downloads python -X utf8 -c f\"'{__import__('runpy').run_path(str(next(filter(__import__('pathlib').Path.is_file,map(__import__('pathlib').Path('scripts/hooks/antigravity_adapter.py').__rtruediv__,(__import__('pathlib').Path.cwd(),*__import__('pathlib').Path.cwd().parents))))),run_name='__main__')}'\" quality-stop",
         "timeout": 600
       }
     ],
     "PreInvocation": [
       {
         "type": "command",
-        "command": "uv --no-cache run --no-project --offline --no-python-downloads python -X utf8 -c __import__('runpy').run_path(str(next(filter(__import__('pathlib').Path.is_file,map(__import__('pathlib').Path('scripts/hooks/antigravity_adapter.py').__rtruediv__,(__import__('pathlib').Path.cwd(),*__import__('pathlib').Path.cwd().parents))))),run_name='__main__') quality-pre-invocation",
+        "command": "uv --no-cache run --no-project --offline --no-python-downloads python -X utf8 -c f\"'{__import__('runpy').run_path(str(next(filter(__import__('pathlib').Path.is_file,map(__import__('pathlib').Path('scripts/hooks/antigravity_adapter.py').__rtruediv__,(__import__('pathlib').Path.cwd(),*__import__('pathlib').Path.cwd().parents))))),run_name='__main__')}'\" quality-pre-invocation",
         "timeout": 30
       }
     ]
@@ -60,7 +60,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv --no-cache run --no-project --offline --no-python-downloads python -X utf8 -c __import__('runpy').run_path(str(next(filter(__import__('pathlib').Path.is_file,map(__import__('pathlib').Path('scripts/hooks/antigravity_adapter.py').__rtruediv__,(__import__('pathlib').Path.cwd(),*__import__('pathlib').Path.cwd().parents))))),run_name='__main__') privacy-post-tool",
+            "command": "uv --no-cache run --no-project --offline --no-python-downloads python -X utf8 -c f\"'{__import__('runpy').run_path(str(next(filter(__import__('pathlib').Path.is_file,map(__import__('pathlib').Path('scripts/hooks/antigravity_adapter.py').__rtruediv__,(__import__('pathlib').Path.cwd(),*__import__('pathlib').Path.cwd().parents))))),run_name='__main__')}'\" privacy-post-tool",
             "timeout": 60
           }
         ]
@@ -69,7 +69,7 @@
     "Stop": [
       {
         "type": "command",
-        "command": "uv --no-cache run --no-project --offline --no-python-downloads python -X utf8 -c __import__('runpy').run_path(str(next(filter(__import__('pathlib').Path.is_file,map(__import__('pathlib').Path('scripts/hooks/antigravity_adapter.py').__rtruediv__,(__import__('pathlib').Path.cwd(),*__import__('pathlib').Path.cwd().parents))))),run_name='__main__') privacy-stop",
+        "command": "uv --no-cache run --no-project --offline --no-python-downloads python -X utf8 -c f\"'{__import__('runpy').run_path(str(next(filter(__import__('pathlib').Path.is_file,map(__import__('pathlib').Path('scripts/hooks/antigravity_adapter.py').__rtruediv__,(__import__('pathlib').Path.cwd(),*__import__('pathlib').Path.cwd().parents))))),run_name='__main__')}'\" privacy-stop",
         "timeout": 60
       }
     ]
