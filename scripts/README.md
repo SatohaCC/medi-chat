@@ -91,7 +91,7 @@ frontendのNodeテストは[scripts/checks/test-runtime-requirements.json](check
 - `PostToolUse`: ファイル編集ツールの入力を解析し、編集されたPython（Ruff）およびFrontend（Biome）の自動整形と編集ループ検出のみを行う。型・構造・受入検査や`--require-spec`は編集ごとに実行せず、手動の`pnpm agent:check`および終了時の`Stop`差分検査へ集約する。
 - `PostToolUse`は対象ファイルの編集回数もターン単位で数える。`apply_patch`・`Edit`・`Write`イベント内の同じパスは1回として扱い、同じリポジトリ内ファイルへの5回目の編集で、受入条件と方針を見直す一度限りの非ブロッキング警告を返す。5回は使用状況で調整する初期ヒューリスティック。
 - 編集回数の状態は無視対象の`.agents/work/.hooks/`に、ハッシュ化したターン識別子とリポジトリ相対パス・回数・警告済みマーカーだけを保存する。ファイル本文やプロンプトは保存しない。`Stop`が完了をブロックした場合は状態を維持し、ブロックしない場合は削除する。この警告はシェル経由の編集を数えず、シェル経由の差分は引き続き`Stop`検査が扱う。
-- `Stop`: `--require-spec`付きでstaged・unstaged・削除・未追跡を含む変更範囲のfull検査を実行する。文書のみの変更ではcode scopeがなくspecを要求しない。
+- `Stop`: `--require-spec --phase quick --parallel`でstaged・unstaged・削除・未追跡を含む変更範囲のquick並列検査を実行する（完了前のfull検査は`pnpm agent:check --report tmp/quality/result.json`が担当する）。文書のみの変更ではcode scopeがなくspecを要求しない。
 - 同一ターン・同一内容の成功結果は再利用する。検査中に内容が変わった場合は成功を認定しない。
 - 再利用の識別子にはHEAD、差分ファイル、Git管理下のJSON/TOML/YAML/INI/lock設定、`scripts/checks`・`scripts/hooks`、Python/Node版指定、作業用`tmp/quality/task.json`も含める。検査計画や作業仕様の変更でも再検証する。依存環境そのものや外部サービスの状態は識別子の対象外。壊れた証跡は診断を出して再検証する。
 - 失敗時は修正を要求する。同じ内容で既に継続した場合は再度継続させず、失敗の報告を促す。環境不足を成功と扱わない。

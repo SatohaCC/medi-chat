@@ -6,6 +6,7 @@ import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { summarizeHarnessMetrics } from "./harness-metrics.mjs";
 import { createCleanWorktree } from "./verify-clean-checkout.mjs";
+import { safeExecuteAsync, safeSpawnSync } from "./safe-process.mjs";
 
 export const ROOT = fileURLToPath(new URL("../../", import.meta.url));
 
@@ -43,7 +44,7 @@ export function measurePromptBundleChars(worktreePath) {
 }
 
 function collectGitDiffSummary(worktreePath) {
-  const status = spawnSync("git", ["status", "--short"], {
+  const status = safeSpawnSync("git", ["status", "--short"], {
     cwd: worktreePath,
     encoding: "utf8",
     windowsHide: true,
@@ -113,79 +114,25 @@ function terminateProcessTree(child) {
   killTimer.unref?.();
 }
 
-function runCommandInWorktree(command, worktreePath, { env = {}, timeoutMs = 1_800_000 } = {}) {
-  return new Promise((resolvePromise) => {
-    const started = Date.now();
-    let stdoutTail = "";
-    let stderrTail = "";
-    let timedOut = false;
-    let settled = false;
-    let forceCloseTimer = null;
-
-    const finish = (exitCode, error) => {
-      if (settled) return;
-      settled = true;
-      if (forceCloseTimer) clearTimeout(forceCloseTimer);
-      resolvePromise({
-        durationMs: Date.now() - started,
-        exitCode,
-        error,
-        stdoutTail,
-        stderrTail,
-      });
-    };
-
-    let child;
-    try {
-      child = spawn(command, {
-        cwd: worktreePath,
-        shell: true,
-        detached: process.platform !== "win32",
-        windowsHide: true,
-        stdio: ["ignore", "pipe", "pipe"],
-        env: { ...process.env, ...env },
-      });
-    } catch (error) {
-      finish(1, error instanceof Error ? error.message : String(error));
-      return;
-    }
-
-    child.stdout?.setEncoding("utf8");
-    child.stderr?.setEncoding("utf8");
-    child.stdout?.on("data", (chunk) => {
-      stdoutTail = appendRollingTail(stdoutTail, chunk);
-    });
-    child.stderr?.on("data", (chunk) => {
-      stderrTail = appendRollingTail(stderrTail, chunk);
-    });
-
-    const timer = timeoutMs > 0
-      ? setTimeout(() => {
-          timedOut = true;
-          terminateProcessTree(child);
-          forceCloseTimer = setTimeout(() => {
-            child.stdout?.destroy();
-            child.stderr?.destroy();
-            finish(1, `Command timed out after ${timeoutMs}ms`);
-          }, 250);
-          forceCloseTimer.unref?.();
-        }, timeoutMs)
-      : null;
-
-    child.on("error", (error) => {
-      if (timer) clearTimeout(timer);
-      finish(1, error.message);
-    });
-
-    child.on("close", (code) => {
-      if (timer) clearTimeout(timer);
-      if (timedOut) {
-        finish(1, `Command timed out after ${timeoutMs}ms`);
-      } else {
-        finish(code ?? 1, null);
-      }
-    });
+async function runCommandInWorktree(command, worktreePath, { env = {}, timeoutMs = 1_800_000 } = {}) {
+  const started = Date.now();
+  const result = await safeExecuteAsync(command, {
+    cwd: worktreePath,
+    shell: true,
+    windowsHide: true,
+    env: { ...process.env, ...env },
+    timeout: timeoutMs > 0 ? timeoutMs : undefined,
+    tailMaxChars: 4000,
+    // Evaluations retain only the tail; cumulative log volume is not a failure.
+    maxBuffer: Infinity,
   });
+  return {
+    durationMs: Date.now() - started,
+    exitCode: result.status ?? 1,
+    error: result.error instanceof Error ? result.error.message : result.error,
+    stdoutTail: result.stdout,
+    stderrTail: result.stderr,
+  };
 }
 
 export async function evaluateArm({

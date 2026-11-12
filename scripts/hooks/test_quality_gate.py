@@ -8,7 +8,12 @@ import pytest
 
 from scripts.hooks.format_edited_python import edited_files
 from scripts.hooks.quality_feedback import repair_state, report_feedback
-from scripts.hooks.quality_gate import changed_paths, fingerprint, stop_decision
+from scripts.hooks.quality_gate import (
+    changed_paths,
+    filter_changed_paths,
+    fingerprint,
+    stop_decision,
+)
 
 
 def test_repair_state_distinguishes_progress_unknown_failures_and_success():
@@ -244,12 +249,27 @@ def test_changed_paths_include_staged_unstaged_deleted_and_untracked(tmp_path):
     (tmp_path / "unstaged.py").write_text("after", encoding="utf-8")
     (tmp_path / "deleted.py").unlink()
     (tmp_path / "untracked.py").write_text("new", encoding="utf-8")
+    (tmp_path / "pytest-of-worker").mkdir()
+    (tmp_path / "pytest-of-worker/temp.py").write_text("ignored", encoding="utf-8")
     assert changed_paths(tmp_path) == [
         "deleted.py",
         "staged.py",
         "unstaged.py",
         "untracked.py",
     ]
+
+
+def test_filter_changed_paths_excludes_transient_pytest_and_hook_work_dirs():
+    assert filter_changed_paths(
+        [
+            "",
+            "backend/main.py",
+            "pytest-of-dsh_worker/pytest-0/foo.py",
+            "pytest-of-kanon/bar.py",
+            ".agents/work/.hooks/abc.json",
+            "scripts/checks/quality.mjs",
+        ]
+    ) == ["backend/main.py", "scripts/checks/quality.mjs"]
 
 
 def test_patch_string_and_structured_payloads_are_understood():
@@ -290,6 +310,9 @@ def test_stop_runs_checks_and_reuses_only_current_success(
     assert gate.main(event) == {}
     assert len(calls) == 1
     assert "--require-spec" in calls[0][0]
+    assert "--phase" in calls[0][0]
+    assert "quick" in calls[0][0]
+    assert "--parallel" in calls[0][0]
     source.write_text("after", encoding="utf-8")
     assert gate.main(event) == {}
     assert len(calls) == 2

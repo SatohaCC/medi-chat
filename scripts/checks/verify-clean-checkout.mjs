@@ -4,11 +4,12 @@ import { tmpdir } from "node:os";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { invocationFor } from "./quality.mjs";
+import { safeSpawnSync } from "./safe-process.mjs";
 
 const ROOT = fileURLToPath(new URL("../../", import.meta.url));
 
 function runGit(root, args) {
-  const result = spawnSync("git", args, {
+  const result = safeSpawnSync("git", args, {
     cwd: root,
     encoding: "utf8",
     windowsHide: true,
@@ -50,7 +51,7 @@ export function resolveCommit(root, ref) {
   return revision;
 }
 
-export function createCleanWorktree(root, ref, tempParent = tmpdir()) {
+export function createCleanWorktree(root, ref, tempParent = tmpdir(), { removeDirectory = rmSync } = {}) {
   const repository = resolve(root);
   const revision = resolveCommit(repository, ref);
   const tempRoot = mkdtempSync(join(tempParent, "medi-chat-clean-checkout-"));
@@ -76,8 +77,36 @@ export function createCleanWorktree(root, ref, tempParent = tmpdir()) {
       if (!isContained(tempRoot, path)) {
         throw new Error("Refusing to remove a worktree outside its owned temporary directory");
       }
-      runGit(repository, ["worktree", "remove", "--force", path]);
-      if (existsSync(tempRoot)) rmSync(tempRoot, { recursive: true, force: true });
+      let lastError;
+      for (let attempt = 0; attempt < 8; attempt++) {
+        try {
+          runGit(repository, ["worktree", "remove", "--force", path]);
+          lastError = null;
+          break;
+        } catch (error) {
+          lastError = error;
+          if (error.message.includes("is not a working tree")) {
+            lastError = null;
+            break;
+          }
+          if (attempt < 7) {
+            const start = Date.now();
+            while (Date.now() - start < 50) {}
+          }
+        }
+      }
+      if (lastError) throw lastError;
+      if (existsSync(tempRoot)) {
+        for (let attempt = 0; ; attempt++) {
+          try {
+            removeDirectory(tempRoot, { recursive: true, force: true });
+            break;
+          } catch (error) {
+            if (attempt === 7) throw error;
+            Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50);
+          }
+        }
+      }
       cleaned = true;
     },
   };
@@ -128,7 +157,7 @@ export function verifyCleanCheckout(ref, { offline = false } = {}) {
     if (offline && !configuredCacheDirectory) {
       const cacheEnvironment = { ...process.env };
       delete cacheEnvironment.UV_CACHE_DIR;
-      const cacheResult = spawnSync("uv", ["cache", "dir"], {
+      const cacheResult = safeSpawnSync("uv", ["cache", "dir"], {
         cwd: ROOT,
         encoding: "utf8",
         windowsHide: true,

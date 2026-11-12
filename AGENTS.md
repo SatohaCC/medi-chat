@@ -3,7 +3,7 @@
 - 既存の差分・未追跡ファイルを保持し、依頼された範囲だけを変更する。
 - 対象ディレクトリに適用されるAGENTS.mdも確認する。frontend作業では`frontend/AGENTS.md`とインストール済みNext.jsの対象ガイドを読み、生成される案内ブロックを削除・複製しない。
 - 未実施・環境不足・skip/xfailを検証成功として報告しない。検証した層と今回の差分を特定する。
-- コードを変更するすべてのエージェントは[共通品質ハーネス](scripts/README.md)を使う。受入条件のある作業では`tmp/quality/task.json`で条件と登録済みテストを対応付け、作業の区切りで`pnpm agent:check --phase quick`、完了前は`pnpm agent:check --report tmp/quality/result.json`を実行する。失敗時はレポートの診断・修正候補を確認し、受入条件や検査を弱めて成功にしない。
+- コード変更時は[共通品質ハーネス](scripts/README.md)を使い、`tmp/quality/task.json`で受入条件とテストを対応付ける。途中の確認は対象テスト単体（10秒以内・コマンド連結なし）で行い、完了前に`pnpm agent:check --report tmp/quality/result.json`を実行する。失敗時は診断を確認し、検査を弱めない。
 - feature-pipelineは明示的な開始・再開依頼がある場合だけ実行する。現在のケース・承認・ログをこのファイルへ書かない。
 
 ## 開発段階の変更方針

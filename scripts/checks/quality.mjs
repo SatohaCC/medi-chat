@@ -5,6 +5,7 @@ import { resolve, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadSpecification, registeredSuite } from "./quality-spec.mjs";
 import { acceptanceEvidence, failureFeedback } from "./quality-feedback.mjs";
+import { safeExecuteAsync, safeSpawnSync } from "./safe-process.mjs";
 
 export const ROOT = fileURLToPath(new URL("../../", import.meta.url));
 const TEST_RUNTIME_REQUIREMENTS = resolve(ROOT, "scripts/checks/test-runtime-requirements.json");
@@ -16,7 +17,7 @@ export function scopesFor(paths) {
       for (const scope of ["backend", "frontend", "scripts"]) scopes.add(scope);
     }
     if (path.startsWith("backend/")) scopes.add("backend");
-    if (path === "pytest.ini") {
+    if (path === "pytest.ini" || path === "conftest.py") {
       scopes.add("backend");
       scopes.add("scripts");
     }
@@ -117,15 +118,19 @@ export function planFor(scopes, phase = "full", { includeBackendStartup = false 
       pnpm("StyleX lint", "--filter", "frontend", "lint:stylex");
       pnpm("Frontend types", "typecheck:frontend");
       const tests = nodeTestGroups(scopes);
-      node("Frontend Node unit tests", ["--disable-warning=ExperimentalWarning", "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", "--experimental-strip-types", "--test", "--test-timeout=60000", ...tests.node]);
+      node("Frontend Node unit tests", ["scripts/checks/run-node-tests.mjs", ...tests.node]);
       if (tests.python.length) {
-        node("Frontend Node tests requiring Python", ["--disable-warning=ExperimentalWarning", "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", "--experimental-strip-types", "--test", "--test-timeout=60000", ...tests.python], { runtimes: ["node", "python"] });
+        node("Frontend Node tests requiring Python", ["scripts/checks/run-node-tests.mjs", ...tests.python], { runtimes: ["node", "python"] });
       }
     }
   }
   if (scopes.includes("scripts")) {
+    uv("Root pytest lint", "ruff", "check", "--config", "backend/pyproject.toml", "conftest.py");
+    uv("Root pytest Mypy", "mypy", "--config-file", "backend/pyproject.toml", "conftest.py");
+    pnpm("Root pytest Pyright", "exec", "pyright", "conftest.py");
     if (phase === "full") {
-      node("Development tooling tests", ["--test", "--test-timeout=60000", ...nodeTests("scripts")]);
+      uv("Root pytest format", "ruff", "format", "--check", "--config", "backend/pyproject.toml", "conftest.py");
+      node("Development tooling tests", ["scripts/checks/run-node-tests.mjs", ...nodeTests("scripts")]);
       node("Source-data dependency guard", ["scripts/checks/source-data-guard.mjs", "--check"]);
     }
     else node("Quality runner syntax", ["--check", "scripts/checks/quality.mjs"]);
@@ -165,7 +170,7 @@ export function taskResource(task) {
 
 export function changedPaths(root = ROOT) {
   const collect = (args) => {
-    const result = spawnSync("git", args, { cwd: root, encoding: "utf8" });
+    const result = safeSpawnSync("git", args, { cwd: root, encoding: "utf8" });
     if (result.status !== 0) throw new Error(result.stderr || "Cannot inspect Git changes");
     return result.stdout.split("\0").filter(Boolean);
   };
@@ -176,56 +181,7 @@ export function changedPaths(root = ROOT) {
 }
 
 export function executeAsync(command, args, options = {}) {
-  return new Promise((resolve) => {
-    let child;
-    let stdout = "";
-    let stderr = "";
-    try {
-      child = spawn(command, args, {
-        cwd: options.cwd,
-        shell: options.shell,
-        env: options.env,
-        stdio: ["ignore", "pipe", "pipe"],
-      });
-    } catch (error) {
-      resolve({ status: null, error, stdout: "", stderr: "" });
-      return;
-    }
-    const maxBuffer = options.maxBuffer ?? 16 * 1024 * 1024;
-    child.stdout?.setEncoding("utf8");
-    child.stderr?.setEncoding("utf8");
-    child.stdout?.on("data", (chunk) => {
-      stdout += chunk;
-      if (stdout.length + stderr.length > maxBuffer) {
-        child.kill();
-        resolve({ status: null, error: new Error("maxBuffer exceeded"), stdout, stderr });
-      }
-    });
-    child.stderr?.on("data", (chunk) => {
-      stderr += chunk;
-      if (stdout.length + stderr.length > maxBuffer) {
-        child.kill();
-        resolve({ status: null, error: new Error("maxBuffer exceeded"), stdout, stderr });
-      }
-    });
-    let timer;
-    if (options.timeout) {
-      timer = setTimeout(() => {
-        const timeoutError = new Error("ETIMEDOUT");
-        timeoutError.code = "ETIMEDOUT";
-        child.kill();
-        resolve({ status: null, error: timeoutError, stdout, stderr });
-      }, options.timeout);
-    }
-    child.on("error", (error) => {
-      if (timer) clearTimeout(timer);
-      resolve({ status: null, error, stdout, stderr });
-    });
-    child.on("close", (status) => {
-      if (timer) clearTimeout(timer);
-      resolve({ status, error: null, stdout, stderr });
-    });
-  });
+  return safeExecuteAsync(command, args, options);
 }
 
 function recordTaskResult(report, index, task, result, started, save) {
@@ -260,7 +216,7 @@ function recordTaskResult(report, index, task, result, started, save) {
   return report.tasks[index].status !== "passed";
 }
 
-export function runPlan(plan, execute = spawnSync, reportPath = null, { concurrency = 1 } = {}) {
+export function runPlan(plan, execute = safeSpawnSync, reportPath = null, { concurrency = 1 } = {}) {
   let failed = false;
   const report = {
     version: 1,
@@ -281,7 +237,15 @@ export function runPlan(plan, execute = spawnSync, reportPath = null, { concurre
     encoding: "utf8",
     maxBuffer: 16 * 1024 * 1024,
     timeout: 300_000,
-    env: { ...process.env, UV_CACHE_DIR: process.env.UV_CACHE_DIR?.trim() || resolve(ROOT, ".uv-cache"), TMP: temporary, TEMP: temporary, TMPDIR: temporary },
+    env: {
+      ...process.env,
+      UV_CACHE_DIR: process.env.UV_CACHE_DIR?.trim() || resolve(ROOT, ".uv-cache"),
+      PYTHONUTF8: "1",
+      PYTHONIOENCODING: "utf-8",
+      TMP: temporary,
+      TEMP: temporary,
+      TMPDIR: temporary,
+    },
   };
 
   if (concurrency > 1 || (execute && (execute === executeAsync || execute.constructor?.name === "AsyncFunction"))) {
@@ -419,7 +383,7 @@ export async function main(args) {
     : concurrencyIndex >= 0
       ? parseInt(args[concurrencyIndex + 1], 10)
       : (args.includes("--parallel") || phase === "full" ? 4 : 1);
-  const executor = concurrency > 1 ? executeAsync : spawnSync;
+  const executor = concurrency > 1 ? executeAsync : safeSpawnSync;
   return await runPlan(plan, executor, reportIndex >= 0 ? resolve(args[reportIndex + 1]) : null, { concurrency });
 }
 

@@ -5,6 +5,17 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
 import { buildQualityPlan, changedPaths, invocationFor, nodeTestGroups, partitionNodeTests, planFor, requireSpecificationForScope, runPlan, scopesFor, taskResource } from "./quality.mjs";
+import { safeExecFileSync } from "./safe-process.mjs";
+
+test("root pytest configuration selects backend and tooling static checks", () => {
+  assert.deepEqual(scopesFor(["conftest.py"]), ["backend", "scripts"]);
+  for (const phase of ["quick", "full"]) {
+    const plan = planFor(["backend", "scripts"], phase);
+    assert.ok(plan.some(task => task.args.includes("check") && task.args.includes("conftest.py")));
+    assert.ok(plan.some(task => task.args.includes("mypy") && task.args.includes("conftest.py")));
+    assert.ok(plan.some(task => task.args.includes("conftest.py") && task.args.some(arg => arg.includes("pyright"))));
+  }
+});
 
 test("reports distinguish failure, timeout, launch error and unexecuted work", () => {
   const folder = mkdtempSync(join(tmpdir(), "quality-report-"));
@@ -54,7 +65,7 @@ test("quality runner preserves an explicitly selected uv cache", () => {
 
 test("real Git changes retain both sides of renames and shared settings select all scopes", () => {
   const folder = mkdtempSync(join(tmpdir(), "quality-git-"));
-  const git = (...args) => execFileSync("git", args, { cwd: folder, stdio: "pipe" });
+  const git = (...args) => safeExecFileSync("git", args, { cwd: folder, stdio: "pipe" });
   try {
     git("init");
     mkdirSync(join(folder, "backend"));
@@ -75,7 +86,7 @@ test("real Git changes retain both sides of renames and shared settings select a
 });
 
 test("every existing frontend and tooling Node test is included in the full plan", () => {
-  const tracked = execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard", "-z"], { encoding: "utf8" }).split("\0");
+  const tracked = safeExecFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard", "-z"], { encoding: "utf8" }).split("\0");
   const planned = new Set(planFor(["frontend", "scripts"]).flatMap((task) => task.args));
   for (const path of tracked.filter((path) => /^(frontend|scripts)\/.*\.test\.mjs$/.test(path) && existsSync(path))) {
     assert.ok(planned.has(path), `Node test is outside the quality plan: ${path}`);

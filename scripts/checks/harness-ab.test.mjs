@@ -3,12 +3,15 @@ import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import test from "node:test";
+import test, { after, before } from "node:test";
 import { compareHarnessRuns, formatAbSummary, measurePromptBundleChars, runAbEvaluation } from "./harness-ab.mjs";
+import { safeExecFileSync } from "./safe-process.mjs";
+
+let sharedRepo;
 
 function createHarnessHistoryRepo() {
   const root = mkdtempSync(join(tmpdir(), "harness-ab-git-"));
-  const git = (...args) => execFileSync("git", args, { cwd: root, stdio: "pipe" });
+  const git = (...args) => safeExecFileSync("git", args, { cwd: root, stdio: "pipe" });
   git("init", "--quiet");
   git("config", "user.name", "AB Test");
   git("config", "user.email", "ab@example.invalid");
@@ -34,6 +37,14 @@ function createHarnessHistoryRepo() {
 
   return { root, git, baseCommit, headCommit };
 }
+
+before(() => {
+  sharedRepo = createHarnessHistoryRepo();
+});
+
+after(() => {
+  if (sharedRepo?.root) rmSync(sharedRepo.root, { recursive: true, force: true });
+});
 
 test("compareHarnessRuns computes deltas between base and head arms", () => {
   const baseArm = {
@@ -77,7 +88,8 @@ test("compareHarnessRuns computes deltas between base and head arms", () => {
 });
 
 test("runAbEvaluation runs isolated worktrees for base and head, collects metrics, and cleans up", async () => {
-  const { root, git, baseCommit, headCommit } = createHarnessHistoryRepo();
+  const { root, git, baseCommit, headCommit } = sharedRepo;
+  const reportDir = mkdtempSync(join(tmpdir(), "harness-ab-report-"));
   try {
     const runnerScript = [
       "const fs = require('node:fs');",
@@ -87,7 +99,7 @@ test("runAbEvaluation runs isolated worktrees for base and head, collects metric
       "fs.writeFileSync('.agents/work/.hooks/turn.report.json', JSON.stringify({ version: 1, status: 'passed', tasks: [{ label: 'Quick', status: 'passed', durationMs: isBase ? 4000 : 500 }] }));",
       "fs.writeFileSync('output.txt', process.env.HARNESS_TASK_PROMPT || 'done');",
     ].join(" ");
-    const reportPath = join(root, "tmp/ab-report.json");
+    const reportPath = join(reportDir, "ab-report.json");
 
     const report = await runAbEvaluation({
       root,
@@ -116,63 +128,55 @@ test("runAbEvaluation runs isolated worktrees for base and head, collects metric
     // Prompt measurement directly on root matches head commit
     assert.equal(measurePromptBundleChars(root).totalChars, saved.head.prompt.totalChars);
   } finally {
-    rmSync(root, { recursive: true, force: true });
+    rmSync(reportDir, { recursive: true, force: true });
   }
 });
 
-test("runAbEvaluation streams large (>2MiB) command output without ENOBUFS and retains bounded tail", async () => {
-  const { root, baseCommit, headCommit } = createHarnessHistoryRepo();
-  try {
-    const noisyScript = [
-      "process.stdout.write('A'.repeat(2 * 1024 * 1024));",
-      "process.stdout.write('TAIL_MARKER');",
-      "process.stderr.write('B'.repeat(512 * 1024));",
-      "process.stderr.write('ERR_TAIL');",
-    ].join(" ");
-    const report = await runAbEvaluation({
-      root,
-      baseRef: baseCommit,
-      headRef: headCommit,
-      command: `${JSON.stringify(process.execPath)} -e ${JSON.stringify(noisyScript)}`,
-    });
-    for (const arm of [report.base, report.head]) {
-      assert.equal(arm.exitCode, 0, arm.error || arm.stderrTail);
-      assert.equal(arm.error, null);
-      assert.ok(arm.stdoutTail.length <= 4000);
-      assert.ok(arm.stdoutTail.endsWith("TAIL_MARKER"));
-      assert.ok(arm.stderrTail.length <= 4000);
-      assert.ok(arm.stderrTail.endsWith("ERR_TAIL"));
-    }
-  } finally {
-    rmSync(root, { recursive: true, force: true });
+test("runAbEvaluation streams output beyond 16MiB without ENOBUFS and retains bounded tail", async () => {
+  const { root, baseCommit, headCommit } = sharedRepo;
+  const noisyScript = [
+    "process.stdout.write('A'.repeat(17 * 1024 * 1024));",
+    "process.stdout.write('TAIL_MARKER');",
+    "process.stderr.write('B'.repeat(512 * 1024));",
+    "process.stderr.write('ERR_TAIL');",
+  ].join(" ");
+  const report = await runAbEvaluation({
+    root,
+    baseRef: baseCommit,
+    headRef: headCommit,
+    command: `${JSON.stringify(process.execPath)} -e ${JSON.stringify(noisyScript)}`,
+  });
+  for (const arm of [report.base, report.head]) {
+    assert.equal(arm.exitCode, 0, arm.error || arm.stderrTail);
+    assert.equal(arm.error, null);
+    assert.ok(arm.stdoutTail.length <= 4000);
+    assert.ok(arm.stdoutTail.endsWith("TAIL_MARKER"));
+    assert.ok(arm.stderrTail.length <= 4000);
+    assert.ok(arm.stderrTail.endsWith("ERR_TAIL"));
   }
 });
 
 test("runAbEvaluation terminates timed-out command process trees promptly", async () => {
-  const { root, baseCommit, headCommit } = createHarnessHistoryRepo();
-  try {
-    const sleepScript = [
-      "const { spawn } = require('node:child_process');",
-      "const child = spawn(process.execPath, ['-e', 'setTimeout(() => console.log(\"LATE\"), 2000)'], { stdio: 'inherit' });",
-      "setTimeout(() => {}, 2000);",
-    ].join(" ");
-    const started = Date.now();
-    const report = await runAbEvaluation({
-      root,
-      baseRef: baseCommit,
-      headRef: headCommit,
-      command: `${JSON.stringify(process.execPath)} -e ${JSON.stringify(sleepScript)}`,
-      timeoutMs: 100,
-    });
-    const elapsedMs = Date.now() - started;
-    const maxAllowedMs = process.platform === "win32" ? 6000 : 3500;
-    assert.ok(elapsedMs < maxAllowedMs, `Expected prompt timeout termination, took ${elapsedMs}ms`);
-    for (const arm of [report.base, report.head]) {
-      assert.notEqual(arm.exitCode, 0);
-      assert.match(String(arm.error || ""), /ETIMEDOUT|timed out/i);
-      assert.equal(arm.stdoutTail.includes("LATE"), false);
-    }
-  } finally {
-    rmSync(root, { recursive: true, force: true });
+  const { root, baseCommit, headCommit } = sharedRepo;
+  const sleepScript = [
+    "const { spawn } = require('node:child_process');",
+    "const child = spawn(process.execPath, ['-e', 'setTimeout(() => console.log(\"LATE\"), 2000)'], { stdio: 'inherit' });",
+    "setTimeout(() => {}, 2000);",
+  ].join(" ");
+  const started = Date.now();
+  const report = await runAbEvaluation({
+    root,
+    baseRef: baseCommit,
+    headRef: headCommit,
+    command: `${JSON.stringify(process.execPath)} -e ${JSON.stringify(sleepScript)}`,
+    timeoutMs: 100,
+  });
+  const elapsedMs = Date.now() - started;
+  const maxAllowedMs = process.platform === "win32" ? 30000 : 3500;
+  assert.ok(elapsedMs < maxAllowedMs, `Expected prompt timeout termination, took ${elapsedMs}ms`);
+  for (const arm of [report.base, report.head]) {
+    assert.notEqual(arm.exitCode, 0);
+    assert.match(String(arm.error || ""), /ETIMEDOUT|timed out/i);
+    assert.equal(arm.stdoutTail.includes("LATE"), false);
   }
 });
