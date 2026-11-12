@@ -106,7 +106,9 @@ hooks定義の変更後はCodex側で定義を確認・信頼する操作が必�
 
 [.agents/hooks.json](../.agents/hooks.json)が登録先。Codexの`.codex/hooks.json`と同様に`proactive-defense`・`quality-gate`・`privacy-gate`を分離して定義し、イベントアダプター [`scripts/hooks/antigravity_adapter.py`](hooks/antigravity_adapter.py) 経由で呼び出す。
 
-登録コマンドはカレントディレクトリがワークスペースルート・`.agents/`のいずれであってもリポジトリルートを解決し、`backend`と`scripts/hooks/antigravity_adapter.py`を参照する。編集後の品質ゲート通知はPostToolUseの戻り値には含めず、次のPreInvocationで一時メッセージとして渡す。
+Windows向け登録コマンドは空白を含まない単一のPython式で、現在のディレクトリから親をたどってadapterを起動する。Appが引数を空白で分割しても式が分断されないよう、`-c`引数全体を引用符で囲まない。ルート・`.agents/`・backend配下からの起動を検証する。`uv --no-cache run --no-project --offline --no-python-downloads`でHook起動時の依存同期・通信・キャッシュ書き込みを避ける。Pythonと開発依存は事前に準備する。
+
+`Stop`は`fullyIdle: false`（バックグラウンド処理中）、`error`あり、または`terminationReason`が`error`・`max_steps_exceeded`の場合に完了検査を起動せず、`continue`も返さない。正常完了時に受入・回帰・プライバシー検査を行う。処理中や異常終了時の通知を検証成功として扱わず、完了前の`pnpm agent:check --report tmp/quality/result.json`は引き続き必須。
 
 - `quality-gate`:
   - `PostToolUse` (`matcher: "edit_file|write_file|replace_file_content|write_to_file|multi_replace_file_content"`, timeout 600): ファイル編集後にPython（Ruff）/ Frontend（Biome）の自動整形および編集ループ検出を行う。
