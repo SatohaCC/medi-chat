@@ -63,6 +63,6 @@
     "storybook": "^10.6.6",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "typescript-eslint": "8.72.1",
-    "vite": "^8.3.6"
+    "vite": "^8.3.7"
   }
 }
