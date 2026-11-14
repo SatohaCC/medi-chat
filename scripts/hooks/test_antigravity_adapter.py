@@ -4,7 +4,10 @@ import json
 import shlex
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+
+import pytest
 
 from scripts.hooks import antigravity_adapter as adapter
 
@@ -153,17 +156,6 @@ def test_quality_post_tool_feedback_is_delivered_once_on_pre_invocation(
     )
 
 
-def _simulate_hook_cwd_prefix(command: str, start_cwd: Path) -> Path:
-    prefix = "(cd backend && cd .. || cd ..) && "
-    assert command.startswith(prefix)
-    cwd = start_cwd
-    if (cwd / "backend").is_dir():
-        cwd = (cwd / "backend" / "..").resolve()
-    else:
-        cwd = (cwd / "..").resolve()
-    return cwd
-
-
 def test_registered_hook_commands_resolve_from_workspace_root():
     hooks_path = ROOT / ".agents/hooks.json"
     data = json.loads(hooks_path.read_text(encoding="utf-8"))
@@ -176,21 +168,131 @@ def test_registered_hook_commands_resolve_from_workspace_root():
     ]
 
     assert commands
-    assert all("../" not in command for command in commands)
-    assert all(not command.startswith("cd .. && ") for command in commands)
     for command in commands:
-        tokens = shlex.split(command)
-        project_path = Path(tokens[tokens.index("--project") + 1])
-        adapter_path = Path(tokens[tokens.index("python") + 1])
-        for start_cwd in (ROOT, ROOT / ".agents"):
-            resolved_cwd = _simulate_hook_cwd_prefix(command, start_cwd)
-            assert resolved_cwd == ROOT.resolve()
-            assert (resolved_cwd / project_path).resolve() == (
-                ROOT / "backend"
-            ).resolve()
-            assert (resolved_cwd / adapter_path).resolve() == (
-                ROOT / "scripts/hooks/antigravity_adapter.py"
-            ).resolve()
+        assert (
+            "uv --no-cache run --no-project --offline --no-python-downloads" in command
+        )
+        assert "python -X utf8" in command
+        assert "cd " not in command
+        # Antigravity may split on whitespace, while POSIX shells remove quotes.
+        # Both representations must execute the adapter, not evaluate a string.
+        for arguments in (command.split(), shlex.split(command)):
+            result = subprocess.run(
+                [sys.executable, *arguments[arguments.index("python") + 1 :]],
+                cwd=ROOT,
+                input=json.dumps({"fullyIdle": False}),
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                timeout=8,
+                check=False,
+            )
+            assert result.returncode == 0, result.stderr
+            expected = (
+                {"decision": "allow"} if arguments[-1] == "defense-pre-tool" else {}
+            )
+            assert json.loads(result.stdout) == expected
+
+    command = data["proactive-defense"]["PreToolUse"][0]["hooks"][0]["command"]
+
+    def run_hook(cwd):
+        direct = subprocess.run(
+            command.split(),
+            cwd=cwd,
+            input="{}",
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=8,
+            check=False,
+        )
+        assert direct.returncode == 0, direct.stderr
+        assert json.loads(direct.stdout) == {"decision": "allow"}
+        return subprocess.run(
+            command,
+            shell=True,
+            cwd=cwd,
+            input=json.dumps(
+                {
+                    "toolCall": {
+                        "name": "run_command",
+                        "args": {"CommandLine": "git status"},
+                    }
+                }
+            ),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=8,
+            check=False,
+        )
+
+    # Exercise the registered shell command, including simultaneous file exploration.
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        results = list(
+            executor.map(
+                run_hook,
+                (ROOT, ROOT / ".agents", ROOT / "backend", ROOT / "backend/domain"),
+            )
+        )
+    for result in results:
+        assert result.returncode == 0, result.stderr
+        assert json.loads(result.stdout) == {"decision": "allow"}
+
+
+@pytest.mark.parametrize("handler", ["handle_quality_stop", "handle_privacy_stop"])
+@pytest.mark.parametrize(
+    "stop_fields",
+    [
+        {"fullyIdle": False, "terminationReason": "model_stop"},
+        {"fullyIdle": True, "terminationReason": "error"},
+        {"fullyIdle": True, "terminationReason": "max_steps_exceeded"},
+        {"fullyIdle": True, "terminationReason": "model_stop", "error": "failed"},
+    ],
+)
+def test_stop_does_not_start_checks_or_continue_unfinished_execution(
+    tmp_path, monkeypatch, handler, stop_fields
+):
+    from scripts.hooks import privacy_gate, quality_gate
+
+    monkeypatch.setattr(adapter, "ROOT", tmp_path)
+
+    def unexpected_check(event):
+        pytest.fail("A busy or failed execution must not start completion checks")
+
+    monkeypatch.setattr(quality_gate, "main", unexpected_check)
+    monkeypatch.setattr(privacy_gate, "main", unexpected_check)
+    payload = {"conversationId": "busy-stop", **stop_fields}
+    assert getattr(adapter, handler)(payload) == {}
+    assert not (tmp_path / ".agents").exists()
+
+
+def test_idle_stop_still_runs_both_completion_checks(tmp_path, monkeypatch):
+    from scripts.hooks import privacy_gate, quality_gate
+
+    monkeypatch.setattr(adapter, "ROOT", tmp_path)
+    calls = []
+
+    def quality_check(event):
+        calls.append("quality")
+        return {}
+
+    def privacy_check(event):
+        calls.append("privacy")
+        return {}
+
+    monkeypatch.setattr(quality_gate, "main", quality_check)
+    monkeypatch.setattr(privacy_gate, "main", privacy_check)
+    payload = {
+        "conversationId": "idle-stop",
+        "fullyIdle": True,
+        "terminationReason": "model_stop",
+    }
+    assert adapter.handle_quality_stop(payload) == {}
+    assert adapter.handle_privacy_stop(payload) == {}
+    assert calls == ["quality", "privacy"]
 
 
 def test_privacy_post_tool_handles_run_command(monkeypatch):

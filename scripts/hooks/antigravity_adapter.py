@@ -210,7 +210,7 @@ def take_quality_feedback(turn: str) -> list[str]:
                         "モデルコンテキスト投入前に動的マスキングしました。"
                     )
                 messages.append(sanitized)
-        except (ValueError, OSError):
+        except ValueError, OSError:
             print("Invalid quality feedback receipt; discarding it.", file=sys.stderr)
         finally:
             try:
@@ -256,7 +256,18 @@ def quality_state_path(directory: Path, turn: str) -> Path:
     return directory / f"{key}.quality-stop.json"
 
 
+def completion_checks_applicable(payload: dict) -> bool:
+    """Stop also fires while background work is pending or execution has failed."""
+    return (
+        payload.get("fullyIdle") is not False
+        and not payload.get("error")
+        and payload.get("terminationReason") not in {"error", "max_steps_exceeded"}
+    )
+
+
 def handle_quality_stop(payload: dict) -> dict:
+    if not completion_checks_applicable(payload):
+        return {}
     turn_id = str(
         payload.get("conversationId") or payload.get("executionNum") or "current"
     )
@@ -281,7 +292,7 @@ def handle_quality_stop(payload: dict) -> dict:
         if state_file.exists():
             stored = json.loads(state_file.read_text(encoding="utf-8"))
             already_warned = bool(stored.get("warned"))
-    except (ValueError, OSError):
+    except ValueError, OSError:
         already_warned = False
 
     codex_event = {
@@ -326,6 +337,8 @@ def privacy_state_path(directory: Path, turn: str) -> Path:
 
 
 def handle_privacy_stop(payload: dict) -> dict:
+    if not completion_checks_applicable(payload):
+        return {}
     turn_id = str(
         payload.get("conversationId") or payload.get("executionNum") or "current"
     )
@@ -338,7 +351,7 @@ def handle_privacy_stop(payload: dict) -> dict:
         if state_file.exists():
             stored = json.loads(state_file.read_text(encoding="utf-8"))
             already_warned = bool(stored.get("warned"))
-    except (ValueError, OSError):
+    except ValueError, OSError:
         already_warned = False
 
     codex_event = {
@@ -377,7 +390,7 @@ def main(action: str | None = None) -> dict:
     try:
         raw_input = sys.stdin.read()
         payload = json.loads(raw_input) if raw_input.strip() else {}
-    except (ValueError, OSError):
+    except ValueError, OSError:
         payload = {}
 
     if not action:
