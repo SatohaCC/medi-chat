@@ -239,8 +239,8 @@ importers:
         specifier: 0.19.1
         version: 0.19.1(supports-color@7.2.0)
       '@stylexjs/eslint-plugin':
-        specifier: 0.19.1
-        version: 0.19.1
+        specifier: 0.19.2
+        version: 0.19.2
       '@stylexjs/postcss-plugin':
         specifier: 0.19.1
         version: 0.19.1(supports-color@7.2.0)
@@ -1429,14 +1429,17 @@ packages:
   '@stylexjs/babel-plugin@0.19.1':
     resolution: {integrity: sha512-Ig3crX6MuGWDEAx+f89aLxTQUWVeEc2Aco2moIdcObyvo7hZJgU26rxJN3k7geFjhi+5dfna6TNR8iTRK0PQGA==}
 
-  '@stylexjs/eslint-plugin@0.19.1':
-    resolution: {integrity: sha512-875KpR4M71F5rTSTfDoGWbs09u8atZvVGWBN5bWt3svIEmuNwTMRZGdY8iHiaPrL+W49/tifc6pouKcn3t8d+A==}
+  '@stylexjs/eslint-plugin@0.19.2':
+    resolution: {integrity: sha512-Oynwwe3grD/H1cHOZeUQgodjmhe2CAEhf4MqdWNO95nDw5kANP9Vso/AKifhOrl5za7wpItHCW9bGef5RTl1UA==}
 
   '@stylexjs/postcss-plugin@0.19.1':
     resolution: {integrity: sha512-+awpiY9rxCDG/CI57jWVTUTxp88sqovplk5vgW28q8fj0yPGO8bOU5bjDloY7krkXwxMkXoZVT89IMIVcZZEsQ==}
 
   '@stylexjs/shared@0.19.1':
     resolution: {integrity: sha512-oFBtW0NPNLJOT1gLweWRNKrIJHjJMwOmSV7fgd6ewok4fwb/Nh95PEaYGKu+ZONk0nNghjLFfOwiIsxJdvh3TQ==}
+
+  '@stylexjs/shared@0.19.2':
+    resolution: {integrity: sha512-xjTZ/6T/1FV103F2bspmXoDRDy1gM/ZKYEHpQlUC0h4R5q7PqUV6k+DJbrayRAMwALIdzTf7zSTqteRde0ZXWQ==}
 
   '@stylexjs/stylex@0.19.1':
     resolution: {integrity: sha512-JwNFm0MOYPqi+M4Ax5Un4ZxfZp4HEAX2sAWetZ88KALFcv1eEiHNJs75oO3V3U7RVWnzfkiM8i9eBowC3hqgUw==}
@@ -3984,10 +3987,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@stylexjs/eslint-plugin@0.19.1':
+  '@stylexjs/eslint-plugin@0.19.2':
     dependencies:
       '@csstools/css-tokenizer': 3.0.4
-      '@stylexjs/shared': 0.19.1
+      '@stylexjs/shared': 0.19.2
       micromatch: 4.0.8
       postcss-value-parser: 4.2.0
 
@@ -4003,6 +4006,8 @@ snapshots:
       - supports-color
 
   '@stylexjs/shared@0.19.1': {}
+
+  '@stylexjs/shared@0.19.2': {}
 
   '@stylexjs/stylex@0.19.1':
     dependencies:
