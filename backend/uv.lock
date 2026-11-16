@@ -823,11 +823,11 @@ wheels = [
 
 [[package]]
 name = "janome"
-version = "0.5.1"
+version = "0.5.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/5f/9e/5dc982eda6e51748ae3d9ad1a62a957805b0a151943cacea34b3d4d0512c/janome-0.5.1.tar.gz", hash = "sha256:9d58e6236f0f64adf13a5e8997c3b13d78103e951cd3594345a9ad9970569753", size = 19381931, upload-time = "2026-11-07T12:20:11.942Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/86/59/ef5c4e60aa5452368a19f55c8f3b86ebe675ac60a695194c1ffe322fdbae/janome-0.5.2.tar.gz", hash = "sha256:53ba04aa68f0a35410db418936460ab66764ac5621c655080c5f5a58b99f83ed", size = 19384089, upload-time = "2026-11-10T10:04:37.445Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/36/54/be9c7bde12d23540a9aa312806c96d8b52470a9cdd5f9eddf30d916338b7/janome-0.5.1-py3-none-any.whl", hash = "sha256:d9925d941ca8314c1575ee10c529a4cffda9f0044a9f5b45e753c764796fce1f", size = 19650909, upload-time = "2026-11-07T12:20:05.623Z" },
+    { url = "https://files.pythonhosted.org/packages/b7/12/0866314fafc3e2a9f24ec2093b7a1524ce5df751f5447c9fd83b6650b900/janome-0.5.2-py3-none-any.whl", hash = "sha256:216c78e3f24ae5f25a20a5e3b4386432f4b85b3a4c367fb485dd849b866ce1eb", size = 19650947, upload-time = "2026-11-10T10:04:30.285Z" },
 ]
 
 [[package]]
