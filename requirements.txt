@@ -74,7 +74,7 @@ filetype==1.2.0
     # via langchain-google-genai
 google-auth==2.58.1
     # via google-genai
-google-genai==3.0.0
+google-genai==3.3.0
     # via
     #   langchain-google-genai
     #   medi-chat-backend
@@ -120,7 +120,7 @@ jsonpatch==1.37
     # via langchain-core
 jsonpointer==3.5
     # via jsonpatch
-langchain-core==1.7.6
+langchain-core==1.8.1
     # via
     #   langchain-google-genai
     #   langchain-openai
@@ -128,7 +128,7 @@ langchain-core==1.7.6
     #   langgraph-checkpoint
     #   langgraph-prebuilt
     #   langgraph-sdk
-langchain-google-genai==4.4.3
+langchain-google-genai==4.5.0
     # via medi-chat-backend
 langchain-openai==1.7.4
     # via medi-chat-backend
