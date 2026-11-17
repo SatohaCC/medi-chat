@@ -130,7 +130,7 @@ langchain-core==1.8.1
     #   langgraph-sdk
 langchain-google-genai==4.5.0
     # via medi-chat-backend
-langchain-openai==1.7.4
+langchain-openai==1.8.0
     # via medi-chat-backend
 langchain-protocol==0.0.20
     # via
