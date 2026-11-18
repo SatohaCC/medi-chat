@@ -49,14 +49,12 @@ yj
 .corepack-cache/
 /docs/reference/
 /.agents/*
-!/.agents/hooks.json
 !/.agents/README.md
 !/.agents/agents/
 !/.agents/skills/
 .vscode/
 .vercel/
 /.codex/*
-!/.codex/hooks.json
 
 
 # OS

@@ -1,22 +1,12 @@
 # 品質コマンドと証跡
 
-## 共通の実行入口
+## 基本の検証入口
 
-エージェント共通の変更範囲検査は`pnpm agent:check`、全体手動検査は`pnpm quality`を入口にする。側別は`pnpm quality:backend`・`pnpm quality:frontend`・`pnpm quality:scripts`。実行前に`--list`で対象コマンドを確認できる。`agent:check`とStop Hookはコード変更scopeで作業用specを必須とし、文書だけの変更では要求しない。specの条件・登録済み検査・Hook adapterは[scripts/README](../../scripts/README.md)を参照する。
+各パッケージのテスト・lint・型検査・ビルドを直接実行する。通常のbackendテストから実DB・非公開原本を必要とするテストを除き、frontendはNode単体テスト・lint・StyleX・型・ビルド・Playwrightを実行する。実PostgreSQL契約・ブラウザ・外部APIの検証は対象コマンドを明示して実施し、単体テストの成功で代替しない。
 
-この入口はソースを自動修正しない。通常のbackendテストから実DB・非公開原本を必要とするテストを除き、frontendはNodeの単体テストを実行する。`agent:check`・`quality:changed`のfull検査はbackend scopeを含む場合に、通常設定のbackend起動とread-only health probeを自動実行する。quickと側別の`quality:backend`では実行しない。実PostgreSQL契約・ブラウザ・外部APIの検証は別に選択し、共通コマンドの成功で代替しない。
+pytestの設定はルート`pytest.ini`で共有する。`pytest`と`python -m pytest`のどちらからもbackendをimportできる。`testpaths`は`backend/tests`で、backend用のDB隔離・マーカー選別は既存の`backend/tests/conftest.py`が担当する。
 
-開発中のquick検査（`pnpm agent:check --phase quick`）および`Stop` Hook（`--phase quick --parallel`）は早期フィードバック、完了時のfull検査（`pnpm agent:check --report tmp/quality/result.json`）は受入判断に使う。`PostToolUse` Hookは編集ファイルの自動整形と編集ループ警告に限定し、編集ごとの全体quick検査やspec強制は行わない。モデルへの信頼で最終検査を省略しない。quickの頻度や範囲を変える場合は、同じ受入条件と検証範囲を保った代表的な作業で、変更前後の反復数・総所要時間・修正前に検出した不具合・最終結果を比較する。単一実行の時間やモデル名だけから検査を削らない。fullの最終ゲートと受入条件は頻度変更後も維持し、テスト結果だけで仕様網羅を証明したとは扱わない。[検査頻度とコストの背景](harness-strengthening-plan.md#調査文書を適用する際の留保)
-
-受入条件がある作業では、[仕様JSONの例](quality-task.example.json)に従って要件ID・受入条件・対応テストを定義し、`--spec <JSON>`で選択する。作業用`tmp/quality/task.json`は手動・hooks共通で自動読込する。`pnpm agent:check`またはHookを使うコード作業は、quick・fullと完了前処理が済むまでspecを保持する。通常の回帰検査も維持する。登録可能なテスト、integrationの明示選択、受入検査の未実施判定、修正フィードバック・停滞停止は[scripts/README](../../scripts/README.md#仕様に基づくテスト選択)を正本とする。自然言語の仕様からテスト内容の妥当性まで自動判定するものではない。
-
-frontendのNodeテストはNode単体とPython連携に分け、後者の追加runtimeを`scripts/checks/test-runtime-requirements.json`へ登録する。Node/Python連携テストにはNodeとPython双方を準備し、どちらかの起動不能も失敗として扱う。`quality:scripts`はCI workflowのjob構造・準備手順を回帰検査するが、GitHub Actions上の成功を代替しない。`scripts/checks/source-data-guard.mjs --check`はテスト中のPMDA原本/生成物の直接パスと、`join`/`resolve`で組み立ててファイル読取に渡す経路を調べる。計算済みの任意パスや動的import等の全経路は静的に証明しない。
-
-指定commitの再現確認は`node scripts/checks/verify-clean-checkout.mjs --ref <commit>`を使う。detached worktreeにlock済み依存を導入し、full品質ゲートを実行する。未commit変更はコピーされず、成功レポートは指定commitにだけ対応する。GitHub CI・実PostgreSQL・browser・外部APIは別の検証層として記録する。
-
-pytestの設定はルート`pytest.ini`で共有する。`pytest`と`python -m pytest`のどちらからもbackendとscriptsをimportできる。`testpaths`は`backend/tests`と`scripts/hooks`で、backend用のDB隔離・マーカー選別は既存の`backend/tests/conftest.py`が担当する。
-
-ルート`conftest.py`はWindows sandboxでのpytest一時領域を調整する。変更時はbackend・scripts両scopeを検査し、quick・fullでRuff・Mypy・Pyright、fullでformat確認も実行する。Node単体テストは`run-node-tests.mjs`からNode標準APIの`isolation: none`で実行し、テストごとの既定タイムアウトは60秒とする。
+ルート`conftest.py`はWindows sandboxでのpytest一時領域を調整する。変更時はRuff・Mypy・Pyrightを実行して確認する。
 
 frontendのソースは`.gitattributes`とBiomeでLFに統一する。`e2e/fixtures`・`e2e-real/fixtures`は原本のバイト列を保持するため、改行変換と整形を行わない。TypeScript 7のCLIは`@typescript/native`、StyleX ESLintが使うコンパイラーAPIは`typescript`名の`@typescript/typescript6`で供給する。`pnpm typecheck:frontend`の`tsc`は引き続き7系を実行する。
 
@@ -67,7 +57,7 @@ Workflow APIを変える場合は、実際の認証主体と必要な権限を�
 |---|---|
 | backendテスト | `pnpm test:backend`、限定時は`pnpm --filter backend exec pytest tests/<対象>.py` |
 | 実PostgreSQL（CI） | `pnpm test:postgres`（`postgres and not source_data`。接続設定不足は失敗） |
-| 通常設定のbackend起動 | backend差分を含む`agent:check`・`quality:changed`のfullで自動実行。個別に実行するときは作業仕様JSONの`{ "kind": "suite", "name": "backend-startup" }`。configured PostgreSQL readinessと実アプリのOS healthをread-onlyで確認 |
+| 通常設定のbackend起動 | `uv run --project backend --locked python -m backend.infrastructure.cli.configured_e2e_gate`（configured PostgreSQL readinessと実アプリのOS healthをread-onlyで確認） |
 | backendlint | `pnpm --filter backend lint` |
 | Domainハーネス | `pnpm --filter backend lint:domain`、検出能力の回帰は`pnpm --filter backend lint:domain:harness` |
 | backendformat確認 | `pnpm --filter backend exec ruff format --check .` |
@@ -77,7 +67,7 @@ Workflow APIを変える場合は、実際の認証主体と必要な権限を�
 
 開発アクセスログのquery秘匿は対象モジュールで個別に検証する: `pnpm --filter backend exec pytest tests/infrastructure/config/test_dev_logging.py -q`。対象テストだけpytestのログをライブ表示する場合は`-o log_cli=true --log-cli-level=ERROR`を追加する。ライブ表示の設定は`pytest.ini`へグローバル適用しない。
 
-`pnpm typecheck:python`はbackendのPyright・mypyと、`pnpm typecheck:scripts`による`scripts/`のPyright・mypyを順に実行する。`pnpm quality:scripts`も開発ツールの型検査を実行する。ルートのpyrightconfigの既定includeはbackendであり、scripts単独検査ではCLI引数で対象を明示する。一部だけの成功を全体成功として扱わない。
+`pnpm typecheck:python`はbackendのPyright・mypyと、`pnpm typecheck:scripts`による`scripts/`のPyright・mypyを順に実行する。ルートのpyrightconfigの既定includeはbackendであり、scripts単独検査ではCLI引数で対象を明示する。一部だけの成功を全体成功として扱わない。
 カタログだけの検証は`python -c "from backend.infrastructure.package_insert_definitions.assembly import get_package_insert_definitions; get_package_insert_definitions()"`。実行環境を確認し、これだけで検索・プロンプト・XML経路が検証できたと扱わない。
 
 ## frontend
@@ -89,9 +79,8 @@ Workflow APIを変える場合は、実際の認証主体と必要な権限を�
 | 型 | `pnpm typecheck:frontend` |
 | ビルド | `pnpm build` |
 | 接続ヘルパー単体 | `node --experimental-strip-types --test frontend/features/chat/api/chatWebSocket.test.mjs`（対応するNodeが必要） |
-| frontendのNode単体テスト | 共通full検査がfrontend内のすべての`.test.mjs`を実行する。Git除外PMDAデータは通常unitの入力にしない |
-| NodeからPythonを呼ぶ統合unit | 共通full検査でruntime manifest登録分を独立実行し、両方のruntime不足を失敗として扱う |
-| PMDA生成データの明示表示確認 | 作業specの`{ "kind": "suite", "name": "source-data" }`（入力ファイルがなければ失敗） |
+| frontendのNode単体テスト | `pnpm --filter frontend test`（Git除外PMDAデータは通常unitの入力にしない） |
+| PMDA生成データの明示表示確認 | `pnpm --filter frontend exec node --test features/chat/components/SourceEvidenceContent/SourceEvidenceContent.source-data.mjs`（入力ファイルがなければ失敗） |
 | チャット画面（Playwright / Chromium） | 初回は`pnpm --filter frontend exec playwright install chromium`、実行は`pnpm test:e2e` |
 
 ### production画面のレスポンスヘッダー

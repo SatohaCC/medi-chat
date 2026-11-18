@@ -19,13 +19,13 @@ description: 機能追加・振る舞い変更を、計画・テスト仕様の�
 
 - 適用されるAGENTS.mdと対象資料、本番・テストの編集範囲、品質コマンドと必要な環境を特定する。
 - `git status --short`をBASELINE_STATUSとして確認し、既存差分・未追跡内容を保持する。
-- 承認対象文書は下の2パスのみ。ケースと実テストの対応は`tmp/quality/task.json`、実行証跡は`tmp/quality/result.json`（および`.agents/work/.hooks/`）で機械的に管理し、手動の進捗Markdownは作成しない。再開時は承認履歴・2文書・現在のGit差分・機械的証跡を照合して未完了段階から続ける。
+- 承認対象文書は下の2パスのみ。再開時は承認履歴・2文書・現在のGit差分・検証結果を確認して未完了段階から続ける。
 
 | 起動名 | 定義 | 編集範囲 |
 |---|---|---|
 | `planner` | [Planner](../../agents/planner.md) | `PLAN_PATH` (`for-llm/plan/YYYYMMDD-<topic>.md`) |
 | `test-designer` | [Test Designer](../../agents/test-designer.md) | `TESTCASE_PATH` (`for-llm/testcase/YYYYMMDD-<topic>.md`) |
-| `generator` | [Generator](../../agents/generator.md) | 計画に含まれるテスト・Fixture・Fake・本番側、`tmp/quality/task.json` |
+| `generator` | [Generator](../../agents/generator.md) | 計画に含まれるテスト・Fixture・Fake・本番側 |
 | `evaluator` | [Evaluator](../../agents/evaluator.md) | ソース編集なし、評価と必要な検証 |
 
 同じ作業ツリーで書き込み段階を同時実行しない。Evaluatorは実装担当と別のエージェントにし、実装担当の自己評価を結論として渡さない。
@@ -34,8 +34,8 @@ description: 機能追加・振る舞い変更を、計画・テスト仕様の�
 
 1. **計画**: Plannerへ目的・範囲・公開契約・受入条件・検証方法を依頼し、ユーザーの計画承認を待って次へ進む。
 2. **テスト仕様**: Test Designerへ要件とケースの対応、前提・操作・期待結果、必要な検証層と作業方式を依頼し、ユーザーの仕様承認を待つ。
-3. **実装・検証**: Generatorへ方式（バグ・重要ルールは小単位TDD、通常機能はテスト先行、構造整理は変更前後Green確認）・対象ケース群・編集範囲を渡す。テスト作成から本番実装・Refactor・`pnpm agent:check --report tmp/quality/result.json`まで一依頼で進め、完了後にEvaluatorへ進む。
-4. **評価と完了報告**: 追加承認を挟まずEvaluatorへ依頼し、要件→ケース→テスト・実装・機械的証跡（`tmp/quality/task.json`・`tmp/quality/result.json`）を照合する。未実施・skip・xfail・環境不足は成功に含めない。
+3. **実装・検証**: Generatorへ方式（バグ・重要ルールは小単位TDD、通常機能はテスト先行、構造整理は変更前後Green確認）・対象ケース群・編集範囲を渡す。テスト作成から本番実装・Refactor・対象範囲のテスト/lint/型検証まで一依頼で進め、完了後にEvaluatorへ進む。
+4. **評価と完了報告**: 追加承認を挟まずEvaluatorへ依頼し、要件→ケース→テスト・実装・検証結果を照合する。未実施・skip・xfail・環境不足は成功に含めない。
 
 ## 変更前失敗・差し戻し・判定
 

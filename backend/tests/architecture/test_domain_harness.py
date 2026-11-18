@@ -304,7 +304,7 @@ def test_standard_lint_and_ci_enforce_domain_harness():
     assert "pnpm run lint:domain && pnpm run lint:domain:harness" in scripts["lint"]
     assert "scripts/checks/domain_architecture.py" in scripts["lint:domain"]
     assert "test_domain_harness.py" in scripts["lint:domain:harness"]
-    assert "pnpm quality:backend" in (
+    assert "pnpm --filter backend lint" in (
         root / ".github/workflows/postgres-contracts.yml"
     ).read_text(encoding="utf-8")
 
