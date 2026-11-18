@@ -14,6 +14,7 @@
     "test:e2e:ci": "playwright test --config=playwright.ci.config.ts",
     "test:e2e:shared": "playwright test --config=playwright.shared.config.ts",
     "test:e2e:real": "playwright test --config=playwright.import-integration.config.ts",
+    "test": "node --test \"features/**/*.test.mjs\" \"shared/**/*.test.mjs\" \"scripts/**/*.test.mjs\"",
     "dev": "next dev",
     "dev:frontend": "next dev",
     "build": "next build",

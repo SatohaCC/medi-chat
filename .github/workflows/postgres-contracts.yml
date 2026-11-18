@@ -59,7 +59,11 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: uv sync --project backend --locked
       - name: Backend tests, architecture, lint, formatting and types
-        run: pnpm quality:backend
+        run: |
+          pnpm --filter backend lint
+          uv run --project backend --locked ruff format --check backend
+          pnpm typecheck:python
+          pnpm test:backend -m "not source_data" -q
       - name: Sync and commit generated requirements for Dependabot PRs
         id: requirements
         if: >-
@@ -92,7 +96,16 @@ jobs:
           gh auth setup-git
           git push origin "HEAD:refs/heads/$PR_BRANCH"
       - name: Development tooling and generated contracts
-        run: pnpm quality:scripts
+        run: |
+          uv run --project backend --locked ruff check --config backend/pyproject.toml conftest.py
+          uv run --project backend --locked ruff format --check --config backend/pyproject.toml conftest.py
+          uv run --project backend --locked ruff check scripts/checks
+          uv run --project backend --locked ruff format --check scripts/checks
+          uv run --project backend --locked mypy --config-file backend/pyproject.toml conftest.py
+          pnpm exec pyright conftest.py
+          node --test scripts/root-environment.test.mjs
+          pnpm vercel:requirements:check
+          uv run --project backend --locked python -m backend.infrastructure.cli.export_search_guide --check
       - name: Initialize this job's disposable service with separated roles
         env:
           POSTGRES_USER: postgres
@@ -128,7 +141,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: uv sync --project backend --locked
       - name: Frontend format, lint, StyleX, types and unit tests
-        run: pnpm quality:frontend
+        run: |
+          pnpm --filter frontend lint
+          pnpm --filter frontend lint:boundaries
+          pnpm --filter frontend exec biome format .
+          pnpm --filter frontend lint:stylex
+          pnpm typecheck:frontend
+          pnpm --filter frontend test
       - name: Install Chromium for browser E2E
         run: pnpm --filter frontend exec playwright install --with-deps chromium
       - name: Browser E2E on the mock API

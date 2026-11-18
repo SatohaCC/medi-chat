@@ -35,10 +35,10 @@ variantやtoneは`compact`、`surface`、`positive`等の見た目を表す。�
 
 ## 検証
 
-`frontend/scripts/shared-boundaries.test.mjs`は、TypeScriptのモジュール解決を使い、相対・エイリアス・型参照・再export・静的dynamic import・JSON/CSSの依存を検査する。負例と本番ソースの両方を共通品質ハーネスで実行する。実行時に計算される依存関係や、ドメイン用語の意味までは証明しないため、公開propsのレビューも行う。
+`frontend/scripts/shared-boundaries.test.mjs`は、TypeScriptのモジュール解決を使い、相対・エイリアス・型参照・再export・静的dynamic import・JSON/CSSの依存を検査する。負例と本番ソースの両方をfrontendのNodeテストで実行する。実行時に計算される依存関係や、ドメイン用語の意味までは証明しないため、公開propsのレビューも行う。
 
 - `pnpm --filter frontend lint:boundaries`: 依存境界だけの確認。
-- `pnpm agent:check --phase quick`と完了前のfull: 作業specによる受入検査と回帰検査。
+- `pnpm --filter frontend test`: frontendのNode単体テスト一式。
 - `pnpm --filter frontend test:e2e:shared`: ポート6007の独立したStorybookで、共有UIの操作・キーボード・フォーカス・業務API呼び出しのないことを検証。
 - `pnpm build-storybook`: featuresとsharedのStoryをビルド。
 - 実画面のE2E・visual regression・SSR/HMR・productionのCSS確認は別に実施し、単体検査やStorybookの成功で代替しない。

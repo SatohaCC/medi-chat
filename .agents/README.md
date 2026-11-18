@@ -7,6 +7,4 @@
 - `react-aria`: React Ariaの実装・検証用資料です。導入元はReact Aria公式Agent Skills（https://react-aria.adobe.com）です。
 - `security-audit`: セキュリティレビュー用です。導入元と導入時のhashはルートの`skills-lock.json`を参照してください。
 
-共通の検証入口は`pnpm agent:check`です。`hooks.json`はAntigravity用、`../.codex/hooks.json`はCodex用のadapterです。設定ファイルが存在するだけでは自動実行を保証しません。各端末・実行環境でHookの読み込みと実行を確認してください。
-
 秘密情報、個人パス、ログ、進行記録をスキル・役割定義へ追加しないでください。新しいスキルは、内容と導入元を確認してから共有します。
