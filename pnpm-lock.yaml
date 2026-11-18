@@ -236,8 +236,8 @@ importers:
         specifier: ^10.6.7
         version: 10.6.7(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(@typescript/typescript6@6.0.2)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(storybook@10.6.7(@types/react@19.3.0)(react@19.3.1))(supports-color@7.2.0)
       '@stylexjs/babel-plugin':
-        specifier: 0.19.1
-        version: 0.19.1(supports-color@7.2.0)
+        specifier: 0.19.2
+        version: 0.19.2(supports-color@7.2.0)
       '@stylexjs/eslint-plugin':
         specifier: 0.19.2
         version: 0.19.2
@@ -1423,9 +1423,6 @@ packages:
       typescript:
         optional: true
 
-  '@stylexjs/babel-plugin@0.19.1':
-    resolution: {integrity: sha512-Ig3crX6MuGWDEAx+f89aLxTQUWVeEc2Aco2moIdcObyvo7hZJgU26rxJN3k7geFjhi+5dfna6TNR8iTRK0PQGA==}
-
   '@stylexjs/babel-plugin@0.19.2':
     resolution: {integrity: sha512-R6cB7Ym+IAvySNfmtRJ6CZ+83rjZ82Uw4wmG3YtwYY8vrnliUrYy9fOLvZ1nX407zeHNkCnE5AodEnjXXfOSYg==}
 
@@ -1435,14 +1432,8 @@ packages:
   '@stylexjs/postcss-plugin@0.19.2':
     resolution: {integrity: sha512-yRZQSa7Q2hcV7LEKA5ktDspYG/dDorNIq6iEhgBI4YArvS3WBKy1PLSRd8jg53Tm8e2l15UX9U/otf881bOFpw==}
 
-  '@stylexjs/shared@0.19.1':
-    resolution: {integrity: sha512-oFBtW0NPNLJOT1gLweWRNKrIJHjJMwOmSV7fgd6ewok4fwb/Nh95PEaYGKu+ZONk0nNghjLFfOwiIsxJdvh3TQ==}
-
   '@stylexjs/shared@0.19.2':
     resolution: {integrity: sha512-xjTZ/6T/1FV103F2bspmXoDRDy1gM/ZKYEHpQlUC0h4R5q7PqUV6k+DJbrayRAMwALIdzTf7zSTqteRde0ZXWQ==}
-
-  '@stylexjs/stylex@0.19.1':
-    resolution: {integrity: sha512-JwNFm0MOYPqi+M4Ax5Un4ZxfZp4HEAX2sAWetZ88KALFcv1eEiHNJs75oO3V3U7RVWnzfkiM8i9eBowC3hqgUw==}
 
   '@stylexjs/stylex@0.19.2':
     resolution: {integrity: sha512-l0fRhOBZ4rFiZ0GntYSlp4lYO5dPT11F3mLb7O4ShK6eE1WOjHtv9GHGQZuzHJbQkjcEaRjPSpBn6itI7yXc3Q==}
@@ -1859,9 +1850,6 @@ packages:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
     engines: {node: '>= 8'}
 
-  css-mediaquery@0.1.2:
-    resolution: {integrity: sha512-COtn4EROW5dBGlE/4PiKnh6rZpAPxDeFLaEEwt4i10jpDMFt2EhQGS79QmmrO+iKCHv0PU/HrOWEhijFd1x99Q==}
-
   css.escape@1.5.1:
     resolution: {integrity: sha512-YUifsXXuknHlUsmlgyY0PKzgPOr7/FjCePfHNt0jxm83wHZi44VDMQ7/fGNkjY3/jV1MC+1CmZbaHzugyeRtpg==}
 
@@ -2164,9 +2152,6 @@ packages:
   inline-style-parser@0.2.7:
     resolution: {integrity: sha512-Nb2ctOyNR8DqQoR0OwRG95uNWIC0C1lCgf5Naz5H6Ji72KZ8OcFZLz2P5sNgwlyoJ8Yif11oMuYs5pBQa86csA==}
 
-  invariant@2.2.4:
-    resolution: {integrity: sha512-phJfQVBuaJM5raOpJjSfkiD6BpbCE4Ns//LaXl6wGYtUBY83nWS6Rf9tXm2e8VaK60JEjYldbPif/A2B1C2gNA==}
-
   is-alphabetical@2.0.1:
     resolution: {integrity: sha512-FWyyY60MeTNyeSRpkM2Iry0G9hpr7/9kD40mD/cGQEuilcZYS4okz8SN2Q6rLCJ8gbCt6fN+rC+6tMGS99LaxQ==}
 
@@ -2332,10 +2317,6 @@ packages:
 
   longest-streak@3.1.0:
     resolution: {integrity: sha512-9Ri+o0JYgehTaVBBDoMqIl8GXtbWg711O3srftcHhZ0dqnETqLaoIK0x17fUw9rFSlK/0NlsKe0Ahhyl5pXE2g==}
-
-  loose-envify@1.4.0:
-    resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
-    hasBin: true
 
   loupe@3.2.1:
     resolution: {integrity: sha512-CdzqowRJCeLU72bHvWqwRBBlLcMEtIvGrlvef74kMnV2AolS9Y8xUv1I0U/MNAWMhBlKIoyuEgoJ0t/bbwHbLQ==}
@@ -3966,19 +3947,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@stylexjs/babel-plugin@0.19.1(supports-color@7.2.0)':
-    dependencies:
-      '@babel/core': 7.29.7(supports-color@7.2.0)
-      '@babel/helper-module-imports': 7.29.7(supports-color@7.2.0)
-      '@babel/traverse': 7.29.8(supports-color@7.2.0)
-      '@babel/types': 7.29.8
-      '@dual-bundle/import-meta-resolve': 4.2.1
-      '@stylexjs/shared': 0.19.1
-      '@stylexjs/stylex': 0.19.1
-      postcss-value-parser: 4.2.0
-    transitivePeerDependencies:
-      - supports-color
-
   '@stylexjs/babel-plugin@0.19.2(supports-color@7.2.0)':
     dependencies:
       '@babel/core': 7.29.7(supports-color@7.2.0)
@@ -4010,15 +3978,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@stylexjs/shared@0.19.1': {}
-
   '@stylexjs/shared@0.19.2': {}
-
-  '@stylexjs/stylex@0.19.1':
-    dependencies:
-      css-mediaquery: 0.1.2
-      invariant: 2.2.4
-      styleq: 0.2.1
 
   '@stylexjs/stylex@0.19.2':
     dependencies:
@@ -4432,8 +4392,6 @@ snapshots:
       shebang-command: 2.0.0
       which: 2.0.2
 
-  css-mediaquery@0.1.2: {}
-
   css.escape@1.5.1: {}
 
   csstype@3.2.3: {}
@@ -4784,10 +4742,6 @@ snapshots:
 
   inline-style-parser@0.2.7: {}
 
-  invariant@2.2.4:
-    dependencies:
-      loose-envify: 1.4.0
-
   is-alphabetical@2.0.1: {}
 
   is-alphanumerical@2.0.1:
@@ -4905,10 +4859,6 @@ snapshots:
   lodash.merge@4.6.2: {}
 
   longest-streak@3.1.0: {}
-
-  loose-envify@1.4.0:
-    dependencies:
-      js-tokens: 4.0.0
 
   loupe@3.2.1: {}
 
