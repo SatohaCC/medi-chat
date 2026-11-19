@@ -47,7 +47,7 @@
   },
   "devDependencies": {
     "@babel/runtime": "^8.1.2",
-    "@biomejs/biome": "2.6.7",
+    "@biomejs/biome": "2.6.8",
     "@playwright/test": "^1.65.1",
     "@storybook/nextjs-vite": "^10.6.7",
     "@storybook/react": "^10.6.7",
