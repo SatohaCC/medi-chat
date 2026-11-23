@@ -178,8 +178,8 @@ importers:
         specifier: ^0.23.2
         version: 0.23.2(zod@4.6.7)
       '@json-render/react':
-        specifier: ^0.22.0
-        version: 0.22.0(react@19.3.1)(zod@4.6.7)
+        specifier: ^0.23.2
+        version: 0.23.2(react@19.3.1)(zod@4.6.7)
       '@react-spectrum/ai':
         specifier: 0.5.2
         version: 0.5.2(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -887,18 +887,13 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@json-render/core@0.22.0':
-    resolution: {integrity: sha512-BIfJ2V3bLYETetBu2KWoxxRPU5cSAf77dDTBgqaV54kEAfyHta1psPJgNk0fDcB3FCrnCZ5KO/X41VDkrNSYgw==}
-    peerDependencies:
-      zod: ^4.0.0
-
   '@json-render/core@0.23.2':
     resolution: {integrity: sha512-2BRXjS2uWLLmlPnlw9kvtCYJFSmnYqBhUyqf6dx7MheKhedGoz80rf4s0XTdGDVue2MLwnFqpcamcEnHi1HLeQ==}
     peerDependencies:
       zod: ^4.0.0
 
-  '@json-render/react@0.22.0':
-    resolution: {integrity: sha512-dUBSPn/OZGJGwYiVUVv6qk14AGvfIutKgw7EKJejof14Ft/UPKsoV7/SkF5xIbGIWcM/vk3U4UnNm3NgPnOSSQ==}
+  '@json-render/react@0.23.2':
+    resolution: {integrity: sha512-DzHB+UekHk5acxjFU2+qleFhCncOmYLEZXXQT6D3hlE0PsJ/kKEb2be0WfwqFJ0ypDC0DQmnKp3/pQDlW64oAQ==}
     peerDependencies:
       react: ^19.2.3
 
@@ -3596,17 +3591,13 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  '@json-render/core@0.22.0(zod@4.6.7)':
-    dependencies:
-      zod: 4.6.7
-
   '@json-render/core@0.23.2(zod@4.6.7)':
     dependencies:
       zod: 4.6.7
 
-  '@json-render/react@0.22.0(react@19.3.1)(zod@4.6.7)':
+  '@json-render/react@0.23.2(react@19.3.1)(zod@4.6.7)':
     dependencies:
-      '@json-render/core': 0.22.0(zod@4.6.7)
+      '@json-render/core': 0.23.2(zod@4.6.7)
       react: 19.3.1
     transitivePeerDependencies:
       - zod
