@@ -82,7 +82,7 @@ jobs:
       - name: Create repository-scoped token for the generated commit
         if: steps.requirements.outputs.changed == 'true'
         id: requirements-token
-        uses: actions/create-github-app-token@v3.3.0
+        uses: actions/create-github-app-token@v3.4.0
         with:
           app-id: ${{ vars.DEPENDABOT_SYNC_APP_ID }}
           private-key: ${{ secrets.DEPENDABOT_SYNC_APP_PRIVATE_KEY }}
