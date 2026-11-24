@@ -49,7 +49,7 @@
     "@babel/runtime": "^8.1.2",
     "@biomejs/biome": "2.6.8",
     "@playwright/test": "^1.65.1",
-    "@storybook/nextjs-vite": "^10.6.7",
+    "@storybook/nextjs-vite": "^10.6.8",
     "@storybook/react": "^10.6.7",
     "@stylexjs/babel-plugin": "0.19.2",
     "@stylexjs/eslint-plugin": "0.19.2",
